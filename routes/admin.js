@@ -193,6 +193,9 @@ router.post('/chapter/add', upload.single('txtfile'), async (req, res) => {
     if (publish_method === 'manual') {
       // ĐĂNG THỦ CÔNG (NHẬP TAY)
       if (!chapter_number || !title || !content) {
+        if (req.body.redirect_to) {
+          return res.redirect(`${req.body.redirect_to}?error=${encodeURIComponent('Vui lòng điền đầy đủ tất cả thông tin chương.')}`);
+        }
         const { data: stories } = await supabase.from('stories').select('id, title').order('title');
         return res.render('admin/add-chapter', {
           title: 'Đăng chương truyện mới',
@@ -214,6 +217,9 @@ router.post('/chapter/add', upload.single('txtfile'), async (req, res) => {
     } else {
       // ĐĂNG TỰ ĐỘNG (ĐỌC FILE TXT HOẶC DOCX)
       if (!file) {
+        if (req.body.redirect_to) {
+          return res.redirect(`${req.body.redirect_to}?error=${encodeURIComponent('Vui lòng chọn file tải lên (.txt hoặc .docx).')}`);
+        }
         const { data: stories } = await supabase.from('stories').select('id, title').order('title');
         return res.render('admin/add-chapter', {
           title: 'Đăng chương truyện mới',
@@ -318,6 +324,9 @@ router.post('/chapter/add', upload.single('txtfile'), async (req, res) => {
       }
 
       if (matches.length === 0) {
+        if (req.body.redirect_to) {
+          return res.redirect(`${req.body.redirect_to}?error=${encodeURIComponent('Không tìm thấy chương truyện hợp lệ nào trong file. Vui lòng kiểm tra lại định dạng file.')}`);
+        }
         const { data: stories } = await supabase.from('stories').select('id, title').order('title');
         return res.render('admin/add-chapter', {
           title: 'Đăng chương truyện mới',
@@ -338,6 +347,9 @@ router.post('/chapter/add', upload.single('txtfile'), async (req, res) => {
 
     if (upsertErr) throw upsertErr;
 
+    if (req.body.redirect_to) {
+      return res.redirect(`${req.body.redirect_to}?success=${encodeURIComponent(successMessage)}`);
+    }
     const { data: stories } = await supabase.from('stories').select('id, title').order('title');
     res.render('admin/add-chapter', {
       title: 'Đăng chương truyện mới',
@@ -349,6 +361,9 @@ router.post('/chapter/add', upload.single('txtfile'), async (req, res) => {
 
   } catch (err) {
     console.error('Lỗi khi đăng chương:', err);
+    if (req.body.redirect_to) {
+      return res.redirect(`${req.body.redirect_to}?error=${encodeURIComponent('Lỗi hệ thống trong quá trình đăng chương.')}`);
+    }
     res.status(500).send('Lỗi hệ thống trong quá trình đăng chương.');
   }
 });
@@ -488,14 +503,17 @@ router.get('/story/edit/:id', async (req, res) => {
 
     const linkedGenreIds = linkedGenres ? linkedGenres.map(g => g.genre_id) : [];
 
+    const success = req.query.success || null;
+    const error = req.query.error || null;
+
     res.render('admin/edit-story', {
       title: `Chỉnh sửa truyện: ${story.title}`,
       user: req.user,
       story,
       genres: genres || [],
       linkedGenreIds,
-      success: null,
-      error: null
+      success,
+      error
     });
 
   } catch (err) {

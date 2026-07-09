@@ -65,6 +65,74 @@
     </form>
 </div>
 
+<hr style="margin: 3rem 0; border: none; border-top: 1px dashed var(--border-color);">
+
+<div class="form-container" style="max-width: 700px; margin-top: 2rem;">
+    <h2 class="section-title">⚡ Đăng Chương Mới Cho Bộ Truyện Này</h2>
+    
+    <form action="/admin/chapter/add" method="POST" enctype="multipart/form-data">
+        <!-- Story ID mặc định cho bộ truyện này -->
+        <input type="hidden" name="story_id" value="<%= story.id %>">
+        <!-- Đường dẫn redirect về đây sau khi lưu thành công -->
+        <input type="hidden" name="redirect_to" value="/admin/story/edit/<%= story.id %>">
+
+        <!-- CHỌN PHƯƠNG THỨC ĐĂNG -->
+        <div class="form-group" style="margin-bottom: 2rem;">
+            <label>Phương thức đăng chương *</label>
+            <div style="display: flex; gap: 2rem; margin-top: 0.5rem; background: var(--bg-primary); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 500;">
+                    <input type="radio" name="publish_method" value="manual" checked>
+                    Đăng thủ công (Nhập tay / Chèn HTML)
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 500;">
+                    <input type="radio" name="publish_method" value="bulk">
+                    Tải tệp tin tự động (.txt, .docx)
+                </label>
+            </div>
+        </div>
+
+        <!-- KHỐI FORM 1: ĐĂNG THỦ CÔNG (MANUAL) -->
+        <div id="form-manual">
+            <div style="display: grid; grid-template-columns: 1fr 3fr; gap: 1rem;">
+                <div class="form-group">
+                    <label for="chapter_number">Số Chương *</label>
+                    <input type="number" id="chapter_number" name="chapter_number" min="1" step="any" placeholder="Ví dụ: 1">
+                </div>
+                <div class="form-group">
+                    <label for="title">Tiêu Đề Chương *</label>
+                    <input type="text" id="title" name="title" placeholder="Ví dụ: Buổi sáng định mệnh">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="content">Nội Dung Chương (Hỗ trợ Text hoặc thẻ ảnh HTML) *</label>
+                <textarea id="content" name="content" rows="10" placeholder="Để đan xen chữ và hình ảnh, bạn có thể viết nội dung dạng HTML:
+<p>Nội dung đoạn chữ thứ nhất...</p>
+<img src='/uploads/ten-anh-da-up.png' alt='Ảnh minh họa'>
+<p>Nội dung đoạn chữ tiếp theo...</p>"></textarea>
+            </div>
+        </div>
+
+        <!-- KHỐI FORM 2: TỰ ĐỘNG TÁCH CHƯƠNG (BULK) -->
+        <div id="form-bulk" style="display: none;">
+            <div style="background: rgba(59, 130, 246, 0.08); border-left: 4px solid var(--accent-color); padding: 1rem; border-radius: 0 8px 8px 0; margin-bottom: 1.5rem; font-size: 0.9rem; line-height: 1.5;">
+                <strong>💡 Hướng dẫn file tải lên:</strong><br>
+                * **File Word (.docx)**: Tự động trích xuất toàn bộ văn bản và **hình ảnh nhúng** bên trong truyện tranh/truyện chữ và lưu lên database.<br>
+                * **File Chữ (.txt)**: Hỗ trợ tệp tin văn bản thuần.<br>
+                * Nhận diện chương bằng từ khóa đầu dòng: <code>Chương [Số]</code>, <code>Chap [Số]</code>, <code>Chapter [Số]</code>.
+            </div>
+
+            <div class="form-group">
+                <label for="txtfile">Tải lên tệp tin truyện *</label>
+                <input type="file" id="txtfile" name="txtfile" accept=".txt,.docx">
+                <span style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.3rem;">Hỗ trợ định dạng đuôi .txt hoặc .docx (Word).</span>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.8rem; font-size: 1rem; margin-top: 1rem;">BẮT ĐẦU ĐĂNG CHƯƠNG</button>
+    </form>
+</div>
+
 <script>
     // Hiển thị tên tệp ảnh khi được chọn mới
     const fileInput = document.getElementById('cover');
@@ -78,6 +146,45 @@
             }
         });
     }
+
+    // Logic ẩn/hiện form đăng chương dựa trên phương thức đăng
+    const methodRadios = document.querySelectorAll('input[name="publish_method"]');
+    const formManual = document.getElementById('form-manual');
+    const formBulk = document.getElementById('form-bulk');
+    
+    // Các trường bắt buộc cho manual
+    const chapNumInput = document.getElementById('chapter_number');
+    const chapTitleInput = document.getElementById('title');
+    const chapContentInput = document.getElementById('content');
+    const bulkFileInput = document.getElementById('txtfile');
+
+    function toggleForms() {
+        const selectedMethod = document.querySelector('input[name="publish_method"]:checked').value;
+        if (selectedMethod === 'manual') {
+            formManual.style.display = 'block';
+            formBulk.style.display = 'none';
+            // Cập nhật thuộc tính required
+            if (chapNumInput) chapNumInput.required = true;
+            if (chapTitleInput) chapTitleInput.required = true;
+            if (chapContentInput) chapContentInput.required = true;
+            if (bulkFileInput) bulkFileInput.required = false;
+        } else {
+            formManual.style.display = 'none';
+            formBulk.style.display = 'block';
+            // Cập nhật thuộc tính required
+            if (chapNumInput) chapNumInput.required = false;
+            if (chapTitleInput) chapTitleInput.required = false;
+            if (chapContentInput) chapContentInput.required = false;
+            if (bulkFileInput) bulkFileInput.required = true;
+        }
+    }
+
+    methodRadios.forEach(radio => {
+        radio.addEventListener('change', toggleForms);
+    });
+
+    // Chạy khi khởi động trang
+    toggleForms();
 </script>
 
 <%- include('../partials/footer') %>
