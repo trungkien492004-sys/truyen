@@ -397,5 +397,126 @@ router.post('/genres/delete/:id', async (req, res) => {
   }
 });
 
+// 7. TRANG CHỈNH SỬA THÔNG TIN TRUYỆN
+router.get('/story/edit/:id', async (req, res) => {
+  const storyId = parseInt(req.params.id);
+  try {
+    // Lấy thông tin truyện
+    const { data: story, error: storyErr } = await supabase
+      .from('stories')
+      .select('*')
+      .eq('id', storyId)
+      .single();
+
+    if (storyErr || !story) {
+      return res.status(404).send('Không tìm thấy truyện.');
+    }
+
+    // Lấy tất cả thể loại truyện
+    const { data: genres } = await supabase.from('genres').select('*').order('name');
+
+    // Lấy danh sách ID thể loại của truyện hiện tại
+    const { data: linkedGenres } = await supabase
+      .from('story_genres')
+      .select('genre_id')
+      .eq('story_id', storyId);
+
+    const linkedGenreIds = linkedGenres ? linkedGenres.map(g => g.genre_id) : [];
+
+    res.render('admin/edit-story', {
+      title: `Chỉnh sửa truyện: ${story.title}`,
+      user: req.user,
+      story,
+      genres: genres || [],
+      linkedGenreIds,
+      success: null,
+      error: null
+    });
+
+  } catch (err) {
+    console.error('Lỗi trang sửa truyện:', err);
+    res.status(500).send('Lỗi hệ thống.');
+  }
+});
+
+// THỰC HIỆN CẬP NHẬT TRUYỆN
+router.post('/story/edit/:id', upload.single('cover'), async (req, res) => {
+  const storyId = parseInt(req.params.id);
+  const { title, author, description, commissioned_by, genres } = req.body;
+
+  if (!title) {
+    return res.status(400).send('Tên truyện không được để trống.');
+  }
+
+  try {
+    // 1. Lấy thông tin truyện hiện tại để lấy ảnh bìa cũ
+    const { data: currentStory } = await supabase
+      .from('stories')
+      .select('cover_url')
+      .eq('id', storyId)
+      .single();
+
+    // Xác định ảnh bìa mới
+    const coverUrl = req.file ? `/uploads/${req.file.filename}` : currentStory.cover_url;
+
+    // 2. Cập nhật bảng `stories`
+    const { error: updateStoryErr } = await supabase
+      .from('stories')
+      .update({
+        title,
+        author: author || 'Ẩn danh',
+        description,
+        cover_url: coverUrl,
+        commissioned_by: commissioned_by ? commissioned_by.trim() : null
+      })
+      .eq('id', storyId);
+
+    if (updateStoryErr) throw updateStoryErr;
+
+    // 3. Đồng bộ lại thể loại trong bảng `story_genres`
+    // Xóa liên kết thể loại cũ
+    await supabase.from('story_genres').delete().eq('story_id', storyId);
+
+    // Chèn liên kết thể loại mới nếu có chọn
+    if (genres && genres.length > 0) {
+      const genreArray = Array.isArray(genres) ? genres : [genres];
+      const storyGenresInsert = genreArray.map(genreId => ({
+        story_id: storyId,
+        genre_id: parseInt(genreId)
+      }));
+
+      const { error: genreLinkErr } = await supabase
+        .from('story_genres')
+        .insert(storyGenresInsert);
+
+      if (genreLinkErr) throw genreLinkErr;
+    }
+
+    res.redirect('/admin');
+
+  } catch (err) {
+    console.error('Lỗi cập nhật truyện:', err);
+    res.status(500).send('Lỗi hệ thống.');
+  }
+});
+
+// THỰC HIỆN XÓA TRUYỆN (VÀ CÁC THÔNG TIN LIÊN QUAN CASCADE)
+router.post('/story/delete/:id', async (req, res) => {
+  const storyId = parseInt(req.params.id);
+  try {
+    const { error } = await supabase
+      .from('stories')
+      .delete()
+      .eq('id', storyId);
+
+    if (error) throw error;
+    res.redirect('/admin');
+  } catch (err) {
+    console.error('Lỗi xóa truyện:', err);
+    res.status(500).send('Lỗi hệ thống.');
+  }
+});
+
 module.exports = router;
+
 
