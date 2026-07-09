@@ -35,26 +35,7 @@ app.use(passport.session());
 // Cấu hình thư mục chứa file tĩnh (public)
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Khởi tạo các file ảnh tĩnh mặc định phòng trường hợp chưa upload
-const defaultCoverPath = path.join(__dirname, 'public/css/default-cover.jpg');
-const defaultAvatarPath = path.join(__dirname, 'public/css/default-avatar.png');
-const fs = require('fs');
 
-// Đảm bảo thư mục css tồn tại
-const cssDir = path.join(__dirname, 'public/css');
-if (!fs.existsSync(cssDir)) {
-  fs.mkdirSync(cssDir, { recursive: true });
-}
-
-// Nếu chưa có ảnh bìa mặc định, tạo một ảnh bìa giả dạng màu xám
-if (!fs.existsSync(defaultCoverPath)) {
-  // Tạo file đơn giản
-  fs.writeFileSync(defaultCoverPath, ''); 
-}
-// Nếu chưa có ảnh đại diện mặc định, tạo file giả
-if (!fs.existsSync(defaultAvatarPath)) {
-  fs.writeFileSync(defaultAvatarPath, '');
-}
 
 // ĐĂNG KÝ CÁC TUYẾN ĐƯỜNG DẪN (ROUTES)
 const authRoutes = require('./routes/auth');
