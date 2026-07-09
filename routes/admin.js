@@ -160,204 +160,178 @@ router.post('/story/add', upload.single('cover'), async (req, res) => {
   }
 });
 
-// 3. TRANG ĐĂNG CHƯƠNG THỦ CÔNG
-router.get('/chapter/add-manual', async (req, res) => {
+// 3. TRANG ĐĂNG CHƯƠNG TRUYỆN MỚI (TÍCH HỢP)
+router.get('/chapter/add', async (req, res) => {
   try {
     const { data: stories } = await supabase.from('stories').select('id, title').order('title');
-    res.render('admin/add-manual', {
-      title: 'Đăng chương thủ công',
+    res.render('admin/add-chapter', {
+      title: 'Đăng chương truyện mới',
       user: req.user,
       stories: stories || [],
       success: null,
       error: null
     });
   } catch (err) {
-    console.error('Lỗi trang đăng chương thủ công:', err);
+    console.error('Lỗi trang đăng chương:', err);
     res.status(500).send('Lỗi hệ thống.');
   }
 });
 
-// THỰC HIỆN ĐĂNG CHƯƠNG THỦ CÔNG
-router.post('/chapter/add-manual', async (req, res) => {
-  const { story_id, chapter_number, title, content } = req.body;
-  
-  if (!story_id || !chapter_number || !title || !content) {
-    return res.status(400).send('Vui lòng điền đầy đủ tất cả thông tin chương.');
-  }
-
-  try {
-    // Chèn chương mới vào Supabase, sử dụng upsert để ghi đè nếu trùng số chương của bộ truyện đó
-    const { error } = await supabase
-      .from('chapters')
-      .upsert([
-        {
-          story_id: parseInt(story_id),
-          chapter_number: parseInt(chapter_number),
-          title: title,
-          content: content
-        }
-      ], { onConflict: 'story_id,chapter_number' });
-
-    if (error) throw error;
-
-    const { data: stories } = await supabase.from('stories').select('id, title').order('title');
-    res.render('admin/add-manual', {
-      title: 'Đăng chương thủ công',
-      user: req.user,
-      stories: stories || [],
-      success: `Đăng chương ${chapter_number}: "${title}" thành công!`,
-      error: null
-    });
-  } catch (err) {
-    console.error('Lỗi đăng chương tay:', err);
-    res.status(500).send('Lỗi đăng chương.');
-  }
-});
-
-// 4. TRANG ĐĂNG CHƯƠNG TỰ ĐỘNG (BULK IMPORT)
-router.get('/chapter/add-bulk', async (req, res) => {
-  try {
-    const { data: stories } = await supabase.from('stories').select('id, title').order('title');
-    res.render('admin/add-bulk', {
-      title: 'Tự động tách chương từ File văn bản',
-      user: req.user,
-      stories: stories || [],
-      success: null,
-      error: null
-    });
-  } catch (err) {
-    console.error('Lỗi trang add-bulk:', err);
-    res.status(500).send('Lỗi hệ thống.');
-  }
-});
-
-// THỰC HIỆN TỰ ĐỘNG TÁCH CHƯƠNG VÀ LƯU
-router.post('/chapter/add-bulk', upload.single('txtfile'), async (req, res) => {
-  const { story_id } = req.body;
+// THỰC HIỆN ĐĂNG CHƯƠNG (HỖ TRỢ CẢ MANUAL VÀ BULK)
+router.post('/chapter/add', upload.single('txtfile'), async (req, res) => {
+  const { story_id, publish_method, chapter_number, title, content } = req.body;
   const file = req.file;
 
-  if (!story_id || !file) {
-    return res.status(400).send('Vui lòng chọn bộ truyện và upload tệp tin (.txt hoặc .docx).');
+  if (!story_id) {
+    return res.status(400).send('Vui lòng chọn bộ truyện.');
   }
 
   try {
-    let matches = [];
     let chaptersToInsert = [];
-    const isDocx = file.originalname.endsWith('.docx') || file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    let successMessage = '';
 
-    if (isDocx) {
-      // CẤU HÌNH MAMMOTH ĐỂ PHÂN TÍCH FILE WORD (.DOCX)
-      // Tự động trích xuất hình ảnh nhúng trong file Word, tải thẳng lên Supabase Storage
-      const options = {
-        convertImage: mammoth.images.inline(function(element) {
-          return element.read("base64").then(async function(imageBuffer) {
-            const buffer = Buffer.from(imageBuffer, 'base64');
-            const fileExt = element.contentType === 'image/jpeg' ? '.jpg' : '.png';
-            const fileName = `word-img-${Date.now()}-${Math.round(Math.random() * 1E9)}${fileExt}`;
-            
-            // Upload trực tiếp lên Supabase Storage
-            const { error: uploadErr } = await supabase.storage
-              .from('uploads')
-              .upload(fileName, buffer, {
-                contentType: element.contentType,
-                upsert: true
-              });
-
-            if (uploadErr) {
-              console.error('Lỗi tải ảnh Word lên Supabase:', uploadErr);
-              throw uploadErr;
-            }
-
-            const { data: { publicUrl } } = supabase.storage
-              .from('uploads')
-              .getPublicUrl(fileName);
-
-            return {
-              src: publicUrl
-            };
-          });
-        })
-      };
-
-      // Đọc trực tiếp từ memory buffer thay vì đọc file từ đĩa
-      const result = await mammoth.convertToHtml({ buffer: file.buffer }, options);
-      const html = result.value;
-
-      // Regex tìm tiêu đề chương trong các thẻ <p>
-      const regex = /<p>(?:<strong>|<em>|<span>)*?(Chương|Chap|Chapter)\s+(\d+(?:\.\d+)?)\s*[:.-]?\s*(.*?)(?:<\/strong>|<\/em>|<\/span>)*?<\/p>/gim;
-      let match;
-      while ((match = regex.exec(html)) !== null) {
-        const cleanTitle = match[3] ? match[3].replace(/<\/?[^>]+(>|$)/g, "").trim() : `Chương ${match[2]}`;
-        matches.push({
-          index: match.index,
-          fullText: match[0],
-          number: parseFloat(match[2]),
-          title: cleanTitle
+    if (publish_method === 'manual') {
+      // ĐĂNG THỦ CÔNG (NHẬP TAY)
+      if (!chapter_number || !title || !content) {
+        const { data: stories } = await supabase.from('stories').select('id, title').order('title');
+        return res.render('admin/add-chapter', {
+          title: 'Đăng chương truyện mới',
+          user: req.user,
+          stories: stories || [],
+          success: null,
+          error: 'Vui lòng điền đầy đủ tất cả thông tin chương.'
         });
       }
 
-      // Cắt HTML thành các chương
-      for (let i = 0; i < matches.length; i++) {
-        const start = matches[i].index + matches[i].fullText.length;
-        const end = (i + 1 < matches.length) ? matches[i + 1].index : html.length;
-        const body = html.substring(start, end).trim();
-
-        chaptersToInsert.push({
-          story_id: parseInt(story_id),
-          chapter_number: matches[i].number,
-          title: matches[i].title,
-          content: body
-        });
-      }
+      chaptersToInsert.push({
+        story_id: parseInt(story_id),
+        chapter_number: parseFloat(chapter_number),
+        title: title.trim(),
+        content: content
+      });
+      successMessage = `Đã đăng Chương ${chapter_number}: "${title}" thành công!`;
 
     } else {
-      // XỬ LÝ FILE VĂN BẢN THƯỜNG (.TXT)
-      const text = file.buffer.toString('utf-8');
-
-      const regex = /^(Chương|Chap|Chapter)\s+(\d+(?:\.\d+)?)\s*[:.-]?\s*(.*)$/gim;
-      let match;
-      while ((match = regex.exec(text)) !== null) {
-        matches.push({
-          index: match.index,
-          fullText: match[0],
-          number: parseFloat(match[2]),
-          title: match[3] ? match[3].trim() : `Chương ${match[2]}`
+      // ĐĂNG TỰ ĐỘNG (ĐỌC FILE TXT HOẶC DOCX)
+      if (!file) {
+        const { data: stories } = await supabase.from('stories').select('id, title').order('title');
+        return res.render('admin/add-chapter', {
+          title: 'Đăng chương truyện mới',
+          user: req.user,
+          stories: stories || [],
+          success: null,
+          error: 'Vui lòng chọn file tải lên (.txt hoặc .docx).'
         });
       }
 
-      for (let i = 0; i < matches.length; i++) {
-        const start = matches[i].index + matches[i].fullText.length;
-        const end = (i + 1 < matches.length) ? matches[i + 1].index : text.length;
-        const rawContent = text.substring(start, end).trim();
+      let matches = [];
+      const isDocx = file.originalname.endsWith('.docx') || file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 
-        const formattedContent = rawContent
-          .split('\n')
-          .map(line => line.trim())
-          .filter(line => line.length > 0)
-          .map(line => `<p>${line}</p>`)
-          .join('');
+      if (isDocx) {
+        // Parse Word file
+        const options = {
+          convertImage: mammoth.images.inline(function(element) {
+            return element.read("base64").then(async function(imageBuffer) {
+              const buffer = Buffer.from(imageBuffer, 'base64');
+              const fileExt = element.contentType === 'image/jpeg' ? '.jpg' : '.png';
+              const fileName = `word-img-${Date.now()}-${Math.round(Math.random() * 1E9)}${fileExt}`;
+              
+              const { error: uploadErr } = await supabase.storage
+                .from('uploads')
+                .upload(fileName, buffer, {
+                  contentType: element.contentType,
+                  upsert: true
+                });
 
-        chaptersToInsert.push({
-          story_id: parseInt(story_id),
-          chapter_number: matches[i].number,
-          title: matches[i].title,
-          content: formattedContent
+              if (uploadErr) throw uploadErr;
+
+              const { data: { publicUrl } } = supabase.storage
+                .from('uploads')
+                .getPublicUrl(fileName);
+
+              return { src: publicUrl };
+            });
+          })
+        };
+
+        const result = await mammoth.convertToHtml({ buffer: file.buffer }, options);
+        const html = result.value;
+
+        const regex = /<p>(?:<strong>|<em>|<span>)*?(Chương|Chap|Chapter)\s+(\d+(?:\.\d+)?)\s*[:.-]?\s*(.*?)(?:<\/strong>|<\/em>|<\/span>)*?<\/p>/gim;
+        let match;
+        while ((match = regex.exec(html)) !== null) {
+          const cleanTitle = match[3] ? match[3].replace(/<\/?[^>]+(>|$)/g, "").trim() : `Chương ${match[2]}`;
+          matches.push({
+            index: match.index,
+            fullText: match[0],
+            number: parseFloat(match[2]),
+            title: cleanTitle
+          });
+        }
+
+        for (let i = 0; i < matches.length; i++) {
+          const start = matches[i].index + matches[i].fullText.length;
+          const end = (i + 1 < matches.length) ? matches[i + 1].index : html.length;
+          const body = html.substring(start, end).trim();
+
+          chaptersToInsert.push({
+            story_id: parseInt(story_id),
+            chapter_number: matches[i].number,
+            title: matches[i].title,
+            content: body
+          });
+        }
+
+      } else {
+        // Parse Txt file
+        const text = file.buffer.toString('utf-8');
+        const regex = /^(Chương|Chap|Chapter)\s+(\d+(?:\.\d+)?)\s*[:.-]?\s*(.*)$/gim;
+        let match;
+        while ((match = regex.exec(text)) !== null) {
+          matches.push({
+            index: match.index,
+            fullText: match[0],
+            number: parseFloat(match[2]),
+            title: match[3] ? match[3].trim() : `Chương ${match[2]}`
+          });
+        }
+
+        for (let i = 0; i < matches.length; i++) {
+          const start = matches[i].index + matches[i].fullText.length;
+          const end = (i + 1 < matches.length) ? matches[i + 1].index : text.length;
+          const rawContent = text.substring(start, end).trim();
+
+          const formattedContent = rawContent
+            .split('\n')
+            .map(line => line.trim())
+            .filter(line => line.length > 0)
+            .map(line => `<p>${line}</p>`)
+            .join('');
+
+          chaptersToInsert.push({
+            story_id: parseInt(story_id),
+            chapter_number: matches[i].number,
+            title: matches[i].title,
+            content: formattedContent
+          });
+        }
+      }
+
+      if (matches.length === 0) {
+        const { data: stories } = await supabase.from('stories').select('id, title').order('title');
+        return res.render('admin/add-chapter', {
+          title: 'Đăng chương truyện mới',
+          user: req.user,
+          stories: stories || [],
+          success: null,
+          error: 'Không tìm thấy chương truyện hợp lệ nào trong file. Vui lòng kiểm tra lại định dạng file.'
         });
       }
+
+      successMessage = `Đã phân tích file thành công và nhập ${chaptersToInsert.length} chương mới vào hệ thống!`;
     }
 
-    if (matches.length === 0) {
-      const { data: stories } = await supabase.from('stories').select('id, title').order('title');
-      return res.render('admin/add-bulk', {
-        title: 'Tự động tách chương từ File văn bản',
-        user: req.user,
-        stories: stories || [],
-        success: null,
-        error: 'Không tìm thấy chương truyện nào trong file. Đảm bảo file chứa các từ khóa đầu dòng như "Chương 1:", "Chap 2:", ...'
-      });
-    }
-
-    // Ghi hàng loạt vào Supabase (upsert đè chương cũ nếu trùng số của bộ đó)
+    // Ghi vào Supabase (upsert)
     const { error: upsertErr } = await supabase
       .from('chapters')
       .upsert(chaptersToInsert, { onConflict: 'story_id,chapter_number' });
@@ -365,17 +339,17 @@ router.post('/chapter/add-bulk', upload.single('txtfile'), async (req, res) => {
     if (upsertErr) throw upsertErr;
 
     const { data: stories } = await supabase.from('stories').select('id, title').order('title');
-    res.render('admin/add-bulk', {
-      title: 'Tự động tách chương từ File văn bản',
+    res.render('admin/add-chapter', {
+      title: 'Đăng chương truyện mới',
       user: req.user,
       stories: stories || [],
-      success: `Đã phân tích file thành công và nhập ${chaptersToInsert.length} chương mới vào hệ thống!`,
+      success: successMessage,
       error: null
     });
 
   } catch (err) {
-    console.error('Lỗi khi tách chương:', err);
-    res.status(500).send('Có lỗi xảy ra trong quá trình xử lý tệp tin.');
+    console.error('Lỗi khi đăng chương:', err);
+    res.status(500).send('Lỗi hệ thống trong quá trình đăng chương.');
   }
 });
 
@@ -610,6 +584,12 @@ router.post('/story/delete/:id', async (req, res) => {
     res.status(500).send('Lỗi hệ thống.');
   }
 });
+
+// CHUYỂN HƯỚNG CÁC ĐƯỜNG DẪN CŨ VỀ ĐƯỜNG DẪN TÍCH HỢP MỚI
+router.get('/chapter/add-manual', (req, res) => res.redirect('/admin/chapter/add'));
+router.post('/chapter/add-manual', (req, res) => res.redirect('/admin/chapter/add'));
+router.get('/chapter/add-bulk', (req, res) => res.redirect('/admin/chapter/add'));
+router.post('/chapter/add-bulk', (req, res) => res.redirect('/admin/chapter/add'));
 
 module.exports = router;
 
