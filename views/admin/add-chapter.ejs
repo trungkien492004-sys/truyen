@@ -226,7 +226,18 @@
                     })
                 });
 
-                const resData = await response.json();
+                let resData;
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    resData = await response.json();
+                } else {
+                    const text = await response.text();
+                    if (response.status === 413) {
+                        throw new Error('Dung lượng tệp truyện hoặc ảnh gửi đi quá lớn (Vượt quá 4.5 MB giới hạn của Vercel). Vui lòng thử chia nhỏ file ra đăng làm nhiều lần.');
+                    }
+                    throw new Error(`Lỗi từ máy chủ (${response.status}): ${text.substring(0, 150)}...`);
+                }
+
                 if (resData.success) {
                     window.location.href = '/admin/chapter/add?success=' + encodeURIComponent(resData.message);
                 } else {

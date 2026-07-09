@@ -12,9 +12,9 @@ const PORT = process.env.PORT || 3000;
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
-// Middleware xử lý dữ liệu đầu vào
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Middleware xử lý dữ liệu đầu vào (Tăng giới hạn lên 50mb để nhận nội dung truyện lớn từ client)
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(cookieParser());
 
 // Cấu hình trust proxy để Express nhận biết HTTPS đứng sau proxy của Vercel
