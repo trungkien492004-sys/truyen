@@ -309,4 +309,93 @@ router.get('/requests', async (req, res) => {
   }
 });
 
+// 6. QUẢN LÝ THỂ LOẠI (HIỂN THỊ DANH SÁCH)
+router.get('/genres', async (req, res) => {
+  try {
+    const { data: genres, error } = await supabase
+      .from('genres')
+      .select('*')
+      .order('name');
+    
+    if (error) throw error;
+    
+    res.render('admin/genres', {
+      title: 'Quản lý thể loại',
+      user: req.user,
+      genres: genres || [],
+      success: null,
+      error: null
+    });
+  } catch (err) {
+    console.error('Lỗi lấy danh sách thể loại:', err);
+    res.status(500).send('Lỗi hệ thống.');
+  }
+});
+
+// THÊM THỂ LOẠI MỚI
+router.post('/genres/add', async (req, res) => {
+  const { name } = req.body;
+  if (!name || name.trim() === '') {
+    return res.status(400).send('Tên thể loại không được để trống.');
+  }
+
+  // Hàm chuyển tiếng Việt có dấu thành slug không dấu
+  function slugify(text) {
+    return text.toString().toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[đĐ]/g, 'd')
+      .replace(/([^a-z0-9\s-]|_)+/g, '')
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-');
+  }
+
+  const slug = slugify(name);
+
+  try {
+    const { error } = await supabase
+      .from('genres')
+      .insert([{ name: name.trim(), slug: slug }]);
+
+    if (error) {
+      // Trường hợp trùng lặp tên/slug
+      if (error.code === '23505' || error.code === '23505_CONFLICT') { 
+        const { data: genres } = await supabase.from('genres').select('*').order('name');
+        return res.render('admin/genres', {
+          title: 'Quản lý thể loại',
+          user: req.user,
+          genres: genres || [],
+          success: null,
+          error: 'Thể loại này đã tồn tại!'
+        });
+      }
+      throw error;
+    }
+
+    res.redirect('/admin/genres');
+  } catch (err) {
+    console.error('Lỗi thêm thể loại:', err);
+    res.status(500).send('Lỗi hệ thống.');
+  }
+});
+
+// XÓA THỂ LOẠI
+router.post('/genres/delete/:id', async (req, res) => {
+  const genreId = parseInt(req.params.id);
+  try {
+    const { error } = await supabase
+      .from('genres')
+      .delete()
+      .eq('id', genreId);
+
+    if (error) throw error;
+    res.redirect('/admin/genres');
+  } catch (err) {
+    console.error('Lỗi xóa thể loại:', err);
+    res.status(500).send('Lỗi hệ thống.');
+  }
+});
+
 module.exports = router;
+

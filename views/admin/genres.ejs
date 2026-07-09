@@ -1,0 +1,62 @@
+<%- include('../partials/header') %>
+
+<div style="margin-bottom: 1.5rem;">
+    <a href="/admin" style="color: var(--text-secondary); font-size: 0.9rem;">&larr; Quay lại Trang quản trị</a>
+</div>
+
+<div class="admin-sections-grid">
+    <!-- Cột trái: Thêm thể loại mới -->
+    <div class="admin-box" style="height: fit-content;">
+        <h2 class="section-title">🏷️ Thêm Thể Loại Mới</h2>
+        
+        <% if (success) { %>
+            <div class="alert alert-success"><%= success %></div>
+        <% } %>
+
+        <% if (error) { %>
+            <div class="alert alert-error"><%= error %></div>
+        <% } %>
+
+        <form action="/admin/genres/add" method="POST">
+            <div class="form-group">
+                <label for="name">Tên thể loại *</label>
+                <input type="text" id="name" name="name" placeholder="Ví dụ: Đô Thị, Huyền Huyễn" required>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.8rem; margin-top: 1rem;">THÊM THỂ LOẠI</button>
+        </form>
+    </div>
+
+    <!-- Cột phải: Danh sách và Xoá thể loại -->
+    <div class="admin-box">
+        <h2 class="section-title">Danh Sách Thể Loại Hiện Có</h2>
+        
+        <% if (genres.length === 0) { %>
+            <p style="color: var(--text-secondary); text-align: center; padding: 2rem 0;">Chưa có thể loại nào.</p>
+        <% } else { %>
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Tên Thể Loại</th>
+                        <th>Đường Dẫn (Slug)</th>
+                        <th>Hành Động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% genres.forEach(genre => { %>
+                        <tr>
+                            <td><strong><%= genre.name %></strong></td>
+                            <td><code><%= genre.slug %></code></td>
+                            <td>
+                                <form action="/admin/genres/delete/<%= genre.id %>" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa thể loại này không? Tất cả các liên kết truyện thuộc thể loại này sẽ bị gỡ bỏ.');" style="display:inline;">
+                                    <button type="submit" class="btn btn-danger" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; border-radius: 4px;">Xóa</button>
+                                </form>
+                            </td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        <% } %>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>
