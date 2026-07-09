@@ -70,11 +70,15 @@ app.use((req, res, next) => {
   res.status(404).send('Không tìm thấy trang yêu cầu (404 Not Found).');
 });
 
-// Khởi chạy Server
-app.listen(PORT, () => {
-  console.log(`==================================================`);
-  console.log(`Ứng dụng đọc truyện đang chạy tại: http://localhost:${PORT}`);
-  console.log(`Cổng cấu hình: ${PORT}`);
-  console.log(`Hãy đảm bảo bạn đã chạy file schema.sql trên Supabase.`);
-  console.log(`==================================================`);
-});
+// Khởi chạy Server khi chạy trực tiếp qua node
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`==================================================`);
+    console.log(`Ứng dụng đọc truyện đang chạy tại: http://localhost:${PORT}`);
+    console.log(`Cổng cấu hình: ${PORT}`);
+    console.log(`Hãy đảm bảo bạn đã chạy file schema.sql trên Supabase.`);
+    console.log(`==================================================`);
+  });
+}
+
+module.exports = app;
