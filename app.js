@@ -1,5 +1,5 @@
 const express = require('express');
-const session = require('express-session');
+const cookieSession = require('cookie-session');
 const path = require('path');
 const cookieParser = require('cookie-parser');
 const passport = require('./config/passport');
@@ -17,15 +17,16 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Cấu hình Session cho xác thực Passport
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'a_very_secret_key_change_me_in_production',
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: false, // Set là true nếu chạy trên HTTPS
-    maxAge: 24 * 60 * 60 * 1000 // Session tồn tại trong 1 ngày
-  }
+// Cấu hình trust proxy để Express nhận biết HTTPS đứng sau proxy của Vercel
+app.set('trust proxy', 1);
+
+// Cấu hình Cookie-Session thay thế cho Express-Session để hoạt động stateless trên Vercel Serverless
+app.use(cookieSession({
+  name: 'session',
+  keys: [process.env.SESSION_SECRET || 'session_secret_fallback_key'],
+  maxAge: 24 * 60 * 60 * 1000, // Cookie tồn tại trong 24 giờ
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'lax'
 }));
 
 // Khởi tạo Passport
