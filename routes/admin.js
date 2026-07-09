@@ -84,47 +84,96 @@ async function parseFileToChapters(file, storyId) {
       .join('');
   }
 
-  // Regex cực kỳ linh hoạt để quét tiêu đề chương trong bất kỳ thẻ HTML nào (h1-h6, p, div) hỗ trợ cả Chương, Chap, Chapter, Phần, Part, P, P., P1...
-  const regex = /<(h[1-6]|p)[^>]*?>\s*?(?:<strong>|<em>|<span>|style|class)*?\b(Chương|Chap|Chapter|Phần|Part|P)\s*?\.?\s*?(\d+(?:\.\d+)?)\s*[:.-]?\s*(.*?)(?:<\/strong>|<\/em>|<\/span>)*?<\/h[1-6]|p>/gim;
-  
-  let matches = [];
-  let match;
-  while ((match = regex.exec(html)) !== null) {
-    const cleanTitle = match[4] ? match[4].replace(/<\/?[^>]+(>|$)/g, "").trim() : `Chương ${match[3]}`;
-    matches.push({
-      index: match.index,
-      fullText: match[0],
-      number: parseFloat(match[3]),
-      title: cleanTitle
-    });
-  }
+// Hàm phân tích 1 tệp tin (Word/Txt) thành đúng 1 chương duy nhất (1 file = 1 chương)
+async function parseSingleFileToChapter(file, storyId) {
+  const isDocx = file.originalname.endsWith('.docx') || file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+  let html = '';
 
-  let chapters = [];
-  if (matches.length > 0) {
-    for (let i = 0; i < matches.length; i++) {
-      const start = matches[i].index + matches[i].fullText.length;
-      const end = (i + 1 < matches.length) ? matches[i + 1].index : html.length;
-      const body = html.substring(start, end).trim();
+  if (isDocx) {
+    const options = {
+      convertImage: mammoth.images.inline(function(element) {
+        return element.read("base64").then(async function(imageBuffer) {
+          const buffer = Buffer.from(imageBuffer, 'base64');
+          const fileExt = element.contentType === 'image/jpeg' ? '.jpg' : '.png';
+          const fileName = `word-img-${Date.now()}-${Math.round(Math.random() * 1E9)}${fileExt}`;
+          
+          const { error: uploadErr } = await supabase.storage
+            .from('uploads')
+            .upload(fileName, buffer, {
+              contentType: element.contentType,
+              upsert: true
+            });
 
-      chapters.push({
-        story_id: parseInt(storyId),
-        chapter_number: matches[i].number,
-        title: matches[i].title,
-        content: body
-      });
-    }
+          if (uploadErr) throw uploadErr;
+
+          const { data: { publicUrl } } = supabase.storage
+            .from('uploads')
+            .getPublicUrl(fileName);
+
+          return { src: publicUrl };
+        });
+      })
+    };
+
+    const result = await mammoth.convertToHtml({ buffer: file.buffer }, options);
+    html = result.value;
   } else {
-    // Không tìm thấy tiêu đề chương nào -> Coi cả tệp tin là 1 chương
-    const cleanFileName = path.basename(file.originalname, path.extname(file.originalname));
-    chapters.push({
-      story_id: parseInt(storyId),
-      chapter_number: null, // sẽ tự động gán ở ngoài
-      title: cleanFileName,
-      content: html
-    });
+    const text = file.buffer.toString('utf-8');
+    html = text
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0)
+      .map(line => `<p>${line}</p>`)
+      .join('');
   }
 
-  return chapters;
+  // Phân tích tên tệp tin để trích xuất số chương và tiêu đề chương
+  const fileName = path.basename(file.originalname, path.extname(file.originalname)).trim();
+  let chapter_number = null;
+  let title = '';
+
+  // 1. Kiểm tra định dạng 3 phần phân cách bởi _ hoặc -
+  const parts = fileName.split(/[_-]/).map(p => p.trim());
+  if (parts.length >= 3) {
+    const chapNumStr = parts[1];
+    const numMatch = chapNumStr.match(/(?:Chương|Chap|Chapter|Phần|Part|P|chuong|phan)?\s*?\.?\s*?(\d+(?:\.\d+)?)/i);
+    if (numMatch) {
+      chapter_number = parseFloat(numMatch[1]);
+    } else {
+      const standaloneNumMatch = chapNumStr.match(/(\d+(?:\.\d+)?)/);
+      if (standaloneNumMatch) {
+        chapter_number = parseFloat(standaloneNumMatch[1]);
+      }
+    }
+    title = parts[2];
+  } else {
+    // Không khớp định dạng 3 phần -> Tìm số chương trong toàn bộ tên file
+    // Hỗ trợ Chương 1, Chap 2, Chapter 3, Phần 4, Part 5, P6, p.7, p 8, chuong 9, phan 10, chuong10, p10...
+    const numMatch = fileName.match(/(?:Chương|Chap|Chapter|Phần|Part|P|chuong|phan)\s*?\.?\s*?(\d+(?:\.\d+)?)/i);
+    if (numMatch) {
+      chapter_number = parseFloat(numMatch[1]);
+    } else {
+      // Tìm số chương viết dính liền không dấu: chuong1, phan2, p3...
+      const dínhMatch = fileName.match(/(?:chuong|phan|p|chap|part)(\d+(?:\.\d+)?)/i);
+      if (dínhMatch) {
+        chapter_number = parseFloat(dínhMatch[1]);
+      } else {
+        // Tìm bất kỳ số đơn lẻ nào trong tên file
+        const standaloneNumMatch = fileName.match(/(\d+(?:\.\d+)?)/);
+        if (standaloneNumMatch) {
+          standaloneNumMatch
+          chapter_number = parseFloat(standaloneNumMatch[1]);
+        }
+      }
+    }
+  }
+
+  return {
+    story_id: parseInt(storyId),
+    chapter_number: chapter_number,
+    title: title || null,
+    content: html
+  };
 }
 
 // Middleware kiểm tra quyền Admin
@@ -327,36 +376,32 @@ router.post('/chapter/add', upload.array('txtfile', 100), async (req, res) => {
         });
       }
 
-      // Quét từng file để tách chương
+      // Quét từng file để tách chương (1 file = 1 chương)
       for (const file of files) {
-        const parsed = await parseFileToChapters(file, story_id);
-        chaptersToInsert.push(...parsed);
+        const parsed = await parseSingleFileToChapter(file, story_id);
+        chaptersToInsert.push(parsed);
       }
 
-      // Xử lý các chương không có số (mặc định Ngoại truyện và đánh số tự động tăng)
-      const hasNullNumber = chaptersToInsert.some(c => c.chapter_number === null || c.chapter_number === undefined || isNaN(c.chapter_number));
-      if (hasNullNumber) {
-        // Lấy số chương lớn nhất hiện tại của bộ truyện
-        let nextNum = 1;
-        const { data: maxChapterData } = await supabase
-          .from('chapters')
-          .select('chapter_number')
-          .eq('story_id', story_id)
-          .order('chapter_number', { ascending: false })
-          .limit(1);
+      // Lấy số chương lớn nhất hiện tại của bộ truyện để gán tự động khi thiếu
+      let nextNum = 1;
+      const { data: maxChapterData } = await supabase
+        .from('chapters')
+        .select('chapter_number')
+        .eq('story_id', story_id)
+        .order('chapter_number', { ascending: false })
+        .limit(1);
 
-        if (maxChapterData && maxChapterData.length > 0) {
-          nextNum = Math.floor(maxChapterData[0].chapter_number) + 1;
+      if (maxChapterData && maxChapterData.length > 0) {
+        nextNum = Math.floor(maxChapterData[0].chapter_number) + 1;
+      }
+
+      for (const chapter of chaptersToInsert) {
+        if (chapter.chapter_number === null || chapter.chapter_number === undefined || isNaN(chapter.chapter_number)) {
+          chapter.chapter_number = nextNum++;
         }
-
-        for (const chapter of chaptersToInsert) {
-          if (chapter.chapter_number === null || chapter.chapter_number === undefined || isNaN(chapter.chapter_number)) {
-            // Đặt tên tiêu đề mặc định Ngoại truyện
-            if (!chapter.title.toLowerCase().startsWith('ngoại truyện')) {
-              chapter.title = `Ngoại truyện - ${chapter.title}`;
-            }
-            chapter.chapter_number = nextNum++;
-          }
+        // Quy tắc đặt tên tiêu đề chương thông minh
+        if (!chapter.title) {
+          chapter.title = `Chương ${chapter.chapter_number}`;
         }
       }
 
@@ -403,118 +448,84 @@ router.post('/chapter/add-json', async (req, res) => {
     let chaptersToInsert = [];
 
     for (const file of files) {
-      let matches = [];
-      const html = file.content;
+      let content = file.content;
+      if (file.type !== 'docx') {
+        // Định dạng file Text thành thẻ <p>
+        content = file.content
+          .split('\n')
+          .map(line => line.trim())
+          .filter(line => line.length > 0)
+          .map(line => `<p>${line}</p>`)
+          .join('');
+      }
 
-      if (file.type === 'docx') {
-        const regex = /<(h[1-6]|p)[^>]*?>\s*?(?:<strong>|<em>|<span>|style|class)*?\b(Chương|Chap|Chapter|Phần|Part|P)\s*?\.?\s*?(\d+(?:\.\d+)?)\s*[:.-]?\s*(.*?)(?:<\/strong>|<\/em>|<\/span>)*?<\/h[1-6]|p>/gim;
-        let match;
-        while ((match = regex.exec(html)) !== null) {
-          const cleanTitle = match[4] ? match[4].replace(/<\/?[^>]+(>|$)/g, "").trim() : `Chương ${match[3]}`;
-          matches.push({
-            index: match.index,
-            fullText: match[0],
-            number: parseFloat(match[3]),
-            title: cleanTitle
-          });
-        }
+      // Phân tích tên tệp tin để lấy số chương và tiêu đề chương
+      const fileName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+      let chapter_number = null;
+      let title = '';
 
-        if (matches.length > 0) {
-          for (let i = 0; i < matches.length; i++) {
-            const start = matches[i].index + matches[i].fullText.length;
-            const end = (i + 1 < matches.length) ? matches[i + 1].index : html.length;
-            const body = html.substring(start, end).trim();
-
-            chaptersToInsert.push({
-              story_id: parseInt(story_id),
-              chapter_number: matches[i].number,
-              title: matches[i].title,
-              content: body
-            });
-          }
+      // 1. Kiểm tra định dạng 3 phần: [Tên truyện]_[Số chương]_[Tiêu đề] hoặc [Tên truyện]-[Số chương]-[Tiêu đề]
+      const parts = fileName.split(/[_-]/).map(p => p.trim());
+      if (parts.length >= 3) {
+        const chapNumStr = parts[1];
+        const numMatch = chapNumStr.match(/(?:Chương|Chap|Chapter|Phần|Part|P|chuong|phan)?\s*?\.?\s*?(\d+(?:\.\d+)?)/i);
+        if (numMatch) {
+          chapter_number = parseFloat(numMatch[1]);
         } else {
-          const cleanFileName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
-          chaptersToInsert.push({
-            story_id: parseInt(story_id),
-            chapter_number: null,
-            title: cleanFileName,
-            content: html
-          });
+          const standaloneNumMatch = chapNumStr.match(/(\d+(?:\.\d+)?)/);
+          if (standaloneNumMatch) {
+            chapter_number = parseFloat(standaloneNumMatch[1]);
+          }
         }
-
+        title = parts[2];
       } else {
-        const text = file.content;
-        const regex = /^(Chương|Chap|Chapter|Phần|Part|P)\s*?\.?\s*?(\d+(?:\.\d+)?)\s*[:.-]?\s*(.*)$/gim;
-        let match;
-        while ((match = regex.exec(text)) !== null) {
-          matches.push({
-            index: match.index,
-            fullText: match[0],
-            number: parseFloat(match[2]),
-            title: match[3] ? match[3].trim() : `Chương ${match[2]}`
-          });
-        }
-
-        if (matches.length > 0) {
-          for (let i = 0; i < matches.length; i++) {
-            const start = matches[i].index + matches[i].fullText.length;
-            const end = (i + 1 < matches.length) ? matches[i + 1].index : text.length;
-            const rawContent = text.substring(start, end).trim();
-
-            const formattedContent = rawContent
-              .split('\n')
-              .map(line => line.trim())
-              .filter(line => line.length > 0)
-              .map(line => `<p>${line}</p>`)
-              .join('');
-
-            chaptersToInsert.push({
-              story_id: parseInt(story_id),
-              chapter_number: matches[i].number,
-              title: matches[i].title,
-              content: formattedContent
-            });
-          }
+        // Hỗ trợ Chương 1, Chap 2, Chapter 3, Phần 4, Part 5, P6, p.7, p 8, chuong 9, phan 10, chuong10, p10...
+        const numMatch = fileName.match(/(?:Chương|Chap|Chapter|Phần|Part|P|chuong|phan)\s*?\.?\s*?(\d+(?:\.\d+)?)/i);
+        if (numMatch) {
+          chapter_number = parseFloat(numMatch[1]);
         } else {
-          const cleanFileName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
-          const formattedContent = text
-            .split('\n')
-            .map(line => line.trim())
-            .filter(line => line.length > 0)
-            .map(line => `<p>${line}</p>`)
-            .join('');
-
-          chaptersToInsert.push({
-            story_id: parseInt(story_id),
-            chapter_number: null,
-            title: cleanFileName,
-            content: formattedContent
-          });
+          // Tìm số chương viết dính liền không dấu: chuong1, phan2, p3...
+          const dínhMatch = fileName.match(/(?:chuong|phan|p|chap|part)(\d+(?:\.\d+)?)/i);
+          if (dínhMatch) {
+            chapter_number = parseFloat(dínhMatch[1]);
+          } else {
+            // Tìm bất kỳ số đơn lẻ nào trong tên file
+            const standaloneNumMatch = fileName.match(/(\d+(?:\.\d+)?)/);
+            if (standaloneNumMatch) {
+              chapter_number = parseFloat(standaloneNumMatch[1]);
+            }
+          }
         }
       }
+
+      chaptersToInsert.push({
+        story_id: parseInt(story_id),
+        chapter_number: chapter_number,
+        title: title || null,
+        content: content
+      });
     }
 
-    const hasNullNumber = chaptersToInsert.some(c => c.chapter_number === null || c.chapter_number === undefined || isNaN(c.chapter_number));
-    if (hasNullNumber) {
-      let nextNum = 1;
-      const { data: maxChapterData } = await supabase
-        .from('chapters')
-        .select('chapter_number')
-        .eq('story_id', story_id)
-        .order('chapter_number', { ascending: false })
-        .limit(1);
+    // Lấy số chương lớn nhất hiện tại của bộ truyện để gán tự động khi thiếu
+    let nextNum = 1;
+    const { data: maxChapterData } = await supabase
+      .from('chapters')
+      .select('chapter_number')
+      .eq('story_id', story_id)
+      .order('chapter_number', { ascending: false })
+      .limit(1);
 
-      if (maxChapterData && maxChapterData.length > 0) {
-        nextNum = Math.floor(maxChapterData[0].chapter_number) + 1;
+    if (maxChapterData && maxChapterData.length > 0) {
+      nextNum = Math.floor(maxChapterData[0].chapter_number) + 1;
+    }
+
+    for (const chapter of chaptersToInsert) {
+      if (chapter.chapter_number === null || chapter.chapter_number === undefined || isNaN(chapter.chapter_number)) {
+        chapter.chapter_number = nextNum++;
       }
-
-      for (const chapter of chaptersToInsert) {
-        if (chapter.chapter_number === null || chapter.chapter_number === undefined || isNaN(chapter.chapter_number)) {
-          if (!chapter.title.toLowerCase().startsWith('ngoại truyện')) {
-            chapter.title = `Ngoại truyện - ${chapter.title}`;
-          }
-          chapter.chapter_number = nextNum++;
-        }
+      // Quy tắc đặt tên tiêu đề chương thông minh
+      if (!chapter.title) {
+        chapter.title = `Chương ${chapter.chapter_number}`;
       }
     }
 
@@ -667,6 +678,13 @@ router.get('/story/edit/:id', async (req, res) => {
 
     const linkedGenreIds = linkedGenres ? linkedGenres.map(g => g.genre_id) : [];
 
+    // Lấy danh sách chương của truyện
+    const { data: chapters } = await supabase
+      .from('chapters')
+      .select('id, chapter_number, title')
+      .eq('story_id', storyId)
+      .order('chapter_number', { ascending: true });
+
     const success = req.query.success || null;
     const error = req.query.error || null;
 
@@ -676,6 +694,7 @@ router.get('/story/edit/:id', async (req, res) => {
       story,
       genres: genres || [],
       linkedGenreIds,
+      chapters: chapters || [],
       success,
       error
     });
@@ -764,6 +783,109 @@ router.post('/story/delete/:id', async (req, res) => {
   } catch (err) {
     console.error('Lỗi xóa truyện:', err);
     res.status(500).send('Lỗi hệ thống.');
+  }
+});
+
+// 8. TRANG CHỈNH SỬA CHI TIẾT CHƯƠNG TRUYỆN
+router.get('/chapter/edit/:id', async (req, res) => {
+  const chapterId = parseInt(req.params.id);
+  const redirectTo = req.query.redirect_to || '/admin';
+
+  try {
+    // Lấy thông tin chi tiết chương
+    const { data: chapter, error: chapErr } = await supabase
+      .from('chapters')
+      .select('*')
+      .eq('id', chapterId)
+      .single();
+
+    if (chapErr || !chapter) {
+      return res.status(404).send('Không tìm thấy chương truyện.');
+    }
+
+    // Lấy tên bộ truyện để hiển thị ngữ cảnh
+    const { data: story } = await supabase
+      .from('stories')
+      .select('title')
+      .eq('id', chapter.story_id)
+      .single();
+
+    res.render('admin/edit-chapter', {
+      title: `Sửa chương: ${chapter.title}`,
+      user: req.user,
+      chapter,
+      storyTitle: story ? story.title : 'Không rõ',
+      redirect_to: redirectTo,
+      success: req.query.success || null,
+      error: req.query.error || null
+    });
+  } catch (err) {
+    console.error('Lỗi tải trang sửa chương:', err);
+    res.status(500).send('Lỗi hệ thống.');
+  }
+});
+
+// THỰC HIỆN CẬP NHẬT CHƯƠNG TRUYỆN
+router.post('/chapter/edit/:id', async (req, res) => {
+  const chapterId = parseInt(req.params.id);
+  const { chapter_number, title, content, redirect_to } = req.body;
+
+  if (!chapter_number || !title || !content) {
+    return res.redirect(`/admin/chapter/edit/${chapterId}?redirect_to=${encodeURIComponent(redirect_to)}&error=${encodeURIComponent('Vui lòng nhập đầy đủ thông tin.')}`);
+  }
+
+  try {
+    const { error } = await supabase
+      .from('chapters')
+      .update({
+        chapter_number: parseFloat(chapter_number),
+        title: title.trim(),
+        content: content
+      })
+      .eq('id', chapterId);
+
+    if (error) throw error;
+
+    res.redirect(`${redirect_to}?success=${encodeURIComponent('Đã cập nhật chương thành công!')}`);
+  } catch (err) {
+    console.error('Lỗi cập nhật chương:', err);
+    res.redirect(`/admin/chapter/edit/${chapterId}?redirect_to=${encodeURIComponent(redirect_to)}&error=${encodeURIComponent(err.message || 'Lỗi hệ thống.')}`);
+  }
+});
+
+// XÓA CHƯƠNG HÀNG LOẠT HOẶC XÓA TẤT CẢ CHƯƠNG
+router.post('/chapter/delete-bulk', async (req, res) => {
+  const { ids, action, story_id } = req.body;
+
+  try {
+    if (action === 'all') {
+      if (!story_id) {
+        return res.status(400).json({ error: 'Thiếu ID bộ truyện để xóa tất cả.' });
+      }
+      const { error } = await supabase
+        .from('chapters')
+        .delete()
+        .eq('story_id', parseInt(story_id));
+
+      if (error) throw error;
+      return res.json({ success: true, message: 'Đã xóa tất cả các chương của bộ truyện này!' });
+    }
+
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ error: 'Vui lòng chọn ít nhất một chương để xóa.' });
+    }
+
+    const { error } = await supabase
+      .from('chapters')
+      .delete()
+      .in('id', ids.map(id => parseInt(id)));
+
+    if (error) throw error;
+    res.json({ success: true, message: `Đã xóa thành công ${ids.length} chương được chọn!` });
+
+  } catch (err) {
+    console.error('Lỗi khi xóa chương hàng loạt:', err);
+    res.status(500).json({ error: err.message || 'Lỗi hệ thống khi xóa chương.' });
   }
 });
 

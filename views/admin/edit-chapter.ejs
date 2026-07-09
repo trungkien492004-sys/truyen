@@ -1,0 +1,44 @@
+<%- include('../partials/header') %>
+
+<div style="margin-bottom: 1.5rem;">
+    <a href="<%= redirect_to %>" style="color: var(--text-secondary); font-size: 0.9rem;">&larr; Quay lại trang trước</a>
+</div>
+
+<div class="form-container" style="max-width: 800px; margin: 0 auto;">
+    <h2 class="section-title">✏️ Chỉnh Sửa Chương Truyện</h2>
+    <p style="color: var(--text-secondary); font-size: 0.95rem; margin-top: -0.8rem; margin-bottom: 1.5rem;">
+        Bộ truyện: <strong><%= storyTitle %></strong>
+    </p>
+    
+    <% if (success) { %>
+        <div class="alert alert-success"><%= success %></div>
+    <% } %>
+
+    <% if (error) { %>
+        <div class="alert alert-error"><%= error %></div>
+    <% } %>
+
+    <form action="/admin/chapter/edit/<%= chapter.id %>" method="POST">
+        <input type="hidden" name="redirect_to" value="<%= redirect_to %>">
+
+        <div style="display: grid; grid-template-columns: 1fr 3fr; gap: 1rem;">
+            <div class="form-group">
+                <label for="chapter_number">Số Chương *</label>
+                <input type="number" id="chapter_number" name="chapter_number" value="<%= chapter.chapter_number %>" step="any" required>
+            </div>
+            <div class="form-group">
+                <label for="title">Tiêu Đề Chương *</label>
+                <input type="text" id="title" name="title" value="<%= chapter.title %>" required>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="content">Nội Dung Chương *</label>
+            <textarea id="content" name="content" rows="20" required><%= chapter.content %></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.8rem; font-size: 1rem; margin-top: 1rem;">CẬP NHẬT CHƯƠNG TRUYỆN</button>
+    </form>
+</div>
+
+<%- include('../partials/footer') %>

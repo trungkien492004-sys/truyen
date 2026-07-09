@@ -141,6 +141,70 @@
     </form>
 </div>
 
+<hr style="margin: 3rem 0; border: none; border-top: 1px dashed var(--border-color);">
+
+<!-- DANH SÁCH CHƯƠNG HIỆN CÓ VÀ CÁC THAO TÁC SỬA / XÓA HÀNG LOẠT -->
+<div class="form-container" style="max-width: 700px; margin-top: 2rem;">
+    <h2 class="section-title">📚 Danh Sách Chương Hiện Có</h2>
+
+    <% if (chapters.length === 0) { %>
+        <p style="color: var(--text-secondary); text-align: center; padding: 2rem 0;">Chưa có chương nào được đăng cho bộ truyện này.</p>
+    <% } else { %>
+        <!-- Thanh công cụ xóa hàng loạt -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; background: var(--bg-primary); padding: 0.8rem; border-radius: 8px; border: 1px solid var(--border-color);">
+            <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: normal; cursor: pointer; margin: 0; font-size: 0.95rem; color: var(--text-primary);">
+                <input type="checkbox" id="select-all-chapters" style="width: auto; margin: 0; cursor: pointer;">
+                Chọn tất cả
+            </label>
+            <div style="display: flex; gap: 0.8rem;">
+                <button type="button" id="btn-delete-selected" class="btn btn-secondary" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); padding: 0.4rem 0.8rem; font-size: 0.9rem;" disabled>
+                    🗑️ Xoá đã chọn (<span id="selected-count">0</span>)
+                </button>
+                <button type="button" id="btn-delete-all" class="btn btn-secondary" style="background: rgba(239, 68, 68, 0.8); color: #fff; border: none; padding: 0.4rem 0.8rem; font-size: 0.9rem; cursor: pointer;">
+                    💥 Xoá tất cả
+                </button>
+            </div>
+        </div>
+
+        <!-- Bảng danh sách chương -->
+        <div style="max-height: 400px; overflow-y: auto; background: var(--bg-primary); border-radius: 8px; border: 1px solid var(--border-color);">
+            <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                <thead>
+                    <tr style="border-bottom: 1px solid var(--border-color); background: rgba(255, 255, 255, 0.02); position: sticky; top: 0; z-index: 10;">
+                        <th style="padding: 0.8rem; width: 40px; background: var(--bg-primary);"></th>
+                        <th style="padding: 0.8rem; width: 100px; background: var(--bg-primary);">Số</th>
+                        <th style="padding: 0.8rem; background: var(--bg-primary);">Tiêu Đề Chương</th>
+                        <th style="padding: 0.8rem; text-align: right; width: 130px; background: var(--bg-primary);">Hành Động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% chapters.forEach(chap => { %>
+                        <tr style="border-bottom: 1px solid var(--border-color); font-size: 0.9rem;" class="chapter-row">
+                            <td style="padding: 0.8rem; text-align: center;">
+                                <input type="checkbox" class="chapter-checkbox" value="<%= chap.id %>" style="width: auto; margin: 0; cursor: pointer;">
+                            </td>
+                            <td style="padding: 0.8rem; font-weight: bold; color: var(--accent-color);">
+                                <%= chap.chapter_number %>
+                            </td>
+                            <td style="padding: 0.8rem; color: var(--text-primary);">
+                                <%= chap.title %>
+                            </td>
+                            <td style="padding: 0.8rem; text-align: right;">
+                                <a href="/admin/chapter/edit/<%= chap.id %>?redirect_to=/admin/story/edit/<%= story.id %>" class="btn btn-secondary" style="padding: 0.2rem 0.5rem; font-size: 0.8rem; margin-right: 0.2rem; display: inline-block;">
+                                    ✏️ Sửa
+                                </a>
+                                <button type="button" class="btn btn-secondary btn-delete-single" data-id="<%= chap.id %>" data-title="<%= chap.title %>" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); padding: 0.2rem 0.5rem; font-size: 0.8rem; cursor: pointer;">
+                                    🗑️ Xoá
+                                </button>
+                            </td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        </div>
+    <% } %>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 
 <script>
@@ -350,6 +414,122 @@
 
         return `${supabaseUrl}/storage/v1/object/public/uploads/${fileName}`;
     }
+
+    // --- LOGIC XỬ LÝ CHỌN VÀ XÓA HÀNG LOẠT CHƯƠNG ---
+    const selectAllCheckbox = document.getElementById('select-all-chapters');
+    const chapterCheckboxes = document.querySelectorAll('.chapter-checkbox');
+    const btnDeleteSelected = document.getElementById('btn-delete-selected');
+    const btnDeleteAll = document.getElementById('btn-delete-all');
+    const selectedCountSpan = document.getElementById('selected-count');
+
+    function updateDeleteSelectedButton() {
+        const checkedCount = document.querySelectorAll('.chapter-checkbox:checked').length;
+        if (selectedCountSpan) selectedCountSpan.textContent = checkedCount;
+        if (btnDeleteSelected) {
+            btnDeleteSelected.disabled = checkedCount === 0;
+            if (checkedCount > 0) {
+                btnDeleteSelected.style.background = 'rgba(239, 68, 68, 0.25)';
+                btnDeleteSelected.style.cursor = 'pointer';
+            } else {
+                btnDeleteSelected.style.background = 'rgba(239, 68, 68, 0.15)';
+                btnDeleteSelected.style.cursor = 'not-allowed';
+            }
+        }
+    }
+
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', () => {
+            chapterCheckboxes.forEach(cb => {
+                cb.checked = selectAllCheckbox.checked;
+            });
+            updateDeleteSelectedButton();
+        });
+    }
+
+    chapterCheckboxes.forEach(cb => {
+        cb.addEventListener('change', () => {
+            if (!cb.checked && selectAllCheckbox) {
+                selectAllCheckbox.checked = false;
+            }
+            if (selectAllCheckbox && document.querySelectorAll('.chapter-checkbox:checked').length === chapterCheckboxes.length) {
+                selectAllCheckbox.checked = true;
+            }
+            updateDeleteSelectedButton();
+        });
+    });
+
+    // Hàm gọi API xóa chương
+    async function deleteChapters(ids, action) {
+        try {
+            const response = await fetch('/admin/chapter/delete-bulk', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    ids: ids,
+                    action: action,
+                    story_id: '<%= story.id %>'
+                })
+            });
+
+            const resData = await response.json();
+            if (resData.success) {
+                window.location.href = '/admin/story/edit/<%= story.id %>?success=' + encodeURIComponent(resData.message);
+            } else {
+                alert('Lỗi: ' + resData.error);
+                // Reset state
+                if (btnDeleteSelected) {
+                    btnDeleteSelected.disabled = false;
+                    btnDeleteSelected.textContent = `🗑️ Xoá đã chọn`;
+                }
+                if (btnDeleteAll) {
+                    btnDeleteAll.disabled = false;
+                    btnDeleteAll.textContent = `💥 Xoá tất cả`;
+                }
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Lỗi kết nối máy chủ: ' + err.message);
+        }
+    }
+
+    if (btnDeleteSelected) {
+        btnDeleteSelected.addEventListener('click', () => {
+            const checkedBoxes = document.querySelectorAll('.chapter-checkbox:checked');
+            const ids = Array.from(checkedBoxes).map(cb => cb.value);
+            if (ids.length === 0) return;
+
+            if (confirm(`Bạn có chắc chắn muốn xoá ${ids.length} chương đã chọn? Hành động này không thể hoàn tác!`)) {
+                btnDeleteSelected.disabled = true;
+                btnDeleteSelected.textContent = '⏳ Đang xoá...';
+                deleteChapters(ids, 'selected');
+            }
+        });
+    }
+
+    if (btnDeleteAll) {
+        btnDeleteAll.addEventListener('click', () => {
+            if (confirm('CẢNH BÁO NGUY HIỂM: Bạn có chắc chắn muốn XÓA TOÀN BỘ chương của bộ truyện này không? Hành động này sẽ xoá sạch mọi dữ liệu chương!')) {
+                btnDeleteAll.disabled = true;
+                btnDeleteAll.textContent = '⏳ Đang xoá...';
+                deleteChapters(null, 'all');
+            }
+        });
+    }
+
+    // Xóa một chương đơn lẻ
+    document.querySelectorAll('.btn-delete-single').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const id = btn.getAttribute('data-id');
+            const title = btn.getAttribute('data-title');
+            if (confirm(`Bạn có chắc chắn muốn xoá chương "${title}" không?`)) {
+                btn.disabled = true;
+                btn.textContent = '⏳...';
+                deleteChapters([id], 'selected');
+            }
+        });
+    });
 </script>
 
 <%- include('../partials/footer') %>
