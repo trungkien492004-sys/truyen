@@ -29,6 +29,17 @@ app.use(cookieSession({
   sameSite: 'lax'
 }));
 
+// Middleware vá lỗi tương thích giữa passport v0.6+ và cookie-session (do cookie-session không có hàm regenerate và save)
+app.use((req, res, next) => {
+  if (req.session && !req.session.regenerate) {
+    req.session.regenerate = (cb) => cb();
+  }
+  if (req.session && !req.session.save) {
+    req.session.save = (cb) => cb();
+  }
+  next();
+});
+
 // Khởi tạo Passport
 app.use(passport.initialize());
 app.use(passport.session());
