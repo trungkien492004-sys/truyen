@@ -255,13 +255,21 @@ router.get('/story/:story_id/chapter/:chapter_number', async (req, res) => {
       .eq('chapter_number', chapterNumber + 1)
       .single();
 
+    // 5. Lấy danh sách toàn bộ chương để hiển thị trong mục lục nhanh
+    const { data: chaptersList } = await supabase
+      .from('chapters')
+      .select('id, chapter_number, title')
+      .eq('story_id', storyId)
+      .order('chapter_number', { ascending: true });
+
     res.render('read', {
       title: `Đọc truyện ${story.title} - Chương ${chapter.chapter_number}: ${chapter.title}`,
       user: req.user,
       story,
       chapter,
       hasPrev: !!prevChapter,
-      hasNext: !!nextChapter
+      hasNext: !!nextChapter,
+      chaptersList: chaptersList || []
     });
   } catch (err) {
     console.error('Lỗi đọc chương:', err);

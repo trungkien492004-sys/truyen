@@ -5,25 +5,45 @@
         <a href="/story/<%= story.id %>" style="color: var(--text-secondary); font-size: 0.9rem;">&larr; Quay lại trang chi tiết truyện</a>
     </div>
 
-    <div class="read-header">
-        <h1 class="read-title">Chương <%= chapter.chapter_number %>: <%= chapter.title %></h1>
-        <p style="color: var(--text-secondary); font-size: 1rem;">Truyện: <strong><%= story.title %></strong></p>
+    <div class="read-header" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 2rem;">
+        <div>
+            <h1 class="read-title" style="margin: 0 0 0.5rem 0;">Chương <%= chapter.chapter_number %>: <%= chapter.title %></h1>
+            <p style="color: var(--text-secondary); font-size: 1rem; margin: 0;">Truyện: <strong><%= story.title %></strong></p>
+        </div>
+        <% if (user && user.role === 'admin') { %>
+            <a href="/admin/chapter/edit/<%= chapter.id %>?redirect_to=/story/<%= story.id %>/chapter/<%= chapter.chapter_number %>" class="btn btn-secondary" style="border: 1px solid var(--accent-color); color: var(--accent-color); font-size: 0.85rem; padding: 0.4rem 0.8rem; border-radius: 6px; white-space: nowrap; font-weight: 500;">
+                ✏️ Sửa Chương
+            </a>
+        <% } %>
     </div>
 
     <!-- Thanh chuyển hướng chương trên -->
-    <div class="read-navigation">
+    <div class="read-navigation" style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
         <% if (hasPrev) { %>
-            <a href="/story/<%= story.id %>/chapter/<%= chapter.chapter_number - 1 %>" class="btn btn-secondary">&larr; Chương Trước</a>
+            <a href="/story/<%= story.id %>/chapter/<%= chapter.chapter_number - 1 %>" class="btn btn-secondary">&larr; Trước</a>
         <% } else { %>
-            <button class="btn btn-secondary" style="opacity: 0.5; cursor: not-allowed;" disabled>&larr; Chương Trước</button>
+            <button class="btn btn-secondary" style="opacity: 0.5; cursor: not-allowed;" disabled>&larr; Trước</button>
         <% } %>
         
-        <a href="/story/<%= story.id %>" class="btn btn-secondary">Mục lục</a>
+        <!-- Mục lục nhanh dạng trượt (Scrollable Dropdown) -->
+        <div class="toc-dropdown" style="position: relative; display: inline-block;">
+            <button class="btn btn-secondary toc-toggle-btn" style="display: flex; align-items: center; gap: 0.3rem;">
+                📖 Mục lục (C. <%= chapter.chapter_number %>) ▾
+            </button>
+            <div class="toc-dropdown-content" style="display: none; position: absolute; left: 50%; transform: translateX(-50%); top: 100%; margin-top: 0.5rem; background: var(--bg-secondary); min-width: 280px; max-height: 350px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); z-index: 1000; padding: 0.4rem 0;">
+                <% chaptersList.forEach(c => { %>
+                    <% const isActive = c.chapter_number === chapter.chapter_number; %>
+                    <a href="/story/<%= story.id %>/chapter/<%= c.chapter_number %>" style="display: block; padding: 0.65rem 1.2rem; color: <%= isActive ? 'var(--accent-color)' : 'var(--text-primary)' %>; font-size: 0.88rem; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.02); font-weight: <%= isActive ? 'bold' : 'normal' %>; transition: background 0.2s;" class="toc-item <%= isActive ? 'toc-item-active' : '' %>">
+                        Chương <%= c.chapter_number %>: <%= c.title %>
+                    </a>
+                <% }) %>
+            </div>
+        </div>
 
         <% if (hasNext) { %>
-            <a href="/story/<%= story.id %>/chapter/<%= chapter.chapter_number + 1 %>" class="btn btn-primary">Chương Tiếp &rarr;</a>
+            <a href="/story/<%= story.id %>/chapter/<%= chapter.chapter_number + 1 %>" class="btn btn-primary">Tiếp &rarr;</a>
         <% } else { %>
-            <button class="btn btn-primary" style="opacity: 0.5; cursor: not-allowed;" disabled>Chương Tiếp &rarr;</button>
+            <button class="btn btn-primary" style="opacity: 0.5; cursor: not-allowed;" disabled>Tiếp &rarr;</button>
         <% } %>
     </div>
 
@@ -33,21 +53,85 @@
     </div>
 
     <!-- Thanh chuyển hướng chương dưới -->
-    <div class="read-navigation" style="margin-top: 4rem;">
+    <div class="read-navigation" style="margin-top: 4rem; display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
         <% if (hasPrev) { %>
-            <a href="/story/<%= story.id %>/chapter/<%= chapter.chapter_number - 1 %>" class="btn btn-secondary">&larr; Chương Trước</a>
+            <a href="/story/<%= story.id %>/chapter/<%= chapter.chapter_number - 1 %>" class="btn btn-secondary">&larr; Trước</a>
         <% } else { %>
-            <button class="btn btn-secondary" style="opacity: 0.5; cursor: not-allowed;" disabled>&larr; Chương Trước</button>
+            <button class="btn btn-secondary" style="opacity: 0.5; cursor: not-allowed;" disabled>&larr; Trước</button>
         <% } %>
         
-        <a href="/story/<%= story.id %>" class="btn btn-secondary">Mục lục</a>
+        <!-- Mục lục nhanh dạng trượt (Scrollable Dropdown) -->
+        <div class="toc-dropdown" style="position: relative; display: inline-block;">
+            <button class="btn btn-secondary toc-toggle-btn" style="display: flex; align-items: center; gap: 0.3rem;">
+                📖 Mục lục (C. <%= chapter.chapter_number %>) ▾
+            </button>
+            <div class="toc-dropdown-content" style="display: none; position: absolute; left: 50%; transform: translateX(-50%); top: 100%; margin-top: 0.5rem; background: var(--bg-secondary); min-width: 280px; max-height: 350px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); z-index: 1000; padding: 0.4rem 0;">
+                <% chaptersList.forEach(c => { %>
+                    <% const isActive = c.chapter_number === chapter.chapter_number; %>
+                    <a href="/story/<%= story.id %>/chapter/<%= c.chapter_number %>" style="display: block; padding: 0.65rem 1.2rem; color: <%= isActive ? 'var(--accent-color)' : 'var(--text-primary)' %>; font-size: 0.88rem; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.02); font-weight: <%= isActive ? 'bold' : 'normal' %>; transition: background 0.2s;" class="toc-item <%= isActive ? 'toc-item-active' : '' %>">
+                        Chương <%= c.chapter_number %>: <%= c.title %>
+                    </a>
+                <% }) %>
+            </div>
+        </div>
 
         <% if (hasNext) { %>
-            <a href="/story/<%= story.id %>/chapter/<%= chapter.chapter_number + 1 %>" class="btn btn-primary">Chương Tiếp &rarr;</a>
+            <a href="/story/<%= story.id %>/chapter/<%= chapter.chapter_number + 1 %>" class="btn btn-primary">Tiếp &rarr;</a>
         <% } else { %>
-            <button class="btn btn-primary" style="opacity: 0.5; cursor: not-allowed;" disabled>Chương Tiếp &rarr;</button>
+            <button class="btn btn-primary" style="opacity: 0.5; cursor: not-allowed;" disabled>Tiếp &rarr;</button>
         <% } %>
     </div>
 </div>
+
+<style>
+    /* Styling cho dropdown mục lục nhanh */
+    .toc-dropdown-content::-webkit-scrollbar {
+        width: 6px;
+    }
+    .toc-dropdown-content::-webkit-scrollbar-track {
+        background: rgba(0,0,0,0.1);
+    }
+    .toc-dropdown-content::-webkit-scrollbar-thumb {
+        background: var(--border-color);
+        border-radius: 3px;
+    }
+    .toc-dropdown-content::-webkit-scrollbar-thumb:hover {
+        background: var(--text-secondary);
+    }
+    .toc-item:hover {
+        background: rgba(255, 255, 255, 0.05);
+    }
+    .toc-item-active {
+        background: rgba(99, 102, 241, 0.15) !important;
+        color: var(--accent-color) !important;
+    }
+</style>
+
+<script>
+    document.querySelectorAll('.toc-toggle-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const content = btn.nextElementSibling;
+            const isVisible = content.style.display === 'block';
+            
+            // Đóng tất cả mục lục nhanh khác
+            document.querySelectorAll('.toc-dropdown-content').forEach(c => c.style.display = 'none');
+            
+            if (!isVisible) {
+                content.style.display = 'block';
+                // Cuộn chương hiện tại vào giữa danh sách để tiện theo dõi
+                const activeItem = content.querySelector('.toc-item-active');
+                if (activeItem) {
+                    content.scrollTop = activeItem.offsetTop - content.clientHeight / 2 + activeItem.clientHeight / 2;
+                }
+            }
+        });
+    });
+
+    // Bấm ra ngoài thì đóng mục lục nhanh
+    document.addEventListener('click', () => {
+        document.querySelectorAll('.toc-dropdown-content').forEach(c => c.style.display = 'none');
+    });
+</script>
 
 <%- include('partials/footer') %>
