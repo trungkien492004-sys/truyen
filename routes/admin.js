@@ -84,8 +84,8 @@ async function parseFileToChapters(file, storyId) {
       .join('');
   }
 
-  // Regex cực kỳ linh hoạt để quét tiêu đề chương trong bất kỳ thẻ HTML nào (h1-h6, p, div)
-  const regex = /<(h[1-6]|p)[^>]*?>\s*?(?:<strong>|<em>|<span>|style|class)*?\b(Chương|Chap|Chapter)\s+(\d+(?:\.\d+)?)\s*[:.-]?\s*(.*?)(?:<\/strong>|<\/em>|<\/span>)*?<\/h[1-6]|p>/gim;
+  // Regex cực kỳ linh hoạt để quét tiêu đề chương trong bất kỳ thẻ HTML nào (h1-h6, p, div) hỗ trợ cả Chương, Chap, Chapter, Phần, Part, P, P., P1...
+  const regex = /<(h[1-6]|p)[^>]*?>\s*?(?:<strong>|<em>|<span>|style|class)*?\b(Chương|Chap|Chapter|Phần|Part|P)\s*?\.?\s*?(\d+(?:\.\d+)?)\s*[:.-]?\s*(.*?)(?:<\/strong>|<\/em>|<\/span>)*?<\/h[1-6]|p>/gim;
   
   let matches = [];
   let match;
@@ -407,7 +407,7 @@ router.post('/chapter/add-json', async (req, res) => {
       const html = file.content;
 
       if (file.type === 'docx') {
-        const regex = /<(h[1-6]|p)[^>]*?>\s*?(?:<strong>|<em>|<span>|style|class)*?\b(Chương|Chap|Chapter)\s+(\d+(?:\.\d+)?)\s*[:.-]?\s*(.*?)(?:<\/strong>|<\/em>|<\/span>)*?<\/h[1-6]|p>/gim;
+        const regex = /<(h[1-6]|p)[^>]*?>\s*?(?:<strong>|<em>|<span>|style|class)*?\b(Chương|Chap|Chapter|Phần|Part|P)\s*?\.?\s*?(\d+(?:\.\d+)?)\s*[:.-]?\s*(.*?)(?:<\/strong>|<\/em>|<\/span>)*?<\/h[1-6]|p>/gim;
         let match;
         while ((match = regex.exec(html)) !== null) {
           const cleanTitle = match[4] ? match[4].replace(/<\/?[^>]+(>|$)/g, "").trim() : `Chương ${match[3]}`;
@@ -444,7 +444,7 @@ router.post('/chapter/add-json', async (req, res) => {
 
       } else {
         const text = file.content;
-        const regex = /^(Chương|Chap|Chapter)\s+(\d+(?:\.\d+)?)\s*[:.-]?\s*(.*)$/gim;
+        const regex = /^(Chương|Chap|Chapter|Phần|Part|P)\s*?\.?\s*?(\d+(?:\.\d+)?)\s*[:.-]?\s*(.*)$/gim;
         let match;
         while ((match = regex.exec(text)) !== null) {
           matches.push({
