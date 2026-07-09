@@ -1,0 +1,57 @@
+<%- include('../partials/header') %>
+
+<div style="margin-bottom: 1.5rem;">
+    <a href="/admin" style="color: var(--text-secondary); font-size: 0.9rem;">&larr; Quay lại Trang quản trị</a>
+</div>
+
+<div class="form-container" style="max-width: 700px;">
+    <h2 class="section-title">✍️ Đăng Chương Truyện Thủ Công</h2>
+    
+    <% if (success) { %>
+        <div class="alert alert-success"><%= success %></div>
+    <% } %>
+
+    <% if (error) { %>
+        <div class="alert alert-error"><%= error %></div>
+    <% } %>
+
+    <% if (stories.length === 0) { %>
+        <div class="alert alert-error">Chưa có bộ truyện nào trong cơ sở dữ liệu. Hãy tạo bộ truyện trước khi thêm chương.</div>
+        <a href="/admin/story/add" class="btn btn-primary" style="width: 100%;">Tạo bộ truyện mới ngay</a>
+    <% } else { %>
+        <form action="/admin/chapter/add-manual" method="POST">
+            <div class="form-group">
+                <label for="story_id">Chọn Bộ Truyện *</label>
+                <select id="story_id" name="story_id" style="width: 100%; padding: 0.8rem 1rem; background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 8px; font-size: 1rem; outline: none;" required>
+                    <option value="">-- Chọn truyện --</option>
+                    <% stories.forEach(story => { %>
+                        <option value="<%= story.id %>"><%= story.title %></option>
+                    <% }) %>
+                </select>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 3fr; gap: 1rem;">
+                <div class="form-group">
+                    <label for="chapter_number">Số Chương *</label>
+                    <input type="number" id="chapter_number" name="chapter_number" min="1" step="any" placeholder="Ví dụ: 1" required>
+                </div>
+                <div class="form-group">
+                    <label for="title">Tiêu Đề Chương *</label>
+                    <input type="text" id="title" name="title" placeholder="Ví dụ: Buổi sáng định mệnh" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="content">Nội Dung Chương (Hỗ trợ Text thường hoặc HTML để đan xen ảnh) *</label>
+                <textarea id="content" name="content" rows="12" placeholder="Để đan xen chữ và hình ảnh, bạn có thể viết nội dung dạng HTML:
+<p>Nội dung đoạn chữ thứ nhất...</p>
+<img src='/uploads/ten-anh-da-up.png' alt='Ảnh minh họa'>
+<p>Nội dung đoạn chữ tiếp theo...</p>" required></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.8rem; font-size: 1rem; margin-top: 1rem;">ĐĂNG CHƯƠNG MỚI</button>
+        </form>
+    <% } %>
+</div>
+
+<%- include('../partials/footer') %>

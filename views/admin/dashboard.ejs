@@ -1,0 +1,79 @@
+<%- include('../partials/header') %>
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <h1 class="section-title" style="margin-bottom: 0;">🛠️ Bảng Điều Khiển Quản Trị</h1>
+    <div style="display: flex; gap: 0.8rem;">
+        <a href="/admin/story/add" class="btn btn-primary">➕ Đăng bộ truyện mới</a>
+        <a href="/admin/chapter/add-manual" class="btn btn-secondary">Đăng chương tay</a>
+        <a href="/admin/chapter/add-bulk" class="btn btn-secondary">Tách chương tự động</a>
+        <a href="/admin/requests" class="btn btn-secondary" style="background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.3); color: #f59e0b;">💬 Yêu cầu độc giả</a>
+    </div>
+</div>
+
+<!-- Khối hiển thị số liệu thống kê nhanh -->
+<div class="admin-stats">
+    <div class="stat-card">
+        <span class="stat-value"><%= stats.stories %></span>
+        <span class="stat-label">Truyện đã đăng</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-value"><%= stats.chapters %></span>
+        <span class="stat-label">Tổng số chương</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-value"><%= stats.views %></span>
+        <span class="stat-label">Tổng lượt đọc truyện</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-value"><%= stats.requests %></span>
+        <span class="stat-label">Yêu cầu từ độc giả</span>
+    </div>
+</div>
+
+<!-- Danh sách truyện đã đăng -->
+<div class="admin-box" style="margin-top: 2rem;">
+    <h2 class="section-title" style="font-size: 1.4rem;">Danh Sách Các Bộ Truyện</h2>
+    
+    <% if (stories.length === 0) { %>
+        <p style="color: var(--text-secondary); text-align: center; padding: 2rem 0;">Chưa có bộ truyện nào được tạo. Hãy bấm vào "Đăng bộ truyện mới" để bắt đầu.</p>
+    <% } else { %>
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Bìa</th>
+                    <th>Tên Truyện</th>
+                    <th>Tác Giả</th>
+                    <th>Người Đặt</th>
+                    <th>Ngày Đăng</th>
+                    <th>Hành Động</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% stories.forEach(story => { %>
+                    <tr>
+                        <td>
+                            <img src="<%= story.cover_url %>" alt="Cover" style="width: 40px; height: 50px; object-fit: cover; border-radius: 4px;">
+                        </td>
+                        <td>
+                            <strong><%= story.title %></strong>
+                        </td>
+                        <td><%= story.author %></td>
+                        <td>
+                            <% if (story.commissioned_by) { %>
+                                <span style="font-size: 0.85rem; color: #10b981; background: rgba(16, 185, 129, 0.1); padding: 0.2rem 0.5rem; border-radius: 4px;"><%= story.commissioned_by %></span>
+                            <% } else { %>
+                                <span style="color: var(--text-secondary); font-size: 0.85rem;">-</span>
+                            <% } %>
+                        </td>
+                        <td><%= new Date(story.created_at).toLocaleDateString('vi-VN') %></td>
+                        <td>
+                            <a href="/story/<%= story.id %>" class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">Xem chi tiết</a>
+                        </td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    <% } %>
+</div>
+
+<%- include('../partials/footer') %>

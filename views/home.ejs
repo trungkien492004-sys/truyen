@@ -1,0 +1,156 @@
+<%- include('partials/header') %>
+
+<!-- Phần quảng cáo / Giới thiệu và tìm kiếm -->
+<div class="hero-section">
+    <h1 class="hero-title">Tìm Kiếm Câu Chuyện Của Bạn</h1>
+    <p class="hero-desc">Thế giới tiên hiệp, kiếm hiệp, truyện tranh và tiểu thuyết đặc sắc đang chờ đón bạn.</p>
+    
+    <form action="/search" method="GET" class="search-bar">
+        <input type="text" name="q" placeholder="Nhập tên truyện hoặc tên tác giả..." value="<%= searchQuery || '' %>" required>
+        <button type="submit" class="btn btn-primary">Tìm kiếm</button>
+    </form>
+</div>
+
+<!-- Lọc theo thể loại -->
+<div class="genre-list">
+    <a href="/" class="genre-tag <%= !activeGenre ? 'active' : '' %>">Tất cả</a>
+    <% genres.forEach(genre => { %>
+        <a href="/genre/<%= genre.slug %>" class="genre-tag <%= (activeGenre && activeGenre.id === genre.id) ? 'active' : '' %>">
+            <%= genre.name %>
+        </a>
+    <% }) %>
+</div>
+
+<div class="content-grid">
+    <!-- Cột trái: Danh sách truyện -->
+    <div>
+        <h2 class="section-title">
+            <% if (searchQuery) { %>
+                🔍 Kết quả tìm kiếm cho "<%= searchQuery %>"
+            <% } else if (activeGenre) { %>
+                📚 Thể loại: <%= activeGenre.name %>
+            <% } else { %>
+                ✨ Truyện mới cập nhật
+            <% } %>
+        </h2>
+        
+        <% if (stories.length === 0) { %>
+            <p style="color: var(--text-secondary); text-align: center; margin-top: 3rem;">Chưa có truyện nào được đăng tải trong danh mục này.</p>
+        <% } else { %>
+            <div class="stories-grid">
+                <% stories.forEach(story => { %>
+                    <div class="story-card">
+                        <a href="/story/<%= story.id %>">
+                            <img src="<%= story.cover_url %>" alt="<%= story.title %>" class="story-cover">
+                        </a>
+                        <div class="story-info">
+                            <a href="/story/<%= story.id %>" class="story-title" title="<%= story.title %>">
+                                <%= story.title %>
+                            </a>
+                            <span class="story-author">Tác giả: <%= story.author %></span>
+                            <p class="story-desc-short"><%= story.description || 'Chưa có tóm tắt nội dung.' %></p>
+                            
+                            <% if (story.commissioned_by) { %>
+                                <div style="font-size: 0.8rem; background: rgba(59, 130, 246, 0.1); border-left: 2px solid var(--accent-color); padding: 0.3rem 0.5rem; margin-bottom: 0.8rem; border-radius: 0 4px 4px 0;">
+                                    👑 Người đặt truyện: <strong><%= story.commissioned_by %></strong>
+                                </div>
+                            <% } %>
+
+                            <a href="/story/<%= story.id %>" class="btn btn-secondary btn-primary" style="margin-top: auto; font-size: 0.85rem; padding: 0.5rem;">Đọc ngay</a>
+                        </div>
+                    </div>
+                <% }) %>
+            </div>
+        <% } %>
+    </div>
+
+    <!-- Cột phải: Bảng xếp hạng (Chỉ hiển thị ở trang chủ mặc định) -->
+    <% if (!searchQuery && !activeGenre) { %>
+        <div>
+            <div class="rankings-container">
+                <h3 class="section-title" style="font-size: 1.3rem; margin-bottom: 1rem;">🏆 Bảng Xếp Hạng</h3>
+                
+                <div class="ranking-tabs">
+                    <div class="ranking-tab active" data-tab="daily">Ngày</div>
+                    <div class="ranking-tab" data-tab="weekly">Tuần</div>
+                    <div class="ranking-tab" data-tab="monthly">Tháng</div>
+                    <div class="ranking-tab" data-tab="yearly">Năm</div>
+                </div>
+
+                <!-- Bảng xếp hạng Ngày -->
+                <div class="ranking-list active" id="top-daily">
+                    <% if (topDaily.length === 0) { %>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; padding: 1rem 0;">Chưa có dữ liệu đọc hôm nay.</p>
+                    <% } else { %>
+                        <% topDaily.forEach((item, index) => { %>
+                            <a href="/story/<%= item.id %>" class="ranking-item">
+                                <div class="rank-number"><%= index + 1 %></div>
+                                <img src="<%= item.cover_url %>" alt="<%= item.title %>" class="ranking-cover">
+                                <div class="ranking-info">
+                                    <div class="ranking-title"><%= item.title %></div>
+                                    <div class="ranking-views">👁️ <%= item.view_count %> lượt đọc</div>
+                                </div>
+                            </a>
+                        <% }) %>
+                    <% } %>
+                </div>
+
+                <!-- Bảng xếp hạng Tuần -->
+                <div class="ranking-list" id="top-weekly">
+                    <% if (topWeekly.length === 0) { %>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; padding: 1rem 0;">Chưa có dữ liệu đọc tuần này.</p>
+                    <% } else { %>
+                        <% topWeekly.forEach((item, index) => { %>
+                            <a href="/story/<%= item.id %>" class="ranking-item">
+                                <div class="rank-number"><%= index + 1 %></div>
+                                <img src="<%= item.cover_url %>" alt="<%= item.title %>" class="ranking-cover">
+                                <div class="ranking-info">
+                                    <div class="ranking-title"><%= item.title %></div>
+                                    <div class="ranking-views">👁️ <%= item.view_count %> lượt đọc</div>
+                                </div>
+                            </a>
+                        <% }) %>
+                    <% } %>
+                </div>
+
+                <!-- Bảng xếp hạng Tháng -->
+                <div class="ranking-list" id="top-monthly">
+                    <% if (topMonthly.length === 0) { %>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; padding: 1rem 0;">Chưa có dữ liệu đọc tháng này.</p>
+                    <% } else { %>
+                        <% topMonthly.forEach((item, index) => { %>
+                            <a href="/story/<%= item.id %>" class="ranking-item">
+                                <div class="rank-number"><%= index + 1 %></div>
+                                <img src="<%= item.cover_url %>" alt="<%= item.title %>" class="ranking-cover">
+                                <div class="ranking-info">
+                                    <div class="ranking-title"><%= item.title %></div>
+                                    <div class="ranking-views">👁️ <%= item.view_count %> lượt đọc</div>
+                                </div>
+                            </a>
+                        <% }) %>
+                    <% } %>
+                </div>
+
+                <!-- Bảng xếp hạng Năm -->
+                <div class="ranking-list" id="top-yearly">
+                    <% if (topYearly.length === 0) { %>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; padding: 1rem 0;">Chưa có dữ liệu đọc năm nay.</p>
+                    <% } else { %>
+                        <% topYearly.forEach((item, index) => { %>
+                            <a href="/story/<%= item.id %>" class="ranking-item">
+                                <div class="rank-number"><%= index + 1 %></div>
+                                <img src="<%= item.cover_url %>" alt="<%= item.title %>" class="ranking-cover">
+                                <div class="ranking-info">
+                                    <div class="ranking-title"><%= item.title %></div>
+                                    <div class="ranking-views">👁️ <%= item.view_count %> lượt đọc</div>
+                                </div>
+                            </a>
+                        <% }) %>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    <% } %>
+</div>
+
+<%- include('partials/footer') %>

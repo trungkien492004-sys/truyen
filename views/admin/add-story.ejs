@@ -1,0 +1,61 @@
+<%- include('../partials/header') %>
+
+<div style="margin-bottom: 1.5rem;">
+    <a href="/admin" style="color: var(--text-secondary); font-size: 0.9rem;">&larr; Quay lại Trang quản trị</a>
+</div>
+
+<div class="form-container" style="max-width: 700px;">
+    <h2 class="section-title">➕ Đăng Bộ Truyện Mới</h2>
+    
+    <% if (success) { %>
+        <div class="alert alert-success"><%= success %></div>
+    <% } %>
+
+    <% if (error) { %>
+        <div class="alert alert-error"><%= error %></div>
+    <% } %>
+
+    <form action="/admin/story/add" method="POST" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="title">Tên Truyện *</label>
+            <input type="text" id="title" name="title" placeholder="Nhập tên bộ truyện..." required>
+        </div>
+
+        <div class="form-group">
+            <label for="author">Tác Giả</label>
+            <input type="text" id="author" name="author" placeholder="Mặc định: Ẩn danh">
+        </div>
+
+        <div class="form-group">
+            <label for="commissioned_by">Người đặt viết truyện (nếu có)</label>
+            <input type="text" id="commissioned_by" name="commissioned_by" placeholder="Ví dụ: Độc giả Nguyễn Văn A">
+            <span style="font-size: 0.8rem; color: var(--text-secondary);">Nếu đây là truyện được viết theo yêu cầu hoặc do độc giả quyên góp đặt cọc, điền tên độc giả tại đây để hiển thị vinh danh ngoài trang chủ.</span>
+        </div>
+
+        <div class="form-group">
+            <label for="cover">Ảnh Bìa Truyện (Chọn tệp ảnh)</label>
+            <input type="file" id="cover" name="cover" accept="image/*">
+        </div>
+
+        <div class="form-group">
+            <label>Thể Loại Truyện (Chọn nhiều thể loại)</label>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.8rem; margin-top: 0.5rem; background: var(--bg-primary); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                <% genres.forEach(genre => { %>
+                    <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: normal; cursor: pointer; font-size: 0.9rem;">
+                        <input type="checkbox" name="genres" value="<%= genre.id %>">
+                        <%= genre.name %>
+                    </label>
+                <% }) %>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="description">Tóm Tắt Nội Dung</label>
+            <textarea id="description" name="description" rows="5" placeholder="Mô tả tóm tắt cốt truyện..."></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.8rem; font-size: 1rem; margin-top: 1rem;">TẠO BỘ TRUYỆN MỚI</button>
+    </form>
+</div>
+
+<%- include('../partials/footer') %>

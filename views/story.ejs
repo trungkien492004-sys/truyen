@@ -1,0 +1,67 @@
+<%- include('partials/header') %>
+
+<div style="margin-bottom: 1.5rem;">
+    <a href="/" style="color: var(--text-secondary); font-size: 0.9rem;">&larr; Quay lại trang chủ</a>
+</div>
+
+<div class="story-detail-header">
+    <img src="<%= story.cover_url %>" alt="<%= story.title %>" class="story-detail-cover">
+    
+    <div class="story-detail-info">
+        <h1 class="story-detail-title"><%= story.title %></h1>
+        <div class="story-detail-author">Tác giả: <strong><%= story.author %></strong></div>
+        
+        <div class="story-detail-meta">
+            <!-- Hiển thị thể loại -->
+            <div>
+                Thể loại: 
+                <% if (genres && genres.length > 0) { %>
+                    <% genres.forEach(genre => { %>
+                        <a href="/genre/<%= genre.slug %>" class="genre-tag" style="padding: 0.2rem 0.6rem; font-size: 0.75rem; border-radius: 12px; margin-left: 0.3rem;">
+                            <%= genre.name %>
+                        </a>
+                    <% }) %>
+                <% } else { %>
+                    <span style="color: var(--text-secondary);">Chưa phân loại</span>
+                <% } %>
+            </div>
+        </div>
+
+        <!-- HIỂN THỊ THÔNG TIN NGƯỜI ĐẶT TRUYỆN NẾU CÓ -->
+        <% if (story.commissioned_by) { %>
+            <div style="margin-bottom: 1.5rem; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 8px; padding: 0.8rem 1.2rem; display: flex; align-items: center; gap: 0.5rem; max-width: fit-content;">
+                <span>👑</span>
+                <span>Truyện viết theo yêu cầu của độc giả: <strong><%= story.commissioned_by %></strong></span>
+            </div>
+        <% } %>
+
+        <div class="story-detail-desc">
+            <h3>Tóm tắt truyện:</h3>
+            <p><%= story.description || 'Nội dung bộ truyện đang được cập nhật...' %></p>
+        </div>
+
+        <% if (chapters && chapters.length > 0) { %>
+            <a href="/story/<%= story.id %>/chapter/<%= chapters[0].chapter_number %>" class="btn btn-primary" style="align-self: flex-start; padding: 0.8rem 2rem;">ĐỌC TỪ ĐẦU</a>
+        <% } %>
+    </div>
+</div>
+
+<div class="chapters-container">
+    <h2 class="section-title">Danh sách chương</h2>
+    
+    <% if (!chapters || chapters.length === 0) { %>
+        <p style="color: var(--text-secondary); text-align: center; padding: 2rem 0;">Truyện hiện tại chưa có chương nào. Vui lòng quay lại sau!</p>
+    <% } else { %>
+        <ul class="chapters-list">
+            <% chapters.forEach(chapter => { %>
+                <li>
+                    <a href="/story/<%= story.id %>/chapter/<%= chapter.chapter_number %>" class="chapter-item" style="display: block;">
+                        <strong>Chương <%= chapter.chapter_number %></strong>: <%= chapter.title %>
+                    </a>
+                </li>
+            <% }) %>
+        </ul>
+    <% } %>
+</div>
+
+<%- include('partials/footer') %>

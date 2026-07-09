@@ -1,0 +1,41 @@
+<%- include('../partials/header') %>
+
+<div style="margin-bottom: 1.5rem;">
+    <a href="/admin" style="color: var(--text-secondary); font-size: 0.9rem;">&larr; Quay lại Trang quản trị</a>
+</div>
+
+<h1 class="section-title">💬 Yêu Cầu Đặt Viết Truyện & Liên Hệ Từ Độc Giả</h1>
+<p style="color: var(--text-secondary); margin-bottom: 2rem;">Dưới đây là danh sách tất cả các đơn đặt viết truyện hoặc thông tin liên hệ đóng góp của độc giả được gửi lên hệ thống.</p>
+
+<% if (requests.length === 0) { %>
+    <p style="color: var(--text-secondary); text-align: center; margin-top: 3rem; font-size: 1.1rem;">Chưa có yêu cầu liên hệ nào từ độc giả.</p>
+<% } else { %>
+    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+        <% requests.forEach(request => { %>
+            <div class="request-card">
+                <div class="request-meta">
+                    <span>👤 Người gửi: <strong><%= request.name %></strong></span>
+                    <span>📅 Gửi lúc: <%= new Date(request.created_at).toLocaleString('vi-VN') %></span>
+                </div>
+                
+                <div style="font-size: 1rem; line-height: 1.6; white-space: pre-wrap; padding: 0.5rem 0;"><%= request.content %></div>
+
+                <!-- Hiển thị ảnh đính kèm (nếu có) -->
+                <% if (request.attachments && request.attachments.length > 0) { %>
+                    <div style="margin-top: 1rem;">
+                        <h4 style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem;">📎 Tệp ảnh đính kèm (Click để xem ảnh lớn):</h4>
+                        <div class="request-attachments">
+                            <% request.attachments.forEach(imgUrl => { %>
+                                <a href="<%= imgUrl %>" target="_blank" title="Xem ảnh gốc">
+                                    <img src="<%= imgUrl %>" alt="Đính kèm" class="attachment-img-preview">
+                                </a>
+                            <% }) %>
+                        </div>
+                    </div>
+                <% } %>
+            </div>
+        <% }) %>
+    </div>
+<% } %>
+
+<%- include('../partials/footer') %>

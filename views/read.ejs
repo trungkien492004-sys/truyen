@@ -1,0 +1,53 @@
+<%- include('partials/header') %>
+
+<div class="read-container">
+    <div style="margin-bottom: 2rem;">
+        <a href="/story/<%= story.id %>" style="color: var(--text-secondary); font-size: 0.9rem;">&larr; Quay lại trang chi tiết truyện</a>
+    </div>
+
+    <div class="read-header">
+        <h1 class="read-title">Chương <%= chapter.chapter_number %>: <%= chapter.title %></h1>
+        <p style="color: var(--text-secondary); font-size: 1rem;">Truyện: <strong><%= story.title %></strong></p>
+    </div>
+
+    <!-- Thanh chuyển hướng chương trên -->
+    <div class="read-navigation">
+        <% if (hasPrev) { %>
+            <a href="/story/<%= story.id %>/chapter/<%= chapter.chapter_number - 1 %>" class="btn btn-secondary">&larr; Chương Trước</a>
+        <% } else { %>
+            <button class="btn btn-secondary" style="opacity: 0.5; cursor: not-allowed;" disabled>&larr; Chương Trước</button>
+        <% } %>
+        
+        <a href="/story/<%= story.id %>" class="btn btn-secondary">Mục lục</a>
+
+        <% if (hasNext) { %>
+            <a href="/story/<%= story.id %>/chapter/<%= chapter.chapter_number + 1 %>" class="btn btn-primary">Chương Tiếp &rarr;</a>
+        <% } else { %>
+            <button class="btn btn-primary" style="opacity: 0.5; cursor: not-allowed;" disabled>Chương Tiếp &rarr;</button>
+        <% } %>
+    </div>
+
+    <!-- Nội dung chương truyện (Có thể chứa cả chữ và các thẻ ảnh đan xen) -->
+    <div class="read-content">
+        <%- chapter.content %>
+    </div>
+
+    <!-- Thanh chuyển hướng chương dưới -->
+    <div class="read-navigation" style="margin-top: 4rem;">
+        <% if (hasPrev) { %>
+            <a href="/story/<%= story.id %>/chapter/<%= chapter.chapter_number - 1 %>" class="btn btn-secondary">&larr; Chương Trước</a>
+        <% } else { %>
+            <button class="btn btn-secondary" style="opacity: 0.5; cursor: not-allowed;" disabled>&larr; Chương Trước</button>
+        <% } %>
+        
+        <a href="/story/<%= story.id %>" class="btn btn-secondary">Mục lục</a>
+
+        <% if (hasNext) { %>
+            <a href="/story/<%= story.id %>/chapter/<%= chapter.chapter_number + 1 %>" class="btn btn-primary">Chương Tiếp &rarr;</a>
+        <% } else { %>
+            <button class="btn btn-primary" style="opacity: 0.5; cursor: not-allowed;" disabled>Chương Tiếp &rarr;</button>
+        <% } %>
+    </div>
+</div>
+
+<%- include('partials/footer') %>

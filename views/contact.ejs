@@ -1,0 +1,43 @@
+<%- include('partials/header') %>
+
+<div class="form-container">
+    <h2 class="section-title" style="margin-bottom: 0.5rem;">👑 Đặt Viết Truyện & Liên Hệ</h2>
+    <p style="color: var(--text-secondary); margin-bottom: 2rem; font-size: 0.95rem;">
+        Bạn muốn đặt viết một bộ truyện riêng theo ý tưởng của mình? Hãy gửi yêu cầu cho chúng tôi. Đính kèm các ảnh tư liệu hoặc hóa đơn/ảnh chụp màn hình chuyển khoản đặt cọc.
+    </p>
+
+    <!-- Hiển thị thông báo thành công hoặc lỗi -->
+    <% if (success) { %>
+        <div class="alert alert-success">
+            <%= success %>
+        </div>
+    <% } %>
+
+    <% if (error) { %>
+        <div class="alert alert-error">
+            <%= error %>
+        </div>
+    <% } %>
+
+    <form action="/contact/submit" method="POST" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="name">Họ và Tên của bạn *</label>
+            <input type="text" id="name" name="name" placeholder="Ví dụ: Nguyễn Văn A" required>
+        </div>
+
+        <div class="form-group">
+            <label for="content">Nội dung yêu cầu *</label>
+            <textarea id="content" name="content" rows="6" placeholder="Mô tả cốt truyện, nhân vật, yêu cầu viết, hoặc thông tin liên hệ khác..." required></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="attachments">Tải lên tài liệu / Ảnh chụp màn hình chuyển khoản (Có thể chọn nhiều ảnh)</label>
+            <input type="file" id="attachments" name="attachments" multiple accept="image/*">
+            <span style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.3rem;">Chấp nhận các định dạng ảnh: PNG, JPG, JPEG. Bạn có thể chọn nhiều file ảnh cùng một lúc.</span>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.8rem; font-size: 1rem; margin-top: 1rem;">GỬI YÊU CẦU ĐẾN ADMIN</button>
+    </form>
+</div>
+
+<%- include('partials/footer') %>
