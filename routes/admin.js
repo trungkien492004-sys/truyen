@@ -41,48 +41,7 @@ async function uploadToSupabase(file, bucketName = 'uploads') {
   return publicUrl;
 }
 
-// Hàm phân tích file (Word/Txt) thành danh sách các chương truyện
-async function parseFileToChapters(file, storyId) {
-  const isDocx = file.originalname.endsWith('.docx') || file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-  let html = '';
 
-  if (isDocx) {
-    const options = {
-      convertImage: mammoth.images.inline(function(element) {
-        return element.read("base64").then(async function(imageBuffer) {
-          const buffer = Buffer.from(imageBuffer, 'base64');
-          const fileExt = element.contentType === 'image/jpeg' ? '.jpg' : '.png';
-          const fileName = `word-img-${Date.now()}-${Math.round(Math.random() * 1E9)}${fileExt}`;
-          
-          const { error: uploadErr } = await supabase.storage
-            .from('uploads')
-            .upload(fileName, buffer, {
-              contentType: element.contentType,
-              upsert: true
-            });
-
-          if (uploadErr) throw uploadErr;
-
-          const { data: { publicUrl } } = supabase.storage
-            .from('uploads')
-            .getPublicUrl(fileName);
-
-          return { src: publicUrl };
-        });
-      })
-    };
-
-    const result = await mammoth.convertToHtml({ buffer: file.buffer }, options);
-    html = result.value;
-  } else {
-    const text = file.buffer.toString('utf-8');
-    html = text
-      .split('\n')
-      .map(line => line.trim())
-      .filter(line => line.length > 0)
-      .map(line => `<p>${line}</p>`)
-      .join('');
-  }
 
 // Hàm phân tích 1 tệp tin (Word/Txt) thành đúng 1 chương duy nhất (1 file = 1 chương)
 async function parseSingleFileToChapter(file, storyId) {
