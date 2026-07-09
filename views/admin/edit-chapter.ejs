@@ -37,8 +37,35 @@
             <textarea id="content" name="content" rows="20" required><%= chapter.content %></textarea>
         </div>
 
-        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.8rem; font-size: 1rem; margin-top: 1rem;">CẬP NHẬT CHƯƠNG TRUYỆN</button>
+        <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+            <button type="submit" class="btn btn-primary" style="flex: 3; padding: 0.8rem; font-size: 1rem;">CẬP NHẬT CHƯƠNG TRUYỆN</button>
+            <button type="button" id="btn-delete-chapter" class="btn btn-secondary" style="flex: 1; padding: 0.8rem; font-size: 1rem; background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); cursor: pointer;">
+                🗑️ Xoá Chương
+            </button>
+        </div>
+    </form>
+
+    <!-- Form ẩn phục vụ việc xoá chương -->
+    <form id="delete-chapter-form" action="/admin/chapter/delete/<%= chapter.id %>" method="POST" style="display: none;">
+        <% 
+           let fallbackRedirect = redirect_to;
+           if (redirect_to.includes('/chapter/')) {
+               fallbackRedirect = `/admin/story/edit/${chapter.story_id}`;
+           }
+        %>
+        <input type="hidden" name="redirect_to" value="<%= fallbackRedirect %>">
     </form>
 </div>
+
+<script>
+    const btnDelete = document.getElementById('btn-delete-chapter');
+    if (btnDelete) {
+        btnDelete.addEventListener('click', () => {
+            if (confirm('Bạn có chắc chắn muốn XÓA chương này không? Hành động này không thể hoàn tác!')) {
+                document.getElementById('delete-chapter-form').submit();
+            }
+        });
+    }
+</script>
 
 <%- include('../partials/footer') %>

@@ -890,6 +890,26 @@ router.post('/chapter/delete-bulk', async (req, res) => {
   }
 });
 
+// THỰC HIỆN XÓA MỘT CHƯƠNG ĐƠN LẺ TRỰC TIẾP
+router.post('/chapter/delete/:id', async (req, res) => {
+  const chapterId = parseInt(req.params.id);
+  const redirectTo = req.body.redirect_to || '/admin';
+
+  try {
+    const { error } = await supabase
+      .from('chapters')
+      .delete()
+      .eq('id', chapterId);
+
+    if (error) throw error;
+
+    res.redirect(`${redirectTo}?success=${encodeURIComponent('Đã xóa chương thành công!')}`);
+  } catch (err) {
+    console.error('Lỗi xóa chương:', err);
+    res.redirect(`${redirectTo}?error=${encodeURIComponent(err.message || 'Lỗi hệ thống khi xóa chương.')}`);
+  }
+});
+
 // CHUYỂN HƯỚNG CÁC ĐƯỜNG DẪN CŨ VỀ ĐƯỜNG DẪN TÍCH HỢP MỚI
 router.get('/chapter/add-manual', (req, res) => res.redirect('/admin/chapter/add'));
 router.post('/chapter/add-manual', (req, res) => res.redirect('/admin/chapter/add'));
