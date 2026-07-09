@@ -6,8 +6,40 @@ const path = require('path');
 const mammoth = require('mammoth');
 const fs = require('fs');
 
-// Cấu hình Multer lưu file text tải lên để tách chương
-const upload = multer({ dest: 'public/uploads/' });
+// Sử dụng Memory Storage để chạy không đĩa (tương thích Vercel Serverless)
+const upload = multer({ storage: multer.memoryStorage() });
+
+// Hàm hỗ trợ upload file lên Supabase Storage
+async function uploadToSupabase(file, bucketName = 'uploads') {
+  if (!file) return null;
+  try {
+    // Tạo bucket nếu chưa có
+    await supabase.storage.createBucket(bucketName, { public: true });
+  } catch (e) {
+    // Bỏ qua lỗi nếu đã tồn tại
+  }
+
+  const fileExt = path.extname(file.originalname);
+  const fileName = `${Date.now()}-${Math.round(Math.random() * 1E9)}${fileExt}`;
+
+  const { data, error } = await supabase.storage
+    .from(bucketName)
+    .upload(fileName, file.buffer, {
+      contentType: file.mimetype,
+      upsert: true
+    });
+
+  if (error) {
+    console.error('Lỗi upload file lên Supabase Storage:', error);
+    throw error;
+  }
+
+  const { data: { publicUrl } } = supabase.storage
+    .from(bucketName)
+    .getPublicUrl(fileName);
+
+  return publicUrl;
+}
 
 // Middleware kiểm tra quyền Admin
 function isAdmin(req, res, next) {
@@ -75,8 +107,11 @@ router.post('/story/add', upload.single('cover'), async (req, res) => {
   }
 
   try {
-    // Lấy ảnh bìa nếu có upload, nếu không để mặc định
-    const coverUrl = req.file ? `/uploads/${req.file.filename}` : '/css/default-cover.jpg';
+    // Lấy ảnh bìa nếu có upload lên Supabase Storage, nếu không để mặc định
+    let coverUrl = '/css/default-cover.jpg';
+    if (req.file) {
+      coverUrl = await uploadToSupabase(req.file, 'uploads');
+    }
 
     // 1. Thêm truyện vào bảng `stories`
     const { data: newStory, error: storyErr } = await supabase
@@ -212,33 +247,46 @@ router.post('/chapter/add-bulk', upload.single('txtfile'), async (req, res) => {
 
     if (isDocx) {
       // CẤU HÌNH MAMMOTH ĐỂ PHÂN TÍCH FILE WORD (.DOCX)
-      // Tự động trích xuất hình ảnh nhúng trong file Word, lưu vào public/uploads và chuyển src sang link static
+      // Tự động trích xuất hình ảnh nhúng trong file Word, tải thẳng lên Supabase Storage
       const options = {
         convertImage: mammoth.images.inline(function(element) {
-          return element.read("base64").then(function(imageBuffer) {
+          return element.read("base64").then(async function(imageBuffer) {
             const buffer = Buffer.from(imageBuffer, 'base64');
-            const filename = `word-img-${Date.now()}-${Math.round(Math.random() * 1E9)}.png`;
-            const filepath = path.join(__dirname, '../public/uploads', filename);
-            fs.writeFileSync(filepath, buffer);
+            const fileExt = element.contentType === 'image/jpeg' ? '.jpg' : '.png';
+            const fileName = `word-img-${Date.now()}-${Math.round(Math.random() * 1E9)}${fileExt}`;
+            
+            // Upload trực tiếp lên Supabase Storage
+            const { error: uploadErr } = await supabase.storage
+              .from('uploads')
+              .upload(fileName, buffer, {
+                contentType: element.contentType,
+                upsert: true
+              });
+
+            if (uploadErr) {
+              console.error('Lỗi tải ảnh Word lên Supabase:', uploadErr);
+              throw uploadErr;
+            }
+
+            const { data: { publicUrl } } = supabase.storage
+              .from('uploads')
+              .getPublicUrl(fileName);
+
             return {
-              src: `/uploads/${filename}`
+              src: publicUrl
             };
           });
         })
       };
 
-      const result = await mammoth.convertToHtml({ path: file.path }, options);
+      // Đọc trực tiếp từ memory buffer thay vì đọc file từ đĩa
+      const result = await mammoth.convertToHtml({ buffer: file.buffer }, options);
       const html = result.value;
 
-      // Xóa file tạm sau khi đã convert xong sang HTML
-      fs.unlinkSync(file.path);
-
       // Regex tìm tiêu đề chương trong các thẻ <p>
-      // Hỗ trợ dạng: <p>Chương 1: Tiêu đề</p> hoặc <p><strong>Chap 2: Tiêu đề</strong></p>
       const regex = /<p>(?:<strong>|<em>|<span>)*?(Chương|Chap|Chapter)\s+(\d+(?:\.\d+)?)\s*[:.-]?\s*(.*?)(?:<\/strong>|<\/em>|<\/span>)*?<\/p>/gim;
       let match;
       while ((match = regex.exec(html)) !== null) {
-        // Loại bỏ thẻ HTML thừa nếu tiêu đề chương chứa thẻ định dạng
         const cleanTitle = match[3] ? match[3].replace(/<\/?[^>]+(>|$)/g, "").trim() : `Chương ${match[2]}`;
         matches.push({
           index: match.index,
@@ -264,8 +312,7 @@ router.post('/chapter/add-bulk', upload.single('txtfile'), async (req, res) => {
 
     } else {
       // XỬ LÝ FILE VĂN BẢN THƯỜNG (.TXT)
-      const text = fs.readFileSync(file.path, 'utf-8');
-      fs.unlinkSync(file.path);
+      const text = file.buffer.toString('utf-8');
 
       const regex = /^(Chương|Chap|Chapter)\s+(\d+(?:\.\d+)?)\s*[:.-]?\s*(.*)$/gim;
       let match;
@@ -500,8 +547,11 @@ router.post('/story/edit/:id', upload.single('cover'), async (req, res) => {
       .eq('id', storyId)
       .single();
 
-    // Xác định ảnh bìa mới
-    const coverUrl = req.file ? `/uploads/${req.file.filename}` : currentStory.cover_url;
+    // Xác định ảnh bìa mới từ Supabase Storage
+    let coverUrl = currentStory.cover_url;
+    if (req.file) {
+      coverUrl = await uploadToSupabase(req.file, 'uploads');
+    }
 
     // 2. Cập nhật bảng `stories`
     const { error: updateStoryErr } = await supabase

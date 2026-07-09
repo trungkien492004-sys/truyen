@@ -5,22 +5,40 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-// Cấu hình Multer lưu ảnh tải lên từ form liên hệ
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadPath = path.join(__dirname, '../public/uploads');
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
-    }
-    cb(null, uploadPath);
-  },
-  filename: (req, file, cb) => {
-    // Đặt tên file: timestamp-random-tên_gốc
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
+// Sử dụng Memory Storage để chạy không đĩa (tương thích Vercel Serverless)
+const upload = multer({ storage: multer.memoryStorage() });
+
+// Hàm hỗ trợ upload file lên Supabase Storage
+async function uploadToSupabase(file, bucketName = 'uploads') {
+  if (!file) return null;
+  try {
+    // Tạo bucket nếu chưa có
+    await supabase.storage.createBucket(bucketName, { public: true });
+  } catch (e) {
+    // Bỏ qua lỗi nếu đã tồn tại
   }
-});
-const upload = multer({ storage: storage });
+
+  const fileExt = path.extname(file.originalname);
+  const fileName = `${Date.now()}-${Math.round(Math.random() * 1E9)}${fileExt}`;
+
+  const { data, error } = await supabase.storage
+    .from(bucketName)
+    .upload(fileName, file.buffer, {
+      contentType: file.mimetype,
+      upsert: true
+    });
+
+  if (error) {
+    console.error('Lỗi upload file lên Supabase Storage:', error);
+    throw error;
+  }
+
+  const { data: { publicUrl } } = supabase.storage
+    .from(bucketName)
+    .getPublicUrl(fileName);
+
+  return publicUrl;
+}
 
 // TRANG CHỦ & BẢNG XẾP HẠNG
 router.get('/', async (req, res) => {
@@ -275,8 +293,14 @@ router.post('/contact/submit', upload.array('attachments', 10), async (req, res)
   }
 
   try {
-    // Thu thập đường dẫn các file ảnh tải lên (nếu có)
-    const filePaths = req.files ? req.files.map(file => `/uploads/${file.filename}`) : [];
+    // Tải lên hàng loạt file ảnh lên Supabase Storage
+    const filePaths = [];
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        const url = await uploadToSupabase(file, 'uploads');
+        if (url) filePaths.push(url);
+      }
+    }
 
     // Lưu yêu cầu liên hệ vào database Supabase
     const { error } = await supabase
