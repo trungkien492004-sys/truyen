@@ -391,6 +391,147 @@ router.post('/chapter/add', upload.array('txtfile', 100), async (req, res) => {
   }
 });
 
+// ĐĂNG CHƯƠNG QUA JSON (HỖ TRỢ GIẢI QUYẾT LỖI PAYLOAD 413 VERCEL)
+router.post('/chapter/add-json', async (req, res) => {
+  const { story_id, files } = req.body;
+
+  if (!story_id || !files || files.length === 0) {
+    return res.status(400).json({ error: 'Thiếu thông tin truyện hoặc tệp tin.' });
+  }
+
+  try {
+    let chaptersToInsert = [];
+
+    for (const file of files) {
+      let matches = [];
+      const html = file.content;
+
+      if (file.type === 'docx') {
+        const regex = /<(h[1-6]|p)[^>]*?>\s*?(?:<strong>|<em>|<span>|style|class)*?\b(Chương|Chap|Chapter)\s+(\d+(?:\.\d+)?)\s*[:.-]?\s*(.*?)(?:<\/strong>|<\/em>|<\/span>)*?<\/h[1-6]|p>/gim;
+        let match;
+        while ((match = regex.exec(html)) !== null) {
+          const cleanTitle = match[4] ? match[4].replace(/<\/?[^>]+(>|$)/g, "").trim() : `Chương ${match[3]}`;
+          matches.push({
+            index: match.index,
+            fullText: match[0],
+            number: parseFloat(match[3]),
+            title: cleanTitle
+          });
+        }
+
+        if (matches.length > 0) {
+          for (let i = 0; i < matches.length; i++) {
+            const start = matches[i].index + matches[i].fullText.length;
+            const end = (i + 1 < matches.length) ? matches[i + 1].index : html.length;
+            const body = html.substring(start, end).trim();
+
+            chaptersToInsert.push({
+              story_id: parseInt(story_id),
+              chapter_number: matches[i].number,
+              title: matches[i].title,
+              content: body
+            });
+          }
+        } else {
+          const cleanFileName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+          chaptersToInsert.push({
+            story_id: parseInt(story_id),
+            chapter_number: null,
+            title: cleanFileName,
+            content: html
+          });
+        }
+
+      } else {
+        const text = file.content;
+        const regex = /^(Chương|Chap|Chapter)\s+(\d+(?:\.\d+)?)\s*[:.-]?\s*(.*)$/gim;
+        let match;
+        while ((match = regex.exec(text)) !== null) {
+          matches.push({
+            index: match.index,
+            fullText: match[0],
+            number: parseFloat(match[2]),
+            title: match[3] ? match[3].trim() : `Chương ${match[2]}`
+          });
+        }
+
+        if (matches.length > 0) {
+          for (let i = 0; i < matches.length; i++) {
+            const start = matches[i].index + matches[i].fullText.length;
+            const end = (i + 1 < matches.length) ? matches[i + 1].index : text.length;
+            const rawContent = text.substring(start, end).trim();
+
+            const formattedContent = rawContent
+              .split('\n')
+              .map(line => line.trim())
+              .filter(line => line.length > 0)
+              .map(line => `<p>${line}</p>`)
+              .join('');
+
+            chaptersToInsert.push({
+              story_id: parseInt(story_id),
+              chapter_number: matches[i].number,
+              title: matches[i].title,
+              content: formattedContent
+            });
+          }
+        } else {
+          const cleanFileName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+          const formattedContent = text
+            .split('\n')
+            .map(line => line.trim())
+            .filter(line => line.length > 0)
+            .map(line => `<p>${line}</p>`)
+            .join('');
+
+          chaptersToInsert.push({
+            story_id: parseInt(story_id),
+            chapter_number: null,
+            title: cleanFileName,
+            content: formattedContent
+          });
+        }
+      }
+    }
+
+    const hasNullNumber = chaptersToInsert.some(c => c.chapter_number === null);
+    if (hasNullNumber) {
+      let nextNum = 1;
+      const { data: maxChapterData } = await supabase
+        .from('chapters')
+        .select('chapter_number')
+        .eq('story_id', story_id)
+        .order('chapter_number', { ascending: false })
+        .limit(1);
+
+      if (maxChapterData && maxChapterData.length > 0) {
+        nextNum = Math.floor(maxChapterData[0].chapter_number) + 1;
+      }
+
+      for (const chapter of chaptersToInsert) {
+        if (chapter.chapter_number === null) {
+          if (!chapter.title.toLowerCase().startsWith('ngoại truyện')) {
+            chapter.title = `Ngoại truyện - ${chapter.title}`;
+          }
+          chapter.chapter_number = nextNum++;
+        }
+      }
+    }
+
+    const { error: upsertErr } = await supabase
+      .from('chapters')
+      .upsert(chaptersToInsert, { onConflict: 'story_id,chapter_number' });
+
+    if (upsertErr) throw upsertErr;
+
+    res.json({ success: true, message: `Đã tải lên thành công và nhập ${chaptersToInsert.length} chương mới vào hệ thống!` });
+
+  } catch (err) {
+    console.error('Lỗi khi đăng chương qua JSON:', err);
+    res.status(500).json({ error: err.message || 'Lỗi hệ thống.' });
+  }
+});
+
 // 5. XEM YÊU CẦU ĐẶT VIẾT TRUYỆN CỦA ĐỘC GIẢ
 router.get('/requests', async (req, res) => {
   try {

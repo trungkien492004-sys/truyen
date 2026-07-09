@@ -134,6 +134,8 @@
     </form>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+
 <script>
     // Hiển thị tên tệp ảnh khi được chọn mới
     const fileInput = document.getElementById('cover');
@@ -186,6 +188,143 @@
 
     // Chạy khi khởi động trang
     toggleForms();
+
+    // INTERCEPT FORM SUBMIT ĐĂNG CHƯƠNG ĐỂ XỬ LÝ PHÍA TRÌNH DUYỆT (TRÁNH LỖI VERCEL 4.5MB PAYLOAD)
+    const chapterForm = document.querySelector('form[action="/admin/chapter/add"]');
+    if (chapterForm) {
+        chapterForm.addEventListener('submit', async (e) => {
+            const selectedMethod = document.querySelector('input[name="publish_method"]:checked').value;
+            if (selectedMethod === 'bulk') {
+                e.preventDefault(); // Ngăn submit form mặc định
+
+                const submitBtn = chapterForm.querySelector('button[type="submit"]');
+                const originalBtnText = submitBtn.textContent;
+                submitBtn.disabled = true;
+                submitBtn.textContent = '⏳ Đang xử lý file và tải ảnh lên...';
+
+                try {
+                    const storyId = chapterForm.querySelector('input[name="story_id"]').value;
+                    const redirectTo = chapterForm.querySelector('input[name="redirect_to"]').value;
+                    const files = bulkFileInput.files;
+                    if (!files || files.length === 0) {
+                        alert('Vui lòng chọn tệp tin truyện.');
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = originalBtnText;
+                        return;
+                    }
+
+                    const processedFiles = [];
+
+                    for (let file of files) {
+                        const isDocx = file.name.endsWith('.docx');
+                        if (isDocx) {
+                            const arrayBuffer = await file.arrayBuffer();
+                            const result = await mammoth.convertToHtml({ arrayBuffer: arrayBuffer });
+                            let html = result.value;
+
+                            // Parse ảnh và upload thẳng lên Supabase
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(html, 'text/html');
+                            const imgs = doc.querySelectorAll('img');
+
+                            if (imgs.length > 0) {
+                                submitBtn.textContent = `⏳ Đang tải ${imgs.length} ảnh trong file lên Supabase...`;
+                            }
+
+                            for (let img of imgs) {
+                                const src = img.getAttribute('src');
+                                if (src && src.startsWith('data:')) {
+                                    const blob = dataURLtoBlob(src);
+                                    const publicUrl = await uploadBlobToSupabase(blob, blob.type);
+                                    img.setAttribute('src', publicUrl);
+                                }
+                            }
+
+                            html = doc.body.innerHTML;
+                            processedFiles.push({
+                                name: file.name,
+                                type: 'docx',
+                                content: html
+                            });
+
+                        } else {
+                            // Txt file
+                            const text = await file.text();
+                            processedFiles.push({
+                                name: file.name,
+                                type: 'txt',
+                                content: text
+                            });
+                        }
+                    }
+
+                    // Gửi JSON lên server
+                    submitBtn.textContent = '⏳ Đang lưu dữ liệu chương vào database...';
+                    const response = await fetch('/admin/chapter/add-json', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            story_id: storyId,
+                            files: processedFiles
+                        })
+                    });
+
+                    const resData = await response.json();
+                    if (resData.success) {
+                        window.location.href = redirectTo + '?success=' + encodeURIComponent(resData.message);
+                    } else {
+                        alert('Lỗi đăng chương: ' + resData.error);
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = originalBtnText;
+                    }
+
+                } catch (err) {
+                    console.error(err);
+                    alert('Có lỗi xảy ra: ' + err.message);
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalBtnText;
+                }
+            }
+        });
+    }
+
+    // Hàm chuyển đổi ảnh base64 thành Blob
+    function dataURLtoBlob(dataurl) {
+        var arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
+            bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+        while(n--){
+            u8arr[n] = bstr.charCodeAt(n);
+        }
+        return new Blob([u8arr], {type:mime});
+    }
+
+    // Hàm upload blob thẳng lên Supabase Storage từ Browser
+    async function uploadBlobToSupabase(blob, mimeType) {
+        const fileExt = mimeType === 'image/jpeg' ? '.jpg' : '.png';
+        const fileName = `word-img-${Date.now()}-${Math.round(Math.random() * 1E9)}${fileExt}`;
+        
+        const supabaseUrl = 'https://xlaqupbqiwpoprywnkgi.supabase.co';
+        const anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhsYXF1cGJxaXdwb3ByeXdua2dpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1ODkxNDcsImV4cCI6MjA5OTE2NTE0N30.v0NZKDhVb4ysx03cmx_aQn6aGBMCO6lWzBUN6--JKB0';
+
+        const response = await fetch(`${supabaseUrl}/storage/v1/object/uploads/${fileName}`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${anonKey}`,
+                'apikey': anonKey,
+                'Content-Type': mimeType
+            },
+            body: blob
+        });
+
+        if (!response.ok) {
+            const errText = await response.text();
+            throw new Error(`Upload ảnh thất bại: ${errText}`);
+        }
+
+        return `${supabaseUrl}/storage/v1/object/public/uploads/${fileName}`;
+    }
 </script>
 
 <%- include('../partials/footer') %>
