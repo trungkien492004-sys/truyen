@@ -5,7 +5,7 @@
 </div>
 
 <div class="form-container" style="max-width: 700px;">
-    <h2 class="section-title">⚡ Tách Chương Tự Động Từ File Văn Bản</h2>
+    <h2 class="section-title">⚡ Tách Chương Tự Động Từ File Văn Bản / Word</h2>
     
     <% if (success) { %>
         <div class="alert alert-success"><%= success %></div>
@@ -16,18 +16,12 @@
     <% } %>
 
     <div style="background: rgba(59, 130, 246, 0.08); border-left: 4px solid var(--accent-color); padding: 1rem; border-radius: 0 8px 8px 0; margin-bottom: 2rem; font-size: 0.9rem; line-height: 1.5;">
-        <strong>💡 Hướng dẫn định dạng file text (.txt):</strong><br>
-        Để hệ thống tách chương chính xác, file của bạn phải bắt đầu tiêu đề chương ở đầu dòng có cấu trúc dạng:<br>
-        <code>Chương [Số] [Dấu cách hoặc Dấu gạch ngang] [Tên chương nếu có]</code> hoặc <code>Chap [Số]: [Tên chương]</code><br><br>
-        <strong>Ví dụ nội dung file hợp lệ:</strong>
-        <pre style="background: var(--bg-primary); padding: 0.8rem; border-radius: 4px; border: 1px solid var(--border-color); overflow-x: auto; margin-top: 0.5rem; font-size: 0.8rem;">
-Chương 1: Sự trỗi dậy
-Nội dung của chương thứ nhất ở đây...
-Mã viết dòng thứ hai...
-
-Chương 2 - Gặp gỡ hồng nhan
-Nội dung chương hai viết tiếp ở đây...
-        </pre>
+        <strong>💡 Định dạng tệp tin được hỗ trợ:</strong><br>
+        1. **File Word (.docx)**: Hỗ trợ trích xuất toàn bộ văn bản và **hình ảnh nhúng bên trong**. Hình ảnh sẽ tự động được lưu và hiển thị đan xen chữ.<br>
+        2. **File Văn Bản (.txt)**: Chỉ hỗ trợ nội dung chữ thuần.<br><br>
+        <strong>Quy tắc nhận diện chương:</strong><br>
+        Đầu mỗi chương phải bắt đầu bằng tiêu đề dòng dạng: <code>Chương [Số]</code>, <code>Chap [Số]</code> hoặc <code>Chapter [Số]</code> ở đầu dòng.<br>
+        *(Ví dụ: <strong>Chương 1: Khởi đầu mới</strong> hoặc <strong>Chap 2 - Bí cảnh</strong>)*
     </div>
 
     <% if (stories.length === 0) { %>
@@ -46,9 +40,9 @@ Nội dung chương hai viết tiếp ở đây...
             </div>
 
             <div class="form-group">
-                <label for="txtfile">Upload File Văn Bản (.txt) *</label>
-                <input type="file" id="txtfile" name="txtfile" accept=".txt" required>
-                <span style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.3rem;">Chấp nhận file định dạng đuôi .txt đã mã hóa UTF-8 để không bị lỗi font chữ tiếng Việt.</span>
+                <label for="txtfile">Tải lên file văn bản (.txt) hoặc file Word (.docx) *</label>
+                <input type="file" id="txtfile" name="txtfile" accept=".txt,.docx" required>
+                <span style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.3rem;">Hỗ trợ tệp tin định dạng .txt (UTF-8) hoặc .docx (Word có chứa chữ và hình ảnh nhúng).</span>
             </div>
 
             <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.8rem; font-size: 1rem; margin-top: 1rem;">BẮT ĐẦU TÁCH CHƯƠNG VÀ LƯU</button>
