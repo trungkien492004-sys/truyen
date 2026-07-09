@@ -126,7 +126,14 @@
             <div class="form-group">
                 <label for="txtfile">Tải lên một hoặc nhiều tệp tin truyện *</label>
                 <input type="file" id="txtfile" name="txtfile" accept=".txt,.docx" multiple>
-                <span style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.3rem;">Để chọn nhiều tệp, hãy giữ phím Ctrl (hoặc Cmd) khi chọn tệp.</span>
+                <span style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.3rem; display: block;">Để chọn nhiều tệp, hãy giữ phím Ctrl (hoặc Cmd) khi chọn tệp.</span>
+            </div>
+
+            <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.8rem;">
+                <input type="checkbox" id="include_images_edit" name="include_images_edit" checked style="width: auto; margin: 0; cursor: pointer;">
+                <label for="include_images_edit" style="margin: 0; font-size: 0.9rem; font-weight: normal; cursor: pointer; color: var(--text-primary);">
+                    Tải ảnh nhúng trong file Word lên hệ thống (Bỏ tích nếu chỉ muốn lấy chữ)
+                </label>
             </div>
         </div>
 
@@ -222,22 +229,29 @@
                             const result = await mammoth.convertToHtml({ arrayBuffer: arrayBuffer });
                             let html = result.value;
 
-                            // Parse ảnh và upload thẳng lên Supabase
+                            // Parse ảnh và upload thẳng lên Supabase hoặc xoá ảnh
                             const parser = new DOMParser();
                             const doc = parser.parseFromString(html, 'text/html');
                             const imgs = doc.querySelectorAll('img');
 
-                            if (imgs.length > 0) {
-                                submitBtn.textContent = `⏳ Đang tải ${imgs.length} ảnh trong file lên Supabase...`;
-                            }
+                            const includeImages = document.getElementById('include_images_edit').checked;
 
-                            for (let img of imgs) {
-                                const src = img.getAttribute('src');
-                                if (src && src.startsWith('data:')) {
-                                    const blob = dataURLtoBlob(src);
-                                    const publicUrl = await uploadBlobToSupabase(blob, blob.type);
-                                    img.setAttribute('src', publicUrl);
+                            if (includeImages) {
+                                if (imgs.length > 0) {
+                                    submitBtn.textContent = `⏳ Đang tải ${imgs.length} ảnh trong file lên Supabase...`;
                                 }
+
+                                for (let img of imgs) {
+                                    const src = img.getAttribute('src');
+                                    if (src && src.startsWith('data:')) {
+                                        const blob = dataURLtoBlob(src);
+                                        const publicUrl = await uploadBlobToSupabase(blob, blob.type);
+                                        img.setAttribute('src', publicUrl);
+                                    }
+                                }
+                            } else {
+                                // Xoá ảnh khỏi tài liệu
+                                imgs.forEach(img => img.remove());
                             }
 
                             html = doc.body.innerHTML;

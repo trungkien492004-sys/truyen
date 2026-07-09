@@ -334,7 +334,7 @@ router.post('/chapter/add', upload.array('txtfile', 100), async (req, res) => {
       }
 
       // Xử lý các chương không có số (mặc định Ngoại truyện và đánh số tự động tăng)
-      const hasNullNumber = chaptersToInsert.some(c => c.chapter_number === null);
+      const hasNullNumber = chaptersToInsert.some(c => c.chapter_number === null || c.chapter_number === undefined || isNaN(c.chapter_number));
       if (hasNullNumber) {
         // Lấy số chương lớn nhất hiện tại của bộ truyện
         let nextNum = 1;
@@ -350,7 +350,7 @@ router.post('/chapter/add', upload.array('txtfile', 100), async (req, res) => {
         }
 
         for (const chapter of chaptersToInsert) {
-          if (chapter.chapter_number === null) {
+          if (chapter.chapter_number === null || chapter.chapter_number === undefined || isNaN(chapter.chapter_number)) {
             // Đặt tên tiêu đề mặc định Ngoại truyện
             if (!chapter.title.toLowerCase().startsWith('ngoại truyện')) {
               chapter.title = `Ngoại truyện - ${chapter.title}`;
@@ -494,7 +494,7 @@ router.post('/chapter/add-json', async (req, res) => {
       }
     }
 
-    const hasNullNumber = chaptersToInsert.some(c => c.chapter_number === null);
+    const hasNullNumber = chaptersToInsert.some(c => c.chapter_number === null || c.chapter_number === undefined || isNaN(c.chapter_number));
     if (hasNullNumber) {
       let nextNum = 1;
       const { data: maxChapterData } = await supabase
@@ -509,7 +509,7 @@ router.post('/chapter/add-json', async (req, res) => {
       }
 
       for (const chapter of chaptersToInsert) {
-        if (chapter.chapter_number === null) {
+        if (chapter.chapter_number === null || chapter.chapter_number === undefined || isNaN(chapter.chapter_number)) {
           if (!chapter.title.toLowerCase().startsWith('ngoại truyện')) {
             chapter.title = `Ngoại truyện - ${chapter.title}`;
           }
