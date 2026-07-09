@@ -341,24 +341,45 @@ router.post('/chapter/add', upload.array('txtfile', 100), async (req, res) => {
         chaptersToInsert.push(parsed);
       }
 
-      // Lấy số chương lớn nhất hiện tại của bộ truyện để gán tự động khi thiếu
-      let nextNum = 1;
-      const { data: maxChapterData } = await supabase
+      // Lấy tất cả số chương hiện có của bộ truyện này trong database để đối chiếu
+      const { data: existingChapters } = await supabase
         .from('chapters')
         .select('chapter_number')
-        .eq('story_id', story_id)
-        .order('chapter_number', { ascending: false })
-        .limit(1);
+        .eq('story_id', story_id);
+      
+      const existingNumbers = new Set(existingChapters ? existingChapters.map(c => c.chapter_number) : []);
+      const usedNumbers = new Set();
 
-      if (maxChapterData && maxChapterData.length > 0) {
-        nextNum = Math.floor(maxChapterData[0].chapter_number) + 1;
+      // Bước 1: Xử lý các chương có số cụ thể trước để tránh bị trùng lặp
+      for (const chapter of chaptersToInsert) {
+        if (chapter.chapter_number !== null && chapter.chapter_number !== undefined && !isNaN(chapter.chapter_number)) {
+          let num = chapter.chapter_number;
+          // Nếu số chương bị trùng trong lô upload này, tự động tăng lên
+          while (usedNumbers.has(num)) {
+            num++;
+          }
+          chapter.chapter_number = num;
+          usedNumbers.add(num);
+        }
       }
 
+      // Bước 2: Tìm nextNum cho các chương không có số
+      let nextNum = 1;
+      const sortedExisting = Array.from(existingNumbers).sort((a, b) => b - a);
+      if (sortedExisting.length > 0) {
+        nextNum = Math.floor(sortedExisting[0]) + 1;
+      }
+
+      // Bước 3: Xử lý các chương chưa có số (mặc định gán số tăng dần)
       for (const chapter of chaptersToInsert) {
         if (chapter.chapter_number === null || chapter.chapter_number === undefined || isNaN(chapter.chapter_number)) {
+          while (existingNumbers.has(nextNum) || usedNumbers.has(nextNum)) {
+            nextNum++;
+          }
           chapter.chapter_number = nextNum++;
+          usedNumbers.add(chapter.chapter_number);
         }
-        // Quy tắc đặt tên tiêu đề chương thông minh
+        // Đặt tiêu đề chương thông minh nếu thiếu
         if (!chapter.title) {
           chapter.title = `Chương ${chapter.chapter_number}`;
         }
@@ -465,24 +486,45 @@ router.post('/chapter/add-json', async (req, res) => {
       });
     }
 
-    // Lấy số chương lớn nhất hiện tại của bộ truyện để gán tự động khi thiếu
-    let nextNum = 1;
-    const { data: maxChapterData } = await supabase
+    // Lấy tất cả số chương hiện có của bộ truyện này trong database để đối chiếu
+    const { data: existingChapters } = await supabase
       .from('chapters')
       .select('chapter_number')
-      .eq('story_id', story_id)
-      .order('chapter_number', { ascending: false })
-      .limit(1);
+      .eq('story_id', story_id);
+    
+    const existingNumbers = new Set(existingChapters ? existingChapters.map(c => c.chapter_number) : []);
+    const usedNumbers = new Set();
 
-    if (maxChapterData && maxChapterData.length > 0) {
-      nextNum = Math.floor(maxChapterData[0].chapter_number) + 1;
+    // Bước 1: Xử lý các chương có số cụ thể trước để tránh bị trùng lặp
+    for (const chapter of chaptersToInsert) {
+      if (chapter.chapter_number !== null && chapter.chapter_number !== undefined && !isNaN(chapter.chapter_number)) {
+        let num = chapter.chapter_number;
+        // Nếu số chương bị trùng trong lô upload này, tự động tăng lên
+        while (usedNumbers.has(num)) {
+          num++;
+        }
+        chapter.chapter_number = num;
+        usedNumbers.add(num);
+      }
     }
 
+    // Bước 2: Tìm nextNum cho các chương không có số
+    let nextNum = 1;
+    const sortedExisting = Array.from(existingNumbers).sort((a, b) => b - a);
+    if (sortedExisting.length > 0) {
+      nextNum = Math.floor(sortedExisting[0]) + 1;
+    }
+
+    // Bước 3: Xử lý các chương chưa có số (mặc định gán số tăng dần)
     for (const chapter of chaptersToInsert) {
       if (chapter.chapter_number === null || chapter.chapter_number === undefined || isNaN(chapter.chapter_number)) {
+        while (existingNumbers.has(nextNum) || usedNumbers.has(nextNum)) {
+          nextNum++;
+        }
         chapter.chapter_number = nextNum++;
+        usedNumbers.add(chapter.chapter_number);
       }
-      // Quy tắc đặt tên tiêu đề chương thông minh
+      // Đặt tiêu đề chương thông minh nếu thiếu
       if (!chapter.title) {
         chapter.title = `Chương ${chapter.chapter_number}`;
       }
