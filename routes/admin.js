@@ -156,7 +156,18 @@ router.post('/story/add', upload.single('cover'), async (req, res) => {
 
   } catch (err) {
     console.error('Lỗi thêm truyện:', err);
-    res.status(500).send('Lỗi thêm truyện.');
+    try {
+      const { data: allGenres } = await supabase.from('genres').select('*');
+      res.render('admin/add-story', {
+        title: 'Đăng bộ truyện mới',
+        user: req.user,
+        genres: allGenres || [],
+        success: null,
+        error: `Lỗi thêm truyện: ${err.message || err}`
+      });
+    } catch (renderErr) {
+      res.status(500).send(`Lỗi hệ thống: ${err.message || err}`);
+    }
   }
 });
 
@@ -582,7 +593,7 @@ router.post('/story/edit/:id', upload.single('cover'), async (req, res) => {
 
   } catch (err) {
     console.error('Lỗi cập nhật truyện:', err);
-    res.status(500).send('Lỗi hệ thống.');
+    res.redirect(`/admin/story/edit/${storyId}?error=${encodeURIComponent(err.message || 'Lỗi cập nhật truyện.')}`);
   }
 });
 
