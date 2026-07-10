@@ -1133,3 +1133,11 @@ footer {
         font-size: 0.7rem !important;
     }
 }
+
+/* Hiệu ứng nháy sáng ping cho trạng thái đọc dở */
+@keyframes ping {
+    75%, 100% {
+        transform: scale(2.2);
+        opacity: 0;
+    }
+}
