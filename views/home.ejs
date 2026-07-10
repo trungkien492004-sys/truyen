@@ -34,6 +34,29 @@
                 min-height: 400px;
                 overflow: hidden;
             }
+            
+            /* Backgrounds and Overlays */
+            .banner-landscape-bg {
+                position: absolute;
+                top: 0;
+                right: 0;
+                width: 100%;
+                height: 100%;
+                background-size: cover;
+                background-position: right center;
+                z-index: 1;
+                display: none;
+            }
+            .banner-landscape-overlay {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(to right, #090d16 35%, rgba(9, 13, 22, 0.95) 50%, rgba(9, 13, 22, 0.4) 75%, rgba(9, 13, 22, 0) 100%);
+                z-index: 2;
+                display: none;
+            }
             .banner-bg-blur {
                 position: absolute;
                 top: -10%;
@@ -47,9 +70,11 @@
                 z-index: 1;
                 pointer-events: none;
             }
+            
+            /* Containers and Info Panel */
             .banner-split-container {
                 position: relative;
-                z-index: 2;
+                z-index: 3;
                 display: flex;
                 width: 100%;
                 align-items: center;
@@ -63,7 +88,7 @@
                 display: flex;
                 flex-direction: column;
                 justify-content: center;
-                z-index: 2;
+                z-index: 3;
                 box-sizing: border-box;
             }
             .banner-tag {
@@ -89,7 +114,7 @@
                 word-break: break-word;
                 margin-bottom: 1.8rem;
                 text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
-                max-height: 180px;
+                max-height: 200px;
                 overflow-y: auto;
                 scrollbar-width: thin;
                 scrollbar-color: rgba(99, 102, 241, 0.4) transparent;
@@ -115,13 +140,15 @@
                 box-shadow: 0 8px 25px rgba(37, 99, 235, 0.6);
                 filter: brightness(1.1);
             }
+            
+            /* Media panels */
             .banner-media-panel {
                 flex: 0.8;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 padding: 2rem 3rem 2rem 0;
-                z-index: 2;
+                z-index: 3;
                 box-sizing: border-box;
             }
             .banner-media-card {
@@ -155,6 +182,23 @@
             .banner-media-card:hover img {
                 transform: scale(1.03);
             }
+            
+            /* Full Image View */
+            .banner-full-container {
+                position: relative;
+                z-index: 3;
+                width: 100%;
+                height: 400px;
+                box-sizing: border-box;
+            }
+            .banner-full-container img, .banner-full-container video {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                display: block;
+            }
+            
+            /* Navigation elements */
             .banner-arrow {
                 position: absolute;
                 top: 50%;
@@ -213,6 +257,52 @@
                 border-radius: 4px;
             }
 
+            /* LAYOUT-SPECIFIC CLASS MODIFIERS */
+            
+            /* 1. Landscape (Wide Horizontal Banner): Left movie-fading layout */
+            .banner-slide.layout-landscape .banner-landscape-bg {
+                display: block;
+            }
+            .banner-slide.layout-landscape .banner-landscape-overlay {
+                display: block;
+            }
+            .banner-slide.layout-landscape .banner-bg-blur {
+                display: none;
+            }
+            .banner-slide.layout-landscape .banner-media-panel {
+                display: none !important;
+            }
+            .banner-slide.layout-landscape .banner-info-panel {
+                flex: 0 0 55%;
+                z-index: 3;
+            }
+
+            /* 2. Portrait (Vertical/Square Banner): Split view with card container */
+            .banner-slide.layout-portrait .banner-media-panel {
+                display: flex !important;
+            }
+            .banner-slide.layout-portrait .banner-info-panel {
+                flex: 1.2;
+            }
+            
+            /* 3. No Description: Full image card layout */
+            .banner-slide.no-desc .banner-bg-blur,
+            .banner-slide.no-desc .banner-landscape-overlay,
+            .banner-slide.no-desc .banner-media-panel,
+            .banner-slide.no-desc .banner-info-panel {
+                display: none !important;
+            }
+            .banner-slide.no-desc .banner-landscape-bg {
+                display: block;
+                width: 100%;
+                height: 100%;
+                background-size: contain;
+                background-position: center center;
+                background-repeat: no-repeat;
+                background-color: #090d16;
+            }
+
+            /* Responsive rules */
             @media (max-width: 768px) {
                 .banner-carousel-container {
                     margin: 1rem;
@@ -221,8 +311,8 @@
                     min-height: auto;
                 }
                 .banner-split-container {
-                    flex-direction: column;
-                    min-height: auto;
+                    flex-direction: column !important;
+                    min-height: auto !important;
                     padding: 1.5rem;
                 }
                 .banner-info-panel {
@@ -247,6 +337,7 @@
                     padding: 1rem 0 0 0 !important;
                     flex: none !important;
                     width: 100% !important;
+                    display: flex !important;
                 }
                 .banner-media-card {
                     height: 240px !important;
@@ -254,12 +345,43 @@
                 .banner-arrow {
                     display: none !important;
                 }
+                
+                /* Override landscape mode on mobile (stack instead of crop overlay) */
+                .banner-slide.layout-landscape .banner-landscape-bg {
+                    position: relative !important;
+                    height: 200px !important;
+                    width: 100% !important;
+                    background-size: contain !important;
+                    background-repeat: no-repeat !important;
+                    background-position: center !important;
+                }
+                .banner-slide.layout-landscape .banner-landscape-overlay {
+                    display: none !important;
+                }
+                .banner-slide.layout-landscape {
+                    flex-direction: column !important;
+                }
+                .banner-slide.layout-landscape .banner-split-container {
+                    flex-direction: column-reverse !important;
+                    width: 100% !important;
+                }
+                .banner-slide.layout-landscape .banner-info-panel {
+                    flex: none !important;
+                    width: 100% !important;
+                    padding: 1rem !important;
+                }
             }
         </style>
         <div class="banner-carousel-container">
             <div class="banner-slides">
                 <% banners.forEach((banner, index) => { %>
-                    <div class="banner-slide">
+                    <div class="banner-slide" id="slide-<%= index %>">
+                        <!-- Landscape Crisp Background -->
+                        <div class="banner-landscape-bg"></div>
+                        <!-- Landscape Left Fading Mask -->
+                        <div class="banner-landscape-overlay"></div>
+
+                        <!-- Portrait Blur Background Glow -->
                         <div class="banner-bg-blur" style="background-image: url('<%= banner.media_url %>');"></div>
                         
                         <% if (banner.description) { %>
@@ -291,14 +413,14 @@
                                 </div>
                             </div>
                         <% } else { %>
-                            <div class="banner-full-container" style="position: relative; z-index: 2; width: 100%; height: 400px; display: flex; align-items: center; justify-content: center; box-sizing: border-box;">
+                            <div class="banner-full-container">
                                 <% if (banner.link_url) { %>
                                     <a href="<%= banner.link_url %>" style="display: block; width: 100%; height: 100%;">
                                 <% } %>
                                 <% if (banner.media_type === 'video') { %>
-                                    <video src="<%= banner.media_url %>" autoplay loop muted playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
+                                    <video src="<%= banner.media_url %>" autoplay loop muted playsinline></video>
                                 <% } else { %>
-                                    <img src="<%= banner.media_url %>" alt="Banner" style="width: 100%; height: 100%; object-fit: cover;">
+                                    <img src="<%= banner.media_url %>" alt="Banner">
                                 <% } %>
                                 <% if (banner.link_url) { %>
                                     </a>
@@ -371,6 +493,44 @@
             }
 
             document.addEventListener('DOMContentLoaded', () => {
+                <% banners.forEach((banner, index) => { %>
+                    (function() {
+                        const imgUrl = '<%= banner.media_url %>';
+                        const isVideo = '<%= banner.media_type %>' === 'video';
+                        const slideId = 'slide-<%= index %>';
+                        const slide = document.getElementById(slideId);
+                        const hasDesc = <%= banner.description ? 'true' : 'false' %>;
+
+                        if (!hasDesc) {
+                            slide.classList.add('no-desc');
+                            const bgEl = slide.querySelector('.banner-landscape-bg');
+                            if (bgEl) bgEl.style.backgroundImage = `url('${imgUrl}')`;
+                            return;
+                        }
+
+                        if (isVideo) {
+                            slide.classList.add('layout-portrait');
+                            return;
+                        }
+
+                        const img = new Image();
+                        img.src = imgUrl;
+                        img.onload = function() {
+                            const ratio = this.naturalWidth / this.naturalHeight;
+                            const bgEl = slide.querySelector('.banner-landscape-bg');
+                            
+                            if (ratio > 1.25) {
+                                slide.classList.add('layout-landscape');
+                                if (bgEl) bgEl.style.backgroundImage = `url('${imgUrl}')`;
+                            } else {
+                                slide.classList.add('layout-portrait');
+                            }
+                        };
+                        img.onerror = function() {
+                            slide.classList.add('layout-portrait');
+                        };
+                    })();
+                <% }) %>
                 updateSlidePosition();
                 startBannerInterval();
             });
