@@ -913,7 +913,7 @@ footer {
     .genre-list::-webkit-scrollbar {
         display: none !important;
     }
-    .genre-tag {
+    .genre-list .genre-tag {
         padding: 0.4rem 1rem !important;
         font-size: 0.82rem !important;
         white-space: nowrap !important;
