@@ -21,3 +21,8 @@ public/uploads/*
 .env*
 
 HANDOFF.md
+
+*.js
+!app.js
+!routes/*.js
+!config/*.js
