@@ -467,7 +467,7 @@ router.get('/story/:id', async (req, res) => {
     // 3. Lấy danh sách chương của truyện
     const { data: chapters, error: chaptersErr } = await supabase
       .from('chapters')
-      .select('id, chapter_number, title, created_at')
+      .select('id, chapter_number, title, created_at, views')
       .eq('story_id', storyId)
       .order('chapter_number', { ascending: true });
 
@@ -576,10 +576,15 @@ router.get('/story/:story_id/chapter/:chapter_number', async (req, res) => {
       return res.status(404).send('Không tìm thấy chương truyện.');
     }
 
-    // 3. Ghi nhận lượt xem (Views) vào bảng story_views
+    // 3. Ghi nhận lượt xem (Views) vào bảng story_views và chương truyện
     // Bấm xem chương nào thì chèn 1 bản ghi với story_id của truyện đó (không đồng bộ, không block trang)
     supabase.from('story_views').insert([{ story_id: storyId }]).then(({ error }) => {
-      if (error) console.error('Lỗi khi ghi nhận views:', error);
+      if (error) console.error('Lỗi khi ghi nhận views truyện:', error);
+    });
+
+    // Tăng lượt xem cho chương truyện cụ thể
+    supabase.rpc('increment_chapter_views', { chap_id: chapter.id }).then(({ error }) => {
+      if (error) console.error('Lỗi khi ghi nhận views chương:', error);
     });
 
     // 3b. Lưu lịch sử đọc (tiến độ đọc gần nhất) nếu người dùng đã đăng nhập
