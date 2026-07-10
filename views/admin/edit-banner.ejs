@@ -1,0 +1,57 @@
+<%- include('../partials/header') %>
+
+<div style="margin-bottom: 1.5rem;">
+    <a href="/admin/banners" style="color: var(--text-secondary); font-size: 0.9rem;">&larr; Quay lại Quản lý Banner</a>
+</div>
+
+<div class="admin-sections-grid" style="display: block; max-width: 600px; margin: 0 auto;">
+    <div class="admin-box">
+        <h2 class="section-title">✏️ Chỉnh Sửa Banner</h2>
+        
+        <% if (success) { %>
+            <div class="alert alert-success"><%= success %></div>
+        <% } %>
+
+        <% if (error) { %>
+            <div class="alert alert-error"><%= error %></div>
+        <% } %>
+
+        <form action="/admin/banners/edit/<%= banner.id %>" method="POST" enctype="multipart/form-data">
+            <!-- Hiện media cũ để review -->
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label>File phương tiện hiện tại:</label>
+                <div style="margin-top: 0.5rem; background: #000; padding: 0.5rem; border-radius: 8px; display: inline-block;">
+                    <% if (banner.media_type === 'video') { %>
+                        <video src="<%= banner.media_url %>" autoplay loop muted playsinline style="max-width: 100%; max-height: 200px; border-radius: 6px;"></video>
+                    <% } else { %>
+                        <img src="<%= banner.media_url %>" alt="Current Banner" style="max-width: 100%; max-height: 200px; border-radius: 6px;">
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- Upload file mới nếu muốn thay đổi -->
+            <div class="form-group" style="margin-bottom: 1.2rem;">
+                <label for="media">Thay đổi tệp hình ảnh/video mới (tùy chọn)</label>
+                <input type="file" id="media" name="media" accept="image/*,video/*" style="padding: 0.5rem 0;">
+                <small style="color: var(--text-secondary); display: block; margin-top: 0.2rem;">Bỏ trống nếu muốn giữ nguyên file cũ.</small>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 1.2rem;">
+                <label for="description">Mô tả ngắn</label>
+                <textarea id="description" name="description" placeholder="Mô tả hiển thị trên banner..." style="width: 100%; min-height: 100px; padding: 0.6rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); resize: vertical; white-space: pre-wrap;"><%= banner.description %></textarea>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 1.2rem;">
+                <label for="link_url">Đường dẫn liên kết (tùy chọn)</label>
+                <input type="url" id="link_url" name="link_url" value="<%= banner.link_url || '' %>" placeholder="https://example.com/story/1">
+            </div>
+
+            <div style="display: flex; gap: 0.8rem; margin-top: 1.5rem;">
+                <a href="/admin/banners" class="btn btn-secondary" style="flex: 1; text-align: center; padding: 0.8rem;">HỦY BỎ</a>
+                <button type="submit" class="btn btn-primary" style="flex: 2; padding: 0.8rem;">LƯU THAY ĐỔI</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

@@ -1071,13 +1071,61 @@ router.post('/banners/add', upload.single('media'), async (req, res) => {
 router.post('/banners/delete/:id', async (req, res) => {
   const id = parseInt(req.params.id);
   try {
-    // Lấy thông tin banner trước để xóa file trên Storage nếu cần (không bắt buộc, có thể để lại hoặc xóa)
     const { error } = await supabase.from('banners').delete().eq('id', id);
     if (error) throw error;
     res.redirect('/admin/banners?success=' + encodeURIComponent('Đã xóa banner thành công!'));
   } catch (err) {
     console.error('Lỗi khi xóa banner:', err);
     res.redirect('/admin/banners?error=' + encodeURIComponent(err.message || 'Lỗi hệ thống khi xóa banner.'));
+  }
+});
+
+// TRANG CHỈNH SỬA BANNER (GET)
+router.get('/banners/edit/:id', async (req, res) => {
+  const id = parseInt(req.params.id);
+  try {
+    const { data: banner, error } = await supabase.from('banners').select('*').eq('id', id).single();
+    if (error || !banner) {
+      return res.status(404).send('Không tìm thấy banner.');
+    }
+    res.render('admin/edit-banner', {
+      title: 'Chỉnh sửa Banner',
+      user: req.user,
+      banner,
+      success: req.query.success || null,
+      error: req.query.error || null
+    });
+  } catch (err) {
+    console.error('Lỗi trang sửa banner:', err);
+    res.status(500).send('Lỗi hệ thống.');
+  }
+});
+
+// THỰC HIỆN CẬP NHẬT BANNER (POST)
+router.post('/banners/edit/:id', upload.single('media'), async (req, res) => {
+  const id = parseInt(req.params.id);
+  const { description, link_url } = req.body;
+  try {
+    const updateData = {
+      description: description ? description.trim() : '',
+      link_url: link_url ? link_url.trim() : null
+    };
+
+    if (req.file) {
+      const mediaUrl = await uploadToSupabase(req.file, 'uploads');
+      const isVideo = req.file.mimetype.startsWith('video/');
+      const mediaType = isVideo ? 'video' : 'image';
+      updateData.media_url = mediaUrl;
+      updateData.media_type = mediaType;
+    }
+
+    const { error } = await supabase.from('banners').update(updateData).eq('id', id);
+    if (error) throw error;
+
+    res.redirect('/admin/banners?success=' + encodeURIComponent('Đã cập nhật banner thành công!'));
+  } catch (err) {
+    console.error('Lỗi chỉnh sửa banner:', err);
+    res.redirect(`/admin/banners/edit/${id}?error=` + encodeURIComponent(err.message || 'Lỗi hệ thống.'));
   }
 });
 

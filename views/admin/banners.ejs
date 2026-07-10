@@ -74,9 +74,12 @@
                                 <span style="font-size: 0.8rem; background: rgba(255,255,255,0.05); padding: 0.2rem 0.5rem; border-radius: 4px; text-transform: capitalize;"><%= banner.media_type %></span>
                             </td>
                             <td>
-                                <form action="/admin/banners/delete/<%= banner.id %>" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa banner này không?');" style="display:inline;">
-                                    <button type="submit" class="btn btn-danger" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; border-radius: 4px;">Xóa</button>
-                                </form>
+                                <div style="display: flex; gap: 0.4rem; align-items: center;">
+                                    <a href="/admin/banners/edit/<%= banner.id %>" class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; border-radius: 4px; background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.2); color: var(--accent-color); text-decoration: none;">Sửa</a>
+                                    <form action="/admin/banners/delete/<%= banner.id %>" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa banner này không?');" style="display:inline; margin: 0;">
+                                        <button type="submit" class="btn btn-danger" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; border-radius: 4px;">Xóa</button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                     <% }) %>
