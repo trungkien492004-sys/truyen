@@ -172,6 +172,9 @@ async function uploadToSupabase(file, bucketName = 'uploads') {
 
 // TRANG CHỦ & BẢNG XẾP HẠNG
 router.get('/', async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
   try {
     const status = req.query.status || ''; // '', 'ongoing', 'completed'
 
