@@ -476,7 +476,7 @@ router.get('/story/:id', async (req, res) => {
     try {
       const { data: commentsData } = await supabase
         .from('comments')
-        .select('*, users(display_name, avatar)')
+        .select('*, users!comments_user_id_fkey(display_name, avatar)')
         .eq('story_id', storyId)
         .is('chapter_number', null)
         .order('created_at', { ascending: true });
@@ -585,7 +585,7 @@ router.get('/story/:story_id/chapter/:chapter_number', async (req, res) => {
     try {
       const { data: commentsData } = await supabase
         .from('comments')
-        .select('*, users(display_name, avatar)')
+        .select('*, users!comments_user_id_fkey(display_name, avatar)')
         .eq('story_id', storyId)
         .eq('chapter_number', chapterNumber)
         .order('created_at', { ascending: true });
@@ -933,7 +933,7 @@ router.post('/story/:story_id/comment', async (req, res) => {
     const { data: newComment, error } = await supabase
       .from('comments')
       .insert([commentData])
-      .select('*, users(display_name, avatar)')
+      .select('*, users!comments_user_id_fkey(display_name, avatar)')
       .single();
 
     if (error) throw error;
