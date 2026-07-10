@@ -1140,6 +1140,7 @@ router.get('/comments', async (req, res) => {
     if (error) throw error;
 
     res.render('admin/comments', {
+      title: 'Quản lý Bình luận & Người dùng',
       user: req.user,
       comments: comments || [],
       success: req.query.success || null,
