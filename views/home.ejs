@@ -7,42 +7,314 @@
     
     <!-- BANNER SLIDER CAROUSEL -->
     <% if (typeof banners !== 'undefined' && banners && banners.length > 0) { %>
-        <div class="banner-carousel-container" style="position: relative; max-width: 800px; margin: 1.5rem auto; border-radius: 12px; overflow: hidden; border: 1px solid var(--border-color); box-shadow: 0 8px 24px rgba(0,0,0,0.3); background: var(--bg-secondary);">
-            <div class="banner-slides" style="display: flex; transition: transform 0.5s ease-in-out; width: 100%;">
+        <style>
+            .banner-carousel-container {
+                position: relative;
+                max-width: 900px;
+                margin: 2rem auto;
+                border-radius: 20px;
+                overflow: hidden;
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+                background: #0f172a;
+            }
+            .banner-slides {
+                display: flex;
+                transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+                width: 100%;
+            }
+            .banner-slide {
+                min-width: 100%;
+                box-sizing: border-box;
+                position: relative;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: #090d16;
+                min-height: 400px;
+                overflow: hidden;
+            }
+            .banner-bg-blur {
+                position: absolute;
+                top: -10%;
+                left: -10%;
+                width: 120%;
+                height: 120%;
+                background-size: cover;
+                background-position: center;
+                filter: blur(40px) brightness(0.25) saturate(1.2);
+                opacity: 0.65;
+                z-index: 1;
+                pointer-events: none;
+            }
+            .banner-split-container {
+                position: relative;
+                z-index: 2;
+                display: flex;
+                width: 100%;
+                align-items: center;
+                box-sizing: border-box;
+                min-height: 400px;
+            }
+            .banner-info-panel {
+                flex: 1.2;
+                padding: 2.5rem 3rem;
+                text-align: left;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                z-index: 2;
+                box-sizing: border-box;
+            }
+            .banner-tag {
+                display: inline-block;
+                align-self: flex-start;
+                padding: 0.35rem 0.9rem;
+                background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+                color: white;
+                border-radius: 20px;
+                font-size: 0.72rem;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 1.5px;
+                margin-bottom: 1.2rem;
+                box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+            }
+            .banner-desc-content {
+                color: #e2e8f0;
+                font-size: 0.96rem;
+                font-weight: 400;
+                line-height: 1.8;
+                white-space: pre-wrap;
+                word-break: break-word;
+                margin-bottom: 1.8rem;
+                text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+                max-height: 180px;
+                overflow-y: auto;
+                scrollbar-width: thin;
+                scrollbar-color: rgba(99, 102, 241, 0.4) transparent;
+            }
+            .banner-cta-btn {
+                align-self: flex-start;
+                padding: 0.75rem 2rem;
+                background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+                color: white;
+                border-radius: 10px;
+                font-size: 0.9rem;
+                font-weight: 600;
+                text-decoration: none;
+                display: inline-flex;
+                align-items: center;
+                gap: 0.6rem;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                box-shadow: 0 4px 20px rgba(37, 99, 235, 0.4);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+            }
+            .banner-cta-btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 25px rgba(37, 99, 235, 0.6);
+                filter: brightness(1.1);
+            }
+            .banner-media-panel {
+                flex: 0.8;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 2rem 3rem 2rem 0;
+                z-index: 2;
+                box-sizing: border-box;
+            }
+            .banner-media-card {
+                position: relative;
+                width: 100%;
+                height: 320px;
+                border-radius: 16px;
+                overflow: hidden;
+                border: 1px solid rgba(255, 255, 255, 0.15);
+                box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+                background: rgba(15, 23, 42, 0.6);
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            }
+            .banner-media-card:hover {
+                transform: translateY(-5px) scale(1.02);
+                border-color: rgba(59, 130, 246, 0.5);
+                box-shadow: 0 20px 45px rgba(59, 130, 246, 0.35);
+            }
+            .banner-media-card img {
+                max-width: 95%;
+                max-height: 95%;
+                object-fit: contain;
+                border-radius: 8px;
+                transition: transform 0.5s ease;
+            }
+            .banner-media-card:hover img {
+                transform: scale(1.03);
+            }
+            .banner-arrow {
+                position: absolute;
+                top: 50%;
+                transform: translateY(-50%);
+                background: rgba(15, 23, 42, 0.7);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                color: rgba(255, 255, 255, 0.8);
+                width: 44px;
+                height: 44px;
+                border-radius: 50%;
+                cursor: pointer;
+                font-size: 1.2rem;
+                z-index: 10;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.3s ease;
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+            }
+            .banner-arrow:hover {
+                background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+                color: white;
+                border-color: transparent;
+                box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+            }
+            .arrow-left { left: 15px; }
+            .arrow-right { right: 15px; }
+            
+            .banner-dots-container {
+                position: absolute;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                display: flex;
+                gap: 0.6rem;
+                z-index: 10;
+                background: rgba(15, 23, 42, 0.5);
+                padding: 6px 12px;
+                border-radius: 20px;
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+                border: 1px solid rgba(255, 255, 255, 0.05);
+            }
+            .banner-dot {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                background: rgba(255, 255, 255, 0.3);
+                cursor: pointer;
+                transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            }
+            .banner-dot.active {
+                background: #3b82f6;
+                width: 24px;
+                border-radius: 4px;
+            }
+
+            @media (max-width: 768px) {
+                .banner-carousel-container {
+                    margin: 1rem;
+                }
+                .banner-slide {
+                    min-height: auto;
+                }
+                .banner-split-container {
+                    flex-direction: column;
+                    min-height: auto;
+                    padding: 1.5rem;
+                }
+                .banner-info-panel {
+                    padding: 1rem 0.5rem !important;
+                    flex: none !important;
+                    width: 100% !important;
+                    text-align: center !important;
+                    align-items: center;
+                }
+                .banner-desc-content {
+                    font-size: 0.9rem;
+                    margin-bottom: 1.2rem;
+                    text-align: center;
+                }
+                .banner-tag {
+                    align-self: center !important;
+                }
+                .banner-cta-btn {
+                    align-self: center !important;
+                }
+                .banner-media-panel {
+                    padding: 1rem 0 0 0 !important;
+                    flex: none !important;
+                    width: 100% !important;
+                }
+                .banner-media-card {
+                    height: 240px !important;
+                }
+                .banner-arrow {
+                    display: none !important;
+                }
+            }
+        </style>
+        <div class="banner-carousel-container">
+            <div class="banner-slides">
                 <% banners.forEach((banner, index) => { %>
-                    <div class="banner-slide" style="min-width: 100%; box-sizing: border-box; position: relative; display: flex; flex-direction: column; background: var(--bg-secondary);">
-                        <% if (banner.link_url) { %>
-                            <a href="<%= banner.link_url %>" style="display: block; width: 100%;">
-                        <% } %>
-
-                        <div class="banner-media-wrapper" style="width: 100%; height: 350px; display: flex; align-items: center; justify-content: center; background: var(--bg-secondary); overflow: hidden;">
-                            <% if (banner.media_type === 'video') { %>
-                                <video src="<%= banner.media_url %>" autoplay loop muted playsinline style="width: 100%; height: 100%; object-fit: contain;"></video>
-                            <% } else { %>
-                                <img src="<%= banner.media_url %>" alt="Banner" style="width: 100%; height: 100%; object-fit: contain;">
-                            <% } %>
-                        </div>
-
-                        <% if (banner.link_url) { %>
-                            </a>
-                        <% } %>
-
+                    <div class="banner-slide">
+                        <div class="banner-bg-blur" style="background-image: url('<%= banner.media_url %>');"></div>
+                        
                         <% if (banner.description) { %>
-                            <div class="banner-desc-box" style="padding: 1rem 1.5rem; color: #e2e8f0; text-align: left; font-size: 0.88rem; font-weight: 400; line-height: 1.7; border-top: 1px solid rgba(59, 130, 246, 0.15); background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.9)); white-space: pre-wrap; word-break: break-word; width: 100%; box-sizing: border-box; max-height: 200px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(99,102,241,0.4) transparent;"><%= banner.description %></div>
+                            <div class="banner-split-container">
+                                <div class="banner-info-panel">
+                                    <div class="banner-tag">Nổi bật</div>
+                                    <div class="banner-desc-content"><%= banner.description %></div>
+                                    <% if (banner.link_url) { %>
+                                        <a href="<%= banner.link_url %>" class="banner-cta-btn">
+                                            <span>Khám phá ngay</span>
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                                        </a>
+                                    <% } %>
+                                </div>
+                                <div class="banner-media-panel">
+                                    <div class="banner-media-card">
+                                        <% if (banner.link_url) { %>
+                                            <a href="<%= banner.link_url %>" style="display: flex; width: 100%; height: 100%; align-items: center; justify-content: center;">
+                                        <% } %>
+                                        <% if (banner.media_type === 'video') { %>
+                                            <video src="<%= banner.media_url %>" autoplay loop muted playsinline style="width: 100%; height: 100%; object-fit: contain;"></video>
+                                        <% } else { %>
+                                            <img src="<%= banner.media_url %>" alt="Banner">
+                                        <% } %>
+                                        <% if (banner.link_url) { %>
+                                            </a>
+                                        <% } %>
+                                    </div>
+                                </div>
+                            </div>
+                        <% } else { %>
+                            <div class="banner-full-container" style="position: relative; z-index: 2; width: 100%; height: 400px; display: flex; align-items: center; justify-content: center; box-sizing: border-box;">
+                                <% if (banner.link_url) { %>
+                                    <a href="<%= banner.link_url %>" style="display: block; width: 100%; height: 100%;">
+                                <% } %>
+                                <% if (banner.media_type === 'video') { %>
+                                    <video src="<%= banner.media_url %>" autoplay loop muted playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
+                                <% } else { %>
+                                    <img src="<%= banner.media_url %>" alt="Banner" style="width: 100%; height: 100%; object-fit: cover;">
+                                <% } %>
+                                <% if (banner.link_url) { %>
+                                    </a>
+                                <% } %>
+                            </div>
                         <% } %>
                     </div>
                 <% }) %>
             </div>
 
             <% if (banners.length > 1) { %>
-                <!-- Navigation arrows centered over media -->
-                <button type="button" onclick="prevBanner()" class="banner-arrow arrow-left" style="position: absolute; top: 175px; left: 15px; transform: translateY(-50%); background: rgba(0,0,0,0.55); border: none; color: white; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 1.2rem; z-index: 10; display: flex; align-items: center; justify-content: center; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);">&lt;</button>
-                <button type="button" onclick="nextBanner()" class="banner-arrow arrow-right" style="position: absolute; top: 175px; right: 15px; transform: translateY(-50%); background: rgba(0,0,0,0.55); border: none; color: white; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 1.2rem; z-index: 10; display: flex; align-items: center; justify-content: center; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);">&gt;</button>
-                
-                <!-- Dot indicators just above description box -->
-                <div class="banner-dots-container" style="position: absolute; top: 320px; left: 50%; transform: translateX(-50%); display: flex; gap: 0.5rem; z-index: 10;">
+                <button type="button" onclick="prevBanner()" class="banner-arrow arrow-left">&lt;</button>
+                <button type="button" onclick="nextBanner()" class="banner-arrow arrow-right">&gt;</button>
+                <div class="banner-dots-container">
                     <% banners.forEach((_, idx) => { %>
-                        <span class="banner-dot <%= idx === 0 ? 'active' : '' %>" onclick="currentBanner(<%= idx %>)" style="width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.4); cursor: pointer; transition: all 0.2s;"></span>
+                        <span class="banner-dot <%= idx === 0 ? 'active' : '' %>" onclick="currentBanner(<%= idx %>)"></span>
                     <% }) %>
                 </div>
             <% } %>
@@ -60,11 +332,9 @@
                 slideContainer.style.transform = `translateX(-${currentSlideIndex * 100}%)`;
                 dots.forEach((dot, idx) => {
                     if (idx === currentSlideIndex) {
-                        dot.style.background = 'var(--accent-color)';
-                        dot.style.transform = 'scale(1.2)';
+                        dot.classList.add('active');
                     } else {
-                        dot.style.background = 'rgba(255,255,255,0.4)';
-                        dot.style.transform = 'scale(1)';
+                        dot.classList.remove('active');
                     }
                 });
             }
@@ -100,7 +370,6 @@
                 }
             }
 
-            // Init
             document.addEventListener('DOMContentLoaded', () => {
                 updateSlidePosition();
                 startBannerInterval();
