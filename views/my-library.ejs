@@ -1,0 +1,59 @@
+<%- include('partials/header') %>
+
+<div style="margin-bottom: 1.5rem;">
+    <a href="/" style="color: var(--text-secondary); font-size: 0.9rem;">&larr; Quay lại trang chủ</a>
+</div>
+
+<h2 class="section-title">📚 Tủ truyện của tôi</h2>
+
+<div class="library-tabs" style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.5rem;">
+    <button class="btn btn-secondary tab-btn active" data-tab="reading">📖 Đang đọc (<%= grouped.reading.length %>)</button>
+    <button class="btn btn-secondary tab-btn" data-tab="plan_to_read">🕒 Đọc sau (<%= grouped.plan_to_read.length %>)</button>
+    <button class="btn btn-secondary tab-btn" data-tab="completed">✅ Đã hoàn thành (<%= grouped.completed.length %>)</button>
+    <button class="btn btn-secondary tab-btn" data-tab="favorite">❤️ Yêu thích (<%= grouped.favorite.length %>)</button>
+</div>
+
+<% ['reading', 'plan_to_read', 'completed', 'favorite'].forEach((tabKey, idx) => { %>
+    <div class="library-panel" data-panel="<%= tabKey %>" style="<%= idx === 0 ? '' : 'display:none;' %>">
+        <% if (grouped[tabKey].length === 0) { %>
+            <p style="color: var(--text-secondary); text-align: center; padding: 2rem 0;">Chưa có truyện nào trong danh sách này.</p>
+        <% } else { %>
+            <div class="stories-grid">
+                <% grouped[tabKey].forEach(story => { %>
+                    <div class="story-card">
+                        <a href="/story/<%= story.id %>">
+                            <img src="<%= story.cover_url %>" alt="<%= story.title %>" class="story-cover">
+                        </a>
+                        <div class="story-info">
+                            <a href="/story/<%= story.id %>" class="story-title" title="<%= story.title %>">
+                                <%= story.title %>
+                            </a>
+                            <span class="story-author">Tác giả: <%= story.author %></span>
+                            <% if (story.lastReadChapter) { %>
+                                <p class="story-desc-short">Đang đọc: Chương <%= story.lastReadChapter %></p>
+                            <% } %>
+                            <a href="/story/<%= story.id %><%= story.lastReadChapter ? '/chapter/' + story.lastReadChapter : '' %>" class="btn btn-secondary btn-primary" style="margin-top: auto; font-size: 0.85rem; padding: 0.5rem;"><%= story.lastReadChapter ? 'Đọc tiếp' : 'Đọc ngay' %></a>
+                        </div>
+                    </div>
+                <% }) %>
+            </div>
+        <% } %>
+    </div>
+<% }) %>
+
+<script>
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const panels = document.querySelectorAll('.library-panel');
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            tabBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const target = btn.dataset.tab;
+            panels.forEach(p => {
+                p.style.display = p.dataset.panel === target ? 'block' : 'none';
+            });
+        });
+    });
+</script>
+
+<%- include('partials/footer') %>

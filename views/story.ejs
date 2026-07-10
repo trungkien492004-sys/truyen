@@ -40,11 +40,48 @@
             <p><%= story.description || 'Nội dung bộ truyện đang được cập nhật...' %></p>
         </div>
 
-        <% if (chapters && chapters.length > 0) { %>
-            <a href="/story/<%= story.id %>/chapter/<%= chapters[0].chapter_number %>" class="btn btn-primary" style="align-self: flex-start; padding: 0.8rem 2rem;">ĐỌC TỪ ĐẦU</a>
-        <% } %>
+        <div style="display: flex; gap: 0.8rem; flex-wrap: wrap; align-items: center;">
+            <% if (chapters && chapters.length > 0) { %>
+                <% if (typeof readingProgress !== 'undefined' && readingProgress) { %>
+                    <a href="/story/<%= story.id %>/chapter/<%= readingProgress %>" class="btn btn-primary" style="padding: 0.8rem 2rem;">TIẾP TỤC ĐỌC (Chương <%= readingProgress %>)</a>
+                <% } else { %>
+                    <a href="/story/<%= story.id %>/chapter/<%= chapters[0].chapter_number %>" class="btn btn-primary" style="padding: 0.8rem 2rem;">ĐỌC TỪ ĐẦU</a>
+                <% } %>
+            <% } %>
+
+            <% if (typeof user !== 'undefined' && user) { %>
+                <select id="bookmark-select" data-story-id="<%= story.id %>" style="padding: 0.7rem 1rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary);">
+                    <option value="" <%= !bookmarkStatus ? 'selected' : '' %>>+ Theo dõi truyện</option>
+                    <option value="reading" <%= bookmarkStatus === 'reading' ? 'selected' : '' %>>📖 Đang đọc</option>
+                    <option value="plan_to_read" <%= bookmarkStatus === 'plan_to_read' ? 'selected' : '' %>>🕒 Đọc sau</option>
+                    <option value="completed" <%= bookmarkStatus === 'completed' ? 'selected' : '' %>>✅ Đã hoàn thành</option>
+                    <option value="favorite" <%= bookmarkStatus === 'favorite' ? 'selected' : '' %>>❤️ Yêu thích</option>
+                </select>
+            <% } %>
+        </div>
     </div>
 </div>
+
+<script>
+    const bookmarkSelect = document.getElementById('bookmark-select');
+    if (bookmarkSelect) {
+        bookmarkSelect.addEventListener('change', async () => {
+            const storyId = bookmarkSelect.dataset.storyId;
+            const value = bookmarkSelect.value;
+            try {
+                const resp = await fetch(`/bookmark/${storyId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(value ? { status: value } : { remove: true })
+                });
+                const data = await resp.json();
+                if (!data.success) alert('Lỗi: ' + data.error);
+            } catch (err) {
+                alert('Có lỗi xảy ra: ' + err.message);
+            }
+        });
+    }
+</script>
 
 <div class="chapters-container">
     <h2 class="section-title">Danh sách chương</h2>

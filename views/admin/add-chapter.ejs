@@ -152,6 +152,85 @@
     methodRadios.forEach(r => r.addEventListener('change', toggleForms));
     toggleForms();
 
+    function splitTextIntoChapters(rawText, fileName) {
+        const chapterHeaderRegex = /^(?:Chương|CHƯƠNG|Chap|CHAP|Chapter|CHAPTER|Phần|PHẦN|Part|PART)\s*\.?\s*(\d+(?:\.\d+)?)(?:[:\s,\-–]+(.*))?$/im;
+        const lines = rawText.split('\n');
+        const chapters = [];
+        let currentChapter = null;
+        let currentLines = [];
+
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (!line) continue;
+            const match = line.match(chapterHeaderRegex);
+
+            if (match) {
+                if (currentChapter !== null) {
+                    chapters.push({
+                        name: currentChapter.title + '.txt',
+                        type: 'txt',
+                        content: currentLines.map(l => `<p>${l}</p>`).join('')
+                    });
+                }
+                const chapNum = parseFloat(match[1]);
+                const chapTitle = match[2] ? match[2].trim() : '';
+                currentChapter = {
+                    title: chapTitle ? `Chương ${chapNum}: ${chapTitle}` : `Chương ${chapNum}`
+                };
+                currentLines = [];
+            } else if (currentChapter !== null) {
+                currentLines.push(line);
+            }
+        }
+
+        if (currentChapter !== null && currentLines.length > 0) {
+            chapters.push({
+                name: currentChapter.title + '.txt',
+                type: 'txt',
+                content: currentLines.map(l => `<p>${l}</p>`).join('')
+            });
+        }
+        
+        if (chapters.length === 0) {
+            chapters.push({
+                name: fileName.replace(/\.pdf$/i, '.txt'),
+                type: 'txt',
+                content: lines.filter(l => l.trim()).map(l => `<p>${l.trim()}</p>`).join('')
+            });
+        }
+        
+        return chapters;
+    }
+
+    async function uploadInBatches(storyId, processedFiles, submitBtn) {
+        const BATCH_SIZE = 50; // Giới hạn 50 chương mỗi lần gửi
+        let successCount = 0;
+        for (let i = 0; i < processedFiles.length; i += BATCH_SIZE) {
+            const batch = processedFiles.slice(i, i + BATCH_SIZE);
+            submitBtn.textContent = `⏳ Đang lưu database (${i + 1} - ${i + batch.length} / ${processedFiles.length})...`;
+            
+            const response = await fetch('/admin/chapter/add-json', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ story_id: storyId, files: batch })
+            });
+
+            let data;
+            if (response.headers.get('content-type')?.includes('application/json')) {
+                data = await response.json();
+            } else {
+                const txt = await response.text();
+                throw new Error('Lỗi máy chủ (' + response.status + '): ' + txt.substring(0, 200));
+            }
+
+            if (!data.success) {
+                throw new Error(data.error);
+            }
+            successCount += batch.length;
+        }
+        return successCount;
+    }
+
     // INTERCEPT FORM SUBMIT
     const form = document.querySelector('form');
     form.addEventListener('submit', async (e) => {
@@ -185,35 +264,11 @@
                     fullText += pageText + '\n';
                 }
 
-                submitBtn.textContent = '⏳ Đang lưu vào database...';
+                submitBtn.textContent = '⏳ Đang xử lý text...';
+                const processedFiles = splitTextIntoChapters(fullText, file.name);
                 
-                const processedFiles = [{
-                    name: file.name.replace('.pdf', '.txt'),
-                    type: 'txt',
-                    content: fullText
-                }];
-
-                const response = await fetch('/admin/chapter/add-json', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ story_id: storyId, files: processedFiles })
-                });
-
-                let data;
-                if (response.headers.get('content-type')?.includes('application/json')) {
-                    data = await response.json();
-                } else {
-                    const txt = await response.text();
-                    throw new Error('Lỗi máy chủ (' + response.status + '): ' + txt.substring(0, 200));
-                }
-
-                if (data.success) {
-                    window.location.href = '/admin/chapter/add?success=' + encodeURIComponent(data.message);
-                } else {
-                    alert('Lỗi: ' + data.error);
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = 'BẮT ĐẦU ĐĂNG CHƯƠNG';
-                }
+                await uploadInBatches(storyId, processedFiles, submitBtn);
+                window.location.href = '/admin/chapter/add?success=' + encodeURIComponent(`Đã tải lên ${processedFiles.length} chương thành công`);
             } catch (err) {
                 alert('Có lỗi xảy ra: ' + err.message);
                 const sb = document.getElementById('submit-btn');
@@ -264,30 +319,13 @@
                         processedFiles.push({ name: file.name, type: 'docx', content: html });
                     } else {
                         const text = await file.text();
-                        processedFiles.push({ name: file.name, type: 'txt', content: text });
+                        const splitted = splitTextIntoChapters(text, file.name);
+                        processedFiles.push(...splitted);
                     }
                 }
-                submitBtn.textContent = '⏳ Đang lưu vào database...';
-                const response = await fetch('/admin/chapter/add-json', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ story_id: storyId, files: processedFiles })
-                });
-                let resData;
-                if (response.headers.get('content-type')?.includes('application/json')) {
-                    resData = await response.json();
-                } else {
-                    const text = await response.text();
-                    if (response.status === 413) throw new Error('File quá lớn (>4.5MB). Vui lòng chia nhỏ file.');
-                    throw new Error('Lỗi server (' + response.status + '): ' + text.substring(0, 150));
-                }
-                if (resData.success) {
-                    window.location.href = '/admin/chapter/add?success=' + encodeURIComponent(resData.message);
-                } else {
-                    alert('Lỗi đăng chương: ' + resData.error);
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = origText;
-                }
+                
+                await uploadInBatches(storyId, processedFiles, submitBtn);
+                window.location.href = '/admin/chapter/add?success=' + encodeURIComponent(`Đã tải lên ${processedFiles.length} chương thành công`);
             } catch (err) {
                 alert('Có lỗi xảy ra: ' + err.message);
                 const sb = document.getElementById('submit-btn');

@@ -43,11 +43,11 @@ async function uploadToSupabase(file, bucketName = 'uploads') {
 // TRANG CHỦ & BẢNG XẾP HẠNG
 router.get('/', async (req, res) => {
   try {
-    // 1. Lấy tất cả danh sách truyện
+    // 1. Lấy tất cả danh sách truyện, sắp xếp theo truyện có chương MỚI CẬP NHẬT gần nhất lên đầu
     const { data: stories, error: storiesError } = await supabase
-      .from('stories')
+      .from('stories_with_last_update')
       .select('*')
-      .order('created_at', { ascending: false });
+      .order('last_update_at', { ascending: false });
 
     if (storiesError) throw storiesError;
 
@@ -199,12 +199,35 @@ router.get('/story/:id', async (req, res) => {
 
     if (chaptersErr) throw chaptersErr;
 
+    // 4. Nếu người dùng đã đăng nhập: lấy tiến độ đọc + trạng thái bookmark của truyện này
+    let readingProgress = null;
+    let bookmarkStatus = null;
+    if (req.user && req.user.id) {
+      const { data: progress } = await supabase
+        .from('reading_history')
+        .select('chapter_number')
+        .eq('user_id', req.user.id)
+        .eq('story_id', storyId)
+        .single();
+      readingProgress = progress ? progress.chapter_number : null;
+
+      const { data: bookmark } = await supabase
+        .from('bookmarks')
+        .select('status')
+        .eq('user_id', req.user.id)
+        .eq('story_id', storyId)
+        .single();
+      bookmarkStatus = bookmark ? bookmark.status : null;
+    }
+
     res.render('story', {
       title: `${story.title} - Chi tiết truyện`,
       user: req.user,
       story,
       genres: storyGenres,
-      chapters
+      chapters,
+      readingProgress,
+      bookmarkStatus
     });
   } catch (err) {
     console.error('Lỗi chi tiết truyện:', err);
@@ -240,6 +263,16 @@ router.get('/story/:story_id/chapter/:chapter_number', async (req, res) => {
       if (error) console.error('Lỗi khi ghi nhận views:', error);
     });
 
+    // 3b. Lưu lịch sử đọc (tiến độ đọc gần nhất) nếu người dùng đã đăng nhập
+    if (req.user && req.user.id) {
+      supabase.from('reading_history').upsert(
+        { user_id: req.user.id, story_id: storyId, chapter_number: chapterNumber, updated_at: new Date().toISOString() },
+        { onConflict: 'user_id,story_id' }
+      ).then(({ error }) => {
+        if (error) console.error('Lỗi khi lưu lịch sử đọc:', error);
+      });
+    }
+
     // 4. Kiểm tra chương trước và chương sau để điều hướng
     const { data: prevChapter } = await supabase
       .from('chapters')
@@ -273,6 +306,88 @@ router.get('/story/:story_id/chapter/:chapter_number', async (req, res) => {
     });
   } catch (err) {
     console.error('Lỗi đọc chương:', err);
+    res.status(500).send('Lỗi hệ thống.');
+  }
+});
+
+// THÊM/CẬP NHẬT/GỠ BOOKMARK (THEO DÕI TRUYỆN) - CẦN ĐĂNG NHẬP
+router.post('/bookmark/:story_id', async (req, res) => {
+  if (!req.user || !req.user.id) {
+    return res.status(401).json({ success: false, error: 'Vui lòng đăng nhập để sử dụng tính năng này.' });
+  }
+
+  const storyId = parseInt(req.params.story_id);
+  const { status, remove } = req.body; // status: reading | plan_to_read | completed | favorite
+
+  try {
+    if (remove) {
+      const { error } = await supabase
+        .from('bookmarks')
+        .delete()
+        .eq('user_id', req.user.id)
+        .eq('story_id', storyId);
+      if (error) throw error;
+      return res.json({ success: true, message: 'Đã bỏ theo dõi truyện.', status: null });
+    }
+
+    const validStatuses = ['reading', 'plan_to_read', 'completed', 'favorite'];
+    const newStatus = validStatuses.includes(status) ? status : 'reading';
+
+    const { error } = await supabase
+      .from('bookmarks')
+      .upsert(
+        { user_id: req.user.id, story_id: storyId, status: newStatus },
+        { onConflict: 'user_id,story_id' }
+      );
+    if (error) throw error;
+
+    res.json({ success: true, message: 'Đã cập nhật theo dõi truyện!', status: newStatus });
+  } catch (err) {
+    console.error('Lỗi khi cập nhật bookmark:', err);
+    res.status(500).json({ success: false, error: err.message || 'Lỗi hệ thống.' });
+  }
+});
+
+// TRANG "TỦ TRUYỆN CỦA TÔI" (DANH SÁCH CÁ NHÂN) - CẦN ĐĂNG NHẬP
+router.get('/my-library', async (req, res) => {
+  if (!req.user || !req.user.id) {
+    return res.redirect('/auth/login');
+  }
+
+  try {
+    const { data: bookmarks, error } = await supabase
+      .from('bookmarks')
+      .select('status, story_id, stories(*)')
+      .eq('user_id', req.user.id)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    const storyIds = (bookmarks || []).map(b => b.story_id);
+    let progressMap = {};
+    if (storyIds.length > 0) {
+      const { data: historyRows } = await supabase
+        .from('reading_history')
+        .select('story_id, chapter_number')
+        .eq('user_id', req.user.id)
+        .in('story_id', storyIds);
+      (historyRows || []).forEach(h => { progressMap[h.story_id] = h.chapter_number; });
+    }
+
+    const grouped = { reading: [], plan_to_read: [], completed: [], favorite: [] };
+    (bookmarks || []).forEach(b => {
+      if (!b.stories) return;
+      const item = { ...b.stories, lastReadChapter: progressMap[b.story_id] || null };
+      if (grouped[b.status]) grouped[b.status].push(item);
+    });
+
+    res.render('my-library', {
+      title: 'Tủ truyện của tôi',
+      user: req.user,
+      grouped
+    });
+  } catch (err) {
+    console.error('Lỗi trang tủ truyện:', err);
     res.status(500).send('Lỗi hệ thống.');
   }
 });

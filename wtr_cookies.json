@@ -1,0 +1,43 @@
+[
+  {
+    "name": "_ga_N72PBEFJ1N",
+    "value": "GS2.1.s1783659801$o1$g0$t1783659801$j60$l0$h0",
+    "domain": ".wtr-lab.com",
+    "path": "/",
+    "expires": 1818219801.655153,
+    "size": 59,
+    "httpOnly": false,
+    "secure": false,
+    "session": false,
+    "priority": "Medium",
+    "sourceScheme": "Secure"
+  },
+  {
+    "name": "cf_clearance",
+    "value": "dv7NVB.7w0vLaAkVT9gg_oGYzx6_kb7IZgGW.CYJ_Jg-1783659800-1.2.1.1-V2qm2mMOWiBb2G3aFwhmpsxV1.EHA58.LMThYmyaJS02T47BLn7P4b7cwLa729oCVGU7BAiTu3SCrto9n42APVmLdi48Q91YorzNsBFKPHP69XrLJ.rRNrfy9qZ4ZGiA0W_aTzKsDWgFJJ4vHOJDHqWd6HqiMwHKP.NR4VFfjruub2EQsn4dykkWUSUs15FGjpkOgSZJA.0Ou9BXbSX0dQEzO8ze81ECyJzaIw_tjwwnDA3Vw2BWfTWMAm_kCw4tWABX67n199fjgwnn2pMaCEpkE0K.jakXeJhS0EZwuTvb5RJ7CybfpsmXSdMs27cb3rjStqzc5lpRK5cKuWa78Q",
+    "domain": ".wtr-lab.com",
+    "path": "/",
+    "expires": 1815195800.958085,
+    "size": 417,
+    "httpOnly": true,
+    "secure": true,
+    "session": false,
+    "sameSite": "None",
+    "priority": "Medium",
+    "sourceScheme": "Secure",
+    "partitionKey": "https://wtr-lab.com"
+  },
+  {
+    "name": "_ga",
+    "value": "GA1.1.1922460727.1783659802",
+    "domain": ".wtr-lab.com",
+    "path": "/",
+    "expires": 1818219801.656077,
+    "size": 30,
+    "httpOnly": false,
+    "secure": false,
+    "session": false,
+    "priority": "Medium",
+    "sourceScheme": "Secure"
+  }
+]
