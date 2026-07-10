@@ -223,6 +223,29 @@ router.get('/', async (req, res) => {
       console.error('Lỗi lấy danh sách banner:', e);
     }
 
+    // 3e. Lấy lịch sử đọc gần nhất của độc giả (để hiển thị Bạn đang đọc)
+    let lastRead = null;
+    if (req.user && req.user.id) {
+      try {
+        const { data: history, error: historyErr } = await supabase
+          .from('reading_history')
+          .select('chapter_number, story_id, stories(title)')
+          .eq('user_id', req.user.id)
+          .order('updated_at', { ascending: false })
+          .limit(1);
+        
+        if (!historyErr && history && history.length > 0) {
+          lastRead = {
+            story_id: history[0].story_id,
+            story_title: history[0].stories ? history[0].stories.title : '',
+            chapter_number: history[0].chapter_number
+          };
+        }
+      } catch (e) {
+        console.error('Lỗi lấy lịch sử đọc gần nhất:', e);
+      }
+    }
+
     res.render('home', {
       title: 'Trang chủ - Web Đọc Truyện',
       user: req.user,
@@ -235,6 +258,7 @@ router.get('/', async (req, res) => {
       topReaders,
       topBookmarks,
       banners,
+      lastRead,
       activeGenre: null,
       searchQuery: null,
       filters: { status }
