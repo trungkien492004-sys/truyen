@@ -66,13 +66,9 @@
             <% } %>
 
             <% if (typeof user !== 'undefined' && user) { %>
-                <select id="bookmark-select" data-story-id="<%= story.id %>" style="padding: 0.7rem 1rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary);">
-                    <option value="" <%= !bookmarkStatus ? 'selected' : '' %>>+ Theo dõi truyện</option>
-                    <option value="reading" <%= bookmarkStatus === 'reading' ? 'selected' : '' %>>📖 Đang đọc</option>
-                    <option value="plan_to_read" <%= bookmarkStatus === 'plan_to_read' ? 'selected' : '' %>>🕒 Đọc sau</option>
-                    <option value="completed" <%= bookmarkStatus === 'completed' ? 'selected' : '' %>>✅ Đã hoàn thành</option>
-                    <option value="favorite" <%= bookmarkStatus === 'favorite' ? 'selected' : '' %>>❤️ Yêu thích</option>
-                </select>
+                <button id="bookmark-btn" data-story-id="<%= story.id %>" data-bookmarked="<%= bookmarkStatus ? 'true' : 'false' %>" class="btn <%= bookmarkStatus ? 'btn-secondary' : 'btn-primary' %>" style="padding: 0.8rem 1.8rem; border-radius: 8px; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
+                    <%= bookmarkStatus ? '💔 Bỏ theo dõi' : '❤️ Theo dõi' %>
+                </button>
             <% } %>
         </div>
     </div>
@@ -109,19 +105,32 @@
         });
     }
 
-    const bookmarkSelect = document.getElementById('bookmark-select');
-    if (bookmarkSelect) {
-        bookmarkSelect.addEventListener('change', async () => {
-            const storyId = bookmarkSelect.dataset.storyId;
-            const value = bookmarkSelect.value;
+    const bookmarkBtn = document.getElementById('bookmark-btn');
+    if (bookmarkBtn) {
+        bookmarkBtn.addEventListener('click', async () => {
+            const storyId = bookmarkBtn.dataset.storyId;
+            const isBookmarked = bookmarkBtn.dataset.bookmarked === 'true';
             try {
                 const resp = await fetch(`/bookmark/${storyId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(value ? { status: value } : { remove: true })
+                    body: JSON.stringify(isBookmarked ? { remove: true } : { status: 'reading' })
                 });
                 const data = await resp.json();
-                if (!data.success) alert('Lỗi: ' + data.error);
+                if (data.success) {
+                    if (isBookmarked) {
+                        bookmarkBtn.dataset.bookmarked = 'false';
+                        bookmarkBtn.className = 'btn btn-primary';
+                        bookmarkBtn.innerHTML = '❤️ Theo dõi';
+                    } else {
+                        bookmarkBtn.dataset.bookmarked = 'true';
+                        bookmarkBtn.className = 'btn btn-secondary';
+                        bookmarkBtn.innerHTML = '💔 Bỏ theo dõi';
+                    }
+                    location.reload();
+                } else {
+                    alert('Lỗi: ' + data.error);
+                }
             } catch (err) {
                 alert('Có lỗi xảy ra: ' + err.message);
             }

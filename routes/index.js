@@ -741,17 +741,15 @@ router.get('/my-library', async (req, res) => {
       (historyRows || []).forEach(h => { progressMap[h.story_id] = h.chapter_number; });
     }
 
-    const grouped = { reading: [], plan_to_read: [], completed: [], favorite: [] };
-    (bookmarks || []).forEach(b => {
-      if (!b.stories) return;
-      const item = { ...b.stories, lastReadChapter: progressMap[b.story_id] || null };
-      if (grouped[b.status]) grouped[b.status].push(item);
-    });
+    const stories = (bookmarks || []).map(b => {
+      if (!b.stories) return null;
+      return { ...b.stories, lastReadChapter: progressMap[b.story_id] || null };
+    }).filter(Boolean);
 
     res.render('my-library', {
       title: 'Tủ truyện của tôi',
       user: req.user,
-      grouped
+      stories
     });
   } catch (err) {
     console.error('Lỗi trang tủ truyện:', err);
