@@ -10,16 +10,10 @@
         <button type="submit" class="btn btn-primary">Tìm kiếm</button>
     </form>
 
-    <!-- BỘ LỌC NÂNG CAO: kết hợp thể loại + trạng thái + số chương + sắp xếp -->
+    <!-- BỘ LỌC NÂNG CAO: kết hợp trạng thái + số chương + sắp xếp (chọn thể loại dùng danh sách pill bên dưới) -->
     <form action="/search" method="GET" style="display: flex; flex-wrap: wrap; gap: 0.6rem; justify-content: center; margin-top: 1rem;">
         <input type="hidden" name="q" value="<%= searchQuery || '' %>">
-
-        <select name="genre" style="padding: 0.5rem 0.8rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 0.85rem;">
-            <option value="">Tất cả thể loại</option>
-            <% genres.forEach(genre => { %>
-                <option value="<%= genre.slug %>" <%= (typeof filters !== 'undefined' && filters.genre === genre.slug) ? 'selected' : '' %>><%= genre.name %></option>
-            <% }) %>
-        </select>
+        <input type="hidden" name="genre" value="<%= (typeof filters !== 'undefined' && filters.genre) ? filters.genre : (activeGenre ? activeGenre.slug : '') %>">
 
         <select name="status" style="padding: 0.5rem 0.8rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 0.85rem;">
             <option value="">Mọi trạng thái</option>
@@ -190,6 +184,26 @@
                     <% } %>
                 </div>
             </div>
+
+            <!-- KHỐI BẢNG XẾP HẠNG ĐỘC GIẢ (theo EXP tích lũy từ việc đọc truyện) -->
+            <% if (typeof topReaders !== 'undefined' && topReaders.length > 0) { %>
+                <div class="rankings-container" style="margin-top: 1.5rem;">
+                    <h3 class="section-title" style="font-size: 1.3rem; margin-bottom: 1rem;">🥇 BXH Độc Giả</h3>
+                    <% topReaders.forEach((reader, index) => { %>
+                        <div class="ranking-item" style="cursor: default;">
+                            <div class="rank-number"><%= index + 1 %></div>
+                            <img src="<%= reader.avatar || '/css/default-avatar.png' %>" alt="avatar" class="ranking-cover" style="border-radius: 50%;">
+                            <div class="ranking-info">
+                                <div class="ranking-title"><%= reader.display_name %></div>
+                                <div class="ranking-views">
+                                    ⭐ <%= reader.exp %> EXP · 📖 <%= reader.chapters_read %> chương
+                                    <% if (reader.streak_days > 0) { %> · 🔥 <%= reader.streak_days %> ngày<% } %>
+                                </div>
+                            </div>
+                        </div>
+                    <% }) %>
+                </div>
+            <% } %>
         </div>
     <% } %>
 </div>

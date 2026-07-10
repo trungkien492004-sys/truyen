@@ -117,6 +117,15 @@ router.get('/', async (req, res) => {
     const { data: topMonthly } = await supabase.from('views_ranking_monthly').select('*').order('view_count', { ascending: false }).limit(5);
     const { data: topYearly } = await supabase.from('views_ranking_yearly').select('*').order('view_count', { ascending: false }).limit(5);
 
+    // 3b. Lấy bảng xếp hạng độc giả (top người đọc nhiều nhất theo EXP) - không chặn trang chủ nếu lỗi/chưa có bảng
+    let topReaders = [];
+    try {
+      const { data: readers } = await supabase.from('leaderboard_by_exp').select('*').limit(5);
+      topReaders = (readers || []).map(r => ({ ...r, badge: getBadgeForCount(r.chapters_read || 0) }));
+    } catch (e) {
+      console.error('Lỗi lấy BXH độc giả (bỏ qua, không chặn trang chủ):', e);
+    }
+
     res.render('home', {
       title: 'Trang chủ - Web Đọc Truyện',
       user: req.user,
@@ -126,6 +135,7 @@ router.get('/', async (req, res) => {
       topWeekly: topWeekly || [],
       topMonthly: topMonthly || [],
       topYearly: topYearly || [],
+      topReaders,
       activeGenre: null,
       searchQuery: null
     });
@@ -558,31 +568,6 @@ function getBadgeForCount(count) {
   }
   return null;
 }
-
-// TRANG BẢNG XẾP HẠNG ĐỘC GIẢ (THEO EXP / SỐ CHƯƠNG ĐỌC)
-router.get('/leaderboard', async (req, res) => {
-  try {
-    const { data: rows, error } = await supabase
-      .from('leaderboard_by_exp')
-      .select('*')
-      .limit(50);
-    if (error) throw error;
-
-    const leaderboard = (rows || []).map(r => ({
-      ...r,
-      badge: getBadgeForCount(r.chapters_read || 0)
-    }));
-
-    res.render('leaderboard', {
-      title: 'Bảng Xếp Hạng Độc Giả',
-      user: req.user,
-      leaderboard
-    });
-  } catch (err) {
-    console.error('Lỗi bảng xếp hạng:', err);
-    res.status(500).send('Lỗi hệ thống.');
-  }
-});
 
 // TRANG "TỦ TRUYỆN CỦA TÔI" (DANH SÁCH CÁ NHÂN) - CẦN ĐĂNG NHẬP
 router.get('/my-library', async (req, res) => {
