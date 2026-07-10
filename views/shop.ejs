@@ -217,7 +217,7 @@
     <div id="tab-badge" class="shop-grid tab-content">
         <% const badgeItems = items.filter(i => i.type === 'badge'); %>
         <% badgeItems.forEach(item => { %>
-            <% const isOwned = ownedItemIds.includes(item.id); %>
+            <% const isOwned = (user && user.role === 'admin') || ownedItemIds.includes(item.id); %>
             <% const isEquipped = userData.equipped_badge === item.value; %>
             <div class="shop-card" id="item-card-<%= item.id %>">
                 <% if (isEquipped) { %>
@@ -255,7 +255,7 @@
     <div id="tab-avatar" class="shop-grid tab-content" style="display: none;">
         <% const avatarItems = items.filter(i => i.type === 'avatar'); %>
         <% avatarItems.forEach(item => { %>
-            <% const isOwned = ownedItemIds.includes(item.id); %>
+            <% const isOwned = (user && user.role === 'admin') || ownedItemIds.includes(item.id); %>
             <% const isEquipped = userData.equipped_avatar === item.value; %>
             <div class="shop-card" id="item-card-<%= item.id %>">
                 <% if (isEquipped) { %>
@@ -297,7 +297,7 @@
             <p style="grid-column: 1/-1; text-align: center; color: var(--text-secondary); padding: 3rem 0;">Cửa hàng chưa mở bán khung viền nào. Vui lòng quay lại sau!</p>
         <% } else { %>
             <% frameItems.forEach(item => { %>
-                <% const isOwned = ownedItemIds.includes(item.id); %>
+                <% const isOwned = (user && user.role === 'admin') || ownedItemIds.includes(item.id); %>
                 <% const isEquipped = userData.equipped_frame === item.value; %>
                 <div class="shop-card" id="item-card-<%= item.id %>">
                     <% if (isEquipped) { %>
