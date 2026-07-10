@@ -1,0 +1,157 @@
+<%- include('../partials/header') %>
+
+<div style="margin-bottom: 1.5rem;">
+    <a href="/admin" style="color: var(--text-secondary); font-size: 0.9rem; text-decoration: none;">&larr; Quay lại Trang quản trị</a>
+</div>
+
+<div class="admin-sections-grid" style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem; align-items: start;">
+    <!-- Cột trái: Thêm Vật Phẩm Mới -->
+    <div class="admin-box" style="height: fit-content;">
+        <h2 class="section-title" style="font-size: 1.2rem; margin-bottom: 1.5rem;">➕ Thêm Vật Phẩm Mới</h2>
+        
+        <% if (success) { %>
+            <div class="alert alert-success" style="margin-bottom: 1rem;"><%= success %></div>
+        <% } %>
+
+        <% if (error) { %>
+            <div class="alert alert-error" style="margin-bottom: 1rem;"><%= error %></div>
+        <% } %>
+
+        <form action="/admin/shop/add" method="POST" enctype="multipart/form-data">
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label for="name">Tên vật phẩm *</label>
+                <input type="text" id="name" name="name" placeholder="Ví dụ: Huy hiệu Hậu Cung Đại Đế" required style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary);">
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label for="type">Loại vật phẩm *</label>
+                <select id="type" name="type" required onchange="toggleValueInput()" style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary);">
+                    <option value="badge">Huy hiệu biệt danh (Badge)</option>
+                    <option value="avatar">Ảnh đại diện đặc biệt (Avatar)</option>
+                </select>
+            </div>
+
+            <!-- Giá trị cho Huy hiệu (chỉ hiện khi chọn badge) -->
+            <div class="form-group" id="badge-value-group" style="margin-bottom: 1rem;">
+                <label for="value_text">Nhãn của Huy hiệu (Text hiển thị) *</label>
+                <input type="text" id="value_text" name="value_text" placeholder="Ví dụ: 🏰 Hậu Cung Đại Đế" style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary);">
+            </div>
+
+            <!-- File Upload cho Avatar (chỉ hiện khi chọn avatar) -->
+            <div class="form-group" id="avatar-file-group" style="margin-bottom: 1rem; display: none;">
+                <label for="avatar_file">Tải lên file ảnh đại diện *</label>
+                <input type="file" id="avatar_file" name="avatar_file" accept="image/*" style="width: 100%; padding: 0.4rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary);">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label for="price_exp">Giá bán (EXP) *</label>
+                <input type="number" id="price_exp" name="price_exp" placeholder="Ví dụ: 1000" required style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary);">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label for="description">Mô tả ngắn</label>
+                <textarea id="description" name="description" placeholder="Mô tả tác dụng/độ hiếm..." style="width: 100%; min-height: 80px; padding: 0.6rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); resize: vertical;"></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.8rem; margin-top: 1rem; border-radius: 8px;">ĐĂNG BÁN VẬT PHẨM</button>
+        </form>
+    </div>
+
+    <!-- Cột phải: Danh sách và Chỉnh sửa vật phẩm -->
+    <div class="admin-box">
+        <h2 class="section-title" style="font-size: 1.2rem; margin-bottom: 1.5rem;">🛍️ Danh Sách Vật Phẩm Cửa Hàng</h2>
+        
+        <% if (items.length === 0) { %>
+            <p style="color: var(--text-secondary); text-align: center; padding: 2rem 0;">Cửa hàng chưa có vật phẩm nào được đăng bán.</p>
+        <% } else { %>
+            <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                <% items.forEach(item => { %>
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem;">
+                        <form action="/admin/shop/edit/<%= item.id %>" method="POST" enctype="multipart/form-data" style="margin: 0; display: flex; flex-wrap: wrap; gap: 1.5rem; justify-content: space-between;">
+                            <!-- Preview & File Input / Text Value -->
+                            <div style="flex: 1; min-width: 250px; display: flex; gap: 1rem; align-items: center;">
+                                <% if (item.type === 'avatar') { %>
+                                    <div style="width: 80px; height: 80px; flex-shrink: 0; border-radius: 50%; overflow: hidden; border: 2px solid var(--border-color);">
+                                        <img src="<%= item.value %>" onerror="this.src='/css/default-avatar.png'" alt="Avatar Preview" style="width: 100%; height: 100%; object-fit: cover;">
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <span style="font-size: 0.72rem; text-transform: uppercase; color: #a855f7; font-weight: bold; display: block; margin-bottom: 0.2rem;">👤 Ảnh đại diện</span>
+                                        <input type="hidden" name="type" value="avatar">
+                                        <label style="font-size: 0.75rem; color: var(--text-secondary); display: block; margin-bottom: 0.2rem;">Thay đổi file ảnh:</label>
+                                        <input type="file" name="avatar_file" accept="image/*" style="font-size: 0.75rem; width: 100%; background: var(--bg-primary); padding: 0.2rem; border-radius: 4px; border: 1px solid var(--border-color);">
+                                    </div>
+                                <% } else { %>
+                                    <div style="width: 80px; min-height: 50px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.3); border-radius: 8px;">
+                                        <span style="font-size: 0.8rem; color: #10b981; font-weight: bold; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 0.2rem 0.5rem; border-radius: 4px;"><%= item.value %></span>
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <span style="font-size: 0.72rem; text-transform: uppercase; color: #10b981; font-weight: bold; display: block; margin-bottom: 0.2rem;">🏷️ Huy hiệu</span>
+                                        <input type="hidden" name="type" value="badge">
+                                        <input type="text" name="value_text" value="<%= item.value %>" required style="width: 100%; padding: 0.4rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 0.85rem;">
+                                    </div>
+                                <% } %>
+                            </div>
+
+                            <!-- Inputs details -->
+                            <div style="flex: 2; min-width: 300px; display: grid; grid-template-columns: 2fr 1fr; gap: 1rem;">
+                                <div>
+                                    <label style="font-size: 0.75rem; color: var(--text-secondary); display: block; margin-bottom: 0.2rem;">Tên hiển thị:</label>
+                                    <input type="text" name="name" value="<%= item.name %>" required style="width: 100%; padding: 0.4rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 0.85rem; font-weight: bold;">
+                                    
+                                    <label style="font-size: 0.75rem; color: var(--text-secondary); display: block; margin-top: 0.5rem; margin-bottom: 0.2rem;">Mô tả:</label>
+                                    <input type="text" name="description" value="<%= item.description %>" style="width: 100%; padding: 0.4rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 0.8rem;">
+                                </div>
+                                <div style="display: flex; flex-direction: column; justify-content: space-between;">
+                                    <div>
+                                        <label style="font-size: 0.75rem; color: var(--text-secondary); display: block; margin-bottom: 0.2rem;">Giá (EXP):</label>
+                                        <input type="number" name="price_exp" value="<%= item.price_exp %>" required style="width: 100%; padding: 0.4rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 0.85rem; font-weight: bold; color: #eab308;">
+                                    </div>
+                                    
+                                    <div style="display: flex; gap: 0.5rem; margin-top: 0.8rem;">
+                                        <button type="submit" class="btn btn-primary" style="flex: 1; padding: 0.4rem; font-size: 0.8rem; border-radius: 6px;">Lưu</button>
+                                        <button type="button" onclick="deleteItem(<%= item.id %>)" class="btn btn-danger" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; border-radius: 6px;">Xóa</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                <% }) %>
+            </div>
+        <% } %>
+    </div>
+</div>
+
+<script>
+    function toggleValueInput() {
+        const typeSelect = document.getElementById('type');
+        const badgeGroup = document.getElementById('badge-value-group');
+        const avatarGroup = document.getElementById('avatar-file-group');
+        const valueText = document.getElementById('value_text');
+        const avatarFile = document.getElementById('avatar_file');
+
+        if (typeSelect.value === 'avatar') {
+            badgeGroup.style.display = 'none';
+            avatarGroup.style.display = 'block';
+            valueText.removeAttribute('required');
+            avatarFile.setAttribute('required', 'required');
+        } else {
+            badgeGroup.style.display = 'block';
+            avatarGroup.style.display = 'none';
+            valueText.setAttribute('required', 'required');
+            avatarFile.removeAttribute('required');
+        }
+    }
+
+    async function deleteItem(id) {
+        if (!confirm('Bạn có chắc chắn muốn xóa vật phẩm này khỏi cửa hàng không? Những người dùng đã mua vật phẩm này sẽ vẫn giữ lại nhưng không thể mua mới.')) return;
+        
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/admin/shop/delete/${id}`;
+        document.body.appendChild(form);
+        form.submit();
+    }
+
+    // Khởi chạy để thiết lập input hiển thị lúc đầu
+    toggleValueInput();
+</script>

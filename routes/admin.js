@@ -1206,6 +1206,135 @@ router.post('/users/:id/unban', async (req, res) => {
   }
 });
 
+// ==================== QUẢN LÝ CỬA HÀNG EXP (SHOP ITEMS) ====================
+// Trang danh sách vật phẩm shop
+router.get('/shop', async (req, res) => {
+  try {
+    const { data: items, error } = await supabase
+      .from('shop_items')
+      .select('*')
+      .order('type', { ascending: true })
+      .order('price_exp', { ascending: true });
+
+    if (error) throw error;
+
+    res.render('admin/shop', {
+      user: req.user,
+      items: items || [],
+      success: req.query.success || null,
+      error: req.query.error || null
+    });
+  } catch (err) {
+    console.error('Lỗi lấy danh sách shop items:', err);
+    res.status(500).send('Lỗi hệ thống.');
+  }
+});
+
+// Thêm vật phẩm shop mới
+router.post('/shop/add', upload.single('avatar_file'), async (req, res) => {
+  const { name, type, price_exp, description, value_text } = req.body;
+  const price = parseInt(price_exp);
+
+  if (!name || !type || isNaN(price)) {
+    return res.redirect('/admin/shop?error=' + encodeURIComponent('Thông tin nhập vào không hợp lệ.'));
+  }
+
+  try {
+    let value = '';
+    if (type === 'avatar') {
+      if (req.file) {
+        value = await uploadToSupabase(req.file, 'uploads');
+      } else {
+        value = '/css/default-avatar.png'; // default
+      }
+    } else {
+      value = value_text ? value_text.trim() : '';
+    }
+
+    const { error } = await supabase
+      .from('shop_items')
+      .insert([{
+        name: name.trim(),
+        type,
+        price_exp: price,
+        description: description ? description.trim() : '',
+        value: value
+      }]);
+
+    if (error) throw error;
+    res.redirect('/admin/shop?success=' + encodeURIComponent('Đã thêm vật phẩm vào cửa hàng thành công!'));
+  } catch (err) {
+    console.error('Lỗi thêm vật phẩm shop:', err);
+    res.redirect('/admin/shop?error=' + encodeURIComponent(err.message || 'Lỗi hệ thống.'));
+  }
+});
+
+// Sửa vật phẩm shop
+router.post('/shop/edit/:id', upload.single('avatar_file'), async (req, res) => {
+  const id = parseInt(req.params.id);
+  const { name, type, price_exp, description, value_text } = req.body;
+  const price = parseInt(price_exp);
+
+  if (!name || !type || isNaN(price)) {
+    return res.redirect('/admin/shop?error=' + encodeURIComponent('Thông tin nhập vào không hợp lệ.'));
+  }
+
+  try {
+    const { data: oldItem } = await supabase
+      .from('shop_items')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (!oldItem) {
+      return res.redirect('/admin/shop?error=' + encodeURIComponent('Vật phẩm không tồn tại.'));
+    }
+
+    let value = oldItem.value;
+    if (type === 'avatar') {
+      if (req.file) {
+        value = await uploadToSupabase(req.file, 'uploads');
+      }
+    } else {
+      value = value_text ? value_text.trim() : oldItem.value;
+    }
+
+    const { error } = await supabase
+      .from('shop_items')
+      .update({
+        name: name.trim(),
+        type,
+        price_exp: price,
+        description: description ? description.trim() : '',
+        value: value
+      })
+      .eq('id', id);
+
+    if (error) throw error;
+    res.redirect('/admin/shop?success=' + encodeURIComponent('Đã cập nhật vật phẩm thành công!'));
+  } catch (err) {
+    console.error('Lỗi sửa vật phẩm shop:', err);
+    res.redirect('/admin/shop?error=' + encodeURIComponent(err.message || 'Lỗi hệ thống.'));
+  }
+});
+
+// Xóa vật phẩm shop
+router.post('/shop/delete/:id', async (req, res) => {
+  const id = parseInt(req.params.id);
+  try {
+    const { error } = await supabase
+      .from('shop_items')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+    res.redirect('/admin/shop?success=' + encodeURIComponent('Đã xóa vật phẩm khỏi cửa hàng thành công!'));
+  } catch (err) {
+    console.error('Lỗi xóa vật phẩm shop:', err);
+    res.redirect('/admin/shop?error=' + encodeURIComponent(err.message || 'Lỗi hệ thống.'));
+  }
+});
+
 // ==================== QUẢN LÝ THIẾT LẬP CẤP BẬC (RANK SETTINGS) ====================
 // Trang danh sách thiết lập cấp bậc
 router.get('/ranks', async (req, res) => {
