@@ -1510,4 +1510,73 @@ router.post('/shop/equip/:id', async (req, res) => {
   }
 });
 
+// XEM THÔNG TIN CÁ NHÂN CỦA USER BẤT KỲ (PUBLIC PROFILE)
+router.get('/user/:id', async (req, res) => {
+  const userId = req.params.id;
+  try {
+    // 1. Lấy thông tin user
+    const { data: targetUserData, error: userErr } = await supabase
+      .from('users')
+      .select('id, display_name, avatar, bio, equipped_badge, equipped_avatar, role, created_at')
+      .eq('id', userId)
+      .single();
+
+    if (userErr || !targetUserData) {
+      return res.status(404).send('Không tìm thấy người dùng.');
+    }
+
+    // 2. Lấy thông tin chỉ số stats từ user_stats
+    const { data: statsData } = await supabase
+      .from('user_stats')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+
+    const exp = statsData ? statsData.exp : 0;
+    const streak = statsData ? statsData.streak_days : 0;
+
+    const level = Math.floor(exp / 100) + 1;
+    const nextLevelExp = 100;
+    const currentLevelExp = exp % 100;
+
+    // 3. Lấy số chương đã đọc
+    const { count: chaptersRead } = await supabase
+      .from('chapter_reads')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId);
+
+    const stats = {
+      level,
+      exp,
+      currentLevelExp,
+      nextLevelExp,
+      streak,
+      chaptersRead: chaptersRead || 0,
+      badge: targetUserData.equipped_badge || 'Người mới'
+    };
+
+    // 4. Lấy danh sách thành tựu đã mở khóa
+    const { data: unlocked } = await supabase
+      .from('user_achievements')
+      .select('unlocked_at, achievements(*)')
+      .eq('user_id', userId);
+
+    const achievements = (unlocked || []).map(ua => ({
+      ...ua.achievements,
+      unlocked_at: ua.unlocked_at
+    }));
+
+    res.render('user-profile', {
+      title: `Hồ sơ của ${targetUserData.display_name}`,
+      user: req.user || null,
+      targetUser: targetUserData,
+      stats,
+      achievements
+    });
+  } catch (err) {
+    console.error('Lỗi khi xem hồ sơ độc giả:', err);
+    res.status(500).send('Lỗi máy chủ.');
+  }
+});
+
 module.exports = router;

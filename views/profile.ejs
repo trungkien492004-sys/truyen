@@ -19,18 +19,20 @@
 
         <div style="flex: 1; min-width: 250px;">
             <form action="/profile/update" method="POST" style="display: flex; flex-direction: column; gap: 0.8rem;">
-                <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
-                    <input type="text" name="display_name" value="<%= userData.display_name %>" required style="font-size: 1.8rem; font-weight: bold; background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--text-primary); padding: 0.2rem 0.5rem; border-radius: 4px; transition: all 0.3s; width: 100%; max-width: 300px;" class="display-name-input" placeholder="Tên hiển thị">
+                <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; width: 100%;">
+                    <div style="position: relative; display: flex; align-items: center; width: 100%; max-width: 320px;">
+                        <input type="text" name="display_name" value="<%= userData.display_name %>" required style="font-size: 1.1rem; font-weight: bold; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); color: var(--text-primary); padding: 0.6rem 2.2rem 0.6rem 0.8rem; border-radius: 8px; transition: all 0.3s; width: 100%;" class="display-name-input" placeholder="Tên hiển thị">
+                        <span style="position: absolute; right: 12px; color: var(--text-secondary); pointer-events: none; font-size: 0.95rem;">✏️</span>
+                    </div>
                     <% if (userData.equipped_badge) { %>
-                        <span style="font-size: 0.85rem; color: #10b981; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 0.3rem 0.8rem; border-radius: 6px; font-weight: 700;"><%= userData.equipped_badge %></span>
+                        <span style="font-size: 0.85rem; color: #10b981; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 0.5rem 0.8rem; border-radius: 8px; font-weight: 700;"><%= userData.equipped_badge %></span>
                     <% } %>
-                    <button type="submit" class="btn btn-secondary" style="font-size: 0.85rem; padding: 0.4rem 1rem; border-radius: 8px;">Lưu Thay Đổi</button>
+                    <button type="submit" class="btn btn-secondary" style="font-size: 0.85rem; padding: 0.6rem 1.2rem; border-radius: 8px; font-weight: 600;">Lưu Thay Đổi</button>
                 </div>
-                <p style="color: var(--text-secondary); margin: 0; font-size: 0.95rem;">📧 <%= user.email %></p>
                 
                 <!-- Sửa Bio -->
-                <div style="margin-top: 0.4rem;">
-                    <textarea name="bio" placeholder="Giới thiệu bản thân (Bio)..." style="width: 100%; max-width: 500px; min-height: 60px; padding: 0.6rem 0.8rem; border-radius: 8px; border: 1px solid var(--border-color); background: rgba(0,0,0,0.25); color: var(--text-primary); font-size: 0.88rem; line-height: 1.4; resize: vertical; outline: none; transition: border-color 0.3s;"><%= userData.bio %></textarea>
+                <div style="margin-top: 0.4rem; width: 100%;">
+                    <textarea name="bio" placeholder="Giới thiệu bản thân (Bio)..." style="width: 100%; max-width: 500px; min-height: 80px; padding: 0.8rem 1rem; border-radius: 8px; border: 1px solid var(--border-color); background: rgba(0,0,0,0.25); color: var(--text-primary); font-size: 0.88rem; line-height: 1.4; resize: vertical; outline: none; transition: border-color 0.3s;"><%= userData.bio %></textarea>
                 </div>
 
                 <div style="display: flex; gap: 1rem; align-items: center; margin-top: 0.5rem; flex-wrap: wrap;">
@@ -142,9 +144,9 @@
         opacity: 1 !important;
     }
     .display-name-input:focus {
-        border-bottom-color: var(--accent-color) !important;
+        border-color: var(--accent-color) !important;
         outline: none;
-        background: rgba(255,255,255,0.02) !important;
+        box-shadow: 0 0 10px rgba(99, 102, 241, 0.3) !important;
     }
     .achievement-card:hover {
         transform: translateY(-3px);
