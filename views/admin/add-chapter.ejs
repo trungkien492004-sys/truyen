@@ -118,6 +118,10 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+</script>
 
 <script>
     // Logic ẩn/hiện form dựa trên phương thức đăng
@@ -158,7 +162,7 @@
             e.preventDefault();
             const submitBtn = document.getElementById('submit-btn');
             submitBtn.disabled = true;
-            submitBtn.textContent = '⏳ Đang tải PDF lên và tách chương...';
+            submitBtn.textContent = '⏳ Đang đọc PDF trên trình duyệt (0%)...';
             try {
                 const storyId = document.getElementById('story_id').value;
                 const file = pdfFileInput.files[0];
@@ -168,18 +172,41 @@
                     submitBtn.textContent = 'BẮT ĐẦU ĐĂNG CHƯƠNG';
                     return;
                 }
-                const fd = new FormData();
-                fd.append('story_id', storyId);
-                fd.append('pdffile', file);
 
-                const resp = await fetch('/admin/chapter/add-pdf', { method: 'POST', body: fd });
-                let data;
-                if (resp.headers.get('content-type')?.includes('application/json')) {
-                    data = await resp.json();
-                } else {
-                    const txt = await resp.text();
-                    throw new Error('Lỗi máy chủ (' + resp.status + '): ' + txt.substring(0,200));
+                const arrayBuffer = await file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                let fullText = '';
+                
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    submitBtn.textContent = `⏳ Đang đọc trang ${i}/${pdf.numPages}...`;
+                    const page = await pdf.getPage(i);
+                    const textContent = await page.getTextContent();
+                    const pageText = textContent.items.map(item => item.str).join(' ');
+                    fullText += pageText + '\n';
                 }
+
+                submitBtn.textContent = '⏳ Đang lưu vào database...';
+                
+                const processedFiles = [{
+                    name: file.name.replace('.pdf', '.txt'),
+                    type: 'txt',
+                    content: fullText
+                }];
+
+                const response = await fetch('/admin/chapter/add-json', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ story_id: storyId, files: processedFiles })
+                });
+
+                let data;
+                if (response.headers.get('content-type')?.includes('application/json')) {
+                    data = await response.json();
+                } else {
+                    const txt = await response.text();
+                    throw new Error('Lỗi máy chủ (' + response.status + '): ' + txt.substring(0, 200));
+                }
+
                 if (data.success) {
                     window.location.href = '/admin/chapter/add?success=' + encodeURIComponent(data.message);
                 } else {
