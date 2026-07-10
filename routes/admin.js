@@ -5,7 +5,7 @@ const multer = require('multer');
 const path = require('path');
 const mammoth = require('mammoth');
 const fs = require('fs');
-const pdfParse = require('pdf-parse');
+// const pdfParse = require('pdf-parse'); // Temporarily disabled for Vercel
 
 // Sử dụng Memory Storage để chạy không đĩa (tương thích Vercel Serverless)
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } }); // 50MB limit cho PDF
@@ -46,52 +46,7 @@ async function uploadToSupabase(file, bucketName = 'uploads') {
 
 // Hàm phân tích file PDF thành nhiều chương (tự động tách dựa theo đầu dòng "Chương X" / "Chapter X")
 async function parsePdfToChapters(buffer, storyId) {
-  const pdfData = await pdfParse(buffer);
-  const rawText = pdfData.text;
-  
-  // Pattern nhận diện đầu chương - linh hoạt hỗ trợ tiếng Việt và tiếng Anh
-  const chapterHeaderRegex = /^(?:Chương|CHƯƠNG|Chap|CHAP|Chapter|CHAPTER|Phần|PHẦN|Part|PART)\s*\.?\s*(\d+(?:\.\d+)?)(?:[:\s,\-–]+(.*))?$/im;
-
-  const lines = rawText.split('\n');
-  const chapters = [];
-  let currentChapter = null;
-  let currentLines = [];
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-    const match = line.match(chapterHeaderRegex);
-
-    if (match) {
-      // Lưu chương hiện tại nếu có
-      if (currentChapter !== null) {
-        chapters.push({
-          ...currentChapter,
-          content: currentLines.filter(l => l.trim()).map(l => `<p>${l.trim()}</p>`).join('')
-        });
-      }
-      const chapNum = parseFloat(match[1]);
-      const chapTitle = match[2] ? match[2].trim() : '';
-      currentChapter = {
-        story_id: parseInt(storyId),
-        chapter_number: chapNum,
-        title: chapTitle ? `Chương ${chapNum}: ${chapTitle}` : `Chương ${chapNum}`
-      };
-      currentLines = [];
-    } else if (currentChapter !== null) {
-      currentLines.push(line);
-    }
-    // Nếu chưa vào chương nào, bỏ qua dòng đó (tiêu đề sách, thông tin đầu file...)
-  }
-
-  // Lưu chương cuối cùng
-  if (currentChapter !== null && currentLines.length > 0) {
-    chapters.push({
-      ...currentChapter,
-      content: currentLines.filter(l => l.trim()).map(l => `<p>${l.trim()}</p>`).join('')
-    });
-  }
-
-  return chapters;
+  throw new Error('Tính năng up PDF tạm thời bị vô hiệu hoá do giới hạn của Vercel (Lỗi bộ nhớ quá tải khi parse PDF). Vui lòng dùng tính năng upload .docx hoặc .txt thay thế.');
 }
 
 // Hàm phân tích 1 tệp tin (Word/Txt) thành đúng 1 chương duy nhất (1 file = 1 chương)
