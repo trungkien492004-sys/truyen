@@ -49,6 +49,21 @@ body {
     overflow-x: hidden;
 }
 
+/* Scrollbar cho banner description */
+.banner-desc-box::-webkit-scrollbar {
+    width: 5px;
+}
+.banner-desc-box::-webkit-scrollbar-track {
+    background: transparent;
+}
+.banner-desc-box::-webkit-scrollbar-thumb {
+    background: rgba(99,102,241,0.35);
+    border-radius: 10px;
+}
+.banner-desc-box::-webkit-scrollbar-thumb:hover {
+    background: rgba(99,102,241,0.6);
+}
+
 a {
     color: inherit;
     text-decoration: none;
@@ -947,9 +962,10 @@ footer {
         top: 175px !important;
     }
     .banner-desc-box {
-        padding: 0.8rem 1rem !important;
-        font-size: 0.82rem !important;
-        min-height: 50px !important;
+        padding: 0.7rem 1rem !important;
+        font-size: 0.78rem !important;
+        max-height: 150px !important;
+        line-height: 1.6 !important;
     }
 
     /* 5. Bạn đang đọc dở banner */
