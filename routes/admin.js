@@ -253,7 +253,7 @@ router.get('/story/add', async (req, res) => {
 
 // THỰC HIỆN ĐĂNG TRUYỆN MỚI
 router.post('/story/add', upload.single('cover'), async (req, res) => {
-  const { title, author, description, commissioned_by, genres } = req.body;
+  const { title, author, description, commissioned_by, genres, status } = req.body;
   
   if (!title) {
     return res.status(400).send('Tên truyện không được để trống.');
@@ -275,7 +275,8 @@ router.post('/story/add', upload.single('cover'), async (req, res) => {
           author: author || 'Ẩn danh',
           description,
           cover_url: coverUrl,
-          commissioned_by: commissioned_by ? commissioned_by.trim() : null
+          commissioned_by: commissioned_by ? commissioned_by.trim() : null,
+          status: status === 'completed' ? 'completed' : 'ongoing'
         }
       ])
       .select('*')
@@ -820,7 +821,7 @@ router.get('/story/edit/:id', async (req, res) => {
 // THỰC HIỆN CẬP NHẬT TRUYỆN
 router.post('/story/edit/:id', upload.single('cover'), async (req, res) => {
   const storyId = parseInt(req.params.id);
-  const { title, author, description, commissioned_by, genres } = req.body;
+  const { title, author, description, commissioned_by, genres, status } = req.body;
 
   if (!title) {
     return res.status(400).send('Tên truyện không được để trống.');
@@ -848,7 +849,8 @@ router.post('/story/edit/:id', upload.single('cover'), async (req, res) => {
         author: author || 'Ẩn danh',
         description,
         cover_url: coverUrl,
-        commissioned_by: commissioned_by ? commissioned_by.trim() : null
+        commissioned_by: commissioned_by ? commissioned_by.trim() : null,
+        status: status === 'completed' ? 'completed' : 'ongoing'
       })
       .eq('id', storyId);
 

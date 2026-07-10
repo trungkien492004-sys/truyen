@@ -14,7 +14,7 @@
         <div class="story-detail-meta">
             <!-- Hiển thị thể loại -->
             <div>
-                Thể loại: 
+                Thể loại:
                 <% if (genres && genres.length > 0) { %>
                     <% genres.forEach(genre => { %>
                         <a href="/genre/<%= genre.slug %>" class="genre-tag" style="padding: 0.2rem 0.6rem; font-size: 0.75rem; border-radius: 12px; margin-left: 0.3rem;">
@@ -25,6 +25,22 @@
                     <span style="color: var(--text-secondary);">Chưa phân loại</span>
                 <% } %>
             </div>
+        </div>
+
+        <!-- ĐÁNH GIÁ TRUYỆN (SAO/ĐIỂM) -->
+        <div style="margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+            <div>
+                ⭐ <strong><%= typeof avgScore !== 'undefined' && avgScore ? avgScore : 'Chưa có' %></strong><% if (typeof avgScore !== 'undefined' && avgScore) { %>/10<% } %>
+                <span style="color: var(--text-secondary); font-size: 0.85rem;">(<%= typeof ratingCount !== 'undefined' ? ratingCount : 0 %> lượt đánh giá)</span>
+            </div>
+
+            <% if (typeof user !== 'undefined' && user) { %>
+                <div id="rating-widget" data-story-id="<%= story.id %>" style="display: flex; gap: 0.2rem; cursor: pointer;">
+                    <% for (let i = 1; i <= 10; i++) { %>
+                        <span class="rate-star" data-score="<%= i %>" style="font-size: 1.1rem; color: <%= (typeof myRating !== 'undefined' && myRating && i <= myRating) ? '#f59e0b' : 'var(--border-color)' %>;">★</span>
+                    <% } %>
+                </div>
+            <% } %>
         </div>
 
         <!-- HIỂN THỊ THÔNG TIN NGƯỜI ĐẶT TRUYỆN NẾU CÓ -->
@@ -63,6 +79,36 @@
 </div>
 
 <script>
+    // Xử lý click sao đánh giá truyện
+    const ratingWidget = document.getElementById('rating-widget');
+    if (ratingWidget) {
+        const stars = ratingWidget.querySelectorAll('.rate-star');
+        stars.forEach(star => {
+            star.addEventListener('click', async () => {
+                const score = star.dataset.score;
+                const storyId = ratingWidget.dataset.storyId;
+                try {
+                    const resp = await fetch(`/rate/${storyId}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ score })
+                    });
+                    const data = await resp.json();
+                    if (data.success) {
+                        stars.forEach(s => {
+                            s.style.color = parseInt(s.dataset.score) <= parseInt(score) ? '#f59e0b' : 'var(--border-color)';
+                        });
+                        location.reload();
+                    } else {
+                        alert('Lỗi: ' + data.error);
+                    }
+                } catch (err) {
+                    alert('Có lỗi xảy ra: ' + err.message);
+                }
+            });
+        });
+    }
+
     const bookmarkSelect = document.getElementById('bookmark-select');
     if (bookmarkSelect) {
         bookmarkSelect.addEventListener('change', async () => {

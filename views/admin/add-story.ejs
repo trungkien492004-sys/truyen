@@ -33,6 +33,14 @@
         </div>
 
         <div class="form-group">
+            <label for="status">Trạng Thái Truyện</label>
+            <select id="status" name="status" style="width: 100%; padding: 0.8rem 1rem; background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 8px; font-size: 1rem; outline: none;">
+                <option value="ongoing" selected>🔄 Đang tiến hành</option>
+                <option value="completed">✅ Đã hoàn thành</option>
+            </select>
+        </div>
+
+        <div class="form-group">
             <label for="cover">Ảnh Bìa Truyện (Chọn tệp ảnh)</label>
             <input type="file" id="cover" name="cover" accept="image/*">
         </div>

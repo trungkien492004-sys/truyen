@@ -1,0 +1,26 @@
+<%- include('partials/header') %>
+
+<div class="form-container" style="max-width: 550px; text-align: center;">
+    <h2 class="section-title" style="margin-bottom: 0.5rem;">☕ Ủng Hộ Admin</h2>
+    <p style="color: var(--text-secondary); margin-bottom: 2rem; font-size: 0.95rem;">
+        Nếu bạn thấy website hữu ích, hãy cân nhắc ủng hộ để mình có thêm động lực duy trì và cập nhật truyện thường xuyên hơn. Xin chân thành cảm ơn!
+    </p>
+
+    <div style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem;">
+        <img src="/css/donate-qr.png" alt="Mã QR ủng hộ" style="width: 100%; max-width: 300px; border-radius: 8px; margin: 0 auto 1rem; display: block;" onerror="this.style.display='none'; document.getElementById('qr-fallback').style.display='block';">
+
+        <div id="qr-fallback" style="display: none; padding: 2rem; color: var(--text-secondary);">
+            📷 Ảnh QR chưa được cập nhật.<br>Vui lòng quay lại sau.
+        </div>
+
+        <div style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.8;">
+            <div><strong>Ngân hàng:</strong> MB Bank</div>
+            <div><strong>Số tài khoản:</strong> 0941535523</div>
+            <div><strong>Chủ tài khoản:</strong> LE NGOC TRUNG KIEN</div>
+        </div>
+    </div>
+
+    <a href="/" class="btn btn-secondary" style="padding: 0.6rem 1.5rem;">&larr; Quay lại trang chủ</a>
+</div>
+
+<%- include('partials/footer') %>

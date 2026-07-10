@@ -1,0 +1,32 @@
+<%- include('partials/header') %>
+
+<div style="margin-bottom: 1.5rem;">
+    <a href="/" style="color: var(--text-secondary); font-size: 0.9rem;">&larr; Quay lại trang chủ</a>
+</div>
+
+<h2 class="section-title">🏆 Bảng Xếp Hạng Độc Giả</h2>
+<p style="color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 0.9rem;">Xếp hạng theo điểm kinh nghiệm (EXP) tích lũy từ việc đọc truyện.</p>
+
+<% if (leaderboard.length === 0) { %>
+    <p style="color: var(--text-secondary); text-align: center; padding: 2rem 0;">Chưa có dữ liệu xếp hạng. Hãy là người đầu tiên đọc truyện để lên bảng!</p>
+<% } else { %>
+    <div style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden;">
+        <% leaderboard.forEach((row, index) => { %>
+            <div style="display: flex; align-items: center; gap: 1rem; padding: 0.9rem 1.2rem; border-bottom: 1px solid var(--border-color);">
+                <div style="font-weight: bold; width: 30px; text-align: center; color: var(--accent-color);"><%= index + 1 %></div>
+                <img src="<%= row.avatar || '/css/default-avatar.png' %>" alt="avatar" style="width: 36px; height: 36px; border-radius: 50%;">
+                <div style="flex: 1;">
+                    <div style="font-weight: 500;"><%= row.display_name %></div>
+                    <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                        📖 <%= row.chapters_read %> chương đã đọc
+                        <% if (row.streak_days > 0) { %> · 🔥 <%= row.streak_days %> ngày liên tiếp<% } %>
+                        <% if (row.badge) { %> · <%= row.badge.label %><% } %>
+                    </div>
+                </div>
+                <div style="font-weight: bold; color: #f59e0b;"><%= row.exp %> EXP</div>
+            </div>
+        <% }) %>
+    </div>
+<% } %>
+
+<%- include('partials/footer') %>

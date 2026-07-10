@@ -8,6 +8,59 @@ const fs = require('fs');
 // Sử dụng Memory Storage để chạy không đĩa (tương thích Vercel Serverless)
 const upload = multer({ storage: multer.memoryStorage() });
 
+const EXP_PER_CHAPTER = 5;
+
+// Hàm gamification: ghi nhận lượt đọc chương (tính EXP 1 lần/chương) + cập nhật streak đọc liên tục
+async function awardReadingExp(userId, storyId, chapterNumber) {
+  // 1. Thử ghi nhận vào chapter_reads - nếu đã tồn tại (đọc lại chương cũ) thì bỏ qua, không cộng EXP nữa
+  const { error: insertErr } = await supabase
+    .from('chapter_reads')
+    .insert([{ user_id: userId, story_id: storyId, chapter_number: chapterNumber }]);
+
+  // Mã lỗi 23505 = vi phạm UNIQUE constraint -> nghĩa là chương này đã được tính EXP trước đó rồi
+  const alreadyCounted = insertErr && insertErr.code === '23505';
+  if (insertErr && !alreadyCounted) {
+    console.error('Lỗi ghi nhận chapter_reads:', insertErr);
+    return;
+  }
+
+  const todayStr = new Date().toISOString().slice(0, 10); // YYYY-MM-DD (UTC)
+
+  // 2. Lấy (hoặc tạo mới) user_stats hiện tại
+  const { data: stats } = await supabase
+    .from('user_stats')
+    .select('*')
+    .eq('user_id', userId)
+    .single();
+
+  let exp = stats ? stats.exp : 0;
+  let streak = stats ? stats.streak_days : 0;
+  const lastDate = stats ? stats.last_read_date : null;
+
+  // Cộng EXP chỉ khi đây là lượt đọc MỚI (chương chưa từng tính EXP trước đó)
+  if (!alreadyCounted) {
+    exp += EXP_PER_CHAPTER;
+  }
+
+  // Cập nhật streak: nếu đã đọc hôm nay rồi thì giữ nguyên, nếu hôm qua thì +1, nếu không thì reset về 1
+  if (lastDate !== todayStr) {
+    const yesterday = new Date();
+    yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+    const yesterdayStr = yesterday.toISOString().slice(0, 10);
+
+    if (lastDate === yesterdayStr) {
+      streak += 1;
+    } else {
+      streak = 1;
+    }
+  }
+
+  await supabase.from('user_stats').upsert(
+    { user_id: userId, exp, streak_days: streak, last_read_date: todayStr, updated_at: new Date().toISOString() },
+    { onConflict: 'user_id' }
+  );
+}
+
 // Hàm hỗ trợ upload file lên Supabase Storage
 async function uploadToSupabase(file, bucketName = 'uploads') {
   if (!file) return null;
@@ -82,29 +135,92 @@ router.get('/', async (req, res) => {
   }
 });
 
-// TÌM KIẾM TRUYỆN
+// TÌM KIẾM TRUYỆN (HỖ TRỢ LỌC NÂNG CAO KẾT HỢP NHIỀU TIÊU CHÍ)
 router.get('/search', async (req, res) => {
   const query = req.query.q ? req.query.q.trim() : '';
+  const genreSlug = req.query.genre || '';
+  const status = req.query.status || ''; // '', 'ongoing', 'completed'
+  const minChapters = req.query.min_chapters ? parseInt(req.query.min_chapters) : 0;
+  const sort = req.query.sort || 'newest'; // newest | oldest | most_chapters | title_az
+
   try {
     const { data: genres } = await supabase.from('genres').select('*');
-    
-    // Tìm truyện theo tên hoặc tác giả
-    const { data: stories, error } = await supabase
-      .from('stories')
-      .select('*')
-      .or(`title.ilike.%${query}%,author.ilike.%${query}%`)
-      .order('created_at', { ascending: false });
 
+    // 1. Nếu lọc theo thể loại: lấy danh sách story_id thuộc thể loại đó trước
+    let genreStoryIds = null;
+    let activeGenre = null;
+    if (genreSlug) {
+      const { data: genreRow } = await supabase.from('genres').select('*').eq('slug', genreSlug).single();
+      activeGenre = genreRow || null;
+      if (activeGenre) {
+        const { data: rel } = await supabase.from('story_genres').select('story_id').eq('genre_id', activeGenre.id);
+        genreStoryIds = (rel || []).map(r => r.story_id);
+      } else {
+        genreStoryIds = [];
+      }
+    }
+
+    // 2. Xây dựng câu truy vấn chính trên bảng stories (kèm số lượng chương qua chapters(count))
+    let q = supabase.from('stories').select('*, chapters(count)');
+
+    if (query) {
+      q = q.or(`title.ilike.%${query}%,author.ilike.%${query}%`);
+    }
+    if (status === 'ongoing' || status === 'completed') {
+      q = q.eq('status', status);
+    }
+    if (genreStoryIds !== null) {
+      if (genreStoryIds.length === 0) {
+        // Không có truyện nào thuộc thể loại này -> trả về rỗng ngay
+        return res.render('home', {
+          title: `Kết quả tìm kiếm`,
+          user: req.user,
+          stories: [],
+          genres,
+          topDaily: [], topWeekly: [], topMonthly: [], topYearly: [],
+          activeGenre,
+          searchQuery: query,
+          filters: { genre: genreSlug, status, minChapters: req.query.min_chapters || '', sort }
+        });
+      }
+      q = q.in('id', genreStoryIds);
+    }
+
+    // Sắp xếp cơ bản ở tầng database (số chương cần lọc/sắp ở tầng ứng dụng vì là quan hệ đếm)
+    if (sort === 'oldest') {
+      q = q.order('created_at', { ascending: true });
+    } else if (sort === 'title_az') {
+      q = q.order('title', { ascending: true });
+    } else {
+      q = q.order('created_at', { ascending: false }); // newest mặc định
+    }
+
+    const { data: rawStories, error } = await q;
     if (error) throw error;
 
+    // 3. Tính số chương thực tế + lọc theo số chương tối thiểu (xử lý ở tầng ứng dụng)
+    let stories = (rawStories || []).map(s => ({
+      ...s,
+      chapter_count: (s.chapters && s.chapters[0] && s.chapters[0].count) || 0
+    }));
+
+    if (minChapters > 0) {
+      stories = stories.filter(s => s.chapter_count >= minChapters);
+    }
+
+    if (sort === 'most_chapters') {
+      stories = stories.sort((a, b) => b.chapter_count - a.chapter_count);
+    }
+
     res.render('home', {
-      title: `Kết quả tìm kiếm cho: "${query}"`,
+      title: query ? `Kết quả tìm kiếm cho: "${query}"` : 'Tìm kiếm nâng cao',
       user: req.user,
       stories,
       genres,
       topDaily: [], topWeekly: [], topMonthly: [], topYearly: [], // ẩn bảng xếp hạng khi tìm kiếm
-      activeGenre: null,
-      searchQuery: query
+      activeGenre,
+      searchQuery: query,
+      filters: { genre: genreSlug, status, minChapters: req.query.min_chapters || '', sort }
     });
   } catch (err) {
     console.error('Lỗi tìm kiếm:', err);
@@ -167,6 +283,21 @@ router.get('/genre/:slug', async (req, res) => {
   }
 });
 
+// RANDOM TRUYỆN ("HÔM NAY ĐỌC GÌ?")
+router.get('/random', async (req, res) => {
+  try {
+    const { data: ids, error } = await supabase.from('stories').select('id');
+    if (error) throw error;
+    if (!ids || ids.length === 0) return res.redirect('/');
+
+    const randomId = ids[Math.floor(Math.random() * ids.length)].id;
+    res.redirect(`/story/${randomId}`);
+  } catch (err) {
+    console.error('Lỗi random truyện:', err);
+    res.redirect('/');
+  }
+});
+
 // TRANG CHI TIẾT TRUYỆN
 router.get('/story/:id', async (req, res) => {
   const storyId = req.params.id;
@@ -199,9 +330,10 @@ router.get('/story/:id', async (req, res) => {
 
     if (chaptersErr) throw chaptersErr;
 
-    // 4. Nếu người dùng đã đăng nhập: lấy tiến độ đọc + trạng thái bookmark của truyện này
+    // 4. Nếu người dùng đã đăng nhập: lấy tiến độ đọc + trạng thái bookmark + điểm đã chấm của truyện này
     let readingProgress = null;
     let bookmarkStatus = null;
+    let myRating = null;
     if (req.user && req.user.id) {
       const { data: progress } = await supabase
         .from('reading_history')
@@ -218,7 +350,22 @@ router.get('/story/:id', async (req, res) => {
         .eq('story_id', storyId)
         .single();
       bookmarkStatus = bookmark ? bookmark.status : null;
+
+      const { data: ratingRow } = await supabase
+        .from('ratings')
+        .select('score')
+        .eq('user_id', req.user.id)
+        .eq('story_id', storyId)
+        .single();
+      myRating = ratingRow ? ratingRow.score : null;
     }
+
+    // 5. Lấy điểm trung bình + số lượt đánh giá của truyện
+    const { data: ratingSummary } = await supabase
+      .from('story_ratings_summary')
+      .select('*')
+      .eq('story_id', storyId)
+      .single();
 
     res.render('story', {
       title: `${story.title} - Chi tiết truyện`,
@@ -227,7 +374,10 @@ router.get('/story/:id', async (req, res) => {
       genres: storyGenres,
       chapters,
       readingProgress,
-      bookmarkStatus
+      bookmarkStatus,
+      myRating,
+      avgScore: ratingSummary ? ratingSummary.avg_score : null,
+      ratingCount: ratingSummary ? ratingSummary.rating_count : 0
     });
   } catch (err) {
     console.error('Lỗi chi tiết truyện:', err);
@@ -271,6 +421,11 @@ router.get('/story/:story_id/chapter/:chapter_number', async (req, res) => {
       ).then(({ error }) => {
         if (error) console.error('Lỗi khi lưu lịch sử đọc:', error);
       });
+
+      // 3c. Gamification: ghi nhận lượt đọc chương (mỗi chương chỉ tính EXP 1 lần/người dùng) + cập nhật streak
+      awardReadingExp(req.user.id, storyId, chapterNumber).catch(err => {
+        console.error('Lỗi khi tính EXP/streak:', err);
+      });
     }
 
     // 4. Kiểm tra chương trước và chương sau để điều hướng
@@ -310,6 +465,46 @@ router.get('/story/:story_id/chapter/:chapter_number', async (req, res) => {
   }
 });
 
+// CHẤM ĐIỂM ĐÁNH GIÁ TRUYỆN (1-10) - CẦN ĐĂNG NHẬP
+router.post('/rate/:story_id', async (req, res) => {
+  if (!req.user || !req.user.id) {
+    return res.status(401).json({ success: false, error: 'Vui lòng đăng nhập để đánh giá truyện.' });
+  }
+
+  const storyId = parseInt(req.params.story_id);
+  const score = parseInt(req.body.score);
+
+  if (!score || score < 1 || score > 10) {
+    return res.status(400).json({ success: false, error: 'Điểm đánh giá phải từ 1 đến 10.' });
+  }
+
+  try {
+    const { error } = await supabase
+      .from('ratings')
+      .upsert(
+        { user_id: req.user.id, story_id: storyId, score },
+        { onConflict: 'user_id,story_id' }
+      );
+    if (error) throw error;
+
+    const { data: summary } = await supabase
+      .from('story_ratings_summary')
+      .select('*')
+      .eq('story_id', storyId)
+      .single();
+
+    res.json({
+      success: true,
+      message: 'Đã ghi nhận đánh giá của bạn!',
+      avgScore: summary ? summary.avg_score : score,
+      ratingCount: summary ? summary.rating_count : 1
+    });
+  } catch (err) {
+    console.error('Lỗi khi chấm điểm:', err);
+    res.status(500).json({ success: false, error: err.message || 'Lỗi hệ thống.' });
+  }
+});
+
 // THÊM/CẬP NHẬT/GỠ BOOKMARK (THEO DÕI TRUYỆN) - CẦN ĐĂNG NHẬP
 router.post('/bookmark/:story_id', async (req, res) => {
   if (!req.user || !req.user.id) {
@@ -345,6 +540,47 @@ router.post('/bookmark/:story_id', async (req, res) => {
   } catch (err) {
     console.error('Lỗi khi cập nhật bookmark:', err);
     res.status(500).json({ success: false, error: err.message || 'Lỗi hệ thống.' });
+  }
+});
+
+// Ngưỡng huy hiệu theo số chương đã đọc
+const BADGE_THRESHOLDS = [
+  { count: 1000, label: '👑 Huyền Thoại', badge: 'legend' },
+  { count: 500, label: '🏆 Đại Cao Thủ', badge: 'grandmaster' },
+  { count: 100, label: '🥇 Master Reader', badge: 'master' },
+  { count: 20, label: '🥈 Mọt Sách', badge: 'bookworm' },
+  { count: 1, label: '🥉 Người Mới', badge: 'newbie' }
+];
+
+function getBadgeForCount(count) {
+  for (const b of BADGE_THRESHOLDS) {
+    if (count >= b.count) return b;
+  }
+  return null;
+}
+
+// TRANG BẢNG XẾP HẠNG ĐỘC GIẢ (THEO EXP / SỐ CHƯƠNG ĐỌC)
+router.get('/leaderboard', async (req, res) => {
+  try {
+    const { data: rows, error } = await supabase
+      .from('leaderboard_by_exp')
+      .select('*')
+      .limit(50);
+    if (error) throw error;
+
+    const leaderboard = (rows || []).map(r => ({
+      ...r,
+      badge: getBadgeForCount(r.chapters_read || 0)
+    }));
+
+    res.render('leaderboard', {
+      title: 'Bảng Xếp Hạng Độc Giả',
+      user: req.user,
+      leaderboard
+    });
+  } catch (err) {
+    console.error('Lỗi bảng xếp hạng:', err);
+    res.status(500).send('Lỗi hệ thống.');
   }
 });
 
@@ -390,6 +626,14 @@ router.get('/my-library', async (req, res) => {
     console.error('Lỗi trang tủ truyện:', err);
     res.status(500).send('Lỗi hệ thống.');
   }
+});
+
+// TRANG ỦNG HỘ ADMIN (DONATE QR)
+router.get('/donate', (req, res) => {
+  res.render('donate', {
+    title: 'Ủng hộ Admin',
+    user: req.user
+  });
 });
 
 // TRANG LIÊN HỆ / ĐẶT VIẾT TRUYỆN

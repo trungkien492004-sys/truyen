@@ -6,8 +6,43 @@
     <p class="hero-desc">Thế giới tiên hiệp, kiếm hiệp, truyện tranh và tiểu thuyết đặc sắc đang chờ đón bạn.</p>
     
     <form action="/search" method="GET" class="search-bar">
-        <input type="text" name="q" placeholder="Nhập tên truyện hoặc tên tác giả..." value="<%= searchQuery || '' %>" required>
+        <input type="text" name="q" placeholder="Nhập tên truyện hoặc tên tác giả..." value="<%= searchQuery || '' %>">
         <button type="submit" class="btn btn-primary">Tìm kiếm</button>
+    </form>
+
+    <!-- BỘ LỌC NÂNG CAO: kết hợp thể loại + trạng thái + số chương + sắp xếp -->
+    <form action="/search" method="GET" style="display: flex; flex-wrap: wrap; gap: 0.6rem; justify-content: center; margin-top: 1rem;">
+        <input type="hidden" name="q" value="<%= searchQuery || '' %>">
+
+        <select name="genre" style="padding: 0.5rem 0.8rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 0.85rem;">
+            <option value="">Tất cả thể loại</option>
+            <% genres.forEach(genre => { %>
+                <option value="<%= genre.slug %>" <%= (typeof filters !== 'undefined' && filters.genre === genre.slug) ? 'selected' : '' %>><%= genre.name %></option>
+            <% }) %>
+        </select>
+
+        <select name="status" style="padding: 0.5rem 0.8rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 0.85rem;">
+            <option value="">Mọi trạng thái</option>
+            <option value="ongoing" <%= (typeof filters !== 'undefined' && filters.status === 'ongoing') ? 'selected' : '' %>>Đang tiến hành</option>
+            <option value="completed" <%= (typeof filters !== 'undefined' && filters.status === 'completed') ? 'selected' : '' %>>Đã hoàn thành</option>
+        </select>
+
+        <select name="min_chapters" style="padding: 0.5rem 0.8rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 0.85rem;">
+            <option value="">Số chương bất kỳ</option>
+            <option value="50" <%= (typeof filters !== 'undefined' && filters.minChapters === '50') ? 'selected' : '' %>>Từ 50 chương</option>
+            <option value="100" <%= (typeof filters !== 'undefined' && filters.minChapters === '100') ? 'selected' : '' %>>Từ 100 chương</option>
+            <option value="200" <%= (typeof filters !== 'undefined' && filters.minChapters === '200') ? 'selected' : '' %>>Từ 200 chương</option>
+        </select>
+
+        <select name="sort" style="padding: 0.5rem 0.8rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 0.85rem;">
+            <option value="newest" <%= (typeof filters === 'undefined' || filters.sort === 'newest') ? 'selected' : '' %>>Mới cập nhật</option>
+            <option value="oldest" <%= (typeof filters !== 'undefined' && filters.sort === 'oldest') ? 'selected' : '' %>>Cũ nhất</option>
+            <option value="most_chapters" <%= (typeof filters !== 'undefined' && filters.sort === 'most_chapters') ? 'selected' : '' %>>Nhiều chương nhất</option>
+            <option value="title_az" <%= (typeof filters !== 'undefined' && filters.sort === 'title_az') ? 'selected' : '' %>>Tên A-Z</option>
+        </select>
+
+        <button type="submit" class="btn btn-secondary" style="font-size: 0.85rem;">Lọc nâng cao</button>
+        <a href="/random" class="btn btn-secondary" style="font-size: 0.85rem;">🎲 Hôm nay đọc gì?</a>
     </form>
 </div>
 
@@ -48,6 +83,12 @@
                                 <%= story.title %>
                             </a>
                             <span class="story-author">Tác giả: <%= story.author %></span>
+                            <% if (typeof story.chapter_count !== 'undefined' || story.status) { %>
+                                <div style="font-size: 0.78rem; color: var(--text-secondary); margin: 0.2rem 0;">
+                                    <% if (typeof story.chapter_count !== 'undefined') { %>📖 <%= story.chapter_count %> chương<% } %>
+                                    <% if (story.status === 'completed') { %> · <span style="color: #22c55e;">✅ Hoàn thành</span><% } else if (story.status === 'ongoing') { %> · <span style="color: #f59e0b;">🔄 Đang tiến hành</span><% } %>
+                                </div>
+                            <% } %>
                             <p class="story-desc-short"><%= story.description || 'Chưa có tóm tắt nội dung.' %></p>
                             
                             <% if (story.commissioned_by) { %>
