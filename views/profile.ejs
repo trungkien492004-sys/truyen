@@ -3,10 +3,42 @@
 <div class="profile-container" style="max-width: 1000px; margin: 0 auto; padding: 2rem 1rem;">
     <!-- Profile Header/Card -->
     <div style="background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.9) 100%); border: 1px solid var(--border-color); border-radius: 16px; padding: 2.5rem; display: flex; flex-wrap: wrap; gap: 2rem; align-items: center; margin-bottom: 2rem; box-shadow: 0 10px 30px rgba(0,0,0,0.3); backdrop-filter: blur(10px);">
-        <!-- Avatar display (No custom upload, must buy and equip from shop) -->
-        <% const frameStyle = userData.equipped_frame || 'border: 4px solid var(--accent-color); box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);' %>
-        <div class="avatar-wrapper" style="position: relative; width: 140px; height: 140px; border-radius: 50%; overflow: hidden; <%= frameStyle %> transition: all 0.3s;">
-            <img id="avatar-preview" src="<%= user.avatar || '/css/default-avatar.png' %>" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;">
+        <!-- Avatar display with title overlay -->
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 0.6rem;">
+            <div style="position: relative; display: inline-block;">
+                <% const frameStyle = userData.equipped_frame || 'border: 4px solid var(--accent-color); box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);' %>
+                <div class="avatar-wrapper" style="position: relative; width: 140px; height: 140px; border-radius: 50%; overflow: hidden; <%= frameStyle %> transition: all 0.3s;">
+                    <img id="avatar-preview" src="<%= user.avatar || '/css/default-avatar.png' %>" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;">
+                </div>
+                
+                <!-- Badge Icon at Top Right -->
+                <% if (userData.equipped_badge) { %>
+                    <% 
+                       const emojiMatch = userData.equipped_badge.match(/^([\uD800-\uDBFF][\uDC00-\uDFFF]|\S)/);
+                       const emoji = emojiMatch ? emojiMatch[1] : '⭐';
+                    %>
+                    <div style="position: absolute; top: -5px; right: -5px; width: 38px; height: 38px; background: #0f172a; border: 2.5px solid var(--accent-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 10;" title="Danh hiệu active">
+                        <%= emoji %>
+                    </div>
+                <% } %>
+            </div>
+            
+            <!-- Badge Title below Avatar -->
+            <% if (userData.equipped_badge) { %>
+                <% 
+                   const badgeText = userData.equipped_badge.replace(/^([\uD800-\uDBFF][\uDC00-\uDFFF]|\S)\s*/, '');
+                   const getBadgeClass = (val) => {
+                       if (!val) return 'user-badge-default';
+                       const v = val.toLowerCase();
+                       if (v.includes('quản trị') || v.includes('admin')) return 'user-badge-admin';
+                       if (v.includes('đế') || v.includes('chúa') || v.includes('thần') || v.includes('hoàng') || v.includes('độc cô')) return 'user-badge-custom-gold';
+                       if (v.includes('tiên') || v.includes('ma') || v.includes('kiếm')) return 'user-badge-custom-purple';
+                       if (v.includes('sách') || v.includes('độc giả') || v.includes('đọc')) return 'user-badge-custom-rose';
+                       return 'user-badge-default';
+                   }
+                %>
+                <span class="user-badge-premium <%= getBadgeClass(userData.equipped_badge) %>" style="font-size: 0.8rem; padding: 0.25rem 0.75rem; border-radius: 12px; white-space: nowrap;"><%= badgeText %></span>
+            <% } %>
         </div>
 
         <div style="flex: 1; min-width: 250px;">
@@ -16,20 +48,6 @@
                         <input type="text" name="display_name" value="<%= userData.display_name %>" required style="font-size: 1.1rem; font-weight: bold; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); color: var(--text-primary); padding: 0.6rem 2.2rem 0.6rem 0.8rem; border-radius: 8px; transition: all 0.3s; width: 100%;" class="display-name-input" placeholder="Tên hiển thị">
                         <span style="position: absolute; right: 12px; color: var(--text-secondary); pointer-events: none; font-size: 0.95rem;">✏️</span>
                     </div>
-                    <% if (userData.equipped_badge) { %>
-                        <%
-                           const getBadgeClass = (val) => {
-                               if (!val) return 'user-badge-default';
-                               const v = val.toLowerCase();
-                               if (v.includes('quản trị') || v.includes('admin')) return 'user-badge-admin';
-                               if (v.includes('đế') || v.includes('chúa') || v.includes('thần') || v.includes('hoàng') || v.includes('độc cô')) return 'user-badge-custom-gold';
-                               if (v.includes('tiên') || v.includes('ma') || v.includes('kiếm')) return 'user-badge-custom-purple';
-                               if (v.includes('sách') || v.includes('độc giả') || v.includes('đọc')) return 'user-badge-custom-rose';
-                               return 'user-badge-default';
-                           }
-                        %>
-                        <span class="user-badge-premium <%= getBadgeClass(userData.equipped_badge) %>" style="margin-left: 0.5rem;"><%= userData.equipped_badge %></span>
-                    <% } %>
                     <button type="submit" class="btn btn-secondary" style="font-size: 0.85rem; padding: 0.6rem 1.2rem; border-radius: 8px; font-weight: 600;">Lưu Thay Đổi</button>
                 </div>
                 
