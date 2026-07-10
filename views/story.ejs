@@ -201,7 +201,18 @@
                                     <%= comment.users ? comment.users.display_name : 'Độc giả ẩn danh' %>
                                 </a>
                                 <% if (comment.users && comment.users.equipped_badge) { %>
-                                    <span style="font-size: 0.72rem; color: #10b981; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 0.1rem 0.4rem; border-radius: 4px; margin-left: 0.4rem; font-weight: 700;"><%= comment.users.equipped_badge %></span>
+                                    <%
+                                       const getBadgeClass = (val) => {
+                                           if (!val) return 'user-badge-default';
+                                           const v = val.toLowerCase();
+                                           if (v.includes('quản trị') || v.includes('admin')) return 'user-badge-admin';
+                                           if (v.includes('đế') || v.includes('chúa') || v.includes('thần') || v.includes('hoàng') || v.includes('độc cô')) return 'user-badge-custom-gold';
+                                           if (v.includes('tiên') || v.includes('ma') || v.includes('kiếm')) return 'user-badge-custom-purple';
+                                           if (v.includes('sách') || v.includes('độc giả') || v.includes('đọc')) return 'user-badge-custom-rose';
+                                           return 'user-badge-default';
+                                       }
+                                    %>
+                                    <span class="user-badge-premium <%= getBadgeClass(comment.users.equipped_badge) %>" style="margin-left: 0.4rem; transform: scale(0.9); display: inline-flex; vertical-align: middle;"><%= comment.users.equipped_badge %></span>
                                 <% } %>
                             </span>
                             <span style="font-size: 0.78rem; color: var(--text-secondary);"><%= new Date(comment.created_at).toLocaleDateString('vi-VN', { hour: '2-digit', minute: '2-digit' }) %></span>
@@ -246,7 +257,18 @@
                                                         <%= reply.users ? reply.users.display_name : 'Độc giả ẩn danh' %>
                                                     </a>
                                                     <% if (reply.users && reply.users.equipped_badge) { %>
-                                                        <span style="font-size: 0.72rem; color: #10b981; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 0.1rem 0.4rem; border-radius: 4px; margin-left: 0.4rem; font-weight: 700;"><%= reply.users.equipped_badge %></span>
+                                                        <%
+                                                           const getBadgeClass = (val) => {
+                                                               if (!val) return 'user-badge-default';
+                                                               const v = val.toLowerCase();
+                                                               if (v.includes('quản trị') || v.includes('admin')) return 'user-badge-admin';
+                                                               if (v.includes('đế') || v.includes('chúa') || v.includes('thần') || v.includes('hoàng') || v.includes('độc cô')) return 'user-badge-custom-gold';
+                                                               if (v.includes('tiên') || v.includes('ma') || v.includes('kiếm')) return 'user-badge-custom-purple';
+                                                               if (v.includes('sách') || v.includes('độc giả') || v.includes('đọc')) return 'user-badge-custom-rose';
+                                                               return 'user-badge-default';
+                                                           }
+                                                        %>
+                                                        <span class="user-badge-premium <%= getBadgeClass(reply.users.equipped_badge) %>" style="margin-left: 0.4rem; transform: scale(0.85); display: inline-flex; vertical-align: middle;"><%= reply.users.equipped_badge %></span>
                                                     <% } %>
                                                 </span>
                                                 <span style="font-size: 0.75rem; color: var(--text-secondary);"><%= new Date(reply.created_at).toLocaleDateString('vi-VN', { hour: '2-digit', minute: '2-digit' }) %></span>

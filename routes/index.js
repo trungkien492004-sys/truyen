@@ -1579,4 +1579,46 @@ router.get('/user/:id', async (req, res) => {
   }
 });
 
+// TRANG BỊ DANH HIỆU TỪ THÀNH TỰU ĐÃ MỞ KHÓA
+router.post('/profile/equip-achievement', async (req, res) => {
+  if (!req.user || !req.user.id) return res.status(401).json({ success: false, error: 'Chưa đăng nhập.' });
+  const { name, action } = req.body;
+  
+  try {
+    let equippedBadge = null;
+    if (action === 'equip') {
+      // Kiểm tra xem user thực sự đã mở khóa thành tựu này chưa
+      const { data: unlocked } = await supabase
+        .from('user_achievements')
+        .select('*, achievements(*)')
+        .eq('user_id', req.user.id);
+        
+      const hasAch = (unlocked || []).some(ua => ua.achievements && ua.achievements.name === name);
+      if (!hasAch) {
+        return res.status(400).json({ success: false, error: 'Bạn chưa mở khóa thành tựu này.' });
+      }
+      
+      const achRecord = (unlocked || []).find(ua => ua.achievements && ua.achievements.name === name).achievements;
+      const emoji = achRecord.badge_class === 'legend' ? '👑' : achRecord.badge_class === 'gold' ? '🥇' : achRecord.badge_class === 'silver' ? '🥈' : '🥉';
+      equippedBadge = `${emoji} ${name}`;
+    }
+    
+    // Cập nhật users table
+    const { error } = await supabase
+      .from('users')
+      .update({ equipped_badge: equippedBadge })
+      .eq('id', req.user.id);
+      
+    if (error) throw error;
+    
+    // Cập nhật session
+    req.user.equipped_badge = equippedBadge;
+    
+    res.json({ success: true, message: action === 'equip' ? 'Đã gắn danh hiệu thành tựu!' : 'Đã tháo danh hiệu!' });
+  } catch (err) {
+    console.error('Lỗi trang bị thành tựu:', err);
+    res.status(500).json({ success: false, error: 'Lỗi hệ thống.' });
+  }
+});
+
 module.exports = router;

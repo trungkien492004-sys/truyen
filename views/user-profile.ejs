@@ -23,7 +23,18 @@
                         <%= targetUser.display_name %>
                     </h2>
                     <% if (targetUser.equipped_badge) { %>
-                        <span style="font-size: 0.85rem; color: #10b981; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 0.3rem 0.8rem; border-radius: 6px; font-weight: 700;"><%= targetUser.equipped_badge %></span>
+                        <%
+                           const getBadgeClass = (val) => {
+                               if (!val) return 'user-badge-default';
+                               const v = val.toLowerCase();
+                               if (v.includes('quản trị') || v.includes('admin')) return 'user-badge-admin';
+                               if (v.includes('đế') || v.includes('chúa') || v.includes('thần') || v.includes('hoàng') || v.includes('độc cô')) return 'user-badge-custom-gold';
+                               if (v.includes('tiên') || v.includes('ma') || v.includes('kiếm')) return 'user-badge-custom-purple';
+                               if (v.includes('sách') || v.includes('độc giả') || v.includes('đọc')) return 'user-badge-custom-rose';
+                               return 'user-badge-default';
+                           }
+                        %>
+                        <span class="user-badge-premium <%= getBadgeClass(targetUser.equipped_badge) %>" style="margin-left: 0.5rem;"><%= targetUser.equipped_badge %></span>
                     <% } %>
                 </div>
                 

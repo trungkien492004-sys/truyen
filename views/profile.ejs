@@ -17,7 +17,18 @@
                         <span style="position: absolute; right: 12px; color: var(--text-secondary); pointer-events: none; font-size: 0.95rem;">✏️</span>
                     </div>
                     <% if (userData.equipped_badge) { %>
-                        <span style="font-size: 0.85rem; color: #10b981; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 0.5rem 0.8rem; border-radius: 8px; font-weight: 700;"><%= userData.equipped_badge %></span>
+                        <%
+                           const getBadgeClass = (val) => {
+                               if (!val) return 'user-badge-default';
+                               const v = val.toLowerCase();
+                               if (v.includes('quản trị') || v.includes('admin')) return 'user-badge-admin';
+                               if (v.includes('đế') || v.includes('chúa') || v.includes('thần') || v.includes('hoàng') || v.includes('độc cô')) return 'user-badge-custom-gold';
+                               if (v.includes('tiên') || v.includes('ma') || v.includes('kiếm')) return 'user-badge-custom-purple';
+                               if (v.includes('sách') || v.includes('độc giả') || v.includes('đọc')) return 'user-badge-custom-rose';
+                               return 'user-badge-default';
+                           }
+                        %>
+                        <span class="user-badge-premium <%= getBadgeClass(userData.equipped_badge) %>" style="margin-left: 0.5rem;"><%= userData.equipped_badge %></span>
                     <% } %>
                     <button type="submit" class="btn btn-secondary" style="font-size: 0.85rem; padding: 0.6rem 1.2rem; border-radius: 8px; font-weight: 600;">Lưu Thay Đổi</button>
                 </div>
@@ -138,17 +149,34 @@
                 <% if (achievements.length === 0) { %>
                     <p style="color: var(--text-secondary); text-align: center; padding: 2rem 0; font-size: 0.95rem;">Bạn chưa mở khóa thành tựu nào. Hãy đọc thêm truyện để nhận huy hiệu nhé!</p>
                 <% } else { %>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1.2rem;">
                         <% achievements.forEach(ach => { %>
-                            <div class="achievement-card" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.2rem; display: flex; flex-direction: column; gap: 0.4rem; transition: all 0.3s; position: relative; overflow: hidden;">
+                            <%
+                               const emoji = ach.badge_class === 'legend' ? '👑' : ach.badge_class === 'gold' ? '🥇' : ach.badge_class === 'silver' ? '🥈' : '🥉';
+                               const badgeValue = `${emoji} ${ach.name}`;
+                               const isEquipped = (userData.equipped_badge === badgeValue);
+                            %>
+                            <div class="achievement-card" style="background: rgba(255,255,255,0.02); border: 1px solid <%= isEquipped ? 'var(--accent-color)' : 'var(--border-color)' %>; border-radius: 12px; padding: 1.2rem; display: flex; flex-direction: column; gap: 0.5rem; transition: all 0.3s; position: relative; overflow: hidden;">
+                                <% if (isEquipped) { %>
+                                    <span style="position: absolute; top: 8px; right: 8px; font-size: 0.62rem; font-weight: bold; background: var(--accent-color); color: #fff; padding: 0.15rem 0.4rem; border-radius: 4px; text-transform: uppercase;">Đang dùng</span>
+                                <% } %>
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <span style="font-weight: bold; font-size: 0.95rem;"><%= ach.name %></span>
+                                    <span style="font-weight: bold; font-size: 0.95rem; color: var(--text-primary);"><%= ach.name %></span>
                                     <span class="badge-icon <%= ach.badge_class %>" style="font-size: 1.1rem;">
-                                        <%= ach.badge_class === 'legend' ? '👑' : ach.badge_class === 'gold' ? '🥇' : ach.badge_class === 'silver' ? '🥈' : '🥉' %>
+                                        <%= emoji %>
                                     </span>
                                 </div>
-                                <p style="color: var(--text-secondary); font-size: 0.82rem; margin: 0;"><%= ach.description %></p>
-                                <span style="font-size: 0.72rem; color: rgba(255,255,255,0.25); margin-top: auto;">Mở khóa: <%= new Date(ach.unlocked_at).toLocaleDateString('vi-VN') %></span>
+                                <p style="color: var(--text-secondary); font-size: 0.82rem; margin: 0; line-height: 1.4;"><%= ach.description %></p>
+                                
+                                <div style="margin-top: auto; padding-top: 0.6rem; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
+                                    <span style="font-size: 0.72rem; color: rgba(255,255,255,0.25);">Mở khóa: <%= new Date(ach.unlocked_at).toLocaleDateString('vi-VN') %></span>
+                                    
+                                    <% if (isEquipped) { %>
+                                        <button onclick="equipAchievement('<%= ach.name %>', 'unequip')" class="btn btn-secondary" style="font-size: 0.72rem; padding: 0.25rem 0.6rem; border-radius: 6px;">Tháo</button>
+                                    <% } else { %>
+                                        <button onclick="equipAchievement('<%= ach.name %>', 'equip')" class="btn btn-primary" style="font-size: 0.72rem; padding: 0.25rem 0.6rem; border-radius: 6px; font-weight: 600;">Gắn</button>
+                                    <% } %>
+                                </div>
                             </div>
                         <% }) %>
                     </div>
@@ -238,6 +266,26 @@
         } catch (err) {
             console.error(err);
             alert('Lỗi hệ thống khi trang bị.');
+        }
+    }
+
+    async function equipAchievement(name, action) {
+        try {
+            const resp = await fetch('/profile/equip-achievement', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, action })
+            });
+            const data = await resp.json();
+            
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.error || 'Lỗi khi thao tác trang bị.');
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Lỗi hệ thống.');
         }
     }
 
