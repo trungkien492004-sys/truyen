@@ -34,14 +34,18 @@
             <!-- 2. PHƯƠNG THỨC ĐĂNG CHƯƠNG -->
             <div class="form-group" style="margin-bottom: 2rem;">
                 <label>Phương thức đăng chương *</label>
-                <div style="display: flex; gap: 2rem; margin-top: 0.5rem; background: var(--bg-primary); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                <div style="display: flex; flex-wrap: wrap; gap: 1.5rem; margin-top: 0.5rem; background: var(--bg-primary); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color);">
                     <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 500;">
                         <input type="radio" name="publish_method" value="manual" checked>
-                        Đăng thủ công (Nhập tay / Chèn HTML)
+                        ✏️ Đăng thủ công (Nhập tay / HTML)
                     </label>
                     <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 500;">
                         <input type="radio" name="publish_method" value="bulk">
-                        Tải tệp tin tự động (.txt, .docx)
+                        📄 Tải file tự động (.txt, .docx)
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 500;">
+                        <input type="radio" name="publish_method" value="pdf">
+                        📕 Tải PDF (tự động tách chương)
                     </label>
                 </div>
             </div>
@@ -68,31 +72,47 @@
                 </div>
             </div>
 
-            <!-- KHỐI FORM 2: TỰ ĐỘNG TÁCH CHƯƠNG (BULK) -->
+            <!-- KHỐI FORM 2: TỰ ĐỘNG TÁCH CHƯƠNG (BULK - .txt/.docx) -->
             <div id="form-bulk" style="display: none;">
-                <div style="background: rgba(59, 130, 246, 0.08); border-left: 4px solid var(--accent-color); padding: 1rem; border-radius: 0 8px 8px 0; margin-bottom: 1.5rem; font-size: 0.9rem; line-height: 1.5;">
+                <div style="background: rgba(59, 130, 246, 0.08); border-left: 4px solid var(--accent-color); padding: 1rem; border-radius: 0 8px 8px 0; margin-bottom: 1.5rem; font-size: 0.9rem; line-height: 1.8;">
                     <strong>💡 Hướng dẫn tải tệp tin truyện:</strong><br>
-                    * **Tải lên hàng loạt**: Bạn có thể chọn và tải lên **nhiều file cùng một lúc**.<br>
-                    * **File Word (.docx)**: Trích xuất toàn bộ văn bản và **ảnh nhúng** đan xen bên trong.<br>
-                    * **File Văn bản (.txt)**: Trích xuất nội dung chữ thuần.<br>
-                    * **Quy tắc**: Nhận diện chương bằng từ khóa đầu dòng như: <code>Chương [Số]</code>, <code>Chap [Số]</code>. Nếu nội dung file không chứa từ khóa đánh số chương, hệ thống sẽ **tự động xem cả file là 1 chương** và đặt tên chương theo tên file (Mặc định Ngoại truyện).
+                    • <b>Tải lên hàng loạt</b>: Bạn có thể chọn nhiều file cùng lúc (giữ Ctrl/Cmd).<br>
+                    • <b>File Word (.docx)</b>: Trích xuất toàn bộ văn bản và ảnh nhúng đan xen.<br>
+                    • <b>File văn bản (.txt)</b>: Trích xuất nội dung chữ thuần.<br>
+                    • <b>Quy tắc đặt tên file</b>: Mỗi file = 1 chương. Nhận diện số chương qua từ khóa đầu tên file: <code>Chương 5</code>, <code>Chap 5</code>.
                 </div>
-
                 <div class="form-group">
-                    <label for="txtfile">Tải lên một hoặc nhiều tệp tin truyện *</label>
+                    <label for="txtfile">Tải lên một hoặc nhiều file truyện *</label>
                     <input type="file" id="txtfile" name="txtfile" accept=".txt,.docx" multiple required>
-                    <span style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.3rem; display: block;">Để chọn nhiều tệp, hãy giữ phím Ctrl (hoặc Cmd) khi chọn tệp.</span>
+                    <span style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.3rem; display: block;">Giữ phím Ctrl (hoặc Cmd) để chọn nhiều tệp cùng lúc.</span>
                 </div>
-                
                 <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.8rem;">
                     <input type="checkbox" id="include_images" name="include_images" checked style="width: auto; margin: 0; cursor: pointer;">
-                    <label for="include_images" style="margin: 0; font-size: 0.9rem; font-weight: normal; cursor: pointer; color: var(--text-primary);">
-                        Tải ảnh nhúng trong file Word lên hệ thống (Bỏ tích nếu chỉ muốn lấy chữ)
-                    </label>
+                    <label for="include_images" style="margin: 0; font-size: 0.9rem; font-weight: normal; cursor: pointer; color: var(--text-primary);">Tải ảnh nhúng trong file Word lên hệ thống (Bỏ tích nếu chỉ muốn lấy chữ)</label>
                 </div>
             </div>
 
-            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.8rem; font-size: 1rem; margin-top: 1.5rem;">BẮT ĐẦU ĐĂNG CHƯƠNG</button>
+            <!-- KHỐI FORM 3: UPLOAD PDF TỰ ĐỘNG TÁCH CHƯƠNG -->
+            <div id="form-pdf" style="display: none;">
+                <div style="background: rgba(239, 68, 68, 0.07); border-left: 4px solid #ef4444; padding: 1rem; border-radius: 0 8px 8px 0; margin-bottom: 1.5rem; font-size: 0.9rem; line-height: 1.8;">
+                    <strong>📕 Hướng dẫn upload PDF tự động tách chương:</strong><br>
+                    • Hệ thống sẽ đọc nội dung PDF và <b>tự động tách thành nhiều chương riêng biệt</b>.<br>
+                    • Nhận diện đầu chương qua các từ khóa đầu dòng: <code>Chương 1</code>, <code>Chapter 5</code>, <code>Phần 3</code>, <code>Chap 10</code>...<br>
+                    • Nếu PDF <b>không có từ khóa chương</b> → toàn bộ nội dung được đăng thành <b>1 chương duy nhất</b>.<br>
+                    • Giới hạn file: <b>50MB</b>. Chỉ hỗ trợ <b>1 file PDF</b> mỗi lần upload.
+                </div>
+                <div class="form-group">
+                    <label for="pdffile">Chọn file PDF *</label>
+                    <input type="file" id="pdffile" name="pdffile" accept=".pdf">
+                    <span style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.3rem; display: block;">Hệ thống sẽ tự phân tích cấu trúc và tách chương theo tiêu đề trong PDF.</span>
+                </div>
+                <div id="pdf-preview" style="display:none; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; margin-top: 1rem;">
+                    <strong>📋 Xem trước các chương sẽ được tách:</strong>
+                    <div id="pdf-chapters-list" style="margin-top: 0.8rem; max-height: 300px; overflow-y: auto;"></div>
+                </div>
+            </div>
+
+            <button type="submit" id="submit-btn" class="btn btn-primary" style="width: 100%; padding: 0.8rem; font-size: 1rem; margin-top: 1.5rem;">BẮT ĐẦU ĐĂNG CHƯƠNG</button>
         </form>
     <% } %>
 </div>
@@ -104,84 +124,106 @@
     const methodRadios = document.querySelectorAll('input[name="publish_method"]');
     const formManual = document.getElementById('form-manual');
     const formBulk = document.getElementById('form-bulk');
-    
-    // Các trường bắt buộc cho manual
+    const formPdf = document.getElementById('form-pdf');
+
     const chapNumInput = document.getElementById('chapter_number');
     const chapTitleInput = document.getElementById('title');
     const chapContentInput = document.getElementById('content');
     const bulkFileInput = document.getElementById('txtfile');
+    const pdfFileInput = document.getElementById('pdffile');
 
     function toggleForms() {
-        const selectedMethod = document.querySelector('input[name="publish_method"]:checked').value;
-        if (selectedMethod === 'manual') {
-            formManual.style.display = 'block';
-            formBulk.style.display = 'none';
-            // Cập nhật thuộc tính required
-            chapNumInput.required = true;
-            chapTitleInput.required = true;
-            chapContentInput.required = true;
-            bulkFileInput.required = false;
-        } else {
-            formManual.style.display = 'none';
-            formBulk.style.display = 'block';
-            // Cập nhật thuộc tính required
-            chapNumInput.required = false;
-            chapTitleInput.required = false;
-            chapContentInput.required = false;
-            bulkFileInput.required = true;
-        }
+        const m = document.querySelector('input[name="publish_method"]:checked').value;
+        formManual.style.display = m === 'manual' ? 'block' : 'none';
+        formBulk.style.display   = m === 'bulk'   ? 'block' : 'none';
+        formPdf.style.display    = m === 'pdf'    ? 'block' : 'none';
+
+        chapNumInput.required     = m === 'manual';
+        chapTitleInput.required   = m === 'manual';
+        chapContentInput.required = m === 'manual';
+        bulkFileInput.required    = m === 'bulk';
+        pdfFileInput.required     = m === 'pdf';
     }
 
-    methodRadios.forEach(radio => {
-        radio.addEventListener('change', toggleForms);
-    });
-
-    // Chạy khi khởi động trang
+    methodRadios.forEach(r => r.addEventListener('change', toggleForms));
     toggleForms();
 
-    // INTERCEPT FORM SUBMIT ĐỂ PHÂN TÍCH FILE PHÍA TRÌNH DUYỆT (TRÁNH LỖI VERCEL 4.5MB PAYLOAD)
+    // INTERCEPT FORM SUBMIT
     const form = document.querySelector('form');
     form.addEventListener('submit', async (e) => {
         const selectedMethod = document.querySelector('input[name="publish_method"]:checked').value;
-        if (selectedMethod === 'bulk') {
-            e.preventDefault(); // Ngăn submit form mặc định
 
-            const submitBtn = form.querySelector('button[type="submit"]');
-            const originalBtnText = submitBtn.textContent;
+        // ── PDF ───────────────────────────────────────────────
+        if (selectedMethod === 'pdf') {
+            e.preventDefault();
+            const submitBtn = document.getElementById('submit-btn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = '⏳ Đang tải PDF lên và tách chương...';
+            try {
+                const storyId = document.getElementById('story_id').value;
+                const file = pdfFileInput.files[0];
+                if (!file) {
+                    alert('Vui lòng chọn file PDF.');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'BẮT ĐẦU ĐĂNG CHƯƠNG';
+                    return;
+                }
+                const fd = new FormData();
+                fd.append('story_id', storyId);
+                fd.append('pdffile', file);
+
+                const resp = await fetch('/admin/chapter/add-pdf', { method: 'POST', body: fd });
+                let data;
+                if (resp.headers.get('content-type')?.includes('application/json')) {
+                    data = await resp.json();
+                } else {
+                    const txt = await resp.text();
+                    throw new Error('Lỗi máy chủ (' + resp.status + '): ' + txt.substring(0,200));
+                }
+                if (data.success) {
+                    window.location.href = '/admin/chapter/add?success=' + encodeURIComponent(data.message);
+                } else {
+                    alert('Lỗi: ' + data.error);
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'BẮT ĐẦU ĐĂNG CHƯƠNG';
+                }
+            } catch (err) {
+                alert('Có lỗi xảy ra: ' + err.message);
+                const sb = document.getElementById('submit-btn');
+                sb.disabled = false;
+                sb.textContent = 'BẮT ĐẦU ĐĂNG CHƯƠNG';
+            }
+        }
+
+        // ── BULK (.txt / .docx) ───────────────────────────────
+        else if (selectedMethod === 'bulk') {
+            e.preventDefault();
+            const submitBtn = document.getElementById('submit-btn');
+            const origText = submitBtn.textContent;
             submitBtn.disabled = true;
             submitBtn.textContent = '⏳ Đang xử lý file và tải ảnh lên...';
-
             try {
                 const storyId = document.getElementById('story_id').value;
                 const files = bulkFileInput.files;
                 if (!files || files.length === 0) {
                     alert('Vui lòng chọn tệp tin truyện.');
                     submitBtn.disabled = false;
-                    submitBtn.textContent = originalBtnText;
+                    submitBtn.textContent = origText;
                     return;
                 }
-
                 const processedFiles = [];
-
                 for (let file of files) {
                     const isDocx = file.name.endsWith('.docx');
                     if (isDocx) {
                         const arrayBuffer = await file.arrayBuffer();
-                        const result = await mammoth.convertToHtml({ arrayBuffer: arrayBuffer });
+                        const result = await mammoth.convertToHtml({ arrayBuffer });
                         let html = result.value;
-
-                        // Parse ảnh và upload thẳng lên Supabase hoặc xoá ảnh
                         const parser = new DOMParser();
                         const doc = parser.parseFromString(html, 'text/html');
                         const imgs = doc.querySelectorAll('img');
-
                         const includeImages = document.getElementById('include_images').checked;
-
                         if (includeImages) {
-                            if (imgs.length > 0) {
-                                submitBtn.textContent = `⏳ Đang tải ${imgs.length} ảnh trong file lên Supabase...`;
-                            }
-
+                            if (imgs.length > 0) submitBtn.textContent = '⏳ Đang tải ' + imgs.length + ' ảnh lên Supabase...';
                             for (let img of imgs) {
                                 const src = img.getAttribute('src');
                                 if (src && src.startsWith('data:')) {
@@ -190,70 +232,45 @@
                                     img.setAttribute('src', publicUrl);
                                 }
                             }
-                        } else {
-                            // Xoá ảnh khỏi tài liệu
-                            imgs.forEach(img => img.remove());
-                        }
-
+                        } else { imgs.forEach(img => img.remove()); }
                         html = doc.body.innerHTML;
-                        processedFiles.push({
-                            name: file.name,
-                            type: 'docx',
-                            content: html
-                        });
-
+                        processedFiles.push({ name: file.name, type: 'docx', content: html });
                     } else {
-                        // Txt file
                         const text = await file.text();
-                        processedFiles.push({
-                            name: file.name,
-                            type: 'txt',
-                            content: text
-                        });
+                        processedFiles.push({ name: file.name, type: 'txt', content: text });
                     }
                 }
-
-                // Gửi JSON lên server
-                submitBtn.textContent = '⏳ Đang lưu dữ liệu chương vào database...';
+                submitBtn.textContent = '⏳ Đang lưu vào database...';
                 const response = await fetch('/admin/chapter/add-json', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        story_id: storyId,
-                        files: processedFiles
-                    })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ story_id: storyId, files: processedFiles })
                 });
-
                 let resData;
-                const contentType = response.headers.get('content-type');
-                if (contentType && contentType.includes('application/json')) {
+                if (response.headers.get('content-type')?.includes('application/json')) {
                     resData = await response.json();
                 } else {
                     const text = await response.text();
-                    if (response.status === 413) {
-                        throw new Error('Dung lượng tệp truyện hoặc ảnh gửi đi quá lớn (Vượt quá 4.5 MB giới hạn của Vercel). Vui lòng thử chia nhỏ file ra đăng làm nhiều lần.');
-                    }
-                    throw new Error(`Lỗi từ máy chủ (${response.status}): ${text.substring(0, 150)}...`);
+                    if (response.status === 413) throw new Error('File quá lớn (>4.5MB). Vui lòng chia nhỏ file.');
+                    throw new Error('Lỗi server (' + response.status + '): ' + text.substring(0, 150));
                 }
-
                 if (resData.success) {
                     window.location.href = '/admin/chapter/add?success=' + encodeURIComponent(resData.message);
                 } else {
                     alert('Lỗi đăng chương: ' + resData.error);
                     submitBtn.disabled = false;
-                    submitBtn.textContent = originalBtnText;
+                    submitBtn.textContent = origText;
                 }
-
             } catch (err) {
-                console.error(err);
                 alert('Có lỗi xảy ra: ' + err.message);
-                submitBtn.disabled = false;
-                submitBtn.textContent = originalBtnText;
+                const sb = document.getElementById('submit-btn');
+                sb.disabled = false;
+                sb.textContent = origText;
             }
         }
     });
+
+
 
     // Hàm chuyển đổi ảnh base64 thành Blob
     function dataURLtoBlob(dataurl) {

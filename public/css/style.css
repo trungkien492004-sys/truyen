@@ -570,6 +570,41 @@ main {
     text-align: justify;
 }
 
+/* Lời thoại nhân vật */
+.read-content p.dialogue {
+    padding-left: 1.2rem;
+    border-left: 3px solid var(--accent-color);
+    color: var(--text-primary);
+    font-style: italic;
+    margin-bottom: 1.2rem;
+}
+
+/* Dấu phân cảnh thời gian [[Tháng X]] */
+.read-content .scene-break {
+    text-align: center;
+    margin: 2.5rem 0;
+    position: relative;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    letter-spacing: 0.15em;
+}
+.read-content .scene-break::before,
+.read-content .scene-break::after {
+    content: '';
+    display: inline-block;
+    width: 60px;
+    height: 1px;
+    background: var(--border-color);
+    vertical-align: middle;
+    margin: 0 0.8rem;
+}
+.read-content .scene-break span {
+    color: var(--accent-color);
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+}
+
 .read-content img {
     max-width: 100%;
     height: auto;

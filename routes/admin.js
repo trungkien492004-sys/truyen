@@ -5,9 +5,10 @@ const multer = require('multer');
 const path = require('path');
 const mammoth = require('mammoth');
 const fs = require('fs');
+const pdfParse = require('pdf-parse');
 
 // Sử dụng Memory Storage để chạy không đĩa (tương thích Vercel Serverless)
-const upload = multer({ storage: multer.memoryStorage() });
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } }); // 50MB limit cho PDF
 
 // Hàm hỗ trợ upload file lên Supabase Storage
 async function uploadToSupabase(file, bucketName = 'uploads') {
@@ -42,6 +43,56 @@ async function uploadToSupabase(file, bucketName = 'uploads') {
 }
 
 
+
+// Hàm phân tích file PDF thành nhiều chương (tự động tách dựa theo đầu dòng "Chương X" / "Chapter X")
+async function parsePdfToChapters(buffer, storyId) {
+  const pdfData = await pdfParse(buffer);
+  const rawText = pdfData.text;
+  
+  // Pattern nhận diện đầu chương - linh hoạt hỗ trợ tiếng Việt và tiếng Anh
+  const chapterHeaderRegex = /^(?:Chương|CHƯƠNG|Chap|CHAP|Chapter|CHAPTER|Phần|PHẦN|Part|PART)\s*\.?\s*(\d+(?:\.\d+)?)(?:[:\s,\-–]+(.*))?$/im;
+
+  const lines = rawText.split('\n');
+  const chapters = [];
+  let currentChapter = null;
+  let currentLines = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    const match = line.match(chapterHeaderRegex);
+
+    if (match) {
+      // Lưu chương hiện tại nếu có
+      if (currentChapter !== null) {
+        chapters.push({
+          ...currentChapter,
+          content: currentLines.filter(l => l.trim()).map(l => `<p>${l.trim()}</p>`).join('')
+        });
+      }
+      const chapNum = parseFloat(match[1]);
+      const chapTitle = match[2] ? match[2].trim() : '';
+      currentChapter = {
+        story_id: parseInt(storyId),
+        chapter_number: chapNum,
+        title: chapTitle ? `Chương ${chapNum}: ${chapTitle}` : `Chương ${chapNum}`
+      };
+      currentLines = [];
+    } else if (currentChapter !== null) {
+      currentLines.push(line);
+    }
+    // Nếu chưa vào chương nào, bỏ qua dòng đó (tiêu đề sách, thông tin đầu file...)
+  }
+
+  // Lưu chương cuối cùng
+  if (currentChapter !== null && currentLines.length > 0) {
+    chapters.push({
+      ...currentChapter,
+      content: currentLines.filter(l => l.trim()).map(l => `<p>${l.trim()}</p>`).join('')
+    });
+  }
+
+  return chapters;
+}
 
 // Hàm phân tích 1 tệp tin (Word/Txt) thành đúng 1 chương duy nhất (1 file = 1 chương)
 async function parseSingleFileToChapter(file, storyId) {
@@ -541,6 +592,58 @@ router.post('/chapter/add-json', async (req, res) => {
   } catch (err) {
     console.error('Lỗi khi đăng chương qua JSON:', err);
     res.status(500).json({ error: err.message || 'Lỗi hệ thống.' });
+  }
+});
+
+// ĐĂNG CHƯƠNG QUA UPLOAD PDF (TỰ ĐỘNG TÁCH CHƯƠNG)
+router.post('/chapter/add-pdf', upload.single('pdffile'), async (req, res) => {
+  try {
+    const { story_id } = req.body;
+    if (!req.file || !story_id) {
+      return res.json({ success: false, error: 'Thiếu file hoặc story_id' });
+    }
+
+    let chapters = await parsePdfToChapters(req.file.buffer, story_id);
+
+    // Nếu PDF không có từ khóa chương nào được nhận diện -> đăng toàn bộ nội dung thành 1 chương duy nhất
+    if (chapters.length === 0) {
+      const pdfData = await pdfParse(req.file.buffer);
+      const rawText = pdfData.text;
+      const html = rawText
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => line.length > 0)
+        .map(line => `<p>${line}</p>`)
+        .join('');
+
+      if (!html) {
+        return res.json({ success: false, error: 'Không tìm thấy chương nào trong PDF' });
+      }
+
+      const { data: existingChapters } = await supabase
+        .from('chapters')
+        .select('chapter_number')
+        .eq('story_id', story_id);
+
+      const existingNumbers = existingChapters ? existingChapters.map(c => c.chapter_number) : [];
+      const nextNum = existingNumbers.length > 0 ? Math.floor(Math.max(...existingNumbers)) + 1 : 1;
+
+      chapters = [{
+        story_id: parseInt(story_id),
+        chapter_number: nextNum,
+        title: `Chương ${nextNum}`,
+        content: html
+      }];
+    }
+
+    const { error } = await supabase.from('chapters')
+      .upsert(chapters, { onConflict: 'story_id,chapter_number' });
+    if (error) throw error;
+
+    res.json({ success: true, message: `Đã tách và đăng ${chapters.length} chương từ PDF!` });
+  } catch (err) {
+    console.error('Lỗi khi đăng chương từ PDF:', err);
+    res.json({ success: false, error: err.message || 'Lỗi hệ thống khi xử lý PDF.' });
   }
 });
 
