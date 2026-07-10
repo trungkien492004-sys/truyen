@@ -1,0 +1,47 @@
+<%- include('partials/header') %>
+
+<div class="read-container" style="max-width: 1000px; margin: 0 auto; padding: 2rem 1rem;">
+    <div style="margin-bottom: 1.5rem;">
+        <a href="/" style="color: var(--text-secondary); font-size: 0.9rem;">&larr; Quay lại trang chủ</a>
+    </div>
+
+    <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 16px; padding: 2rem; margin-bottom: 2rem; display: flex; flex-direction: column; gap: 0.5rem;">
+        <h2 style="margin: 0; font-size: 1.8rem; background: linear-gradient(90deg, #818cf8 0%, #c084fc 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">🧠 Trí Tuệ Nhân Tạo (AI) Gợi Ý Truyện</h2>
+        <p style="color: var(--text-secondary); font-size: 0.95rem; margin: 0; line-height: 1.6;">
+            Hệ thống phân tích lịch sử đọc chương và danh sách theo dõi của bạn để nhận biết các thể loại yêu thích. Dưới đây là danh sách những tác phẩm phù hợp nhất với khẩu vị đọc của bạn mà bạn chưa lưu vào tủ sách!
+        </p>
+    </div>
+
+    <% if (stories.length === 0) { %>
+        <p style="color: var(--text-secondary); text-align: center; padding: 3rem 0;">Hệ thống chưa tìm thấy gợi ý nào phù hợp. Hãy đọc thêm một vài chương truyện để AI có dữ liệu phân tích nhé!</p>
+    <% } else { %>
+        <div class="stories-grid">
+            <% stories.forEach(story => { %>
+                <div class="story-card" style="position: relative;">
+                    <!-- Match Score Badge -->
+                    <div style="position: absolute; top: 10px; right: 10px; z-index: 10; background: linear-gradient(90deg, var(--accent-color) 0%, #a855f7 100%); color: white; padding: 0.3rem 0.6rem; border-radius: 8px; font-size: 0.75rem; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+                        ⚡ Phù hợp <%= story.match_score %>%
+                    </div>
+                    <a href="/story/<%= story.id %>">
+                        <img src="<%= story.cover_url %>" alt="<%= story.title %>" class="story-cover">
+                    </a>
+                    <div class="story-info">
+                        <a href="/story/<%= story.id %>" class="story-title" title="<%= story.title %>">
+                            <%= story.title %>
+                        </a>
+                        <span class="story-author">Tác giả: <%= story.author %></span>
+                        <div style="font-size: 0.78rem; color: var(--text-secondary); margin: 0.2rem 0;">
+                            📖 <%= story.chapter_count %> chương
+                            <% if (story.status === 'completed') { %> · <span style="color: #22c55e;">✅ Hoàn thành</span><% } else { %> · <span style="color: #f59e0b;">🔄 Đang tiến hành</span><% } %>
+                        </div>
+                        <p class="story-desc-short"><%= story.description || 'Chưa có tóm tắt nội dung.' %></p>
+                        
+                        <a href="/story/<%= story.id %>" class="btn btn-secondary btn-primary" style="margin-top: auto; font-size: 0.85rem; padding: 0.5rem;">Đọc ngay</a>
+                    </div>
+                </div>
+            <% }) %>
+        </div>
+    <% } %>
+</div>
+
+<%- include('partials/footer') %>

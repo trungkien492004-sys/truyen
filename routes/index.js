@@ -8,7 +8,65 @@ const fs = require('fs');
 // Sử dụng Memory Storage để chạy không đĩa (tương thích Vercel Serverless)
 const upload = multer({ storage: multer.memoryStorage() });
 
+// Middleware nạp thông tin người dùng và số thông báo chưa đọc vào res.locals cho mọi template EJS
+router.use(async (req, res, next) => {
+  res.locals.user = req.user;
+  res.locals.unreadNotificationsCount = 0;
+  if (req.user && req.user.id) {
+    try {
+      const { count } = await supabase
+        .from('notifications')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', req.user.id)
+        .eq('is_read', false);
+      res.locals.unreadNotificationsCount = count || 0;
+    } catch (e) {
+      console.error('Lỗi lấy số thông báo chưa đọc:', e);
+    }
+  }
+  next();
+});
+
 const EXP_PER_CHAPTER = 5;
+
+function getBadgeForCount(count) {
+  if (count >= 500) return { label: 'Huyền thoại độc giả', badge_class: 'legend' };
+  if (count >= 100) return { label: 'Đại học giả', badge_class: 'gold' };
+  if (count >= 20) return { label: 'Mọt sách thực thụ', badge_class: 'silver' };
+  if (count >= 1) return { label: 'Độc giả mới', badge_class: 'bronze' };
+  return { label: 'Người mới', badge_class: 'bronze' };
+}
+
+async function unlockAchievement(userId, achievementName) {
+  try {
+    const { data: ach } = await supabase
+      .from('achievements')
+      .select('id, description')
+      .eq('name', achievementName)
+      .single();
+    if (!ach) return;
+
+    // Kiểm tra xem đã mở khóa chưa
+    const { data: exists } = await supabase
+      .from('user_achievements')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('achievement_id', ach.id)
+      .single();
+
+    if (!exists) {
+      await supabase.from('user_achievements').insert([{ user_id: userId, achievement_id: ach.id }]);
+      // Gửi thông báo
+      await supabase.from('notifications').insert([{
+        user_id: userId,
+        message: `🏆 Bạn đã mở khóa huy hiệu: ${achievementName}! (${ach.description})`,
+        link: '/profile'
+      }]);
+    }
+  } catch (err) {
+    console.error('Lỗi mở khóa thành tựu:', err);
+  }
+}
 
 // Hàm gamification: ghi nhận lượt đọc chương (tính EXP 1 lần/chương) + cập nhật streak đọc liên tục
 async function awardReadingExp(userId, storyId, chapterNumber) {
@@ -59,6 +117,24 @@ async function awardReadingExp(userId, storyId, chapterNumber) {
     { user_id: userId, exp, streak_days: streak, last_read_date: todayStr, updated_at: new Date().toISOString() },
     { onConflict: 'user_id' }
   );
+
+  // 3. Kiểm tra mở khóa thành tựu
+  if (!alreadyCounted) {
+    const { count } = await supabase
+      .from('chapter_reads')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId);
+    
+    const totalRead = count || 0;
+    if (totalRead >= 1) await unlockAchievement(userId, 'Độc giả mới');
+    if (totalRead >= 20) await unlockAchievement(userId, 'Mọt sách thực thụ');
+    if (totalRead >= 100) await unlockAchievement(userId, 'Đại học giả');
+    if (totalRead >= 500) await unlockAchievement(userId, 'Huyền thoại độc giả');
+  }
+
+  if (streak >= 7) {
+    await unlockAchievement(userId, 'Kiên trì đọc sách');
+  }
 }
 
 // Hàm hỗ trợ upload file lên Supabase Storage
@@ -96,12 +172,15 @@ async function uploadToSupabase(file, bucketName = 'uploads') {
 // TRANG CHỦ & BẢNG XẾP HẠNG
 router.get('/', async (req, res) => {
   try {
-    // 1. Lấy tất cả danh sách truyện, sắp xếp theo truyện có chương MỚI CẬP NHẬT gần nhất lên đầu
-    const { data: stories, error: storiesError } = await supabase
-      .from('stories_with_last_update')
-      .select('*')
-      .order('last_update_at', { ascending: false });
+    const status = req.query.status || ''; // '', 'ongoing', 'completed'
 
+    // 1. Lấy tất cả danh sách truyện, sắp xếp theo truyện có chương MỚI CẬP NHẬT gần nhất lên đầu
+    let query = supabase.from('stories_with_last_update').select('*');
+    if (status === 'ongoing' || status === 'completed') {
+      query = query.eq('status', status);
+    }
+    
+    const { data: stories, error: storiesError } = await query.order('last_update_at', { ascending: false });
     if (storiesError) throw storiesError;
 
     // 2. Lấy danh sách thể loại để hiển thị menu
@@ -126,18 +205,29 @@ router.get('/', async (req, res) => {
       console.error('Lỗi lấy BXH độc giả (bỏ qua, không chặn trang chủ):', e);
     }
 
+    // 3c. Lấy bảng xếp hạng Top Bookmark (được theo dõi nhiều nhất)
+    let topBookmarks = [];
+    try {
+      const { data: bookmarks } = await supabase.from('stories_bookmarks_count').select('*').order('bookmark_count', { ascending: false }).limit(5);
+      topBookmarks = bookmarks || [];
+    } catch (e) {
+      console.error('Lỗi lấy Top Bookmarks:', e);
+    }
+
     res.render('home', {
       title: 'Trang chủ - Web Đọc Truyện',
       user: req.user,
-      stories,
+      stories: stories || [],
       genres,
       topDaily: topDaily || [],
       topWeekly: topWeekly || [],
       topMonthly: topMonthly || [],
       topYearly: topYearly || [],
       topReaders,
+      topBookmarks,
       activeGenre: null,
-      searchQuery: null
+      searchQuery: null,
+      filters: { status }
     });
   } catch (err) {
     console.error('Lỗi trang chủ:', err);
@@ -151,6 +241,7 @@ router.get('/search', async (req, res) => {
   const genreSlug = req.query.genre || '';
   const status = req.query.status || ''; // '', 'ongoing', 'completed'
   const minChapters = req.query.min_chapters ? parseInt(req.query.min_chapters) : 0;
+  const year = req.query.year ? parseInt(req.query.year) : null;
   const sort = req.query.sort || 'newest'; // newest | oldest | most_chapters | title_az
 
   try {
@@ -179,6 +270,9 @@ router.get('/search', async (req, res) => {
     if (status === 'ongoing' || status === 'completed') {
       q = q.eq('status', status);
     }
+    if (year) {
+      q = q.eq('year', year);
+    }
     if (genreStoryIds !== null) {
       if (genreStoryIds.length === 0) {
         // Không có truyện nào thuộc thể loại này -> trả về rỗng ngay
@@ -187,10 +281,10 @@ router.get('/search', async (req, res) => {
           user: req.user,
           stories: [],
           genres,
-          topDaily: [], topWeekly: [], topMonthly: [], topYearly: [],
+          topDaily: [], topWeekly: [], topMonthly: [], topYearly: [], topBookmarks: [],
           activeGenre,
           searchQuery: query,
-          filters: { genre: genreSlug, status, minChapters: req.query.min_chapters || '', sort }
+          filters: { genre: genreSlug, status, minChapters: req.query.min_chapters || '', year: req.query.year || '', sort }
         });
       }
       q = q.in('id', genreStoryIds);
@@ -227,10 +321,10 @@ router.get('/search', async (req, res) => {
       user: req.user,
       stories,
       genres,
-      topDaily: [], topWeekly: [], topMonthly: [], topYearly: [], // ẩn bảng xếp hạng khi tìm kiếm
+      topDaily: [], topWeekly: [], topMonthly: [], topYearly: [], topBookmarks: [], // ẩn bảng xếp hạng khi tìm kiếm
       activeGenre,
       searchQuery: query,
-      filters: { genre: genreSlug, status, minChapters: req.query.min_chapters || '', sort }
+      filters: { genre: genreSlug, status, minChapters: req.query.min_chapters || '', year: req.query.year || '', sort }
     });
   } catch (err) {
     console.error('Lỗi tìm kiếm:', err);
@@ -377,6 +471,31 @@ router.get('/story/:id', async (req, res) => {
       .eq('story_id', storyId)
       .single();
 
+    // 6. Lấy danh sách bình luận (chỉ lấy bình luận ở cấp độ truyện, tức chapter_number IS NULL)
+    let comments = [];
+    try {
+      const { data: commentsData } = await supabase
+        .from('comments')
+        .select('*, users(display_name, avatar)')
+        .eq('story_id', storyId)
+        .is('chapter_number', null)
+        .order('created_at', { ascending: true });
+      
+      comments = commentsData || [];
+      for (const c of comments) {
+        const { count } = await supabase.from('comment_likes').select('*', { count: 'exact', head: true }).eq('comment_id', c.id);
+        c.likes_count = count || 0;
+        
+        c.user_liked = false;
+        if (req.user && req.user.id) {
+          const { data: liked } = await supabase.from('comment_likes').select('*').eq('comment_id', c.id).eq('user_id', req.user.id).single();
+          if (liked) c.user_liked = true;
+        }
+      }
+    } catch (e) {
+      console.error('Lỗi lấy bình luận truyện:', e);
+    }
+
     res.render('story', {
       title: `${story.title} - Chi tiết truyện`,
       user: req.user,
@@ -387,7 +506,8 @@ router.get('/story/:id', async (req, res) => {
       bookmarkStatus,
       myRating,
       avgScore: ratingSummary ? ratingSummary.avg_score : null,
-      ratingCount: ratingSummary ? ratingSummary.rating_count : 0
+      ratingCount: ratingSummary ? ratingSummary.rating_count : 0,
+      comments
     });
   } catch (err) {
     console.error('Lỗi chi tiết truyện:', err);
@@ -460,6 +580,31 @@ router.get('/story/:story_id/chapter/:chapter_number', async (req, res) => {
       .eq('story_id', storyId)
       .order('chapter_number', { ascending: true });
 
+    // 6. Lấy danh sách bình luận của chương truyện này
+    let comments = [];
+    try {
+      const { data: commentsData } = await supabase
+        .from('comments')
+        .select('*, users(display_name, avatar)')
+        .eq('story_id', storyId)
+        .eq('chapter_number', chapterNumber)
+        .order('created_at', { ascending: true });
+      
+      comments = commentsData || [];
+      for (const c of comments) {
+        const { count } = await supabase.from('comment_likes').select('*', { count: 'exact', head: true }).eq('comment_id', c.id);
+        c.likes_count = count || 0;
+        
+        c.user_liked = false;
+        if (req.user && req.user.id) {
+          const { data: liked } = await supabase.from('comment_likes').select('*').eq('comment_id', c.id).eq('user_id', req.user.id).single();
+          if (liked) c.user_liked = true;
+        }
+      }
+    } catch (e) {
+      console.error('Lỗi lấy bình luận chương:', e);
+    }
+
     res.render('read', {
       title: `Đọc truyện ${story.title} - Chương ${chapter.chapter_number}: ${chapter.title}`,
       user: req.user,
@@ -467,7 +612,8 @@ router.get('/story/:story_id/chapter/:chapter_number', async (req, res) => {
       chapter,
       hasPrev: !!prevChapter,
       hasNext: !!nextChapter,
-      chaptersList: chaptersList || []
+      chaptersList: chaptersList || [],
+      comments
     });
   } catch (err) {
     console.error('Lỗi đọc chương:', err);
@@ -682,6 +828,313 @@ router.post('/contact/submit', upload.array('attachments', 10), async (req, res)
       success: null,
       error: 'Có lỗi xảy ra khi lưu yêu cầu của bạn. Vui lòng thử lại.'
     });
+  }
+});
+
+// ==========================================
+// HỆ THỐNG THÀNH TỰU & BÌNH LUẬN & THÔNG BÁO & AI GỢI Ý & LEADERBOARD
+
+// Quét nhắc tên @mention trong bình luận
+async function handleCommentMentions(commentContent, storyId, chapterNumber, senderName) {
+  const mentionRegex = /@([a-zA-Z0-9_\sà-ỹÀ-Ỹ]+)/g;
+  let match;
+  const mentionedNames = [];
+  while ((match = mentionRegex.exec(commentContent)) !== null) {
+    mentionedNames.push(match[1].trim());
+  }
+  for (const name of mentionedNames) {
+    const { data: u } = await supabase.from('users').select('id').ilike('display_name', name).single();
+    if (u) {
+      await supabase.from('notifications').insert([{
+        user_id: u.id,
+        message: `💬 ${senderName} đã nhắc đến bạn trong một bình luận!`,
+        link: `/story/${storyId}${chapterNumber ? '/chapter/' + chapterNumber : ''}`
+      }]);
+    }
+  }
+}
+
+// Thuật toán AI gợi ý truyện dựa trên thể loại đọc nhiều nhất
+async function getAiRecommendations(userId) {
+  try {
+    const { data: reads } = await supabase.from('chapter_reads').select('story_id');
+    const readStoryIds = (reads || []).map(r => r.story_id);
+    
+    if (readStoryIds.length === 0) {
+      const { data: popular } = await supabase.from('stories_bookmarks_count').select('*').order('bookmark_count', { ascending: false }).limit(6);
+      return popular || [];
+    }
+
+    const { data: readGenres } = await supabase.from('story_genres').select('genre_id').in('story_id', readStoryIds);
+    const genreCounts = {};
+    (readGenres || []).forEach(g => {
+      genreCounts[g.genre_id] = (genreCounts[g.genre_id] || 0) + 1;
+    });
+
+    const topGenres = Object.keys(genreCounts).map(Number).sort((a, b) => genreCounts[b] - genreCounts[a]).slice(0, 3);
+    if (topGenres.length === 0) {
+      const { data: popular } = await supabase.from('stories_bookmarks_count').select('*').order('bookmark_count', { ascending: false }).limit(6);
+      return popular || [];
+    }
+
+    const { data: bookmarks } = await supabase.from('bookmarks').select('story_id').eq('user_id', userId);
+    const bookmarkedIds = (bookmarks || []).map(b => b.story_id);
+    const excludeIds = [...new Set([...readStoryIds, ...bookmarkedIds])];
+
+    const { data: candidateStoryGenres } = await supabase
+      .from('story_genres')
+      .select('story_id, genre_id')
+      .in('genre_id', topGenres);
+
+    const scores = {};
+    (candidateStoryGenres || []).forEach(sg => {
+      if (excludeIds.includes(sg.story_id)) return;
+      scores[sg.story_id] = (scores[sg.story_id] || 0) + 1;
+    });
+
+    const sortedIds = Object.keys(scores).map(Number).sort((a, b) => scores[b] - scores[a]).slice(0, 6);
+    if (sortedIds.length === 0) {
+      const { data: popular } = await supabase.from('stories_bookmarks_count').select('*').order('bookmark_count', { ascending: false }).limit(6);
+      return popular || [];
+    }
+
+    const { data: recs } = await supabase.from('stories').select('*, chapters(count)').in('id', sortedIds);
+    return (recs || []).map(r => ({
+      ...r,
+      chapter_count: (r.chapters && r.chapters[0] && r.chapters[0].count) || 0,
+      match_score: Math.round((scores[r.id] / topGenres.length) * 100)
+    }));
+  } catch (e) {
+    console.error('Lỗi thuật toán AI gợi ý:', e);
+    return [];
+  }
+}
+
+// Route đăng bình luận
+router.post('/story/:story_id/comment', async (req, res) => {
+  if (!req.user || !req.user.id) {
+    return res.status(401).json({ success: false, error: 'Vui lòng đăng nhập để bình luận.' });
+  }
+  const storyId = parseInt(req.params.story_id);
+  const { content, chapter_number, parent_id } = req.body;
+  if (!content || !content.trim()) {
+    return res.status(400).json({ success: false, error: 'Bình luận không được để trống.' });
+  }
+
+  try {
+    const commentData = {
+      story_id: storyId,
+      chapter_number: chapter_number ? parseInt(chapter_number) : null,
+      user_id: req.user.id,
+      content: content.trim(),
+      parent_id: parent_id ? parseInt(parent_id) : null
+    };
+
+    const { data: newComment, error } = await supabase
+      .from('comments')
+      .insert([commentData])
+      .select('*, users(display_name, avatar)')
+      .single();
+
+    if (error) throw error;
+
+    // Quét nhắc tên @mention
+    await handleCommentMentions(content, storyId, chapter_number, req.user.display_name);
+
+    // Gửi thông báo cho bình luận gốc nếu là phản hồi
+    if (parent_id) {
+      const { data: parentComment } = await supabase.from('comments').select('user_id').eq('id', parent_id).single();
+      if (parentComment && parentComment.user_id !== req.user.id) {
+        await supabase.from('notifications').insert([{
+          user_id: parentComment.user_id,
+          message: `💬 ${req.user.display_name} đã phản hồi bình luận của bạn!`,
+          link: `/story/${storyId}${chapter_number ? '/chapter/' + chapter_number : ''}`
+        }]);
+      }
+    }
+
+    // Mở khóa thành tựu bình luận đầu tiên
+    await unlockAchievement(req.user.id, 'Người đóng góp');
+
+    res.json({ success: true, comment: newComment });
+  } catch (err) {
+    console.error('Lỗi khi thêm bình luận:', err);
+    res.status(500).json({ success: false, error: err.message || 'Lỗi hệ thống.' });
+  }
+});
+
+// Route thích bình luận
+router.post('/comment/:id/like', async (req, res) => {
+  if (!req.user || !req.user.id) {
+    return res.status(401).json({ success: false, error: 'Vui lòng đăng nhập.' });
+  }
+  const commentId = parseInt(req.params.id);
+
+  try {
+    const { data: existing } = await supabase
+      .from('comment_likes')
+      .select('*')
+      .eq('comment_id', commentId)
+      .eq('user_id', req.user.id)
+      .single();
+
+    let liked = false;
+    if (existing) {
+      await supabase.from('comment_likes').delete().eq('comment_id', commentId).eq('user_id', req.user.id);
+    } else {
+      await supabase.from('comment_likes').insert([{ comment_id: commentId, user_id: req.user.id }]);
+      liked = true;
+
+      const { data: comment } = await supabase.from('comments').select('user_id, story_id, chapter_number').eq('id', commentId).single();
+      if (comment && comment.user_id !== req.user.id) {
+        await supabase.from('notifications').insert([{
+          user_id: comment.user_id,
+          message: `❤️ ${req.user.display_name} đã thích bình luận của bạn!`,
+          link: `/story/${comment.story_id}${comment.chapter_number ? '/chapter/' + comment.chapter_number : ''}`
+        }]);
+      }
+    }
+
+    const { count } = await supabase.from('comment_likes').select('*', { count: 'exact', head: true }).eq('comment_id', commentId);
+    res.json({ success: true, liked, likesCount: count || 0 });
+  } catch (err) {
+    console.error('Lỗi thích bình luận:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Route đọc tất cả thông báo
+router.post('/notifications/read-all', async (req, res) => {
+  if (!req.user || !req.user.id) return res.status(401).json({ success: false });
+  try {
+    await supabase.from('notifications').update({ is_read: true }).eq('user_id', req.user.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Trang cá nhân người dùng
+router.get('/profile', async (req, res) => {
+  if (!req.user || !req.user.id) return res.redirect('/auth/login');
+
+  try {
+    const { data: stats } = await supabase
+      .from('user_stats')
+      .select('*')
+      .eq('user_id', req.user.id)
+      .single();
+
+    const exp = stats ? stats.exp : 0;
+    const streak = stats ? stats.streak_days : 0;
+
+    const level = Math.floor(exp / 100) + 1;
+    const nextLevelExp = 100;
+    const currentLevelExp = exp % 100;
+
+    const { data: unlocked } = await supabase
+      .from('user_achievements')
+      .select('unlocked_at, achievements(*)')
+      .eq('user_id', req.user.id);
+
+    const achievements = (unlocked || []).map(ua => ({
+      ...ua.achievements,
+      unlocked_at: ua.unlocked_at
+    }));
+
+    const { data: notifications } = await supabase
+      .from('notifications')
+      .select('*')
+      .eq('user_id', req.user.id)
+      .order('created_at', { ascending: false })
+      .limit(30);
+
+    const { count: chaptersCount } = await supabase
+      .from('chapter_reads')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', req.user.id);
+
+    const badge = getBadgeForCount(chaptersCount || 0);
+
+    res.render('profile', {
+      title: 'Trang cá nhân của tôi',
+      user: req.user,
+      stats: {
+        exp,
+        streak,
+        level,
+        currentLevelExp,
+        nextLevelExp,
+        chaptersRead: chaptersCount || 0,
+        badge: badge ? badge.label : 'Người mới'
+      },
+      achievements,
+      notifications: notifications || []
+    });
+  } catch (err) {
+    console.error('Lỗi khi tải trang cá nhân:', err);
+    res.status(500).send('Lỗi hệ thống.');
+  }
+});
+
+// Route cập nhật hồ sơ người dùng
+router.post('/profile/update', upload.single('avatar'), async (req, res) => {
+  if (!req.user || !req.user.id) return res.status(401).send('Chưa đăng nhập');
+  const { display_name } = req.body;
+  if (!display_name || !display_name.trim()) {
+    return res.status(400).send('Tên hiển thị không được để trống.');
+  }
+
+  try {
+    let avatarUrl = req.user.avatar;
+    if (req.file) {
+      avatarUrl = await uploadToSupabase(req.file, 'uploads');
+    }
+
+    const { error } = await supabase
+      .from('users')
+      .update({ display_name: display_name.trim(), avatar: avatarUrl })
+      .eq('id', req.user.id);
+
+    if (error) throw error;
+    res.redirect('/profile');
+  } catch (err) {
+    console.error('Lỗi cập nhật hồ sơ:', err);
+    res.status(500).send('Lỗi hệ thống.');
+  }
+});
+
+// AI gợi ý truyện cho độc giả
+router.get('/ai-recommend', async (req, res) => {
+  if (!req.user || !req.user.id) {
+    return res.redirect('/auth/login');
+  }
+  try {
+    const recs = await getAiRecommendations(req.user.id);
+    res.render('ai-recommend', {
+      title: 'AI Gợi Ý Truyện Dành Cho Bạn',
+      user: req.user,
+      stories: recs
+    });
+  } catch (err) {
+    console.error('Lỗi gợi ý AI:', err);
+    res.status(500).send('Lỗi hệ thống.');
+  }
+});
+
+// Trang Bảng Xếp Hạng Độc Giả toàn diện
+router.get('/leaderboard', async (req, res) => {
+  try {
+    const { data: readers } = await supabase.from('leaderboard_by_exp').select('*').limit(20);
+    const leaderboard = (readers || []).map(r => ({ ...r, badge: getBadgeForCount(r.chapters_read || 0) }));
+    res.render('leaderboard', {
+      title: 'Bảng xếp hạng độc giả',
+      user: req.user,
+      leaderboard
+    });
+  } catch (err) {
+    console.error('Lỗi lấy BXH độc giả:', err);
+    res.status(500).send('Lỗi hệ thống.');
   }
 });
 

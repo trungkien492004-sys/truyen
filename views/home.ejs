@@ -28,6 +28,14 @@
             <option value="200" <%= (typeof filters !== 'undefined' && filters.minChapters === '200') ? 'selected' : '' %>>Từ 200 chương</option>
         </select>
 
+        <select name="year" style="padding: 0.5rem 0.8rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 0.85rem;">
+            <option value="">Mọi năm</option>
+            <% const currentYear = new Date().getFullYear(); %>
+            <% for (let y = currentYear; y >= 2020; y--) { %>
+                <option value="<%= y %>" <%= (typeof filters !== 'undefined' && filters.year == y) ? 'selected' : '' %>><%= y %></option>
+            <% } %>
+        </select>
+
         <select name="sort" style="padding: 0.5rem 0.8rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 0.85rem;">
             <option value="newest" <%= (typeof filters === 'undefined' || filters.sort === 'newest') ? 'selected' : '' %>>Mới cập nhật</option>
             <option value="oldest" <%= (typeof filters !== 'undefined' && filters.sort === 'oldest') ? 'selected' : '' %>>Cũ nhất</option>
@@ -53,15 +61,25 @@
 <div class="content-grid">
     <!-- Cột trái: Danh sách truyện -->
     <div>
-        <h2 class="section-title">
-            <% if (searchQuery) { %>
-                🔍 Kết quả tìm kiếm cho "<%= searchQuery %>"
-            <% } else if (activeGenre) { %>
-                📚 Thể loại: <%= activeGenre.name %>
-            <% } else { %>
-                ✨ Truyện mới cập nhật
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem;">
+            <h2 class="section-title" style="margin-bottom: 0; border-bottom: none; padding-bottom: 0;">
+                <% if (searchQuery) { %>
+                    🔍 Kết quả tìm kiếm cho "<%= searchQuery %>"
+                <% } else if (activeGenre) { %>
+                    📚 Thể loại: <%= activeGenre.name %>
+                <% } else { %>
+                    ✨ Truyện mới cập nhật
+                <% } %>
+            </h2>
+            
+            <% if (!searchQuery && !activeGenre) { %>
+                <div style="display: flex; gap: 0.4rem;">
+                    <a href="/" class="btn <%= (!filters || !filters.status) ? 'btn-primary' : 'btn-secondary' %>" style="font-size: 0.8rem; padding: 0.35rem 0.8rem; border-radius: 8px; font-weight: 500;">Tất cả</a>
+                    <a href="/?status=ongoing" class="btn <%= (filters && filters.status === 'ongoing') ? 'btn-primary' : 'btn-secondary' %>" style="font-size: 0.8rem; padding: 0.35rem 0.8rem; border-radius: 8px; font-weight: 500;">🔄 Đang ra</a>
+                    <a href="/?status=completed" class="btn <%= (filters && filters.status === 'completed') ? 'btn-primary' : 'btn-secondary' %>" style="font-size: 0.8rem; padding: 0.35rem 0.8rem; border-radius: 8px; font-weight: 500;">✅ Trọn bộ</a>
+                </div>
             <% } %>
-        </h2>
+        </div>
         
         <% if (stories.length === 0) { %>
             <p style="color: var(--text-secondary); text-align: center; margin-top: 3rem;">Chưa có truyện nào được đăng tải trong danh mục này.</p>
@@ -77,10 +95,17 @@
                                 <%= story.title %>
                             </a>
                             <span class="story-author">Tác giả: <%= story.author %></span>
-                            <% if (typeof story.chapter_count !== 'undefined' || story.status) { %>
-                                <div style="font-size: 0.78rem; color: var(--text-secondary); margin: 0.2rem 0;">
-                                    <% if (typeof story.chapter_count !== 'undefined') { %>📖 <%= story.chapter_count %> chương<% } %>
-                                    <% if (story.status === 'completed') { %> · <span style="color: #22c55e;">✅ Hoàn thành</span><% } else if (story.status === 'ongoing') { %> · <span style="color: #f59e0b;">🔄 Đang tiến hành</span><% } %>
+                            <div style="font-size: 0.78rem; color: var(--text-secondary); margin: 0.25rem 0;">
+                                <% if (story.last_chapter_number) { %>
+                                    <span style="color: var(--accent-color); font-weight: 600;">Mới: Chương <%= story.last_chapter_number %></span>
+                                <% } else { %>
+                                    <span>Chưa có chương</span>
+                                <% } %>
+                                <% if (story.status === 'completed') { %> · <span style="color: #22c55e;">✅ Hoàn thành</span><% } else { %> · <span style="color: #f59e0b;">🔄 Đang tiến hành</span><% } %>
+                            </div>
+                            <% if (story.last_update_at) { %>
+                                <div style="font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                                    🕒 Cập nhật: <%= new Date(story.last_update_at).toLocaleDateString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' }) %>
                                 </div>
                             <% } %>
                             <p class="story-desc-short"><%= story.description || 'Chưa có tóm tắt nội dung.' %></p>
@@ -101,15 +126,14 @@
 
     <!-- Cột phải: Bảng xếp hạng (Chỉ hiển thị ở trang chủ mặc định) -->
     <% if (!searchQuery && !activeGenre) { %>
-        <div>
-            <div class="rankings-container">
+        <div style="position: sticky; top: 100px; display: flex; flex-direction: column; gap: 1.5rem;">
+            <div class="rankings-container" style="position: relative !important; top: auto !important;">
                 <h3 class="section-title" style="font-size: 1.3rem; margin-bottom: 1rem;">🏆 Bảng Xếp Hạng</h3>
                 
                 <div class="ranking-tabs">
                     <div class="ranking-tab active" data-tab="daily">Ngày</div>
                     <div class="ranking-tab" data-tab="weekly">Tuần</div>
-                    <div class="ranking-tab" data-tab="monthly">Tháng</div>
-                    <div class="ranking-tab" data-tab="yearly">Năm</div>
+                    <div class="ranking-tab" data-tab="bookmarks">Theo Dõi</div>
                 </div>
 
                 <!-- Bảng xếp hạng Ngày -->
@@ -148,36 +172,18 @@
                     <% } %>
                 </div>
 
-                <!-- Bảng xếp hạng Tháng -->
-                <div class="ranking-list" id="top-monthly">
-                    <% if (topMonthly.length === 0) { %>
-                        <p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; padding: 1rem 0;">Chưa có dữ liệu đọc tháng này.</p>
+                <!-- Bảng xếp hạng Theo Dõi (Bookmarks) -->
+                <div class="ranking-list" id="top-bookmarks">
+                    <% if (topBookmarks.length === 0) { %>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; padding: 1rem 0;">Chưa có truyện được theo dõi.</p>
                     <% } else { %>
-                        <% topMonthly.forEach((item, index) => { %>
+                        <% topBookmarks.forEach((item, index) => { %>
                             <a href="/story/<%= item.id %>" class="ranking-item">
                                 <div class="rank-number"><%= index + 1 %></div>
                                 <img src="<%= item.cover_url %>" alt="<%= item.title %>" class="ranking-cover">
                                 <div class="ranking-info">
                                     <div class="ranking-title"><%= item.title %></div>
-                                    <div class="ranking-views">👁️ <%= item.view_count %> lượt đọc</div>
-                                </div>
-                            </a>
-                        <% }) %>
-                    <% } %>
-                </div>
-
-                <!-- Bảng xếp hạng Năm -->
-                <div class="ranking-list" id="top-yearly">
-                    <% if (topYearly.length === 0) { %>
-                        <p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; padding: 1rem 0;">Chưa có dữ liệu đọc năm nay.</p>
-                    <% } else { %>
-                        <% topYearly.forEach((item, index) => { %>
-                            <a href="/story/<%= item.id %>" class="ranking-item">
-                                <div class="rank-number"><%= index + 1 %></div>
-                                <img src="<%= item.cover_url %>" alt="<%= item.title %>" class="ranking-cover">
-                                <div class="ranking-info">
-                                    <div class="ranking-title"><%= item.title %></div>
-                                    <div class="ranking-views">👁️ <%= item.view_count %> lượt đọc</div>
+                                    <div class="ranking-views">❤️ <%= item.bookmark_count %> theo dõi</div>
                                 </div>
                             </a>
                         <% }) %>
@@ -187,7 +193,7 @@
 
             <!-- KHỐI BẢNG XẾP HẠNG ĐỘC GIẢ (theo EXP tích lũy từ việc đọc truyện) -->
             <% if (typeof topReaders !== 'undefined' && topReaders.length > 0) { %>
-                <div class="rankings-container" style="margin-top: 1.5rem;">
+                <div class="rankings-container" style="position: relative !important; top: auto !important;">
                     <h3 class="section-title" style="font-size: 1.3rem; margin-bottom: 1rem;">🥇 BXH Độc Giả</h3>
                     <% topReaders.forEach((reader, index) => { %>
                         <div class="ranking-item" style="cursor: default;">

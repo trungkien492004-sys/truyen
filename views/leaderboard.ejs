@@ -1,32 +1,76 @@
 <%- include('partials/header') %>
 
-<div style="margin-bottom: 1.5rem;">
-    <a href="/" style="color: var(--text-secondary); font-size: 0.9rem;">&larr; Quay lại trang chủ</a>
+<div class="read-container" style="max-width: 800px; margin: 0 auto; padding: 2rem 1rem;">
+    <div style="margin-bottom: 1.5rem;">
+        <a href="/" style="color: var(--text-secondary); font-size: 0.9rem;">&larr; Quay lại trang chủ</a>
+    </div>
+
+    <div style="background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.9) 100%); border: 1px solid var(--border-color); border-radius: 16px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 10px 30px rgba(0,0,0,0.3); backdrop-filter: blur(10px); text-align: center;">
+        <h2 style="margin: 0 0 0.5rem 0; font-size: 2rem; background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: bold;">🏆 Bảng Xếp Hạng Độc Giả</h2>
+        <p style="color: var(--text-secondary); font-size: 0.95rem; margin: 0;">Vinh danh những mọt sách kiên trì và tích cực nhất của thư viện!</p>
+    </div>
+
+    <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.15); overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.95rem;">
+            <thead>
+                <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-secondary); font-weight: bold;">
+                    <th style="padding: 1rem 0.8rem; text-align: center; width: 80px;">Hạng</th>
+                    <th style="padding: 1rem 0.8rem;">Độc giả</th>
+                    <th style="padding: 1rem 0.8rem;">Huy hiệu</th>
+                    <th style="padding: 1rem 0.8rem; text-align: center;">Cấp độ</th>
+                    <th style="padding: 1rem 0.8rem; text-align: right; width: 120px;">Số chương</th>
+                    <th style="padding: 1rem 0.8rem; text-align: right; width: 100px;">EXP</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (leaderboard.length === 0) { %>
+                    <tr>
+                        <td colspan="6" style="padding: 2rem; text-align: center; color: var(--text-secondary);">Chưa có dữ liệu độc giả nào. Hãy bắt đầu đọc chương để ghi danh!</td>
+                    </tr>
+                <% } else { %>
+                    <% leaderboard.forEach((reader, index) => { %>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.03); transition: background-color 0.2s;" class="leaderboard-row">
+                            <td style="padding: 1rem 0.8rem; text-align: center;">
+                                <% if (index === 0) { %>
+                                    <span style="font-size: 1.4rem;" title="Quán quân">🥇</span>
+                                <% } else if (index === 1) { %>
+                                    <span style="font-size: 1.4rem;" title="Á quân">🥈</span>
+                                <% } else if (index === 2) { %>
+                                    <span style="font-size: 1.4rem;" title="Hạng ba">🥉</span>
+                                <% } else { %>
+                                    <span style="font-weight: bold; color: var(--text-secondary);"><%= index + 1 %></span>
+                                <% } %>
+                            </td>
+                            <td style="padding: 1rem 0.8rem; display: flex; align-items: center; gap: 0.8rem;">
+                                <img src="<%= reader.avatar || '/css/default-avatar.png' %>" alt="avatar" style="width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border-color); object-fit: cover;">
+                                <span style="font-weight: 600;"><%= reader.display_name %></span>
+                            </td>
+                            <td style="padding: 1rem 0.8rem;">
+                                <span style="font-size: 0.8rem; background: rgba(99, 102, 241, 0.1); color: var(--accent-color); padding: 0.25rem 0.6rem; border-radius: 12px; font-weight: 500; border: 1px solid rgba(99, 102, 241, 0.2);">
+                                    <%= reader.badge ? reader.badge.label : 'Người mới' %>
+                                </span>
+                            </td>
+                            <td style="padding: 1rem 0.8rem; text-align: center; font-weight: bold; color: #10b981;">
+                                Lvl <%= Math.floor((reader.exp || 0) / 100) + 1 %>
+                            </td>
+                            <td style="padding: 1rem 0.8rem; text-align: right; font-weight: 500;">
+                                <%= reader.chapters_read || 0 %>
+                            </td>
+                            <td style="padding: 1rem 0.8rem; text-align: right; font-weight: bold; color: var(--accent-color);">
+                                <%= reader.exp || 0 %>
+                            </td>
+                        </tr>
+                    <% }) %>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
 </div>
 
-<h2 class="section-title">🏆 Bảng Xếp Hạng Độc Giả</h2>
-<p style="color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 0.9rem;">Xếp hạng theo điểm kinh nghiệm (EXP) tích lũy từ việc đọc truyện.</p>
-
-<% if (leaderboard.length === 0) { %>
-    <p style="color: var(--text-secondary); text-align: center; padding: 2rem 0;">Chưa có dữ liệu xếp hạng. Hãy là người đầu tiên đọc truyện để lên bảng!</p>
-<% } else { %>
-    <div style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden;">
-        <% leaderboard.forEach((row, index) => { %>
-            <div style="display: flex; align-items: center; gap: 1rem; padding: 0.9rem 1.2rem; border-bottom: 1px solid var(--border-color);">
-                <div style="font-weight: bold; width: 30px; text-align: center; color: var(--accent-color);"><%= index + 1 %></div>
-                <img src="<%= row.avatar || '/css/default-avatar.png' %>" alt="avatar" style="width: 36px; height: 36px; border-radius: 50%;">
-                <div style="flex: 1;">
-                    <div style="font-weight: 500;"><%= row.display_name %></div>
-                    <div style="font-size: 0.8rem; color: var(--text-secondary);">
-                        📖 <%= row.chapters_read %> chương đã đọc
-                        <% if (row.streak_days > 0) { %> · 🔥 <%= row.streak_days %> ngày liên tiếp<% } %>
-                        <% if (row.badge) { %> · <%= row.badge.label %><% } %>
-                    </div>
-                </div>
-                <div style="font-weight: bold; color: #f59e0b;"><%= row.exp %> EXP</div>
-            </div>
-        <% }) %>
-    </div>
-<% } %>
+<style>
+    .leaderboard-row:hover {
+        background-color: rgba(255, 255, 255, 0.02);
+    }
+</style>
 
 <%- include('partials/footer') %>

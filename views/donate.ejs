@@ -1,26 +1,101 @@
 <%- include('partials/header') %>
 
-<div class="form-container" style="max-width: 550px; text-align: center;">
-    <h2 class="section-title" style="margin-bottom: 0.5rem;">☕ Ủng Hộ Admin</h2>
-    <p style="color: var(--text-secondary); margin-bottom: 2rem; font-size: 0.95rem;">
-        Nếu bạn thấy website hữu ích, hãy cân nhắc ủng hộ để mình có thêm động lực duy trì và cập nhật truyện thường xuyên hơn. Xin chân thành cảm ơn!
+<div class="form-container" style="max-width: 600px; text-align: center; margin: 0 auto; padding: 2rem 1rem;">
+    <h2 class="section-title" style="margin-bottom: 0.5rem; background: linear-gradient(90deg, #f59e0b 0%, #ef4444 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: bold; font-size: 1.8rem;">☕ Ủng Hộ Admin</h2>
+    <p style="color: var(--text-secondary); margin-bottom: 2rem; font-size: 0.95rem; line-height: 1.6;">
+        Nếu bạn yêu thích website và các bộ truyện được dịch thuật/sưu tầm, hãy ủng hộ admin một tách cà phê để duy trì máy chủ hoạt động mượt mà nhé!
     </p>
 
-    <div style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem;">
-        <img src="/css/donate-qr.png" alt="Mã QR ủng hộ" style="width: 100%; max-width: 300px; border-radius: 8px; margin: 0 auto 1rem; display: block;" onerror="this.style.display='none'; document.getElementById('qr-fallback').style.display='block';">
-
-        <div id="qr-fallback" style="display: none; padding: 2rem; color: var(--text-secondary);">
-            📷 Ảnh QR chưa được cập nhật.<br>Vui lòng quay lại sau.
+    <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 16px; padding: 2rem; box-shadow: 0 10px 30px rgba(0,0,0,0.2); margin-bottom: 2.5rem; backdrop-filter: blur(10px);">
+        <!-- QR Code Display Area -->
+        <div style="position: relative; background: white; padding: 1.2rem; border-radius: 12px; display: inline-block; margin-bottom: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+            <img id="vietqr-img" src="https://img.vietqr.io/image/MB-0941535523-compact2.png?amount=20000&addInfo=Ung%20ho%20web%20truyen&accountName=LE%20NGOC%20TRUNG%20KIEN" alt="Mã QR thanh toán VietQR" style="width: 260px; height: 260px; object-fit: contain; display: block; margin: 0 auto;">
         </div>
 
-        <div style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.8;">
-            <div><strong>Ngân hàng:</strong> MB Bank</div>
-            <div><strong>Số tài khoản:</strong> 0941535523</div>
-            <div><strong>Chủ tài khoản:</strong> LE NGOC TRUNG KIEN</div>
+        <!-- Bank Details Info -->
+        <div style="font-size: 0.9rem; color: var(--text-primary); line-height: 1.8; text-align: left; max-width: 400px; margin: 0 auto 2rem; background: rgba(255,255,255,0.02); padding: 1rem 1.5rem; border-radius: 10px; border: 1px solid var(--border-color);">
+            <div>🏦 <strong>Ngân hàng:</strong> MB Bank (Ngân hàng Quân Đội)</div>
+            <div>💳 <strong>Số tài khoản:</strong> <span style="font-weight: bold; color: var(--accent-color); font-size: 1.05rem;">0941535523</span></div>
+            <div>👤 <strong>Chủ tài khoản:</strong> LE NGOC TRUNG KIEN</div>
+            <div>📝 <strong>Nội dung chuyển khoản:</strong> <span style="font-weight: bold; color: #10b981;">Ung ho web truyen</span></div>
+        </div>
+
+        <!-- Amount Selection Widget -->
+        <h4 style="margin: 0 0 1rem 0; font-size: 0.95rem; text-align: left; color: var(--text-secondary);">Chọn số tiền quyên góp:</h4>
+        <div class="amount-presets" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.6rem; margin-bottom: 1.2rem;">
+            <button class="preset-btn" data-amount="10000" style="padding: 0.6rem; border-radius: 8px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.02); color: var(--text-primary); font-weight: 600; cursor: pointer; transition: all 0.2s;">10K</button>
+            <button class="preset-btn active" data-amount="20000" style="padding: 0.6rem; border-radius: 8px; border: 1px solid var(--accent-color); background: rgba(99, 102, 241, 0.1); color: var(--accent-color); font-weight: 600; cursor: pointer; transition: all 0.2s;">20K</button>
+            <button class="preset-btn" data-amount="50000" style="padding: 0.6rem; border-radius: 8px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.02); color: var(--text-primary); font-weight: 600; cursor: pointer; transition: all 0.2s;">50K</button>
+            <button class="preset-btn" data-amount="100000" style="padding: 0.6rem; border-radius: 8px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.02); color: var(--text-primary); font-weight: 600; cursor: pointer; transition: all 0.2s;">100K</button>
+        </div>
+
+        <!-- Custom amount input -->
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <input type="number" id="custom-amount-input" placeholder="Số tiền tùy chỉnh (VNĐ)" style="flex: 1; padding: 0.6rem 0.8rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 0.9rem;">
+            <button onclick="updateQrFromInput()" class="btn btn-primary" style="padding: 0.6rem 1.2rem; font-size: 0.88rem; border-radius: 8px;">Tạo mã QR</button>
         </div>
     </div>
 
-    <a href="/" class="btn btn-secondary" style="padding: 0.6rem 1.5rem;">&larr; Quay lại trang chủ</a>
+    <a href="/" class="btn btn-secondary" style="padding: 0.6rem 1.5rem; border-radius: 8px;">&larr; Quay lại trang chủ</a>
 </div>
+
+<style>
+    .preset-btn:hover {
+        border-color: var(--accent-color) !important;
+        background: rgba(99, 102, 241, 0.05) !important;
+    }
+</style>
+
+<script>
+    const presetButtons = document.querySelectorAll('.preset-btn');
+    const qrImg = document.getElementById('vietqr-img');
+    const customInput = document.getElementById('custom-amount-input');
+    const bankId = 'MB';
+    const accountNo = '0941535523';
+    const accountName = encodeURIComponent('LE NGOC TRUNG KIEN');
+    const addInfo = encodeURIComponent('Ung ho web truyen');
+
+    // Add click listeners to presets
+    presetButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            // Remove active classes
+            presetButtons.forEach(b => {
+                b.style.borderColor = 'var(--border-color)';
+                b.style.background = 'rgba(255,255,255,0.02)';
+                b.style.color = 'var(--text-primary)';
+            });
+
+            // Set active styles
+            btn.style.borderColor = 'var(--accent-color)';
+            btn.style.background = 'rgba(99, 102, 241, 0.1)';
+            btn.style.color = 'var(--accent-color)';
+
+            const amount = btn.getAttribute('data-amount');
+            customInput.value = ''; // clear custom
+            updateQR(amount);
+        });
+    });
+
+    function updateQR(amount) {
+        qrImg.src = `https://img.vietqr.io/image/${bankId}-${accountNo}-compact2.png?amount=${amount}&addInfo=${addInfo}&accountName=${accountName}`;
+    }
+
+    function updateQrFromInput() {
+        const val = parseInt(customInput.value);
+        if (isNaN(val) || val <= 0) {
+            alert('Vui lòng nhập số tiền quyên góp hợp lệ.');
+            return;
+        }
+
+        // Remove active class from presets
+        presetButtons.forEach(b => {
+            b.style.borderColor = 'var(--border-color)';
+            b.style.background = 'rgba(255,255,255,0.02)';
+            b.style.color = 'var(--text-primary)';
+        });
+
+        updateQR(val);
+    }
+</script>
 
 <%- include('partials/footer') %>

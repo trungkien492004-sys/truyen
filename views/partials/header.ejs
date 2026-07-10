@@ -15,8 +15,10 @@
             
             <ul class="nav-links">
                 <li><a href="/" class="nav-link">Trang chủ</a></li>
+                <li><a href="/leaderboard" class="nav-link">Bảng xếp hạng</a></li>
                 <% if (user) { %>
                     <li><a href="/my-library" class="nav-link">Tủ truyện của tôi</a></li>
+                    <li><a href="/ai-recommend" class="nav-link">AI Gợi ý</a></li>
                 <% } %>
                 <li><a href="/contact" class="nav-link">Đặt viết truyện</a></li>
                 <% if (user && user.role === 'admin') { %>
@@ -29,9 +31,19 @@
                 <button id="theme-toggle" class="theme-toggle-btn" title="Chuyển chế độ sáng/tối">☀️</button>
                 
                 <% if (user) { %>
+                    <!-- Chuông thông báo -->
+                    <a href="/profile" style="position: relative; font-size: 1.25rem; text-decoration: none; color: var(--text-primary); margin-right: 0.5rem; display: flex; align-items: center;" title="Thông báo cá nhân">
+                        🔔
+                        <% if (typeof unreadNotificationsCount !== 'undefined' && unreadNotificationsCount > 0) { %>
+                            <span style="position: absolute; top: -6px; right: -6px; background: #ef4444; color: white; border-radius: 50%; font-size: 0.65rem; padding: 0.1rem 0.35rem; font-weight: bold; min-width: 15px; text-align: center; border: 1.5px solid var(--bg-primary);"><%= unreadNotificationsCount %></span>
+                        <% } %>
+                    </a>
+                    
                     <div style="display: flex; align-items: center; gap: 0.8rem;">
-                        <img src="<%= user.avatar %>" alt="avatar" style="width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--border-color);">
-                        <span style="font-weight: 500; font-size: 0.9rem; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><%= user.display_name %></span>
+                        <a href="/profile" style="display: flex; align-items: center; gap: 0.5rem; text-decoration: none; color: var(--text-primary);">
+                            <img src="<%= user.avatar %>" alt="avatar" style="width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--border-color); object-fit: cover;">
+                            <span style="font-weight: 500; font-size: 0.9rem; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><%= user.display_name %></span>
+                        </a>
                         <a href="/auth/logout" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">Đăng xuất</a>
                     </div>
                 <% } else { %>

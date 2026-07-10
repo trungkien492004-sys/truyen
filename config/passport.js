@@ -32,18 +32,7 @@ passport.use(new GoogleStrategy({
       }
 
       if (existingUser) {
-        // Cập nhật thông tin mới nhất nếu cần
-        const { data: updatedUser, error: updateError } = await supabase
-          .from('users')
-          .update({ display_name: displayName, avatar: avatar })
-          .eq('google_id', googleId)
-          .select('*')
-          .single();
-        
-        if (updateError) {
-          console.error('Lỗi cập nhật user:', updateError);
-        }
-        return done(null, updatedUser || existingUser);
+        return done(null, existingUser);
       }
 
       // 2. Nếu chưa tồn tại, tạo mới user
