@@ -25,6 +25,25 @@ CREATE TABLE IF NOT EXISTS bookmarks (
 CREATE INDEX IF NOT EXISTS idx_reading_history_user ON reading_history(user_id);
 CREATE INDEX IF NOT EXISTS idx_bookmarks_user ON bookmarks(user_id);
 
+-- 2b. ROW LEVEL SECURITY: Cho phép backend (dùng anon key) đọc/ghi 2 bảng này.
+-- Việc kiểm soát "user nào được sửa dữ liệu của user đó" đã được xử lý ở tầng ứng dụng
+-- (routes/index.js chỉ dùng req.user.id lấy từ session đăng nhập, không cho client tự truyền user_id),
+-- nên ở tầng database chỉ cần mở quyền cho vai trò anon/authenticated, giống cách các bảng cũ đang hoạt động.
+ALTER TABLE reading_history ENABLE ROW LEVEL SECURITY;
+ALTER TABLE bookmarks ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "allow_all_reading_history" ON reading_history;
+CREATE POLICY "allow_all_reading_history" ON reading_history
+    FOR ALL
+    USING (true)
+    WITH CHECK (true);
+
+DROP POLICY IF EXISTS "allow_all_bookmarks" ON bookmarks;
+CREATE POLICY "allow_all_bookmarks" ON bookmarks
+    FOR ALL
+    USING (true)
+    WITH CHECK (true);
+
 -- 3. VIEW: TRUYỆN KÈM THỜI ĐIỂM CẬP NHẬT CHƯƠNG GẦN NHẤT
 -- Dùng để sắp xếp trang chủ theo "truyện mới cập nhật" (có chương mới đăng) thay vì ngày tạo truyện
 CREATE OR REPLACE VIEW stories_with_last_update AS
