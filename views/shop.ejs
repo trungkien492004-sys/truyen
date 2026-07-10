@@ -207,10 +207,10 @@
         </div>
     </div>
 
-    <!-- Tabs -->
     <div class="shop-tabs">
         <button class="shop-tab-btn active" onclick="switchTab('badge')">🏷️ Huy Hiệu Chat</button>
         <button class="shop-tab-btn" onclick="switchTab('avatar')">👤 Ảnh Đại Diện</button>
+        <button class="shop-tab-btn" onclick="switchTab('frame')">🖼️ Khung Viền</button>
     </div>
 
     <!-- Badges Grid -->
@@ -288,6 +288,50 @@
                 </div>
             </div>
         <% }) %>
+    </div>
+
+    <!-- Frames Grid -->
+    <div id="tab-frame" class="shop-grid tab-content" style="display: none;">
+        <% const frameItems = items.filter(i => i.type === 'frame'); %>
+        <% if (frameItems.length === 0) { %>
+            <p style="grid-column: 1/-1; text-align: center; color: var(--text-secondary); padding: 3rem 0;">Cửa hàng chưa mở bán khung viền nào. Vui lòng quay lại sau!</p>
+        <% } else { %>
+            <% frameItems.forEach(item => { %>
+                <% const isOwned = ownedItemIds.includes(item.id); %>
+                <% const isEquipped = userData.equipped_frame === item.value; %>
+                <div class="shop-card" id="item-card-<%= item.id %>">
+                    <% if (isEquipped) { %>
+                        <span class="equipped-tag">Đang Dùng</span>
+                    <% } %>
+                    <div>
+                        <div class="avatar-preview-box" style="display: flex; align-items: center; justify-content: center; min-height: 120px;">
+                            <div style="position: relative; width: 85px; height: 85px; border-radius: 50%; overflow: hidden; <%= item.value %>">
+                                <img src="<%= user.avatar || '/css/default-avatar.png' %>" alt="Frame Preview" style="width: 100%; height: 100%; object-fit: cover;">
+                            </div>
+                        </div>
+                        <h3 class="item-title"><%= item.name %></h3>
+                        <p class="item-desc"><%= item.description %></p>
+                    </div>
+                    <div>
+                        <% if (!isOwned) { %>
+                            <div class="item-price">🪙 <%= item.price_exp %> EXP</div>
+                            <% if (exp >= item.price_exp) { %>
+                                <button onclick="buyItem(<%= item.id %>, 'frame')" class="shop-btn btn-buy">Mua Bằng EXP</button>
+                            <% } else { %>
+                                <button class="shop-btn btn-disabled" disabled>Thiếu EXP</button>
+                            <% } %>
+                        <% } else { %>
+                            <div class="item-price" style="color: #10b981;">✔️ Đã sở hữu</div>
+                            <% if (isEquipped) { %>
+                                <button onclick="equipItem(<%= item.id %>, 'unequip')" class="shop-btn btn-unequip">Tháo Ra</button>
+                            <% } else { %>
+                                <button onclick="equipItem(<%= item.id %>, 'equip')" class="shop-btn btn-equip">Trang Bị</button>
+                            <% } %>
+                        <% } %>
+                    </div>
+                </div>
+            <% }) %>
+        <% } %>
     </div>
 </div>
 

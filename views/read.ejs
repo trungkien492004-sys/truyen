@@ -159,8 +159,11 @@
             <% const topLevelComments = comments.filter(c => !c.parent_id); %>
             <% topLevelComments.forEach(comment => { %>
                 <div class="comment-item" id="comment-<%= comment.id %>" style="display: flex; gap: 1rem; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 1rem;">
-                    <a href="/user/<%= comment.user_id %>" style="flex-shrink: 0;">
-                        <img src="<%= comment.users ? comment.users.avatar : '/css/default-avatar.png' %>" alt="avatar" style="width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--border-color); object-fit: cover; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform='scale(1)'">
+                    <a href="/user/<%= comment.user_id %>" style="flex-shrink: 0; display: inline-block; position: relative;">
+                        <% const cFrame = (comment.users && comment.users.equipped_frame) ? comment.users.equipped_frame : 'border: 1px solid var(--border-color);' %>
+                        <div style="width: 42px; height: 42px; border-radius: 50%; overflow: hidden; <%= cFrame %> transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform='scale(1)'">
+                            <img src="<%= comment.users ? comment.users.avatar : '/css/default-avatar.png' %>" alt="avatar" style="width: 100%; height: 100%; object-fit: cover;">
+                        </div>
                     </a>
                     
                     <div style="flex: 1;">
@@ -202,8 +205,11 @@
                             <div class="replies-container" style="margin-top: 1rem; padding-left: 1rem; border-left: 2px solid var(--border-color); display: flex; flex-direction: column; gap: 1rem;">
                                 <% replies.forEach(reply => { %>
                                     <div class="comment-item" id="comment-<%= reply.id %>" style="display: flex; gap: 0.8rem;">
-                                        <a href="/user/<%= reply.user_id %>" style="flex-shrink: 0;">
-                                            <img src="<%= reply.users ? reply.users.avatar : '/css/default-avatar.png' %>" alt="avatar" style="width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--border-color); object-fit: cover; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform='scale(1)'">
+                                        <a href="/user/<%= reply.user_id %>" style="flex-shrink: 0; display: inline-block; position: relative;">
+                                            <% const rFrame = (reply.users && reply.users.equipped_frame) ? reply.users.equipped_frame : 'border: 1px solid var(--border-color);' %>
+                                            <div style="width: 32px; height: 32px; border-radius: 50%; overflow: hidden; <%= rFrame %> transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform='scale(1)'">
+                                                <img src="<%= reply.users ? reply.users.avatar : '/css/default-avatar.png' %>" alt="avatar" style="width: 100%; height: 100%; object-fit: cover;">
+                                            </div>
                                         </a>
                                         <div style="flex: 1;">
                                             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.2rem;">

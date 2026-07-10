@@ -11,7 +11,8 @@
     <!-- Profile Header/Card (Read-Only) -->
     <div style="background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.9) 100%); border: 1px solid var(--border-color); border-radius: 16px; padding: 2.5rem; display: flex; flex-wrap: wrap; gap: 2rem; align-items: center; margin-bottom: 2rem; box-shadow: 0 10px 30px rgba(0,0,0,0.3); backdrop-filter: blur(10px);">
         <!-- Avatar wrapper -->
-        <div class="avatar-wrapper" style="position: relative; width: 140px; height: 140px; border-radius: 50%; overflow: hidden; border: 4px solid var(--accent-color); box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);">
+        <% const frameStyle = targetUser.equipped_frame || 'border: 4px solid var(--accent-color); box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);' %>
+        <div class="avatar-wrapper" style="position: relative; width: 140px; height: 140px; border-radius: 50%; overflow: hidden; <%= frameStyle %>">
             <img src="<%= targetUser.avatar || '/css/default-avatar.png' %>" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;">
         </div>
 

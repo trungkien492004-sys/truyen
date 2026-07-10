@@ -515,7 +515,7 @@ router.get('/story/:id', async (req, res) => {
     try {
       const { data: commentsData } = await supabase
         .from('comments')
-        .select('*, users!comments_user_id_fkey(display_name, avatar, equipped_badge)')
+        .select('*, users!comments_user_id_fkey(display_name, avatar, equipped_badge, equipped_frame)')
         .eq('story_id', storyId)
         .is('chapter_number', null)
         .order('created_at', { ascending: true });
@@ -631,7 +631,7 @@ router.get('/story/:story_id/chapter/:chapter_number', async (req, res) => {
     try {
       const { data: commentsData } = await supabase
         .from('comments')
-        .select('*, users!comments_user_id_fkey(display_name, avatar, equipped_badge)')
+        .select('*, users!comments_user_id_fkey(display_name, avatar, equipped_badge, equipped_frame)')
         .eq('story_id', storyId)
         .eq('chapter_number', chapterNumber)
         .order('created_at', { ascending: true });
@@ -1036,7 +1036,7 @@ router.post('/story/:story_id/comment', async (req, res) => {
     const { data: newComment, error } = await supabase
       .from('comments')
       .insert([commentData])
-      .select('*, users!comments_user_id_fkey(display_name, avatar, equipped_badge)')
+      .select('*, users!comments_user_id_fkey(display_name, avatar, equipped_badge, equipped_frame)')
       .single();
 
     if (error) throw error;
@@ -1168,7 +1168,7 @@ router.get('/profile', async (req, res) => {
 
     const { data: userData } = await supabase
       .from('users')
-      .select('display_name, avatar, bio, equipped_badge, equipped_avatar')
+      .select('display_name, avatar, bio, equipped_badge, equipped_avatar, equipped_frame')
       .eq('id', req.user.id)
       .single();
 
@@ -1178,6 +1178,7 @@ router.get('/profile', async (req, res) => {
       req.user.bio = userData.bio;
       req.user.equipped_badge = userData.equipped_badge;
       req.user.equipped_avatar = userData.equipped_avatar;
+      req.user.equipped_frame = userData.equipped_frame;
     }
 
     const exp = stats ? stats.exp : 0;
@@ -1217,6 +1218,13 @@ router.get('/profile', async (req, res) => {
 
     const badge = getBadgeForCount(chaptersCount || 0, rankSettings);
 
+    const { data: inventory } = await supabase
+      .from('user_inventory')
+      .select('item_id, shop_items(*)')
+      .eq('user_id', req.user.id);
+      
+    const ownedItems = (inventory || []).map(i => i.shop_items).filter(Boolean);
+
     res.render('profile', {
       title: 'Trang cá nhân của tôi',
       user: req.user,
@@ -1231,7 +1239,8 @@ router.get('/profile', async (req, res) => {
         badge: badge ? badge.label : 'Người mới'
       },
       achievements,
-      notifications: notifications || []
+      notifications: notifications || [],
+      ownedItems
     });
   } catch (err) {
     console.error('Lỗi khi tải trang cá nhân:', err);
@@ -1240,7 +1249,7 @@ router.get('/profile', async (req, res) => {
 });
 
 // Route cập nhật hồ sơ người dùng
-router.post('/profile/update', upload.single('avatar'), async (req, res) => {
+router.post('/profile/update', async (req, res) => {
   if (!req.user || !req.user.id) return res.status(401).send('Chưa đăng nhập');
   const { display_name, bio } = req.body;
   if (!display_name || !display_name.trim()) {
@@ -1248,21 +1257,10 @@ router.post('/profile/update', upload.single('avatar'), async (req, res) => {
   }
 
   try {
-    let avatarUrl = req.user.avatar;
-    if (req.file) {
-      avatarUrl = await uploadToSupabase(req.file, 'uploads');
-      // Khi tải lên avatar mới, gỡ avatar mua từ shop để avatar mới có tác dụng
-      await supabase
-        .from('users')
-        .update({ equipped_avatar: null })
-        .eq('id', req.user.id);
-    }
-
     const { error } = await supabase
       .from('users')
       .update({ 
         display_name: display_name.trim(), 
-        avatar: avatarUrl, 
         bio: (bio || '').trim() 
       })
       .eq('id', req.user.id);
@@ -1270,9 +1268,7 @@ router.post('/profile/update', upload.single('avatar'), async (req, res) => {
     if (error) throw error;
     
     req.user.display_name = display_name.trim();
-    req.user.avatar = avatarUrl;
     req.user.bio = (bio || '').trim();
-    req.user.equipped_avatar = null;
 
     res.redirect('/profile');
   } catch (err) {
@@ -1486,6 +1482,8 @@ router.post('/shop/equip/:id', async (req, res) => {
       } else {
         updateData.avatar = '/css/default-avatar.png';
       }
+    } else if (item.type === 'frame') {
+      updateData.equipped_frame = action === 'equip' ? item.value : null;
     }
 
     const { error } = await supabase
@@ -1501,6 +1499,8 @@ router.post('/shop/equip/:id', async (req, res) => {
     } else if (item.type === 'avatar') {
       req.user.equipped_avatar = action === 'equip' ? item.value : null;
       req.user.avatar = action === 'equip' ? item.value : '/css/default-avatar.png';
+    } else if (item.type === 'frame') {
+      req.user.equipped_frame = action === 'equip' ? item.value : null;
     }
 
     res.json({ success: true, message: action === 'equip' ? 'Đã trang bị vật phẩm!' : 'Đã tháo trang bị!' });
