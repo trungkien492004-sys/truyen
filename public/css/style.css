@@ -817,3 +817,167 @@ footer {
     color: var(--text-secondary);
     margin-bottom: 2rem;
 }
+
+/* ==========================================================================
+   CSS CHO THIẾT BỊ DI ĐỘNG (MOBILE RESPONSIVENESS & PREMIUM OPTIMIZATION)
+   ========================================================================== */
+@media (max-width: 768px) {
+    /* 1. Header & Navigation */
+    .nav-container {
+        padding: 0.8rem 1rem;
+        flex-direction: column;
+        gap: 0.6rem;
+    }
+    .logo {
+        font-size: 1.5rem;
+    }
+    .nav-links {
+        gap: 1rem;
+        font-size: 0.85rem;
+        justify-content: center;
+        width: 100%;
+        overflow-x: auto;
+        white-space: nowrap;
+        padding-bottom: 0.3rem;
+        -webkit-overflow-scrolling: touch;
+    }
+    .nav-links::-webkit-scrollbar {
+        display: none; /* Ẩn scrollbar để thanh menu cuộn mượt đẹp */
+    }
+    .nav-actions {
+        width: 100%;
+        justify-content: center;
+        gap: 0.8rem;
+    }
+    .nav-actions .btn {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.8rem;
+    }
+
+    /* 2. Hero Section */
+    .hero-section {
+        padding: 1.5rem 0 1rem 0;
+        margin-bottom: 1rem;
+    }
+    .hero-title {
+        font-size: 1.8rem;
+        line-height: 1.3;
+    }
+    .hero-desc {
+        font-size: 0.9rem;
+        margin-bottom: 1.2rem;
+        padding: 0 0.5rem;
+    }
+    .search-bar {
+        width: 100%;
+        padding: 0.25rem;
+    }
+    .search-bar input {
+        padding: 0.4rem 0.5rem;
+        font-size: 0.9rem;
+    }
+    .search-bar .btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+    }
+
+    /* 3. Main layout padding */
+    main {
+        padding: 0 1rem;
+        margin: 1rem auto;
+    }
+
+    /* 4. Banner Carousel on Mobile */
+    .banner-carousel-container {
+        margin: 1rem auto;
+        border-radius: 8px;
+    }
+    .banner-media-wrapper {
+        height: 200px !important; /* Thu nhỏ chiều cao khung chứa ảnh/video */
+    }
+    .banner-arrow {
+        top: 100px !important; /* Đặt mũi tên căn giữa theo chiều cao mới (200px / 2) */
+        width: 32px !important;
+        height: 32px !important;
+        font-size: 0.9rem !important;
+    }
+    .banner-dots-container {
+        top: 175px !important; /* Đưa dấu chấm lên sát lề dưới của ảnh */
+    }
+    .banner-desc-box {
+        padding: 0.8rem 1rem !important;
+        font-size: 0.82rem !important;
+        min-height: 50px !important;
+    }
+
+    /* 5. Bạn đang đọc dở banner */
+    .last-read-banner {
+        width: 100%;
+        padding: 0.5rem 0.8rem;
+        font-size: 0.8rem;
+        flex-wrap: wrap;
+        text-align: center;
+        gap: 0.3rem !important;
+    }
+}
+
+@media (max-width: 500px) {
+    /* 6. Stories Grid (Cực kỳ quan trọng: chuyển sang dạng 2 cột siêu cao cấp trên mobile) */
+    .stories-grid {
+        grid-template-columns: repeat(2, 1fr) !important; /* 2 Cột */
+        gap: 0.8rem !important;
+    }
+    .story-card {
+        border-radius: 8px;
+    }
+    .story-cover {
+        height: 180px; /* Chiều cao bìa gọn hơn */
+    }
+    .story-info {
+        padding: 0.6rem 0.8rem;
+    }
+    .story-title {
+        font-size: 0.88rem;
+        margin-bottom: 0.3rem;
+        line-height: 1.3;
+        -webkit-line-clamp: 2;
+    }
+    .story-author, .story-desc-short {
+        display: none !important; /* Ẩn tóm tắt và tác giả ngoài lưới trang chủ để giao diện gọn gàng */
+    }
+    .story-info div[style*="font-size: 0.78rem"] {
+        font-size: 0.72rem !important;
+        margin: 0.15rem 0 !important;
+    }
+    .story-info div[style*="color: #f59e0b"] {
+        font-size: 0.72rem !important;
+    }
+    .story-info div[style*="font-size: 0.72rem"] {
+        font-size: 0.68rem !important;
+        margin-bottom: 0.3rem !important;
+    }
+    .story-card .btn {
+        font-size: 0.78rem !important;
+        padding: 0.4rem !important;
+        margin-top: 0.4rem !important;
+    }
+    
+    /* 7. Leaderboard & Bảng xếp hạng */
+    .rankings-container {
+        padding: 1rem;
+        border-radius: 12px;
+    }
+    .ranking-tabs {
+        margin-bottom: 0.8rem;
+    }
+    .ranking-tab {
+        padding: 0.5rem 0;
+        font-size: 0.78rem;
+    }
+    .ranking-title {
+        font-size: 0.85rem;
+    }
+    .ranking-views {
+        font-size: 0.75rem;
+    }
+}
