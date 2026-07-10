@@ -185,7 +185,12 @@
                     
                     <div style="flex: 1;">
                         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.3rem;">
-                            <span style="font-weight: 600; font-size: 0.92rem;"><%= comment.users ? comment.users.display_name : 'Độc giả ẩn danh' %></span>
+                            <span style="font-weight: 600; font-size: 0.92rem;">
+                                <%= comment.users ? comment.users.display_name : 'Độc giả ẩn danh' %>
+                                <% if (comment.users && comment.users.equipped_badge) { %>
+                                    <span style="font-size: 0.72rem; color: #10b981; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 0.1rem 0.4rem; border-radius: 4px; margin-left: 0.4rem; font-weight: 700;"><%= comment.users.equipped_badge %></span>
+                                <% } %>
+                            </span>
                             <span style="font-size: 0.78rem; color: var(--text-secondary);"><%= new Date(comment.created_at).toLocaleDateString('vi-VN', { hour: '2-digit', minute: '2-digit' }) %></span>
                         </div>
                         
@@ -218,7 +223,12 @@
                                         <img src="<%= reply.users ? reply.users.avatar : '/css/default-avatar.png' %>" alt="avatar" style="width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--border-color); object-fit: cover; flex-shrink: 0;">
                                         <div style="flex: 1;">
                                             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.2rem;">
-                                                <span style="font-weight: 600; font-size: 0.88rem;"><%= reply.users ? reply.users.display_name : 'Độc giả ẩn danh' %></span>
+                                                <span style="font-weight: 600; font-size: 0.88rem;">
+                                                    <%= reply.users ? reply.users.display_name : 'Độc giả ẩn danh' %>
+                                                    <% if (reply.users && reply.users.equipped_badge) { %>
+                                                        <span style="font-size: 0.72rem; color: #10b981; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 0.1rem 0.4rem; border-radius: 4px; margin-left: 0.4rem; font-weight: 700;"><%= reply.users.equipped_badge %></span>
+                                                    <% } %>
+                                                </span>
                                                 <span style="font-size: 0.75rem; color: var(--text-secondary);"><%= new Date(reply.created_at).toLocaleDateString('vi-VN', { hour: '2-digit', minute: '2-digit' }) %></span>
                                             </div>
                                             <div class="comment-content" style="font-size: 0.86rem; line-height: 1.5; color: var(--text-primary); white-space: pre-wrap; margin-bottom: 0.4rem;"><%- reply.content.replace(/@([a-zA-Z0-9_\sà-ỹÀ-Ỹ]+)/g, '<span style="color:var(--accent-color); font-weight:600;">@$1</span>') %></div>

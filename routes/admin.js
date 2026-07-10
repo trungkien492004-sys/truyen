@@ -1206,6 +1206,92 @@ router.post('/users/:id/unban', async (req, res) => {
   }
 });
 
+// ==================== QUẢN LÝ THIẾT LẬP CẤP BẬC (RANK SETTINGS) ====================
+// Trang danh sách thiết lập cấp bậc
+router.get('/ranks', async (req, res) => {
+  try {
+    const { data: ranks, error } = await supabase
+      .from('rank_settings')
+      .select('*')
+      .order('count', { ascending: true });
+
+    if (error) throw error;
+
+    res.render('admin/ranks', {
+      user: req.user,
+      ranks: ranks || [],
+      success: req.query.success || null,
+      error: req.query.error || null
+    });
+  } catch (err) {
+    console.error('Lỗi lấy danh sách ranks:', err);
+    res.status(500).send('Lỗi hệ thống.');
+  }
+});
+
+// Thêm thiết lập cấp bậc mới
+router.post('/ranks/add', async (req, res) => {
+  const { count, label, badge } = req.body;
+  const chapterCount = parseInt(count);
+
+  if (isNaN(chapterCount) || !label || !badge) {
+    return res.redirect('/admin/ranks?error=' + encodeURIComponent('Thông tin nhập vào không hợp lệ.'));
+  }
+
+  try {
+    const { error } = await supabase
+      .from('rank_settings')
+      .insert([{ count: chapterCount, label: label.trim(), badge: badge.trim() }]);
+
+    if (error) throw error;
+    res.redirect('/admin/ranks?success=' + encodeURIComponent('Đã thêm Rank cấp bậc mới thành công!'));
+  } catch (err) {
+    console.error('Lỗi thêm rank:', err);
+    res.redirect('/admin/ranks?error=' + encodeURIComponent(err.message || 'Lỗi hệ thống.'));
+  }
+});
+
+// Sửa thiết lập cấp bậc
+router.post('/ranks/edit/:id', async (req, res) => {
+  const id = parseInt(req.params.id);
+  const { count, label, badge } = req.body;
+  const chapterCount = parseInt(count);
+
+  if (isNaN(chapterCount) || !label || !badge) {
+    return res.redirect('/admin/ranks?error=' + encodeURIComponent('Thông tin nhập vào không hợp lệ.'));
+  }
+
+  try {
+    const { error } = await supabase
+      .from('rank_settings')
+      .update({ count: chapterCount, label: label.trim(), badge: badge.trim() })
+      .eq('id', id);
+
+    if (error) throw error;
+    res.redirect('/admin/ranks?success=' + encodeURIComponent('Đã cập nhật cấp bậc thành công!'));
+  } catch (err) {
+    console.error('Lỗi sửa rank:', err);
+    res.redirect('/admin/ranks?error=' + encodeURIComponent(err.message || 'Lỗi hệ thống.'));
+  }
+});
+
+// Xóa thiết lập cấp bậc
+router.post('/ranks/delete/:id', async (req, res) => {
+  const id = parseInt(req.params.id);
+  try {
+    const { error } = await supabase
+      .from('rank_settings')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+    res.redirect('/admin/ranks?success=' + encodeURIComponent('Đã xóa cấp bậc thành công!'));
+  } catch (err) {
+    console.error('Lỗi xóa rank:', err);
+    res.redirect('/admin/ranks?error=' + encodeURIComponent(err.message || 'Lỗi hệ thống.'));
+  }
+});
+
 // CHUYỂN HƯỚNG CÁC ĐƯỜNG DẪN CŨ VỀ ĐƯỜNG DẪN TÍCH HỢP MỚI
 router.get('/chapter/add-manual', (req, res) => res.redirect('/admin/chapter/add'));
 router.post('/chapter/add-manual', (req, res) => res.redirect('/admin/chapter/add'));

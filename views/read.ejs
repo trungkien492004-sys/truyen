@@ -163,7 +163,12 @@
                     
                     <div style="flex: 1;">
                         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.3rem;">
-                            <span style="font-weight: 600; font-size: 0.92rem;"><%= comment.users ? comment.users.display_name : 'Độc giả ẩn danh' %></span>
+                            <span style="font-weight: 600; font-size: 0.92rem;">
+                                <%= comment.users ? comment.users.display_name : 'Độc giả ẩn danh' %>
+                                <% if (comment.users && comment.users.equipped_badge) { %>
+                                    <span style="font-size: 0.72rem; color: #10b981; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 0.1rem 0.4rem; border-radius: 4px; margin-left: 0.4rem; font-weight: 700;"><%= comment.users.equipped_badge %></span>
+                                <% } %>
+                            </span>
                             <span style="font-size: 0.78rem; color: var(--text-secondary);"><%= new Date(comment.created_at).toLocaleDateString('vi-VN', { hour: '2-digit', minute: '2-digit' }) %></span>
                         </div>
                         
@@ -196,7 +201,12 @@
                                         <img src="<%= reply.users ? reply.users.avatar : '/css/default-avatar.png' %>" alt="avatar" style="width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--border-color); object-fit: cover; flex-shrink: 0;">
                                         <div style="flex: 1;">
                                             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.2rem;">
-                                                <span style="font-weight: 600; font-size: 0.88rem;"><%= reply.users ? reply.users.display_name : 'Độc giả ẩn danh' %></span>
+                                                <span style="font-weight: 600; font-size: 0.88rem;">
+                                                    <%= reply.users ? reply.users.display_name : 'Độc giả ẩn danh' %>
+                                                    <% if (reply.users && reply.users.equipped_badge) { %>
+                                                        <span style="font-size: 0.72rem; color: #10b981; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 0.1rem 0.4rem; border-radius: 4px; margin-left: 0.4rem; font-weight: 700;"><%= reply.users.equipped_badge %></span>
+                                                    <% } %>
+                                                </span>
                                                 <span style="font-size: 0.75rem; color: var(--text-secondary);"><%= new Date(reply.created_at).toLocaleDateString('vi-VN', { hour: '2-digit', minute: '2-digit' }) %></span>
                                             </div>
                                             <div class="comment-content" style="font-size: 0.86rem; line-height: 1.5; color: var(--text-primary); white-space: pre-wrap; margin-bottom: 0.4rem;"><%- reply.content.replace(/@([a-zA-Z0-9_\sà-ỹÀ-Ỹ]+)/g, '<span style="color:var(--accent-color); font-weight:600;">@$1</span>') %></div>
@@ -230,6 +240,27 @@
         <% } %>
     </div>
 </div>
+
+<% if (typeof user !== 'undefined' && user) { %>
+    <!-- Widget ghi nhận đọc chương lấy EXP -->
+    <div id="read-progress-widget" style="position: fixed; bottom: 20px; right: 20px; z-index: 999; background: rgba(15, 23, 42, 0.95); border: 1px solid var(--border-color); border-radius: 12px; padding: 0.8rem 1.2rem; box-shadow: 0 10px 30px rgba(0,0,0,0.5); backdrop-filter: blur(10px); display: flex; align-items: center; gap: 0.8rem; font-size: 0.85rem; color: var(--text-primary); transition: all 0.3s ease;">
+        <div style="width: 8px; height: 8px; border-radius: 50%; background: #f59e0b; animation: pulse 1.5s infinite;" id="progress-dot"></div>
+        <span id="progress-text">📖 Đang ghi nhận đọc chương... (còn <span id="progress-timer">2:30</span>)</span>
+    </div>
+    
+    <style>
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+        }
+        @keyframes pulse-green {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+    </style>
+<% } %>
 
 <script>
     // Xử lý gửi bình luận chính
@@ -359,6 +390,67 @@
             alert('Lỗi hệ thống khi xóa bình luận.');
         }
     }
+
+    <% if (typeof user !== 'undefined' && user) { %>
+    // Xử lý countdown tính EXP đọc truyện
+    (function() {
+        let secondsLeft = 150; // 2.5 minutes
+        const timerSpan = document.getElementById('progress-timer');
+        const textSpan = document.getElementById('progress-text');
+        const dot = document.getElementById('progress-dot');
+        const widget = document.getElementById('read-progress-widget');
+        
+        const countdown = setInterval(async () => {
+            secondsLeft--;
+            
+            const minutes = Math.floor(secondsLeft / 60);
+            const seconds = secondsLeft % 60;
+            if (timerSpan) {
+                timerSpan.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+            }
+            
+            if (secondsLeft <= 0) {
+                clearInterval(countdown);
+                
+                // Gửi xác nhận đọc chương lên server
+                try {
+                    const storyId = '<%= story.id %>';
+                    const chapterNumber = '<%= chapter.chapter_number %>';
+                    
+                    const resp = await fetch('/chapter/read-confirm', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ story_id: storyId, chapter_number: chapterNumber })
+                    });
+                    const data = await resp.json();
+                    
+                    if (data.success) {
+                        textSpan.innerHTML = '🎉 ' + data.message;
+                        dot.style.background = '#10b981';
+                        dot.style.animation = 'pulse-green 1.5s infinite';
+                        
+                        // Ẩn nhẹ sau 5s
+                        setTimeout(() => {
+                            if (widget) {
+                                widget.style.opacity = '0.5';
+                                widget.style.transform = 'translateY(10px)';
+                            }
+                        }, 5000);
+                    } else {
+                        textSpan.textContent = '❌ Lỗi: ' + data.error;
+                        dot.style.background = '#ef4444';
+                        dot.style.animation = 'none';
+                    }
+                } catch (err) {
+                    console.error('Lỗi khi gửi xác nhận đọc chương:', err);
+                    textSpan.textContent = '❌ Lỗi hệ thống ghi nhận EXP.';
+                    dot.style.background = '#ef4444';
+                    dot.style.animation = 'none';
+                }
+            }
+        }, 1000);
+    })();
+    <% } %>
 </script>
 
 <%- include('partials/footer') %>

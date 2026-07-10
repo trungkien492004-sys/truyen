@@ -135,6 +135,7 @@ async function awardReadingExp(userId, storyId, chapterNumber) {
   if (streak >= 7) {
     await unlockAchievement(userId, 'Kiên trì đọc sách');
   }
+  return { earnedExp: !alreadyCounted };
 }
 
 // Hàm hỗ trợ upload file lên Supabase Storage
@@ -199,8 +200,9 @@ router.get('/', async (req, res) => {
     // 3b. Lấy bảng xếp hạng độc giả (top người đọc nhiều nhất theo EXP) - không chặn trang chủ nếu lỗi/chưa có bảng
     let topReaders = [];
     try {
+      const { data: rankSettings } = await supabase.from('rank_settings').select('*').order('count', { ascending: false });
       const { data: readers } = await supabase.from('leaderboard_by_exp').select('*').limit(5);
-      topReaders = (readers || []).map(r => ({ ...r, badge: getBadgeForCount(r.chapters_read || 0) }));
+      topReaders = (readers || []).map(r => ({ ...r, badge: getBadgeForCount(r.chapters_read || 0, rankSettings) }));
     } catch (e) {
       console.error('Lỗi lấy BXH độc giả (bỏ qua, không chặn trang chủ):', e);
     }
@@ -510,7 +512,7 @@ router.get('/story/:id', async (req, res) => {
     try {
       const { data: commentsData } = await supabase
         .from('comments')
-        .select('*, users!comments_user_id_fkey(display_name, avatar)')
+        .select('*, users!comments_user_id_fkey(display_name, avatar, equipped_badge)')
         .eq('story_id', storyId)
         .is('chapter_number', null)
         .order('created_at', { ascending: true });
@@ -586,10 +588,12 @@ router.get('/story/:story_id/chapter/:chapter_number', async (req, res) => {
         if (error) console.error('Lỗi khi lưu lịch sử đọc:', error);
       });
 
-      // 3c. Gamification: ghi nhận lượt đọc chương (mỗi chương chỉ tính EXP 1 lần/người dùng) + cập nhật streak
-      awardReadingExp(req.user.id, storyId, chapterNumber).catch(err => {
-        console.error('Lỗi khi tính EXP/streak:', err);
-      });
+      // 3c. Lưu thông tin bắt đầu đọc vào session để tính thời gian đọc (tránh hack/buff EXP)
+      req.session.reading = {
+        storyId: storyId,
+        chapterNumber: chapterNumber,
+        startTime: Date.now()
+      };
     }
 
     // 4. Kiểm tra chương trước và chương sau để điều hướng
@@ -619,7 +623,7 @@ router.get('/story/:story_id/chapter/:chapter_number', async (req, res) => {
     try {
       const { data: commentsData } = await supabase
         .from('comments')
-        .select('*, users!comments_user_id_fkey(display_name, avatar)')
+        .select('*, users!comments_user_id_fkey(display_name, avatar, equipped_badge)')
         .eq('story_id', storyId)
         .eq('chapter_number', chapterNumber)
         .order('created_at', { ascending: true });
@@ -653,6 +657,58 @@ router.get('/story/:story_id/chapter/:chapter_number', async (req, res) => {
     console.error('Lỗi đọc chương:', err);
     res.status(500).send('Lỗi hệ thống.');
   }
+});
+
+// Route xác nhận đọc chương truyện đủ thời gian (2.5 phút) để nhận EXP
+router.post('/chapter/read-confirm', async (req, res) => {
+  if (!req.user || !req.user.id) {
+    return res.status(401).json({ success: false, error: 'Vui lòng đăng nhập.' });
+  }
+  
+  if (req.user.is_banned) {
+    return res.status(403).json({ success: false, error: 'Tài khoản của bạn đã bị khóa.' });
+  }
+
+  const { story_id, chapter_number } = req.body;
+  const storyId = parseInt(story_id);
+  const chapterNumber = parseInt(chapter_number);
+
+  if (!storyId || !chapterNumber) {
+    return res.status(400).json({ success: false, error: 'Tham số không hợp lệ.' });
+  }
+
+  const reading = req.session.reading;
+  if (!reading || reading.storyId !== storyId || reading.chapterNumber !== chapterNumber) {
+    return res.status(400).json({ success: false, error: 'Yêu cầu không hợp lệ hoặc lượt đọc chưa được bắt đầu.' });
+  }
+
+  const elapsedMs = Date.now() - reading.startTime;
+  const requiredMs = 150 * 1000; // 2.5 phút (150 giây)
+
+  if (elapsedMs < requiredMs) {
+    const remainingSeconds = Math.ceil((requiredMs - elapsedMs) / 1000);
+    return res.status(400).json({ 
+      success: false, 
+      error: `Vui lòng đọc tiếp. Cần đọc thêm ${remainingSeconds} giây nữa để ghi nhận EXP!` 
+    });
+  }
+
+  // Cộng EXP
+  let earnedExp = false;
+  try {
+    const result = await awardReadingExp(req.user.id, storyId, chapterNumber);
+    earnedExp = result ? result.earnedExp : false;
+  } catch (err) {
+    console.error('Lỗi cộng EXP trong xác nhận:', err);
+  }
+
+  // Xóa thông tin đọc trong session để tránh gửi lại nhiều lần
+  delete req.session.reading;
+
+  res.json({ 
+    success: true, 
+    message: earnedExp ? 'Đã ghi nhận đọc chương thành công! +5 EXP' : 'Đã ghi nhận đọc chương. (Chương này đã tính EXP trước đó)'
+  });
 });
 
 // CHẤM ĐIỂM ĐÁNH GIÁ TRUYỆN (1-10) - CẦN ĐĂNG NHẬP
@@ -745,8 +801,9 @@ const BADGE_THRESHOLDS = [
   { count: 1, label: '🥉 Người Mới', badge: 'newbie' }
 ];
 
-function getBadgeForCount(count) {
-  for (const b of BADGE_THRESHOLDS) {
+function getBadgeForCount(count, rankSettings = null) {
+  const thresholds = rankSettings && rankSettings.length > 0 ? rankSettings : BADGE_THRESHOLDS;
+  for (const b of thresholds) {
     if (count >= b.count) return b;
   }
   return null;
@@ -971,7 +1028,7 @@ router.post('/story/:story_id/comment', async (req, res) => {
     const { data: newComment, error } = await supabase
       .from('comments')
       .insert([commentData])
-      .select('*, users!comments_user_id_fkey(display_name, avatar)')
+      .select('*, users!comments_user_id_fkey(display_name, avatar, equipped_badge)')
       .single();
 
     if (error) throw error;
@@ -1101,6 +1158,20 @@ router.get('/profile', async (req, res) => {
       .eq('user_id', req.user.id)
       .single();
 
+    const { data: userData } = await supabase
+      .from('users')
+      .select('display_name, avatar, bio, equipped_badge, equipped_avatar')
+      .eq('id', req.user.id)
+      .single();
+
+    if (userData) {
+      req.user.display_name = userData.display_name;
+      req.user.avatar = userData.avatar;
+      req.user.bio = userData.bio;
+      req.user.equipped_badge = userData.equipped_badge;
+      req.user.equipped_avatar = userData.equipped_avatar;
+    }
+
     const exp = stats ? stats.exp : 0;
     const streak = stats ? stats.streak_days : 0;
 
@@ -1130,11 +1201,18 @@ router.get('/profile', async (req, res) => {
       .select('*', { count: 'exact', head: true })
       .eq('user_id', req.user.id);
 
-    const badge = getBadgeForCount(chaptersCount || 0);
+    // Lấy cài đặt Rank từ database
+    const { data: rankSettings } = await supabase
+      .from('rank_settings')
+      .select('*')
+      .order('count', { ascending: false });
+
+    const badge = getBadgeForCount(chaptersCount || 0, rankSettings);
 
     res.render('profile', {
       title: 'Trang cá nhân của tôi',
       user: req.user,
+      userData: userData || req.user,
       stats: {
         exp,
         streak,
@@ -1156,7 +1234,7 @@ router.get('/profile', async (req, res) => {
 // Route cập nhật hồ sơ người dùng
 router.post('/profile/update', upload.single('avatar'), async (req, res) => {
   if (!req.user || !req.user.id) return res.status(401).send('Chưa đăng nhập');
-  const { display_name } = req.body;
+  const { display_name, bio } = req.body;
   if (!display_name || !display_name.trim()) {
     return res.status(400).send('Tên hiển thị không được để trống.');
   }
@@ -1165,14 +1243,29 @@ router.post('/profile/update', upload.single('avatar'), async (req, res) => {
     let avatarUrl = req.user.avatar;
     if (req.file) {
       avatarUrl = await uploadToSupabase(req.file, 'uploads');
+      // Khi tải lên avatar mới, gỡ avatar mua từ shop để avatar mới có tác dụng
+      await supabase
+        .from('users')
+        .update({ equipped_avatar: null })
+        .eq('id', req.user.id);
     }
 
     const { error } = await supabase
       .from('users')
-      .update({ display_name: display_name.trim(), avatar: avatarUrl })
+      .update({ 
+        display_name: display_name.trim(), 
+        avatar: avatarUrl, 
+        bio: (bio || '').trim() 
+      })
       .eq('id', req.user.id);
 
     if (error) throw error;
+    
+    req.user.display_name = display_name.trim();
+    req.user.avatar = avatarUrl;
+    req.user.bio = (bio || '').trim();
+    req.user.equipped_avatar = null;
+
     res.redirect('/profile');
   } catch (err) {
     console.error('Lỗi cập nhật hồ sơ:', err);
@@ -1201,8 +1294,13 @@ router.get('/ai-recommend', async (req, res) => {
 // Trang Bảng Xếp Hạng Độc Giả toàn diện
 router.get('/leaderboard', async (req, res) => {
   try {
+    const { data: rankSettings } = await supabase
+      .from('rank_settings')
+      .select('*')
+      .order('count', { ascending: false });
+
     const { data: readers } = await supabase.from('leaderboard_by_exp').select('*').limit(20);
-    const leaderboard = (readers || []).map(r => ({ ...r, badge: getBadgeForCount(r.chapters_read || 0) }));
+    const leaderboard = (readers || []).map(r => ({ ...r, badge: getBadgeForCount(r.chapters_read || 0, rankSettings) }));
     res.render('leaderboard', {
       title: 'Bảng xếp hạng độc giả',
       user: req.user,
@@ -1211,6 +1309,196 @@ router.get('/leaderboard', async (req, res) => {
   } catch (err) {
     console.error('Lỗi lấy BXH độc giả:', err);
     res.status(500).send('Lỗi hệ thống.');
+  }
+});
+
+// ==================== CỬA HÀNG VẬT PHẨM (AVATAR & HUY HIỆU BẰNG EXP) ====================
+// Trang danh sách cửa hàng
+router.get('/shop', async (req, res) => {
+  if (!req.user || !req.user.id) return res.redirect('/auth/login');
+
+  try {
+    // 1. Lấy tất cả vật phẩm bán trong shop
+    const { data: items, error: itemsErr } = await supabase
+      .from('shop_items')
+      .select('*')
+      .order('price_exp', { ascending: true });
+
+    if (itemsErr) throw itemsErr;
+
+    // 2. Lấy EXP hiện tại của người dùng
+    const { data: stats } = await supabase
+      .from('user_stats')
+      .select('exp')
+      .eq('user_id', req.user.id)
+      .single();
+
+    const exp = stats ? stats.exp : 0;
+
+    // 3. Lấy danh sách các vật phẩm người dùng đã mua
+    const { data: inventory } = await supabase
+      .from('user_inventory')
+      .select('item_id')
+      .eq('user_id', req.user.id);
+
+    const ownedItemIds = (inventory || []).map(inv => inv.item_id);
+
+    // 4. Lấy live info của user (để xem avatar & huy hiệu đang trang bị)
+    const { data: userData } = await supabase
+      .from('users')
+      .select('equipped_badge, equipped_avatar')
+      .eq('id', req.user.id)
+      .single();
+
+    res.render('shop', {
+      title: 'Cửa hàng EXP - Gắn Huy hiệu & Thay Avatar',
+      user: req.user,
+      userData: userData || req.user,
+      items: items || [],
+      exp,
+      ownedItemIds,
+      success: req.query.success || null,
+      error: req.query.error || null
+    });
+  } catch (err) {
+    console.error('Lỗi khi tải cửa hàng:', err);
+    res.status(500).send('Lỗi hệ thống khi tải cửa hàng.');
+  }
+});
+
+// Mua vật phẩm từ shop
+router.post('/shop/buy/:id', async (req, res) => {
+  if (!req.user || !req.user.id) return res.status(401).json({ success: false, error: 'Vui lòng đăng nhập.' });
+  if (req.user.is_banned) return res.status(403).json({ success: false, error: 'Tài khoản đã bị khóa.' });
+
+  const itemId = parseInt(req.params.id);
+
+  try {
+    // 1. Kiểm tra vật phẩm tồn tại
+    const { data: item, error: itemErr } = await supabase
+      .from('shop_items')
+      .select('*')
+      .eq('id', itemId)
+      .single();
+
+    if (itemErr || !item) {
+      return res.status(404).json({ success: false, error: 'Vật phẩm không tồn tại.' });
+    }
+
+    // 2. Kiểm tra xem người dùng đã sở hữu vật phẩm chưa
+    const { data: alreadyOwn } = await supabase
+      .from('user_inventory')
+      .select('id')
+      .eq('user_id', req.user.id)
+      .eq('item_id', itemId)
+      .maybeSingle();
+
+    if (alreadyOwn) {
+      return res.status(400).json({ success: false, error: 'Bạn đã sở hữu vật phẩm này rồi.' });
+    }
+
+    // 3. Lấy EXP của người dùng
+    const { data: stats } = await supabase
+      .from('user_stats')
+      .select('exp')
+      .eq('user_id', req.user.id)
+      .single();
+
+    const userExp = stats ? stats.exp : 0;
+    if (userExp < item.price_exp) {
+      return res.status(400).json({ success: false, error: `Bạn không đủ EXP. Cần ${item.price_exp} EXP (Hiện có: ${userExp} EXP).` });
+    }
+
+    // 4. Trừ EXP và thêm vật phẩm vào túi đồ (inventory)
+    const newExp = userExp - item.price_exp;
+    
+    // Cập nhật EXP
+    const { error: updateErr } = await supabase
+      .from('user_stats')
+      .update({ exp: newExp })
+      .eq('user_id', req.user.id);
+
+    if (updateErr) throw updateErr;
+
+    // Thêm vào inventory
+    const { error: invErr } = await supabase
+      .from('user_inventory')
+      .insert([{ user_id: req.user.id, item_id: itemId }]);
+
+    if (invErr) throw invErr;
+
+    res.json({ success: true, message: `Đã mua thành công ${item.name}!`, remainingExp: newExp });
+  } catch (err) {
+    console.error('Lỗi khi mua vật phẩm:', err);
+    res.status(500).json({ success: false, error: 'Lỗi hệ thống khi mua vật phẩm.' });
+  }
+});
+
+// Trang bị/Tháo vật phẩm
+router.post('/shop/equip/:id', async (req, res) => {
+  if (!req.user || !req.user.id) return res.status(401).json({ success: false, error: 'Vui lòng đăng nhập.' });
+
+  const itemId = parseInt(req.params.id);
+  const action = req.body.action; // 'equip' hoặc 'unequip'
+
+  try {
+    // 1. Lấy vật phẩm
+    const { data: item } = await supabase
+      .from('shop_items')
+      .select('*')
+      .eq('id', itemId)
+      .single();
+
+    if (!item) {
+      return res.status(404).json({ success: false, error: 'Vật phẩm không tồn tại.' });
+    }
+
+    // 2. Nếu là trang bị, kiểm tra xem người dùng có sở hữu trong inventory không
+    if (action === 'equip') {
+      const { data: own } = await supabase
+        .from('user_inventory')
+        .select('id')
+        .eq('user_id', req.user.id)
+        .eq('item_id', itemId)
+        .maybeSingle();
+
+      if (!own) {
+        return res.status(400).json({ success: false, error: 'Bạn chưa sở hữu vật phẩm này.' });
+      }
+    }
+
+    // 3. Thực hiện trang bị/tháo dựa trên type
+    const updateData = {};
+    if (item.type === 'badge') {
+      updateData.equipped_badge = action === 'equip' ? item.value : null;
+    } else if (item.type === 'avatar') {
+      updateData.equipped_avatar = action === 'equip' ? item.value : null;
+      if (action === 'equip') {
+        updateData.avatar = item.value;
+      } else {
+        updateData.avatar = '/css/default-avatar.png';
+      }
+    }
+
+    const { error } = await supabase
+      .from('users')
+      .update(updateData)
+      .eq('id', req.user.id);
+
+    if (error) throw error;
+
+    // Cập nhật session
+    if (item.type === 'badge') {
+      req.user.equipped_badge = action === 'equip' ? item.value : null;
+    } else if (item.type === 'avatar') {
+      req.user.equipped_avatar = action === 'equip' ? item.value : null;
+      req.user.avatar = action === 'equip' ? item.value : '/css/default-avatar.png';
+    }
+
+    res.json({ success: true, message: action === 'equip' ? 'Đã trang bị vật phẩm!' : 'Đã tháo trang bị!' });
+  } catch (err) {
+    console.error('Lỗi khi trang bị vật phẩm:', err);
+    res.status(500).json({ success: false, error: 'Lỗi hệ thống.' });
   }
 });
 

@@ -16,6 +16,8 @@ yarn-error.log*
 # Uploaded files
 public/uploads/*
 !public/uploads/.gitkeep
+!public/uploads/shop/
+!public/uploads/shop/*
 
 .vercel
 .env*

@@ -1,0 +1,349 @@
+<%- include('partials/header') %>
+
+<style>
+    .shop-container {
+        max-width: 1000px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+    }
+    .shop-header {
+        text-align: center;
+        margin-bottom: 3rem;
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.4), rgba(15, 23, 42, 0.6));
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 20px;
+        padding: 2.5rem;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+    .user-exp-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: linear-gradient(135deg, #eab308, #ca8a04);
+        color: #0f172a;
+        font-weight: 800;
+        padding: 0.6rem 1.5rem;
+        border-radius: 50px;
+        font-size: 1.1rem;
+        margin-top: 1rem;
+        box-shadow: 0 5px 15px rgba(234, 179, 8, 0.4);
+    }
+    
+    /* Shop Tabs */
+    .shop-tabs {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    .shop-tab-btn {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--border-color);
+        color: var(--text-secondary);
+        padding: 0.8rem 2rem;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    .shop-tab-btn.active {
+        background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+        color: white;
+        border-color: transparent;
+        box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+    }
+    
+    /* Shop Grid */
+    .shop-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 2rem;
+    }
+    .shop-card {
+        background: rgba(15, 23, 42, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 16px;
+        padding: 1.5rem;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        position: relative;
+        overflow: hidden;
+    }
+    .shop-card:hover {
+        transform: translateY(-5px);
+        border-color: rgba(99, 102, 241, 0.3);
+        box-shadow: 0 10px 25px rgba(99, 102, 241, 0.15);
+    }
+    
+    /* Avatar Shop Card Specifics */
+    .avatar-preview-box {
+        width: 100px;
+        height: 100px;
+        margin: 0 auto 1.2rem auto;
+        position: relative;
+    }
+    .avatar-preview-img {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid var(--border-color);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+    }
+    
+    /* Badge Shop Card Specifics */
+    .badge-preview-box {
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1.2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 80px;
+    }
+    .badge-preview-tag {
+        font-size: 0.95rem;
+        color: #10b981;
+        background: rgba(16, 185, 129, 0.1);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        padding: 0.3rem 0.8rem;
+        border-radius: 6px;
+        font-weight: 700;
+    }
+    
+    .item-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        color: var(--text-primary);
+    }
+    .item-desc {
+        font-size: 0.82rem;
+        color: var(--text-secondary);
+        line-height: 1.5;
+        margin-bottom: 1.5rem;
+        min-height: 45px;
+    }
+    .item-price {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.3rem;
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #eab308;
+        margin-bottom: 1rem;
+    }
+    
+    /* Buttons */
+    .shop-btn {
+        width: 100%;
+        padding: 0.7rem 1.2rem;
+        border-radius: 10px;
+        font-size: 0.88rem;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    .btn-buy {
+        background: linear-gradient(135deg, #3b82f6, #2563eb);
+        color: white;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    }
+    .btn-buy:hover {
+        filter: brightness(1.1);
+        transform: translateY(-1px);
+    }
+    .btn-disabled {
+        background: #1e293b;
+        color: #64748b;
+        cursor: not-allowed;
+    }
+    .btn-equip {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+    .btn-equip:hover {
+        filter: brightness(1.1);
+        transform: translateY(-1px);
+    }
+    .btn-unequip {
+        background: rgba(239, 68, 68, 0.15);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        color: #f87171;
+    }
+    .btn-unequip:hover {
+        background: rgba(239, 68, 68, 0.25);
+        color: white;
+    }
+    .equipped-tag {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background: #eab308;
+        color: #0f172a;
+        font-size: 0.68rem;
+        font-weight: 800;
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        text-transform: uppercase;
+        box-shadow: 0 3px 8px rgba(234, 179, 8, 0.3);
+    }
+</style>
+
+<div class="shop-container">
+    <div class="shop-header">
+        <h1 style="margin: 0; font-size: 2.2rem; background: linear-gradient(135deg, #eab308, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">🛍️ Cửa Hàng EXP Tích Lũy</h1>
+        <p style="color: var(--text-secondary); margin-top: 0.5rem; font-size: 0.95rem;">Đọc truyện tích lũy EXP và đổi lấy các ảnh đại diện hoặc huy hiệu chat độc quyền!</p>
+        <div class="user-exp-badge">
+            ⭐️ Tài sản: <span id="user-current-exp"><%= exp %></span> EXP
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="shop-tabs">
+        <button class="shop-tab-btn active" onclick="switchTab('badge')">🏷️ Huy Hiệu Chat</button>
+        <button class="shop-tab-btn" onclick="switchTab('avatar')">👤 Ảnh Đại Diện</button>
+    </div>
+
+    <!-- Badges Grid -->
+    <div id="tab-badge" class="shop-grid tab-content">
+        <% const badgeItems = items.filter(i => i.type === 'badge'); %>
+        <% badgeItems.forEach(item => { %>
+            <% const isOwned = ownedItemIds.includes(item.id); %>
+            <% const isEquipped = userData.equipped_badge === item.value; %>
+            <div class="shop-card" id="item-card-<%= item.id %>">
+                <% if (isEquipped) { %>
+                    <span class="equipped-tag">Đang Dùng</span>
+                <% } %>
+                <div>
+                    <div class="badge-preview-box">
+                        <span class="badge-preview-tag"><%= item.value %></span>
+                    </div>
+                    <h3 class="item-title"><%= item.name %></h3>
+                    <p class="item-desc"><%= item.description %></p>
+                </div>
+                <div>
+                    <% if (!isOwned) { %>
+                        <div class="item-price">🪙 <%= item.price_exp %> EXP</div>
+                        <% if (exp >= item.price_exp) { %>
+                            <button onclick="buyItem(<%= item.id %>, 'badge')" class="shop-btn btn-buy">Mua Bằng EXP</button>
+                        <% } else { %>
+                            <button class="shop-btn btn-disabled" disabled>Thiếu EXP</button>
+                        <% } %>
+                    <% } else { %>
+                        <div class="item-price" style="color: #10b981;">✔️ Đã sở hữu</div>
+                        <% if (isEquipped) { %>
+                            <button onclick="equipItem(<%= item.id %>, 'unequip')" class="shop-btn btn-unequip">Tháo Ra</button>
+                        <% } else { %>
+                            <button onclick="equipItem(<%= item.id %>, 'equip')" class="shop-btn btn-equip">Trang Bị</button>
+                        <% } %>
+                    <% } %>
+                </div>
+            </div>
+        <% }) %>
+    </div>
+
+    <!-- Avatars Grid -->
+    <div id="tab-avatar" class="shop-grid tab-content" style="display: none;">
+        <% const avatarItems = items.filter(i => i.type === 'avatar'); %>
+        <% avatarItems.forEach(item => { %>
+            <% const isOwned = ownedItemIds.includes(item.id); %>
+            <% const isEquipped = userData.equipped_avatar === item.value; %>
+            <div class="shop-card" id="item-card-<%= item.id %>">
+                <% if (isEquipped) { %>
+                    <span class="equipped-tag">Đang Dùng</span>
+                <% } %>
+                <div>
+                    <div class="avatar-preview-box">
+                        <!-- Tạo avatar tạm thời bằng font awesome hoặc ảnh mặc định -->
+                        <img src="<%= item.value %>" onerror="this.src='/css/default-avatar.png'" alt="Avatar Preview" class="avatar-preview-img">
+                    </div>
+                    <h3 class="item-title"><%= item.name %></h3>
+                    <p class="item-desc"><%= item.description %></p>
+                </div>
+                <div>
+                    <% if (!isOwned) { %>
+                        <div class="item-price">🪙 <%= item.price_exp %> EXP</div>
+                        <% if (exp >= item.price_exp) { %>
+                            <button onclick="buyItem(<%= item.id %>, 'avatar')" class="shop-btn btn-buy">Mua Bằng EXP</button>
+                        <% } else { %>
+                            <button class="shop-btn btn-disabled" disabled>Thiếu EXP</button>
+                        <% } %>
+                    <% } else { %>
+                        <div class="item-price" style="color: #10b981;">✔️ Đã sở hữu</div>
+                        <% if (isEquipped) { %>
+                            <button onclick="equipItem(<%= item.id %>, 'unequip')" class="shop-btn btn-unequip">Tháo Ra</button>
+                        <% } else { %>
+                            <button onclick="equipItem(<%= item.id %>, 'equip')" class="shop-btn btn-equip">Trang Bị</button>
+                        <% } %>
+                    <% } %>
+                </div>
+            </div>
+        <% }) %>
+    </div>
+</div>
+
+<script>
+    function switchTab(tabType) {
+        document.querySelectorAll('.shop-tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(grid => grid.style.display = 'none');
+        
+        event.target.classList.add('active');
+        document.getElementById(`tab-${tabType}`).style.display = 'grid';
+    }
+
+    async function buyItem(id, type) {
+        if (!confirm('Bạn có chắc chắn muốn dùng EXP để mua vật phẩm này không?')) return;
+        
+        try {
+            const resp = await fetch(`/shop/buy/${id}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const data = await resp.json();
+            
+            if (data.success) {
+                alert(data.message);
+                // Cập nhật EXP hiển thị
+                document.getElementById('user-current-exp').textContent = data.remainingExp;
+                location.reload(); // Reload để update nút trạng thái mua/sở hữu
+            } else {
+                alert(data.error || 'Lỗi khi mua hàng.');
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Lỗi hệ thống khi mua hàng.');
+        }
+    }
+
+    async function equipItem(id, action) {
+        try {
+            const resp = await fetch(`/shop/equip/${id}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action })
+            });
+            const data = await resp.json();
+            
+            if (data.success) {
+                alert(data.message);
+                location.reload(); // Reload để cập nhật ảnh avatar/huy hiệu chat
+            } else {
+                alert(data.error || 'Lỗi khi thao tác trang bị.');
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Lỗi hệ thống khi trang bị.');
+        }
+    }
+</script>
+
+<%- include('partials/footer') %>

@@ -1,0 +1,96 @@
+<%- include('../partials/header') %>
+
+<div style="margin-bottom: 1.5rem;">
+    <a href="/admin" style="color: var(--text-secondary); font-size: 0.9rem; text-decoration: none;">&larr; Quay lại Trang quản trị</a>
+</div>
+
+<div class="admin-sections-grid" style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem; align-items: start;">
+    <!-- Cột trái: Thêm Rank mới -->
+    <div class="admin-box" style="height: fit-content;">
+        <h2 class="section-title" style="font-size: 1.2rem; margin-bottom: 1.5rem;">➕ Thêm Cấp Bậc Mới</h2>
+        
+        <% if (success) { %>
+            <div class="alert alert-success" style="margin-bottom: 1rem;"><%= success %></div>
+        <% } %>
+
+        <% if (error) { %>
+            <div class="alert alert-error" style="margin-bottom: 1rem;"><%= error %></div>
+        <% } %>
+
+        <form action="/admin/ranks/add" method="POST">
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label for="count">Số chương yêu cầu *</label>
+                <input type="number" id="count" name="count" placeholder="Ví dụ: 20, 100" required style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary);">
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label for="label">Tên hiển thị cấp bậc *</label>
+                <input type="text" id="label" name="label" placeholder="Ví dụ: 🥈 Mọt Sách" required style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary);">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label for="badge">Class / Loại Badge (Dùng làm style css) *</label>
+                <input type="text" id="badge" name="badge" placeholder="Ví dụ: newbie, bookworm, legend" required style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary);">
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.8rem; margin-top: 1rem; border-radius: 8px;">THÊM CẤP BẬC</button>
+        </form>
+    </div>
+
+    <!-- Cột phải: Danh sách và Chỉnh sửa cấp bậc -->
+    <div class="admin-box">
+        <h2 class="section-title" style="font-size: 1.2rem; margin-bottom: 1.5rem;">🏆 Danh Sách Cấu Hình Cấp Bậc (Xếp theo số chương)</h2>
+        
+        <% if (ranks.length === 0) { %>
+            <p style="color: var(--text-secondary); text-align: center; padding: 2rem 0;">Chưa có cấp bậc nào được tạo.</p>
+        <% } else { %>
+            <table class="admin-table" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr>
+                        <th style="width: 120px;">Số Chương</th>
+                        <th>Tên Hiển Thị Cấp Bậc</th>
+                        <th>Loại Badge</th>
+                        <th style="text-align: center; width: 180px;">Hành Động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% ranks.forEach(rank => { %>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.03);">
+                            <form action="/admin/ranks/edit/<%= rank.id %>" method="POST" style="margin: 0;">
+                                <td>
+                                    <input type="number" name="count" value="<%= rank.count %>" required style="width: 80px; padding: 0.4rem; border-radius: 6px; border: 1px solid var(--border-color); background: rgba(0,0,0,0.2); color: var(--text-primary);">
+                                </td>
+                                <td>
+                                    <input type="text" name="label" value="<%= rank.label %>" required style="width: 100%; max-width: 180px; padding: 0.4rem; border-radius: 6px; border: 1px solid var(--border-color); background: rgba(0,0,0,0.2); color: var(--text-primary);">
+                                </td>
+                                <td>
+                                    <input type="text" name="badge" value="<%= rank.badge %>" required style="width: 100%; max-width: 120px; padding: 0.4rem; border-radius: 6px; border: 1px solid var(--border-color); background: rgba(0,0,0,0.2); color: var(--text-primary);">
+                                </td>
+                                <td style="text-align: center;">
+                                    <div style="display: flex; gap: 0.5rem; justify-content: center; align-items: center;">
+                                        <button type="submit" class="btn btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; border-radius: 6px; background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.3); color: var(--accent-color);">Lưu</button>
+                                        
+                                        <button type="button" onclick="deleteRank(<%= rank.id %>)" class="btn btn-danger" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; border-radius: 6px;">Xóa</button>
+                                    </div>
+                                </td>
+                            </form>
+                        </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        <% } %>
+    </div>
+</div>
+
+<script>
+    async function deleteRank(id) {
+        if (!confirm('Bạn có chắc chắn muốn xóa Rank cấp bậc này không? Người dùng đạt mốc chương này sẽ tự động quay về mốc cấp bậc thấp hơn.')) return;
+        
+        // Tạo form ẩn để submit POST xóa
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/admin/ranks/delete/${id}`;
+        document.body.appendChild(form);
+        form.submit();
+    }
+</script>
