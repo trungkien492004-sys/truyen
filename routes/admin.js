@@ -1219,6 +1219,7 @@ router.get('/shop', async (req, res) => {
     if (error) throw error;
 
     res.render('admin/shop', {
+      title: 'Quản lý Cửa hàng EXP',
       user: req.user,
       items: items || [],
       success: req.query.success || null,
@@ -1347,6 +1348,7 @@ router.get('/ranks', async (req, res) => {
     if (error) throw error;
 
     res.render('admin/ranks', {
+      title: 'Quản lý Thiết lập Ranks',
       user: req.user,
       ranks: ranks || [],
       success: req.query.success || null,
