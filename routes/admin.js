@@ -1129,6 +1129,83 @@ router.post('/banners/edit/:id', upload.single('media'), async (req, res) => {
   }
 });
 
+// 10. QUẢN LÝ BÌNH LUẬN & NGƯỜI DÙNG
+router.get('/comments', async (req, res) => {
+  try {
+    const { data: comments, error } = await supabase
+      .from('comments')
+      .select('*, users!comments_user_id_fkey(id, display_name, email, avatar, is_banned, role), stories!comments_story_id_fkey(title)')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    res.render('admin/comments', {
+      user: req.user,
+      comments: comments || [],
+      success: req.query.success || null,
+      error: req.query.error || null
+    });
+  } catch (err) {
+    console.error('Lỗi khi lấy danh sách bình luận:', err);
+    res.status(500).send('Lỗi hệ thống.');
+  }
+});
+
+// Xóa hàng loạt bình luận
+router.post('/comments/bulk-delete', async (req, res) => {
+  const { ids } = req.body;
+  if (!ids || !Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json({ success: false, error: 'Không tìm thấy ID để xóa.' });
+  }
+
+  try {
+    const { error } = await supabase
+      .from('comments')
+      .delete()
+      .in('id', ids);
+
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Lỗi xóa hàng loạt bình luận:', err);
+    res.status(500).json({ success: false, error: err.message || 'Lỗi hệ thống.' });
+  }
+});
+
+// Khóa tài khoản người dùng
+router.post('/users/:id/ban', async (req, res) => {
+  const userId = req.params.id;
+  try {
+    const { error } = await supabase
+      .from('users')
+      .update({ is_banned: true })
+      .eq('id', userId);
+
+    if (error) throw error;
+    res.redirect('/admin/comments?success=' + encodeURIComponent('Đã khóa tài khoản người dùng thành công!'));
+  } catch (err) {
+    console.error('Lỗi khóa tài khoản:', err);
+    res.redirect('/admin/comments?error=' + encodeURIComponent(err.message || 'Lỗi hệ thống.'));
+  }
+});
+
+// Mở khóa tài khoản người dùng
+router.post('/users/:id/unban', async (req, res) => {
+  const userId = req.params.id;
+  try {
+    const { error } = await supabase
+      .from('users')
+      .update({ is_banned: false })
+      .eq('id', userId);
+
+    if (error) throw error;
+    res.redirect('/admin/comments?success=' + encodeURIComponent('Đã mở khóa tài khoản người dùng thành công!'));
+  } catch (err) {
+    console.error('Lỗi mở khóa tài khoản:', err);
+    res.redirect('/admin/comments?error=' + encodeURIComponent(err.message || 'Lỗi hệ thống.'));
+  }
+});
+
 // CHUYỂN HƯỚNG CÁC ĐƯỜNG DẪN CŨ VỀ ĐƯỜNG DẪN TÍCH HỢP MỚI
 router.get('/chapter/add-manual', (req, res) => res.redirect('/admin/chapter/add'));
 router.post('/chapter/add-manual', (req, res) => res.redirect('/admin/chapter/add'));

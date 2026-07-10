@@ -1,0 +1,206 @@
+<%- include('../partials/header') %>
+
+<div style="margin-bottom: 1.5rem;">
+    <a href="/admin" style="color: var(--text-secondary); font-size: 0.9rem; text-decoration: none;">&larr; Quay lại Trang quản trị</a>
+</div>
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+    <h1 class="section-title" style="margin-bottom: 0;">💬 Quản Lý Bình Luận & Người Dùng</h1>
+    <button type="button" onclick="bulkDelete()" class="btn btn-danger" style="display: flex; align-items: center; gap: 0.5rem; border-radius: 8px;">
+        🗑️ Xóa các mục đã chọn (<span id="selected-count">0</span>)
+    </button>
+</div>
+
+<% if (success) { %>
+    <div class="alert alert-success" style="margin-bottom: 1.5rem;"><%= success %></div>
+<% } %>
+
+<% if (error) { %>
+    <div class="alert alert-error" style="margin-bottom: 1.5rem;"><%= error %></div>
+<% } %>
+
+<!-- Danh sách bình luận -->
+<div class="admin-box">
+    <% if (comments.length === 0) { %>
+        <p style="color: var(--text-secondary); text-align: center; padding: 2rem 0;">Chưa có bình luận nào trên hệ thống.</p>
+    <% } else { %>
+        <div style="overflow-x: auto;">
+            <table class="admin-table" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr>
+                        <th style="width: 40px; text-align: center;">
+                            <input type="checkbox" id="select-all" onclick="toggleSelectAll(this)" style="transform: scale(1.2); cursor: pointer;">
+                        </th>
+                        <th>Người Dùng</th>
+                        <th>Nội Dung Bình Luận</th>
+                        <th>Truyện / Chương</th>
+                        <th>Thời Gian</th>
+                        <th style="text-align: center;">Trạng Thái</th>
+                        <th style="text-align: center;">Hành Động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% comments.forEach(comment => { %>
+                        <tr id="comment-row-<%= comment.id %>" style="border-bottom: 1px solid rgba(255,255,255,0.03);">
+                            <td style="text-align: center; vertical-align: middle;">
+                                <input type="checkbox" name="comment_ids" value="<%= comment.id %>" onclick="updateSelectionCount()" style="transform: scale(1.2); cursor: pointer;">
+                            </td>
+                            <td style="vertical-align: middle;">
+                                <div style="display: flex; align-items: center; gap: 0.8rem;">
+                                    <img src="<%= comment.users ? comment.users.avatar : '/css/default-avatar.png' %>" alt="Avatar" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color);">
+                                    <div>
+                                        <strong style="display: block; font-size: 0.9rem;"><%= comment.users ? comment.users.display_name : 'Độc giả ẩn danh' %></strong>
+                                        <span style="font-size: 0.75rem; color: var(--text-secondary);"><%= comment.users ? comment.users.email : '' %></span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td style="vertical-align: middle; max-width: 300px; white-space: pre-wrap; font-size: 0.9rem; line-height: 1.5; color: var(--text-primary);">
+                                <%= comment.content %>
+                            </td>
+                            <td style="vertical-align: middle; font-size: 0.85rem;">
+                                <a href="/story/<%= comment.story_id %>" target="_blank" style="color: var(--accent-color); font-weight: 600; text-decoration: none;">
+                                    <%= comment.stories ? comment.stories.title : 'Truyện #' + comment.story_id %>
+                                </a>
+                                <% if (comment.chapter_number !== null) { %>
+                                    <span style="color: var(--text-secondary); display: block; font-size: 0.78rem; margin-top: 0.2rem;">
+                                        Chương <%= comment.chapter_number %>
+                                    </span>
+                                <% } else { %>
+                                    <span style="color: var(--text-secondary); display: block; font-size: 0.78rem; margin-top: 0.2rem;">
+                                        Trang chi tiết
+                                    </span>
+                                <% } %>
+                            </td>
+                            <td style="vertical-align: middle; font-size: 0.8rem; color: var(--text-secondary);">
+                                <%= new Date(comment.created_at).toLocaleString('vi-VN') %>
+                            </td>
+                            <td style="text-align: center; vertical-align: middle;">
+                                <% if (comment.users && comment.users.is_banned) { %>
+                                    <span style="font-size: 0.78rem; color: #ef4444; background: rgba(239, 68, 68, 0.1); padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: bold; border: 1px solid rgba(239, 68, 68, 0.2);">
+                                        Bị Khóa
+                                    </span>
+                                <% } else { %>
+                                    <span style="font-size: 0.78rem; color: #10b981; background: rgba(16, 185, 129, 0.1); padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: bold; border: 1px solid rgba(16, 185, 129, 0.2);">
+                                        Hoạt Động
+                                    </span>
+                                <% } %>
+                            </td>
+                            <td style="text-align: center; vertical-align: middle;">
+                                <div style="display: flex; gap: 0.5rem; justify-content: center; align-items: center;">
+                                    <!-- Nút xóa bình luận riêng biệt -->
+                                    <button onclick="deleteSingleComment(<%= comment.id %>)" class="btn btn-danger" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; border-radius: 6px;">
+                                        Xóa
+                                    </button>
+                                    
+                                    <!-- Nút khóa/mở khóa user -->
+                                    <% if (comment.users) { %>
+                                        <% if (comment.users.is_banned) { %>
+                                            <form action="/admin/users/<%= comment.users.id %>/unban" method="POST" style="margin: 0; display: inline;">
+                                                <button type="submit" class="btn btn-primary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; border-radius: 6px; background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.3); color: #10b981;">
+                                                    Mở Khóa
+                                                </button>
+                                            </form>
+                                        <% } else { %>
+                                            <% if (comment.users.role !== 'admin') { %>
+                                                <form action="/admin/users/<%= comment.users.id %>/ban" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn khóa tài khoản người dùng này? Họ sẽ không thể gửi bình luận hoặc đánh giá nữa!');" style="margin: 0; display: inline;">
+                                                    <button type="submit" class="btn btn-danger" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; border-radius: 6px; background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); color: #ef4444;">
+                                                        Khóa User
+                                                    </button>
+                                                </form>
+                                            <% } %>
+                                        <% } %>
+                                    <% } %>
+                                </div>
+                            </td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        </div>
+    <% } %>
+</div>
+
+<script>
+    function toggleSelectAll(master) {
+        const checkboxes = document.getElementsByName('comment_ids');
+        checkboxes.forEach(cb => cb.checked = master.checked);
+        updateSelectionCount();
+    }
+
+    function updateSelectionCount() {
+        const checkboxes = document.getElementsByName('comment_ids');
+        const selected = Array.from(checkboxes).filter(cb => cb.checked);
+        document.getElementById('selected-count').textContent = selected.length;
+
+        // Update select all master checkbox state
+        const master = document.getElementById('select-all');
+        if (master) {
+            master.checked = selected.length === checkboxes.length && checkboxes.length > 0;
+        }
+    }
+
+    async function deleteSingleComment(id) {
+        if (!confirm('Bạn có chắc chắn muốn xóa bình luận này không?')) return;
+        try {
+            const resp = await fetch(`/comment/${id}/delete`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const data = await resp.json();
+            if (data.success) {
+                const row = document.getElementById(`comment-row-${id}`);
+                if (row) {
+                    row.remove();
+                    updateSelectionCount();
+                } else {
+                    location.reload();
+                }
+            } else {
+                alert(data.error || 'Lỗi khi xóa bình luận.');
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Lỗi hệ thống khi xóa bình luận.');
+        }
+    }
+
+    async function bulkDelete() {
+        const checkboxes = document.getElementsByName('comment_ids');
+        const selectedIds = Array.from(checkboxes)
+            .filter(cb => cb.checked)
+            .map(cb => parseInt(cb.value));
+
+        if (selectedIds.length === 0) {
+            alert('Vui lòng tích chọn ít nhất một bình luận để xóa!');
+            return;
+        }
+
+        if (!confirm(`Bạn có chắc chắn muốn xóa ${selectedIds.length} bình luận đã chọn?`)) return;
+
+        try {
+            const resp = await fetch('/admin/comments/bulk-delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids: selectedIds })
+            });
+            const data = await resp.json();
+            if (data.success) {
+                selectedIds.forEach(id => {
+                    const row = document.getElementById(`comment-row-${id}`);
+                    if (row) row.remove();
+                });
+                const master = document.getElementById('select-all');
+                if (master) master.checked = false;
+                updateSelectionCount();
+                alert(`Đã xóa thành công ${selectedIds.length} bình luận!`);
+            } else {
+                alert(data.error || 'Lỗi khi xóa hàng loạt bình luận.');
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Lỗi hệ thống khi xóa hàng loạt.');
+        }
+    }
+</script>
+
+<%- include('../partials/footer') %>

@@ -660,6 +660,9 @@ router.post('/rate/:story_id', async (req, res) => {
   if (!req.user || !req.user.id) {
     return res.status(401).json({ success: false, error: 'Vui lòng đăng nhập để đánh giá truyện.' });
   }
+  if (req.user.is_banned) {
+    return res.status(403).json({ success: false, error: 'Tài khoản của bạn đã bị khóa bởi quản trị viên.' });
+  }
 
   const storyId = parseInt(req.params.story_id);
   const score = parseInt(req.body.score);
@@ -947,6 +950,9 @@ router.post('/story/:story_id/comment', async (req, res) => {
   if (!req.user || !req.user.id) {
     return res.status(401).json({ success: false, error: 'Vui lòng đăng nhập để bình luận.' });
   }
+  if (req.user.is_banned) {
+    return res.status(403).json({ success: false, error: 'Tài khoản của bạn đã bị khóa bởi quản trị viên.' });
+  }
   const storyId = parseInt(req.params.story_id);
   const { content, chapter_number, parent_id } = req.body;
   if (!content || !content.trim()) {
@@ -1032,6 +1038,44 @@ router.post('/comment/:id/like', async (req, res) => {
   } catch (err) {
     console.error('Lỗi thích bình luận:', err);
     res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Route xóa bình luận (User xóa của mình hoặc Admin xóa)
+router.post('/comment/:id/delete', async (req, res) => {
+  if (!req.user || !req.user.id) {
+    return res.status(401).json({ success: false, error: 'Vui lòng đăng nhập.' });
+  }
+  const commentId = parseInt(req.params.id);
+  try {
+    const { data: comment, error: fetchErr } = await supabase
+      .from('comments')
+      .select('user_id')
+      .eq('id', commentId)
+      .single();
+      
+    if (fetchErr || !comment) {
+      return res.status(404).json({ success: false, error: 'Bình luận không tồn tại.' });
+    }
+    
+    const isOwner = comment.user_id === req.user.id;
+    const isAdmin = req.user.role === 'admin';
+    
+    if (!isOwner && !isAdmin) {
+      return res.status(403).json({ success: false, error: 'Bạn không có quyền xóa bình luận này.' });
+    }
+    
+    const { error: deleteErr } = await supabase
+      .from('comments')
+      .delete()
+      .eq('id', commentId);
+      
+    if (deleteErr) throw deleteErr;
+    
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Lỗi khi xóa bình luận:', err);
+    res.status(500).json({ success: false, error: 'Lỗi hệ thống khi xóa bình luận.' });
   }
 });
 

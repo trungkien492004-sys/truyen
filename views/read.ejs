@@ -180,6 +180,11 @@
                                     💬 Trả lời
                                 </button>
                             <% } %>
+                            <% if (typeof user !== 'undefined' && user && (user.id === comment.user_id || user.role === 'admin')) { %>
+                                <button onclick="deleteComment(<%= comment.id %>)" style="background: none; border: none; color: #ef4444; cursor: pointer; padding: 0; font-size: 0.8rem; display: flex; align-items: center; gap: 0.2rem;">
+                                    🗑️ Xóa
+                                </button>
+                            <% } %>
                         </div>
 
                         <!-- Danh sách phản hồi lồng nhau -->
@@ -199,6 +204,11 @@
                                                 <button onclick="likeComment(<%= reply.id %>)" class="like-btn" style="background: none; border: none; color: <%= reply.user_liked ? 'var(--accent-color)' : 'var(--text-secondary)' %>; cursor: pointer; display: flex; align-items: center; gap: 0.2rem; font-size: 0.75rem; padding: 0;">
                                                     ❤️ <span class="likes-count"><%= reply.likes_count %></span> Thích
                                                 </button>
+                                                <% if (typeof user !== 'undefined' && user && (user.id === reply.user_id || user.role === 'admin')) { %>
+                                                    <button onclick="deleteComment(<%= reply.id %>)" style="background: none; border: none; color: #ef4444; cursor: pointer; padding: 0; font-size: 0.75rem; display: flex; align-items: center; gap: 0.2rem;">
+                                                        🗑️ Xóa
+                                                    </button>
+                                                <% } %>
                                             </div>
                                         </div>
                                     </div>
@@ -322,6 +332,31 @@
             }
         } catch (err) {
             alert('Lỗi: ' + err.message);
+        }
+    }
+
+    // Xóa bình luận
+    async function deleteComment(commentId) {
+        if (!confirm('Bạn có chắc chắn muốn xóa bình luận này?')) return;
+        try {
+            const resp = await fetch(`/comment/${commentId}/delete`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const data = await resp.json();
+            if (data.success) {
+                const commentEl = document.getElementById(`comment-${commentId}`);
+                if (commentEl) {
+                    commentEl.remove();
+                } else {
+                    location.reload();
+                }
+            } else {
+                alert(data.error || 'Lỗi khi xóa bình luận.');
+            }
+        } catch (err) {
+            console.error('Lỗi khi xóa bình luận:', err);
+            alert('Lỗi hệ thống khi xóa bình luận.');
         }
     }
 </script>
