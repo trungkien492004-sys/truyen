@@ -138,7 +138,9 @@
                 <div class="ranking-tabs">
                     <div class="ranking-tab active" data-tab="daily">Ngày</div>
                     <div class="ranking-tab" data-tab="weekly">Tuần</div>
+                    <div class="ranking-tab" data-tab="monthly">Tháng</div>
                     <div class="ranking-tab" data-tab="bookmarks">Theo Dõi</div>
+                    <div class="ranking-tab" data-tab="alltime">All-Time</div>
                 </div>
 
                 <!-- Bảng xếp hạng Ngày -->
@@ -177,6 +179,24 @@
                     <% } %>
                 </div>
 
+                <!-- Bảng xếp hạng Tháng -->
+                <div class="ranking-list" id="top-monthly">
+                    <% if (topMonthly.length === 0) { %>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; padding: 1rem 0;">Chưa có dữ liệu đọc tháng này.</p>
+                    <% } else { %>
+                        <% topMonthly.forEach((item, index) => { %>
+                            <a href="/story/<%= item.id %>" class="ranking-item">
+                                <div class="rank-number"><%= index + 1 %></div>
+                                <img src="<%= item.cover_url %>" alt="<%= item.title %>" class="ranking-cover">
+                                <div class="ranking-info">
+                                    <div class="ranking-title"><%= item.title %></div>
+                                    <div class="ranking-views">👁️ <%= item.view_count %> lượt đọc</div>
+                                </div>
+                            </a>
+                        <% }) %>
+                    <% } %>
+                </div>
+
                 <!-- Bảng xếp hạng Theo Dõi (Bookmarks) -->
                 <div class="ranking-list" id="top-bookmarks">
                     <% if (topBookmarks.length === 0) { %>
@@ -189,6 +209,24 @@
                                 <div class="ranking-info">
                                     <div class="ranking-title"><%= item.title %></div>
                                     <div class="ranking-views">❤️ <%= item.bookmark_count %> theo dõi</div>
+                                </div>
+                            </a>
+                        <% }) %>
+                    <% } %>
+                </div>
+
+                <!-- Bảng xếp hạng All-Time -->
+                <div class="ranking-list" id="top-alltime">
+                    <% if (topYearly.length === 0) { %>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; padding: 1rem 0;">Chưa có dữ liệu đọc All-Time.</p>
+                    <% } else { %>
+                        <% topYearly.forEach((item, index) => { %>
+                            <a href="/story/<%= item.id %>" class="ranking-item">
+                                <div class="rank-number"><%= index + 1 %></div>
+                                <img src="<%= item.cover_url %>" alt="<%= item.title %>" class="ranking-cover">
+                                <div class="ranking-info">
+                                    <div class="ranking-title"><%= item.title %></div>
+                                    <div class="ranking-views">👁️ <%= item.view_count %> lượt đọc</div>
                                 </div>
                             </a>
                         <% }) %>
