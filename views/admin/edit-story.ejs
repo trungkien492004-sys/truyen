@@ -262,11 +262,90 @@
 
     // INTERCEPT FORM SUBMIT ĐĂNG CHƯƠNG ĐỂ XỬ LÝ PHÍA TRÌNH DUYỆT (TRÁNH LỖI VERCEL 4.5MB PAYLOAD)
     const chapterForm = document.querySelector('form[action="/admin/chapter/add"]');
+    function splitTextIntoChapters(rawText, fileName) {
+        const chapterHeaderRegex = /^(?:Chương|CHƯƠNG|Chap|CHAP|Chapter|CHAPTER|Phần|PHẦN|Part|PART)\s*\.?\s*(\d+(?:\.\d+)?)(?:[:\s,\-–]+(.*))?$/im;
+        const lines = rawText.split('\n');
+        const chapters = [];
+        let currentChapter = null;
+        let currentLines = [];
+
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (!line) continue;
+            const match = line.match(chapterHeaderRegex);
+
+            if (match) {
+                if (currentChapter !== null) {
+                    chapters.push({
+                        name: currentChapter.title + '.txt',
+                        type: 'txt',
+                        content: currentLines.map(l => `<p>${l}</p>`).join('')
+                    });
+                }
+                const chapNum = parseFloat(match[1]);
+                const chapTitle = match[2] ? match[2].trim() : '';
+                currentChapter = {
+                    title: chapTitle ? `Chương ${chapNum}: ${chapTitle}` : `Chương ${chapNum}`
+                };
+                currentLines = [];
+            } else if (currentChapter !== null) {
+                currentLines.push(line);
+            }
+        }
+
+        if (currentChapter !== null && currentLines.length > 0) {
+            chapters.push({
+                name: currentChapter.title + '.txt',
+                type: 'txt',
+                content: currentLines.map(l => `<p>${l}</p>`).join('')
+            });
+        }
+        
+        if (chapters.length === 0) {
+            chapters.push({
+                name: fileName.replace(/\.pdf$/i, '.txt'),
+                type: 'txt',
+                content: lines.filter(l => l.trim()).map(l => `<p>${l.trim()}</p>`).join('')
+            });
+        }
+        
+        return chapters;
+    }
+
+    async function uploadInBatches(storyId, processedFiles, submitBtn) {
+        const BATCH_SIZE = 50;
+        let successCount = 0;
+        for (let i = 0; i < processedFiles.length; i += BATCH_SIZE) {
+            const batch = processedFiles.slice(i, i + BATCH_SIZE);
+            submitBtn.textContent = `⏳ Đang lưu database (${i + 1} - ${i + batch.length} / ${processedFiles.length})...`;
+            
+            const response = await fetch('/admin/chapter/add-json', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ story_id: storyId, files: batch })
+            });
+
+            let data;
+            if (response.headers.get('content-type')?.includes('application/json')) {
+                data = await response.json();
+            } else {
+                const txt = await response.text();
+                throw new Error('Lỗi máy chủ (' + response.status + '): ' + txt.substring(0, 200));
+            }
+
+            if (!data.success) {
+                throw new Error(data.error);
+            }
+            successCount += batch.length;
+        }
+        return successCount;
+    }
+
     if (chapterForm) {
         chapterForm.addEventListener('submit', async (e) => {
             const selectedMethod = document.querySelector('input[name="publish_method"]:checked').value;
             if (selectedMethod === 'bulk') {
-                e.preventDefault(); // Ngăn submit form mặc định
+                e.preventDefault();
 
                 const submitBtn = chapterForm.querySelector('button[type="submit"]');
                 const originalBtnText = submitBtn.textContent;
@@ -293,18 +372,15 @@
                             const result = await mammoth.convertToHtml({ arrayBuffer: arrayBuffer });
                             let html = result.value;
 
-                            // Parse ảnh và upload thẳng lên Supabase hoặc xoá ảnh
                             const parser = new DOMParser();
                             const doc = parser.parseFromString(html, 'text/html');
                             const imgs = doc.querySelectorAll('img');
-
                             const includeImages = document.getElementById('include_images_edit').checked;
 
                             if (includeImages) {
                                 if (imgs.length > 0) {
                                     submitBtn.textContent = `⏳ Đang tải ${imgs.length} ảnh trong file lên Supabase...`;
                                 }
-
                                 for (let img of imgs) {
                                     const src = img.getAttribute('src');
                                     if (src && src.startsWith('data:')) {
@@ -314,7 +390,6 @@
                                     }
                                 }
                             } else {
-                                // Xoá ảnh khỏi tài liệu
                                 imgs.forEach(img => img.remove());
                             }
 
@@ -324,50 +399,15 @@
                                 type: 'docx',
                                 content: html
                             });
-
                         } else {
-                            // Txt file
                             const text = await file.text();
-                            processedFiles.push({
-                                name: file.name,
-                                type: 'txt',
-                                content: text
-                            });
+                            const splitted = splitTextIntoChapters(text, file.name);
+                            processedFiles.push(...splitted);
                         }
                     }
 
-                    // Gửi JSON lên server
-                    submitBtn.textContent = '⏳ Đang lưu dữ liệu chương vào database...';
-                    const response = await fetch('/admin/chapter/add-json', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            story_id: storyId,
-                            files: processedFiles
-                        })
-                    });
-
-                    let resData;
-                    const contentType = response.headers.get('content-type');
-                    if (contentType && contentType.includes('application/json')) {
-                        resData = await response.json();
-                    } else {
-                        const text = await response.text();
-                        if (response.status === 413) {
-                            throw new Error('Dung lượng tệp truyện hoặc ảnh gửi đi quá lớn (Vượt quá 4.5 MB giới hạn của Vercel). Vui lòng thử chia nhỏ file ra đăng làm nhiều lần.');
-                        }
-                        throw new Error(`Lỗi từ máy chủ (${response.status}): ${text.substring(0, 150)}...`);
-                    }
-
-                    if (resData.success) {
-                        window.location.href = redirectTo + '?success=' + encodeURIComponent(resData.message);
-                    } else {
-                        alert('Lỗi đăng chương: ' + resData.error);
-                        submitBtn.disabled = false;
-                        submitBtn.textContent = originalBtnText;
-                    }
+                    await uploadInBatches(storyId, processedFiles, submitBtn);
+                    window.location.href = redirectTo + '?success=' + encodeURIComponent(`Đã tải lên ${processedFiles.length} chương thành công`);
 
                 } catch (err) {
                     console.error(err);
