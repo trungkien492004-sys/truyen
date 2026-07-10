@@ -214,6 +214,15 @@ router.get('/', async (req, res) => {
       console.error('Lỗi lấy Top Bookmarks:', e);
     }
 
+    // 3d. Lấy danh sách banner trang chủ
+    let banners = [];
+    try {
+      const { data: bannerData } = await supabase.from('banners').select('*').order('created_at', { ascending: false });
+      banners = bannerData || [];
+    } catch (e) {
+      console.error('Lỗi lấy danh sách banner:', e);
+    }
+
     res.render('home', {
       title: 'Trang chủ - Web Đọc Truyện',
       user: req.user,
@@ -225,6 +234,7 @@ router.get('/', async (req, res) => {
       topYearly: topYearly || [],
       topReaders,
       topBookmarks,
+      banners,
       activeGenre: null,
       searchQuery: null,
       filters: { status }

@@ -1023,6 +1023,64 @@ router.post('/chapter/delete/:id', async (req, res) => {
   }
 });
 
+// QUẢN LÝ BANNER TRANG CHỦ
+router.get('/banners', async (req, res) => {
+  try {
+    const { data: banners } = await supabase.from('banners').select('*').order('created_at', { ascending: false });
+    res.render('admin/banners', {
+      title: 'Quản lý Banner trang chủ',
+      user: req.user,
+      banners: banners || [],
+      success: req.query.success || null,
+      error: req.query.error || null
+    });
+  } catch (err) {
+    console.error('Lỗi trang quản lý banner:', err);
+    res.status(500).send('Lỗi hệ thống.');
+  }
+});
+
+// THỰC HIỆN THÊM BANNER MỚI (HỖ TRỢ CẢ HÌNH ẢNH VÀ VIDEO)
+router.post('/banners/add', upload.single('media'), async (req, res) => {
+  const { description, link_url } = req.body;
+  if (!req.file) {
+    return res.redirect('/admin/banners?error=' + encodeURIComponent('Vui lòng chọn tệp hình ảnh hoặc video để tải lên.'));
+  }
+
+  try {
+    const mediaUrl = await uploadToSupabase(req.file, 'uploads');
+    const isVideo = req.file.mimetype.startsWith('video/');
+    const mediaType = isVideo ? 'video' : 'image';
+
+    const { error } = await supabase.from('banners').insert([{
+      media_url: mediaUrl,
+      media_type: mediaType,
+      description: description ? description.trim() : '',
+      link_url: link_url ? link_url.trim() : null
+    }]);
+
+    if (error) throw error;
+    res.redirect('/admin/banners?success=' + encodeURIComponent('Đã tải lên và tạo banner mới thành công!'));
+  } catch (err) {
+    console.error('Lỗi thêm banner:', err);
+    res.redirect('/admin/banners?error=' + encodeURIComponent(err.message || 'Lỗi hệ thống khi tải lên banner.'));
+  }
+});
+
+// THỰC HIỆN XÓA BANNER
+router.post('/banners/delete/:id', async (req, res) => {
+  const id = parseInt(req.params.id);
+  try {
+    // Lấy thông tin banner trước để xóa file trên Storage nếu cần (không bắt buộc, có thể để lại hoặc xóa)
+    const { error } = await supabase.from('banners').delete().eq('id', id);
+    if (error) throw error;
+    res.redirect('/admin/banners?success=' + encodeURIComponent('Đã xóa banner thành công!'));
+  } catch (err) {
+    console.error('Lỗi khi xóa banner:', err);
+    res.redirect('/admin/banners?error=' + encodeURIComponent(err.message || 'Lỗi hệ thống khi xóa banner.'));
+  }
+});
+
 // CHUYỂN HƯỚNG CÁC ĐƯỜNG DẪN CŨ VỀ ĐƯỜNG DẪN TÍCH HỢP MỚI
 router.get('/chapter/add-manual', (req, res) => res.redirect('/admin/chapter/add'));
 router.post('/chapter/add-manual', (req, res) => res.redirect('/admin/chapter/add'));

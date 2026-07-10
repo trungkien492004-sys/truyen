@@ -1,0 +1,89 @@
+<%- include('../partials/header') %>
+
+<div style="margin-bottom: 1.5rem;">
+    <a href="/admin" style="color: var(--text-secondary); font-size: 0.9rem;">&larr; Quay lại Trang quản trị</a>
+</div>
+
+<div class="admin-sections-grid">
+    <!-- Cột trái: Thêm banner mới -->
+    <div class="admin-box" style="height: fit-content;">
+        <h2 class="section-title">📺 Thêm Banner Mới</h2>
+        
+        <% if (success) { %>
+            <div class="alert alert-success"><%= success %></div>
+        <% } %>
+
+        <% if (error) { %>
+            <div class="alert alert-error"><%= error %></div>
+        <% } %>
+
+        <form action="/admin/banners/add" method="POST" enctype="multipart/form-data">
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label for="media">Tệp hình ảnh hoặc Video *</label>
+                <input type="file" id="media" name="media" accept="image/*,video/*" required style="padding: 0.5rem 0;">
+                <small style="color: var(--text-secondary); display: block; margin-top: 0.2rem;">Hỗ trợ ảnh (JPG, PNG, GIF, WEBP) hoặc video (MP4, WEBM).</small>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label for="description">Mô tả ngắn</label>
+                <textarea id="description" name="description" placeholder="Mô tả hiển thị trên banner..." style="width: 100%; min-height: 80px; padding: 0.6rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); resize: vertical;"></textarea>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label for="link_url">Đường dẫn liên kết (tùy chọn)</label>
+                <input type="url" id="link_url" name="link_url" placeholder="https://example.com/story/1">
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.8rem; margin-top: 1rem;">TẢI LÊN BANNER</button>
+        </form>
+    </div>
+
+    <!-- Cột phải: Danh sách và Xoá banner -->
+    <div class="admin-box">
+        <h2 class="section-title">Danh Sách Banner Hiện Có</h2>
+        
+        <% if (banners.length === 0) { %>
+            <p style="color: var(--text-secondary); text-align: center; padding: 2rem 0;">Chưa có banner nào được đăng tải.</p>
+        <% } else { %>
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th style="width: 180px;">Xem trước</th>
+                        <th>Mô tả</th>
+                        <th>Loại</th>
+                        <th>Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% banners.forEach(banner => { %>
+                        <tr>
+                            <td>
+                                <% if (banner.media_type === 'video') { %>
+                                    <video src="<%= banner.media_url %>" autoplay loop muted playsinline style="width: 150px; height: 90px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-color);"></video>
+                                <% } else { %>
+                                    <img src="<%= banner.media_url %>" alt="preview" style="width: 150px; height: 90px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-color);">
+                                <% } %>
+                            </td>
+                            <td>
+                                <div style="font-weight: 500; font-size: 0.9rem; line-height: 1.4;"><%= banner.description || 'Không có mô tả' %></div>
+                                <% if (banner.link_url) { %>
+                                    <div style="font-size: 0.78rem; margin-top: 0.2rem;"><a href="<%= banner.link_url %>" target="_blank" style="color: var(--accent-color); overflow: hidden; text-overflow: ellipsis; display: block; max-width: 250px;">🔗 Liên kết</a></div>
+                                <% } %>
+                            </td>
+                            <td>
+                                <span style="font-size: 0.8rem; background: rgba(255,255,255,0.05); padding: 0.2rem 0.5rem; border-radius: 4px; text-transform: capitalize;"><%= banner.media_type %></span>
+                            </td>
+                            <td>
+                                <form action="/admin/banners/delete/<%= banner.id %>" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa banner này không?');" style="display:inline;">
+                                    <button type="submit" class="btn btn-danger" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; border-radius: 4px;">Xóa</button>
+                                </form>
+                            </td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        <% } %>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>
