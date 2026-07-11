@@ -946,21 +946,58 @@ router.post('/chapter/edit/:id', async (req, res) => {
   const chapterId = parseInt(req.params.id);
   const { chapter_number, title, content, redirect_to } = req.body;
 
-  if (!chapter_number || !title || !content) {
-    return res.redirect(`/admin/chapter/edit/${chapterId}?redirect_to=${encodeURIComponent(redirect_to)}&error=${encodeURIComponent('Vui lòng nhập đầy đủ thông tin.')}`);
+  if (!chapter_number || !content) {
+    return res.redirect(`/admin/chapter/edit/${chapterId}?redirect_to=${encodeURIComponent(redirect_to)}&error=${encodeURIComponent('Vui lòng nhập số chương và nội dung.')}`);
   }
 
   try {
-    const { error } = await supabase
-      .from('chapters')
-      .update({
-        chapter_number: parseFloat(chapter_number),
-        title: title.trim(),
-        content: content
-      })
-      .eq('id', chapterId);
+    const targetChapterNumber = Math.max(1, parseInt(chapter_number) || 1);
+    const newTitle = title ? title.trim() : '';
 
-    if (error) throw error;
+    // Lấy thông tin chương hiện tại
+    const { data: currentChap, error: fetchErr } = await supabase.from('chapters').select('story_id, chapter_number').eq('id', chapterId).single();
+    if (fetchErr || !currentChap) throw new Error('Không tìm thấy chương.');
+
+    // Cập nhật nội dung và tiêu đề trước
+    const { error: updateContentErr } = await supabase.from('chapters').update({ title: newTitle, content: content }).eq('id', chapterId);
+    if (updateContentErr) throw updateContentErr;
+
+    // Nếu thay đổi số thứ tự chương, tiến hành sắp xếp lại
+    if (currentChap.chapter_number !== targetChapterNumber) {
+        // Lấy tất cả các chương, sắp xếp theo chapter_number
+        const { data: allChapters, error: allErr } = await supabase.from('chapters').select('id, chapter_number').eq('story_id', currentChap.story_id).order('chapter_number', { ascending: true });
+        if (allErr) throw allErr;
+
+        const currentIndex = allChapters.findIndex(c => c.id === chapterId);
+        if (currentIndex !== -1) {
+            const targetChap = allChapters.splice(currentIndex, 1)[0];
+            
+            let newIndex = targetChapterNumber - 1;
+            if (newIndex < 0) newIndex = 0;
+            if (newIndex > allChapters.length) newIndex = allChapters.length;
+            
+            allChapters.splice(newIndex, 0, targetChap);
+            
+            const changedChapters = [];
+            allChapters.forEach((ch, idx) => {
+                const expectedNumber = idx + 1;
+                if (ch.chapter_number !== expectedNumber) {
+                    changedChapters.push({ id: ch.id, newNumber: expectedNumber });
+                }
+            });
+            
+            if (changedChapters.length > 0) {
+                // Đổi thành số âm để né UNIQUE constraint
+                for (const ch of changedChapters) {
+                    await supabase.from('chapters').update({ chapter_number: -ch.id }).eq('id', ch.id);
+                }
+                // Đổi thành số đúng
+                for (const ch of changedChapters) {
+                    await supabase.from('chapters').update({ chapter_number: ch.newNumber }).eq('id', ch.id);
+                }
+            }
+        }
+    }
 
     res.redirect(`${redirect_to}?success=${encodeURIComponent('Đã cập nhật chương thành công!')}`);
   } catch (err) {
