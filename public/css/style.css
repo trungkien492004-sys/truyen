@@ -1347,46 +1347,122 @@ footer {
 }
 
 /* MMORPG Badge Titles (Polygonal cut) */
+/* MMORPG Metal Plate Titles */
 .game-title {
+    position: relative;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 6px 18px;
+    justify-content: center;
+    padding: 6px 20px;
+    font-size: 0.85rem;
     font-weight: 900;
-    font-size: 0.8rem;
     letter-spacing: 1px;
-    text-transform: uppercase;
     color: white !important;
+    text-transform: uppercase;
     clip-path: polygon(8% 0, 92% 0, 100% 50%, 92% 100%, 8% 100%, 0 50%);
-    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
-    box-shadow: 0 3px 10px rgba(0,0,0,0.5);
-    border: 1px solid rgba(255,255,255,0.25);
+    box-shadow: 0 5px 18px rgba(0,0,0,0.4);
+    text-shadow: 0 2px 5px black;
     z-index: 10;
 }
 
-.game-title-admin {
-    background: linear-gradient(180deg, #ffd700, #f97316, #b45309) !important;
-    box-shadow: 0 0 12px rgba(249, 115, 22, 0.6) !important;
+.game-title::before {
+    content: "✦";
+    margin-right: 6px;
+    font-size: 14px;
+    color: rgba(255,255,255,0.9);
 }
 
-.game-title-legendary {
-    background: linear-gradient(180deg, #ffe88f, #eab308, #b45309) !important;
-    box-shadow: 0 0 12px rgba(234, 179, 8, 0.6) !important;
+.game-title::after {
+    content: "✦";
+    margin-left: 6px;
+    font-size: 14px;
+    color: rgba(255,255,255,0.9);
 }
 
-.game-title-magic {
-    background: linear-gradient(180deg, #93c5fd, #3b82f6, #1d4ed8) !important;
-    box-shadow: 0 0 12px rgba(59, 130, 246, 0.6) !important;
+/* 1. Mythic (Thần Thoại) */
+.game-title-mythic {
+    background: linear-gradient(180deg, #ffe082, #ffb300, #ff6f00) !important;
+    border: 2px solid #fff4c6;
+    box-shadow: 0 0 12px gold, 0 5px 18px rgba(0,0,0,0.4) !important;
+    animation: mythicGlow 2.5s infinite alternate;
+}
+@keyframes mythicGlow {
+    from { filter: drop-shadow(0 0 5px gold); }
+    to { filter: drop-shadow(0 0 15px gold); }
 }
 
+/* 2. Dragon (Long Thần) */
+.game-title-dragon {
+    background: linear-gradient(180deg, #bbf7d0, #16a34a, #14532d) !important;
+    border: 2px solid #6ee7b7;
+    box-shadow: 0 0 18px #22c55e, 0 5px 18px rgba(0,0,0,0.4) !important;
+}
+
+/* 3. Sword (Kiếm Tiên) */
 .game-title-sword {
-    background: linear-gradient(180deg, #f5d0fe, #a855f7, #6b21a8) !important;
-    box-shadow: 0 0 12px rgba(168, 85, 247, 0.6) !important;
+    background: linear-gradient(180deg, #dbeafe, #60a5fa, #1d4ed8) !important;
+    border: 2px solid white;
+    box-shadow: 0 0 20px #3b82f6, 0 5px 18px rgba(0,0,0,0.4) !important;
 }
 
+/* 4. Demon (Ma Thần) */
+.game-title-demon {
+    background: linear-gradient(180deg, #fca5a5, #ef4444, #7f1d1d) !important;
+    border: 2px solid #fecaca;
+    box-shadow: 0 0 18px red, 0 5px 18px rgba(0,0,0,0.4) !important;
+}
+
+/* 5. Angel (Thiên Sứ) */
+.game-title-angel {
+    background: linear-gradient(180deg, white, #fde68a, white) !important;
+    color: #222 !important;
+    text-shadow: none;
+    border: 2px solid gold;
+    box-shadow: 0 0 15px gold, 0 5px 18px rgba(0,0,0,0.4) !important;
+}
+.game-title-angel::before, .game-title-angel::after {
+    color: #b48608;
+}
+
+/* 6. Cyber */
 .game-title-cyber {
-    background: linear-gradient(180deg, #fda4af, #ec4899, #9d174d) !important;
-    box-shadow: 0 0 12px rgba(236, 72, 153, 0.6) !important;
+    background: linear-gradient(90deg, cyan, magenta, cyan) !important;
+    background-size: 300%;
+    animation: cyberMove 3s linear infinite;
+    border: 2px solid white;
+    box-shadow: 0 0 20px cyan, 0 5px 18px rgba(0,0,0,0.4) !important;
+}
+@keyframes cyberMove {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 100% 50%; }
+}
+
+/* 7. Galaxy */
+.game-title-galaxy {
+    background: linear-gradient(180deg, #ec4899, #6d28d9, #1e1b4b) !important;
+    border: 2px solid #ddd6fe;
+    box-shadow: 0 0 18px violet, 0 5px 18px rgba(0,0,0,0.4) !important;
+}
+
+/* 8. Sakura */
+.game-title-sakura {
+    background: linear-gradient(180deg, #fecdd3, #f9a8d4, #be185d) !important;
+    border: 2px solid white;
+    box-shadow: 0 0 15px pink, 0 5px 18px rgba(0,0,0,0.4) !important;
+}
+
+/* 9. Noel */
+.game-title-noel {
+    background: linear-gradient(180deg, #16a34a, #dc2626) !important;
+    border: 2px solid white;
+    box-shadow: 0 0 18px green, 0 5px 18px rgba(0,0,0,0.4) !important;
+}
+
+/* 10. Halloween */
+.game-title-halloween {
+    background: linear-gradient(180deg, #fcd34d, #ea580c, #000) !important;
+    border: 2px solid orange;
+    box-shadow: 0 0 20px orange, 0 5px 18px rgba(0,0,0,0.4) !important;
 }
 
 .game-title-default {

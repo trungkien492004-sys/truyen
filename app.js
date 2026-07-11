@@ -53,11 +53,19 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.locals.getTitleRarityClass = (val) => {
     if (!val) return 'game-title-default';
     const v = val.toLowerCase();
-    if (v.includes('quản trị') || v.includes('admin')) return 'game-title-admin';
-    if (v.includes('đế') || v.includes('chúa') || v.includes('thần') || v.includes('hoàng')) return 'game-title-legendary';
-    if (v.includes('tiên') || v.includes('ma')) return 'game-title-magic';
-    if (v.includes('kiếm') || v.includes('độc cô')) return 'game-title-sword';
-    if (v.includes('sách') || v.includes('đọc') || v.includes('độc giả')) return 'game-title-cyber';
+    
+    if (v.includes('admin') || v.includes('quản trị')) return 'game-title-mythic';
+    if (v.includes('long') || v.includes('rồng') || v.includes('dragon')) return 'game-title-dragon';
+    if (v.includes('kiếm') || v.includes('sword') || v.includes('độc cô')) return 'game-title-sword';
+    if (v.includes('ma') || v.includes('quỷ') || v.includes('demon')) return 'game-title-demon';
+    if (v.includes('thiên') || v.includes('angel') || v.includes('thần') || v.includes('tiên') || v.includes('sứ')) return 'game-title-angel';
+    if (v.includes('thần thoại') || v.includes('vô cực') || v.includes('đế') || v.includes('hoàng') || v.includes('chúa') || v.includes('tôn')) return 'game-title-mythic';
+    if (v.includes('cyber') || v.includes('máy') || v.includes('đọc') || v.includes('sách')) return 'game-title-cyber';
+    if (v.includes('tinh hà') || v.includes('vũ trụ') || v.includes('galaxy') || v.includes('sao')) return 'game-title-galaxy';
+    if (v.includes('hoa') || v.includes('sakura') || v.includes('đào')) return 'game-title-sakura';
+    if (v.includes('noel') || v.includes('giáng sinh') || v.includes('tuyết')) return 'game-title-noel';
+    if (v.includes('halloween') || v.includes('bí ngô') || v.includes('ma cà rồng')) return 'game-title-halloween';
+    
     return 'game-title-default';
 };
 
