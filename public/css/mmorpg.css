@@ -679,3 +679,31 @@
 .frame-heaven::before { content: '⛅'; position: absolute; top: -15px; left: 0px; font-size: 1.8rem; z-index: 10; animation: floatParticle 4s infinite alternate; filter: drop-shadow(0 0 5px #fff); }
 .frame-heaven::after { content: '🕊️'; position: absolute; bottom: -10px; right: -15px; font-size: 1.6rem; z-index: 10; animation: flutter 3s infinite alternate; filter: drop-shadow(0 0 5px gold); }
 
+
+
+
+/* Fix spinning avatars inside spinning frames */
+@keyframes spinSlowReverse {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(-360deg); }
+}
+@keyframes spinFastReverse {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(-360deg); }
+}
+
+/* Reverse spin for the avatar image and the corner icon to keep them upright */
+.frame-magic .avatar-img,
+.frame-magic .avatar-corner {
+  animation: spinSlowReverse 5s linear infinite;
+}
+
+.frame-birthday .avatar-img,
+.frame-birthday .avatar-corner {
+  animation: spinSlowReverse 6s linear infinite;
+}
+
+.frame-mythic-halloween .avatar-img,
+.frame-mythic-halloween .avatar-corner {
+  animation: spinFastReverse 4s linear infinite;
+}
