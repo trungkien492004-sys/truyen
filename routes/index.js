@@ -1560,6 +1560,10 @@ router.get('/user/:id', async (req, res) => {
       .gt('exp', exp);
     const userRank = higherExpCount !== null ? higherExpCount + 1 : '-';
 
+    // Tính badge (Cảnh giới / Tu vi) dựa trên chaptersRead
+    const { data: rankSettings } = await supabase.from('rank_settings').select('*').order('count', { ascending: false });
+    const calculatedBadge = (rankSettings || []).find(r => chaptersRead >= r.count);
+
     const stats = {
       level,
       exp,
@@ -1567,7 +1571,8 @@ router.get('/user/:id', async (req, res) => {
       nextLevelExp,
       streak,
       chaptersRead: chaptersRead || 0,
-      badge: targetUserData.equipped_badge || 'Người mới',
+      badge: calculatedBadge ? calculatedBadge.label : 'Người mới',
+      equipped_badge: targetUserData.equipped_badge,
       rank: userRank
     };
 
