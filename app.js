@@ -49,6 +49,18 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 
 
+// Global Helper for EJS
+app.locals.getTitleRarityClass = (val) => {
+    if (!val) return 'game-title-default';
+    const v = val.toLowerCase();
+    if (v.includes('quản trị') || v.includes('admin')) return 'game-title-admin';
+    if (v.includes('đế') || v.includes('chúa') || v.includes('thần') || v.includes('hoàng')) return 'game-title-legendary';
+    if (v.includes('tiên') || v.includes('ma')) return 'game-title-magic';
+    if (v.includes('kiếm') || v.includes('độc cô')) return 'game-title-sword';
+    if (v.includes('sách') || v.includes('đọc') || v.includes('độc giả')) return 'game-title-cyber';
+    return 'game-title-default';
+};
+
 // ĐĂNG KÝ CÁC TUYẾN ĐƯỜNG DẪN (ROUTES)
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');

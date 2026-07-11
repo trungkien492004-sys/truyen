@@ -42,13 +42,19 @@
                                 <% } %>
                             </td>
                             <td data-label="Độc giả" style="padding: 0.8rem 0.8rem; display: flex; align-items: center; gap: 0.8rem;">
-                                <a href="/user/<%= reader.id %>" style="text-decoration: none; display: inline-block;">
-                                    <% const readerFrame = reader.equipped_frame || 'default-frame' %>
-                                    <div class="avatar-frame <%= readerFrame %>" style="width: 44px; height: 44px; padding: 2px;">
-                                        <div class="avatar-glow"></div>
-                                        <img src="<%= reader.avatar || '/css/silly_duck.png' %>" class="avatar-img" alt="avatar" style="border-width: 1px;">
-                                    </div>
-                                </a>
+                                <div style="display: flex; flex-direction: column; align-items: center; gap: 0.3rem;">
+                                    <a href="/user/<%= reader.id %>" style="text-decoration: none; display: inline-block;">
+                                        <% const readerFrame = reader.equipped_frame || 'default-frame' %>
+                                        <div class="avatar-frame <%= readerFrame %>" style="width: 44px; height: 44px; padding: 2px;">
+                                            <div class="avatar-glow"></div>
+                                            <img src="<%= reader.avatar || '/css/silly_duck.png' %>" class="avatar-img" alt="avatar" style="border-width: 1px;">
+                                        </div>
+                                    </a>
+                                    <% if (reader.equipped_badge) { %>
+                                        <% const badgeText = reader.equipped_badge.replace(/^([\uD800-\uDBFF][\uDC00-\uDFFF]|\S)\s*/, ''); %>
+                                        <span class="game-title <%= getTitleRarityClass(reader.equipped_badge) %>" style="font-size: 0.55rem; padding: 2px 6px; transform: scale(0.8); z-index: 2; margin-top: -6px; white-space: nowrap;"><%= badgeText %></span>
+                                    <% } %>
+                                </div>
                                 <span style="font-weight: 600;">
                                     <a href="/user/<%= reader.id %>" style="text-decoration: none; color: inherit; transition: color 0.2s;" onmouseover="this.style.color='var(--accent-color)'" onmouseout="this.style.color='inherit'">
                                         <%= reader.display_name %>
@@ -56,29 +62,11 @@
                                 </span>
                             </td>
                             <td data-label="Huy hiệu" style="padding: 0.8rem 0.8rem;">
-                                <% 
-                                   const getTitleRarityClass = (val) => {
-                                       if (!val) return 'game-title-default';
-                                       const v = val.toLowerCase();
-                                       if (v.includes('quản trị') || v.includes('admin')) return 'game-title-admin';
-                                       if (v.includes('đế') || v.includes('chúa') || v.includes('thần') || v.includes('hoàng')) return 'game-title-legendary';
-                                       if (v.includes('tiên') || v.includes('ma')) return 'game-title-magic';
-                                       if (v.includes('kiếm') || v.includes('độc cô')) return 'game-title-sword';
-                                       if (v.includes('sách') || v.includes('đọc') || v.includes('độc giả')) return 'game-title-cyber';
-                                       return 'game-title-default';
-                                   }
-                                %>
                                 <div style="display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
                                     <!-- Rank (Tu vi / Cảnh giới) -->
                                     <span style="font-size: 0.8rem; background: rgba(99, 102, 241, 0.1); color: var(--accent-color); padding: 0.25rem 0.6rem; border-radius: 12px; font-weight: 500; border: 1px solid rgba(99, 102, 241, 0.2); white-space: nowrap;">
                                         <%= reader.badge ? reader.badge.label : 'Người mới' %>
                                     </span>
-
-                                    <!-- Huy Hiệu (Equipped Badge) -->
-                                    <% if (reader.equipped_badge) { %>
-                                        <% const badgeText = reader.equipped_badge.replace(/^([\uD800-\uDBFF][\uDC00-\uDFFF]|\S)\s*/, ''); %>
-                                        <span class="game-title <%= getTitleRarityClass(reader.equipped_badge) %>" style="font-size: 0.65rem; padding: 4px 10px; transform: scale(0.9); transform-origin: left center; white-space: nowrap;"><%= badgeText %></span>
-                                    <% } %>
                                 </div>
                             </td>
                             <td data-label="Cấp độ" style="padding: 1rem 0.8rem; text-align: center; font-weight: bold; color: #10b981;">
