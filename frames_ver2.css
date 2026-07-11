@@ -1,0 +1,197 @@
+/* --- VER 2 FRAMES & MYTHIC EFFECTS --- */
+
+/* Ver 2 Angel */
+.frame-angel {
+  background: linear-gradient(135deg, #fff, #fdfbfb);
+  box-shadow: 0 0 25px rgba(255,255,255,1), inset 0 0 15px rgba(234, 179, 8, 0.5);
+  border: 2px solid gold;
+}
+.frame-angel::before { content: '🪽'; position: absolute; top: -15px; left: -10px; font-size: 1.5rem; z-index: 10; animation: flutter 2s infinite alternate; }
+.frame-angel::after { content: '🪽'; position: absolute; top: -15px; right: -10px; font-size: 1.5rem; z-index: 10; transform: scaleX(-1); animation: flutter 2s infinite alternate-reverse; }
+
+/* Ver 2 Demon */
+.frame-demon {
+  background: linear-gradient(135deg, #450a0a, #7f1d1d);
+  box-shadow: 0 0 25px rgba(185, 28, 28, 0.8), inset 0 0 15px #000;
+  border: 2px solid #ef4444;
+}
+.frame-demon::before { content: '🦇'; position: absolute; top: -10px; left: -10px; font-size: 1.2rem; z-index: 10; animation: floatParticle 3s infinite alternate; }
+.frame-demon::after { content: '🔥'; position: absolute; bottom: -10px; right: -5px; font-size: 1.4rem; z-index: 10; animation: burnFlame 1s infinite alternate; }
+
+/* Ver 2 Dragon */
+.frame-dragon {
+  background: linear-gradient(135deg, #b45309, #d97706);
+  box-shadow: 0 0 30px rgba(217, 119, 6, 0.8);
+  border: 2px dashed gold;
+}
+.frame-dragon::before { content: '🐉'; position: absolute; top: -12px; left: 5px; font-size: 1.6rem; z-index: 10; animation: spinSlow 8s linear infinite; }
+.frame-dragon::after { content: '✨'; position: absolute; bottom: -5px; right: -5px; font-size: 1.2rem; z-index: 10; animation: flash 1.5s infinite; }
+
+/* Phoenix */
+.frame-phoenix {
+  background: linear-gradient(135deg, #f59e0b, #ef4444);
+  box-shadow: 0 0 25px rgba(245, 158, 11, 0.9);
+}
+.frame-phoenix::before { content: '🔥'; position: absolute; top: -10px; left: -5px; font-size: 1.5rem; z-index: 10; animation: burnFlame 1.2s infinite alternate; }
+.frame-phoenix::after { content: '🦅'; position: absolute; bottom: -5px; right: -10px; font-size: 1.5rem; z-index: 10; animation: floatBob 2.5s infinite alternate; }
+
+/* Sword Fairy */
+.frame-sword {
+  background: linear-gradient(135deg, #94a3b8, #e2e8f0);
+  box-shadow: 0 0 25px rgba(226, 232, 240, 0.9);
+  border: 1px solid #fff;
+}
+.frame-sword::before { content: '⚔️'; position: absolute; top: -10px; left: -10px; font-size: 1.4rem; z-index: 10; animation: spinFast 3s linear infinite; }
+.frame-sword::after { content: '💨'; position: absolute; bottom: -5px; right: -5px; font-size: 1.2rem; z-index: 10; animation: floatParticle 2s infinite alternate; }
+
+/* Ver 2 Galaxy */
+.frame-galaxy {
+  background: linear-gradient(135deg, #2e1065, #4c1d95, #1e3a8a);
+  background-size: 200% 200%;
+  animation: gradientShift 4s ease infinite;
+  box-shadow: 0 0 30px rgba(76, 29, 149, 1);
+  border: 2px dotted #a855f7;
+}
+.frame-galaxy::before { content: '🪐'; position: absolute; top: -10px; left: -10px; font-size: 1.5rem; z-index: 10; animation: floatBob 4s infinite alternate; }
+.frame-galaxy::after { content: '⭐'; position: absolute; bottom: -10px; right: -5px; font-size: 1.3rem; z-index: 10; animation: pulseBreath 2s infinite; }
+
+/* Ver 2 Cyberpunk */
+.frame-cyberpunk {
+  background: #000;
+  box-shadow: 0 0 20px #0ff, inset 0 0 10px #f0f;
+  border: 3px solid #0ff;
+  border-right-color: #f0f;
+  border-bottom-color: #f0f;
+  animation: flash 3s infinite;
+}
+.frame-cyberpunk::before { content: '⚡'; position: absolute; top: -15px; left: 0; font-size: 1.5rem; z-index: 10; animation: shake 2s infinite; }
+.frame-cyberpunk::after { content: '👾'; position: absolute; bottom: -10px; right: -5px; font-size: 1.3rem; z-index: 10; animation: floatBob 2s infinite; }
+
+/* Ver 2 Sakura */
+.frame-sakura {
+  background: linear-gradient(135deg, #fce7f3, #fbcfe8);
+  box-shadow: 0 0 25px rgba(244, 114, 182, 0.7);
+  border: 2px dashed #f472b6;
+}
+.frame-sakura::before { content: '🌸'; position: absolute; top: -10px; left: -10px; font-size: 1.4rem; z-index: 10; animation: spinSlow 6s linear infinite; }
+.frame-sakura::after { content: '🌸'; position: absolute; bottom: -5px; right: -10px; font-size: 1.2rem; z-index: 10; animation: floatParticle 3s infinite alternate; }
+
+/* Ver 2 Ice */
+.frame-ice {
+  background: linear-gradient(135deg, #e0f2fe, #7dd3fc);
+  box-shadow: 0 0 25px rgba(125, 211, 252, 0.9);
+  border: 2px double #38bdf8;
+}
+.frame-ice::before { content: '❄️'; position: absolute; top: -12px; left: -8px; font-size: 1.3rem; z-index: 10; animation: spinSlow 4s linear infinite; }
+.frame-ice::after { content: '⛄'; position: absolute; bottom: -10px; right: -5px; font-size: 1.4rem; z-index: 10; animation: floatBob 3s infinite alternate; }
+
+/* Ver 2 Fire */
+.frame-fire {
+  background: linear-gradient(135deg, #ef4444, #f97316);
+  box-shadow: 0 0 25px rgba(239, 68, 68, 0.9);
+  border: 2px solid #b91c1c;
+}
+.frame-fire::before { content: '☄️'; position: absolute; top: -15px; right: -5px; font-size: 1.5rem; z-index: 10; animation: shake 2s infinite; }
+.frame-fire::after { content: '🔥'; position: absolute; bottom: -10px; left: -10px; font-size: 1.5rem; z-index: 10; animation: burnFlame 1s infinite alternate; }
+
+/* Lightning */
+.frame-lightning {
+  background: linear-gradient(135deg, #fef08a, #eab308);
+  box-shadow: 0 0 25px rgba(234, 179, 8, 0.9);
+  border: 2px dotted #fff;
+}
+.frame-lightning::before { content: '🌩️'; position: absolute; top: -15px; left: -5px; font-size: 1.5rem; z-index: 10; animation: flash 1s infinite; }
+.frame-lightning::after { content: '⚡'; position: absolute; bottom: -5px; right: -10px; font-size: 1.3rem; z-index: 10; animation: shake 2s infinite; }
+
+/* Magic */
+.frame-magic {
+  background: conic-gradient(from 0deg, #a855f7, #d946ef, #a855f7);
+  box-shadow: 0 0 30px rgba(217, 70, 239, 0.8);
+  animation: spinSlow 5s linear infinite;
+}
+.frame-magic::before { content: '🔮'; position: absolute; top: -10px; left: -10px; font-size: 1.4rem; z-index: 10; animation: floatBob 2s infinite alternate; }
+.frame-magic::after { content: '✨'; position: absolute; bottom: -5px; right: -5px; font-size: 1.2rem; z-index: 10; animation: pulseBreath 1.5s infinite; }
+
+/* Ver 2 Noel */
+.frame-noel {
+  background: linear-gradient(135deg, #166534, #b91c1c);
+  box-shadow: 0 0 25px rgba(22, 101, 52, 0.9);
+  border: 2px dashed #fff;
+}
+.frame-noel::before { content: '🎄'; position: absolute; top: -15px; left: -5px; font-size: 1.5rem; z-index: 10; animation: floatBob 3s infinite alternate; }
+.frame-noel::after { content: '🎁'; position: absolute; bottom: -5px; right: -10px; font-size: 1.4rem; z-index: 10; animation: shake 3s infinite; }
+
+/* Ver 2 Halloween */
+.frame-halloween {
+  background: linear-gradient(135deg, #f97316, #000);
+  box-shadow: 0 0 25px rgba(249, 115, 22, 0.8);
+  border: 2px solid #ea580c;
+}
+.frame-halloween::before { content: '🎃'; position: absolute; top: -12px; left: -10px; font-size: 1.5rem; z-index: 10; animation: pulseBreath 2s infinite alternate; }
+.frame-halloween::after { content: '🦇'; position: absolute; bottom: -5px; right: -15px; font-size: 1.4rem; z-index: 10; animation: flutter 2s infinite; }
+
+/* Ver 2 Valentine */
+.frame-valentine {
+  background: linear-gradient(135deg, #be185d, #f43f5e);
+  box-shadow: 0 0 25px rgba(244, 63, 94, 0.9);
+  border: 2px solid #fff;
+}
+.frame-valentine::before { content: '💘'; position: absolute; top: -12px; left: -10px; font-size: 1.5rem; z-index: 10; animation: pulseBreath 1.5s infinite alternate; }
+.frame-valentine::after { content: '🌹'; position: absolute; bottom: -5px; right: -5px; font-size: 1.3rem; z-index: 10; animation: floatBob 3s infinite; }
+
+/* Ver 2 Tet (Lunar) */
+.frame-tet {
+  background: linear-gradient(135deg, #b91c1c, #fcd34d);
+  box-shadow: 0 0 25px rgba(252, 211, 77, 0.8);
+  border: 2px dashed #f59e0b;
+}
+.frame-tet::before { content: '🏮'; position: absolute; top: -15px; left: -5px; font-size: 1.5rem; z-index: 10; animation: flutter 2.5s infinite alternate; }
+.frame-tet::after { content: '🧧'; position: absolute; bottom: -5px; right: -10px; font-size: 1.4rem; z-index: 10; animation: floatParticle 3s infinite alternate; }
+
+/* Birthday */
+.frame-birthday {
+  background: conic-gradient(from 0deg, #fcd34d, #f472b6, #60a5fa, #fcd34d);
+  box-shadow: 0 0 20px rgba(244, 114, 182, 0.8);
+  animation: spinSlow 6s linear infinite;
+}
+.frame-birthday::before { content: '🎂'; position: absolute; top: -12px; left: -10px; font-size: 1.5rem; z-index: 10; animation: pulseBreath 2s infinite alternate; }
+.frame-birthday::after { content: '🎉'; position: absolute; bottom: -5px; right: -10px; font-size: 1.4rem; z-index: 10; animation: shake 2s infinite; }
+
+/* Ocean */
+.frame-ocean {
+  background: linear-gradient(135deg, #0ea5e9, #0284c7);
+  box-shadow: 0 0 25px rgba(14, 165, 233, 0.8);
+  border: 2px wave #38bdf8;
+}
+.frame-ocean::before { content: '🌊'; position: absolute; bottom: -10px; left: -5px; font-size: 1.5rem; z-index: 10; animation: floatParticle 3s infinite alternate; }
+.frame-ocean::after { content: '🐬'; position: absolute; top: -10px; right: -10px; font-size: 1.4rem; z-index: 10; animation: floatBob 4s infinite alternate; }
+
+/* Mythic Halloween */
+.frame-mythic-halloween {
+  background: conic-gradient(from 0deg, #ea580c, #4c1d95, #ea580c);
+  box-shadow: 0 0 40px rgba(234, 88, 12, 1);
+  animation: spinFast 4s linear infinite;
+  border: 3px solid #000;
+}
+.frame-mythic-halloween::before { content: '🧟'; position: absolute; top: -15px; left: -10px; font-size: 1.8rem; z-index: 10; animation: shake 1.5s infinite; filter: drop-shadow(0 0 5px #4c1d95); }
+.frame-mythic-halloween::after { content: '🧛'; position: absolute; bottom: -10px; right: -15px; font-size: 1.8rem; z-index: 10; animation: floatBob 2s infinite alternate; filter: drop-shadow(0 0 5px #ea580c); }
+
+/* Mythic Christmas */
+.frame-mythic-christmas {
+  background: conic-gradient(from 0deg, #dc2626, #16a34a, #dc2626);
+  box-shadow: 0 0 40px rgba(22, 163, 74, 1);
+  animation: gradientShift 3s ease infinite;
+  border: 3px solid gold;
+}
+.frame-mythic-christmas::before { content: '🎅'; position: absolute; top: -15px; left: -10px; font-size: 1.8rem; z-index: 10; animation: floatBob 2.5s infinite alternate; filter: drop-shadow(0 0 5px gold); }
+.frame-mythic-christmas::after { content: '🦌'; position: absolute; bottom: -10px; right: -15px; font-size: 1.8rem; z-index: 10; animation: flutter 2s infinite alternate; filter: drop-shadow(0 0 5px gold); }
+
+/* Heaven */
+.frame-heaven {
+  background: linear-gradient(135deg, #fdfbfb, #ebedee);
+  box-shadow: 0 0 40px rgba(255, 255, 255, 1);
+  border: 3px solid #fde047;
+}
+.frame-heaven::before { content: '⛅'; position: absolute; top: -15px; left: 0px; font-size: 1.8rem; z-index: 10; animation: floatParticle 4s infinite alternate; filter: drop-shadow(0 0 5px #fff); }
+.frame-heaven::after { content: '🕊️'; position: absolute; bottom: -10px; right: -15px; font-size: 1.6rem; z-index: 10; animation: flutter 3s infinite alternate; filter: drop-shadow(0 0 5px gold); }
+

@@ -123,4 +123,23 @@ if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
   });
 }
 
+
+app.locals.getBadgeIcon = (val) => {
+    if (!val) return '💎';
+    const v = val.toLowerCase();
+    if (v.includes('rồng') || v.includes('long')) return '🐉';
+    if (v.includes('kiếm')) return '⚔️';
+    if (v.includes('ma')) return '👿';
+    if (v.includes('tiên')) return '🧚';
+    if (v.includes('thần') || v.includes('đế') || v.includes('chúa') || v.includes('vương') || v.includes('tôn')) return '👑';
+    if (v.includes('sáng thế') || v.includes('vô cực')) return '🌌';
+    if (v.includes('hỗn độn')) return '🌪️';
+    if (v.includes('quản trị') || v.includes('admin')) return '⚙️';
+    if (v.includes('hổ')) return '🐯';
+    if (v.includes('tước') || v.includes('chim')) return '🦚';
+    if (v.includes('rùa') || v.includes('vũ')) return '🐢';
+    if (v.includes('đọc giả') || v.includes('tân binh')) return '📚';
+    return '💎';
+};
+
 module.exports = app;
