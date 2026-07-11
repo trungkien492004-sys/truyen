@@ -95,6 +95,7 @@ async function awardReadingExp(userId, storyId, chapterNumber) {
   let streak = stats ? (stats.streak_days || 0) : 0;
   let chaptersRead = stats ? (stats.chapters_read || 0) : 0;
   const lastDate = stats ? stats.last_read_date : null;
+  const chaptersReadBefore = chaptersRead;
 
   // Luôn cộng EXP và Số chương đã đọc, bất kể đọc mới hay đọc lại!
   exp += EXP_PER_CHAPTER;
@@ -128,7 +129,34 @@ async function awardReadingExp(userId, storyId, chapterNumber) {
     await unlockAchievement(userId, 'Kiên trì đọc sách');
   }
 
-  return { earnedExp: true };
+  // 4. Kiểm tra xem có "lên rank / đột phá cảnh giới" hay không (dựa trên rank_settings)
+  let rankUp = null;
+  try {
+    const { data: rankSettings } = await supabase
+      .from('rank_settings')
+      .select('*')
+      .order('count', { ascending: false });
+
+    if (rankSettings && rankSettings.length > 0) {
+      const rankBefore = rankSettings.find(r => chaptersReadBefore >= r.count);
+      const rankAfter = rankSettings.find(r => chaptersRead >= r.count);
+      const labelBefore = rankBefore ? rankBefore.label : null;
+      const labelAfter = rankAfter ? rankAfter.label : null;
+
+      if (labelAfter && labelAfter !== labelBefore) {
+        rankUp = { from: labelBefore || 'Nhập môn', to: labelAfter };
+        await supabase.from('notifications').insert([{
+          user_id: userId,
+          message: `⚡ Đột phá cảnh giới! Bạn đã tiến lên "${labelAfter}"!`,
+          link: '/profile'
+        }]);
+      }
+    }
+  } catch (err) {
+    console.error('Lỗi kiểm tra lên rank:', err);
+  }
+
+  return { earnedExp: true, rankUp };
 }
 
 // Hàm hỗ trợ upload file lên Supabase Storage
@@ -719,9 +747,11 @@ router.post('/chapter/read-confirm', async (req, res) => {
 
   // Cộng EXP
   let earnedExp = false;
+  let rankUp = null;
   try {
     const result = await awardReadingExp(req.user.id, storyId, chapterNumber);
     earnedExp = result ? result.earnedExp : false;
+    rankUp = result ? result.rankUp : null;
   } catch (err) {
     console.error('Lỗi cộng EXP trong xác nhận:', err);
   }
@@ -729,9 +759,10 @@ router.post('/chapter/read-confirm', async (req, res) => {
   // Xóa thông tin đọc trong session để tránh gửi lại nhiều lần
   delete req.session.reading;
 
-  res.json({ 
-    success: true, 
-    message: earnedExp ? 'Đã ghi nhận đọc chương thành công! +5 EXP' : 'Đã ghi nhận đọc chương. (Chương này đã tính EXP trước đó)'
+  res.json({
+    success: true,
+    message: earnedExp ? 'Đã ghi nhận đọc chương thành công! +5 EXP' : 'Đã ghi nhận đọc chương. (Chương này đã tính EXP trước đó)',
+    rankUp
   });
 });
 

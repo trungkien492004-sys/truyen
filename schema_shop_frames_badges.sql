@@ -5,15 +5,18 @@
 
 -- ===== KHUNG VIỀN (type = 'frame') =====
 -- Lưu ý: cột "value" của frame phải trùng đúng tên class CSS (vd: .avatar-frame.mythic trong style.css)
+-- Đã rà soát: 'angel' trùng khung Thiên Thần có sẵn (hoa mỹ/nữ tính) -> đổi Thiên Sứ sang 'seraph' (uy nghiêm hơn)
+-- 'cyber' trùng CSS cũ -> dùng bản mới 'cyber_v2' (phong cách công nghệ sắc lạnh, cơ khí)
 INSERT INTO shop_items (name, type, price_exp, description, value) VALUES
 ('Khung Thần Thoại', 'frame', 500, 'Khung viền cầu vồng huyền ảo, hiệu ứng hào quang xoay liên tục - dành cho độc giả huyền thoại.', 'mythic'),
 ('Khung Tinh Hà', 'frame', 350, 'Khung viền lấp lánh như dải ngân hà, phù hợp người yêu thích vũ trụ bao la.', 'galaxy'),
 ('Khung Long Đế', 'frame', 400, 'Khung viền uy nghiêm sắc vàng-đỏ của bậc đế vương rồng thiêng.', 'dragon_emperor'),
 ('Khung Kiếm Thánh', 'frame', 400, 'Khung viền ánh kim sắc bén, tôn vinh những cao thủ kiếm đạo.', 'sword_saint'),
-('Khung Thiên Sứ', 'frame', 250, 'Khung viền ánh sáng thuần khiết, nhẹ nhàng và thanh thoát.', 'angel'),
+('Khung Thiên Sứ', 'frame', 250, 'Khung viền ánh sáng thánh khiết uy nghiêm, sức mạnh của bậc thiên sứ chiến binh.', 'seraph'),
 ('Khung Ma Vương', 'frame', 250, 'Khung viền bóng tối huyền bí, dành cho những kẻ chinh phục bóng đêm.', 'demon'),
 ('Khung Băng Giá', 'frame', 200, 'Khung viền lạnh lẽo tinh khiết như băng tuyết vĩnh cửu.', 'ice'),
-('Khung Hỏa Diệm', 'frame', 200, 'Khung viền rực lửa nóng bỏng, thể hiện nhiệt huyết đọc truyện không ngừng.', 'fire')
+('Khung Hỏa Diệm', 'frame', 200, 'Khung viền rực lửa nóng bỏng, thể hiện nhiệt huyết đọc truyện không ngừng.', 'fire'),
+('Khung Chiến Cơ', 'frame', 300, 'Khung viền công nghệ cao, quét tia sáng liên tục theo phong cách cơ khí tương lai.', 'cyber_v2')
 ;
 
 -- ===== HUY HIỆU CHAT (type = 'badge') =====

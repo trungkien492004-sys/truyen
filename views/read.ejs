@@ -493,7 +493,7 @@
                         textSpan.innerHTML = '🎉 ' + data.message;
                         dot.style.background = '#10b981';
                         dot.style.animation = 'pulse-green 1.5s infinite';
-                        
+
                         // Ẩn nhẹ sau 5s
                         setTimeout(() => {
                             if (widget) {
@@ -501,6 +501,16 @@
                                 widget.style.transform = 'translateY(10px)';
                             }
                         }, 5000);
+
+                        // Nếu vừa lên rank (Đột Phá Cảnh Giới) thì hiện banner, chỉ 1 lần/rank/ngày
+                        if (data.rankUp && data.rankUp.to) {
+                            const todayStr = new Date().toISOString().slice(0, 10);
+                            const seenKey = `rankup_seen_${data.rankUp.to}_${todayStr}`;
+                            if (!localStorage.getItem(seenKey)) {
+                                localStorage.setItem(seenKey, '1');
+                                showRankUpBanner(data.rankUp.from, data.rankUp.to);
+                            }
+                        }
                     } else {
                         textSpan.textContent = '❌ Lỗi: ' + data.error;
                         dot.style.background = '#ef4444';
@@ -515,6 +525,30 @@
             }
         }, 1000);
     })();
+
+    function showRankUpBanner(fromRank, toRank) {
+        const overlay = document.createElement('div');
+        overlay.className = 'rankup-overlay';
+        overlay.innerHTML = `
+            <div class="rankup-banner">
+                <button class="rankup-close" onclick="this.closest('.rankup-overlay').remove()">&times;</button>
+                <div class="rankup-icon">⚡</div>
+                <div class="rankup-label">ĐỘT PHÁ CẢNH GIỚI</div>
+                <div class="rankup-ranks">
+                    <span class="rankup-from">${fromRank || 'Nhập Môn'}</span>
+                    <span class="rankup-arrow">➜</span>
+                    <span class="rankup-to">${toRank}</span>
+                </div>
+                <div class="rankup-sub">Chúc mừng bạn đã tiến thêm một bước trên con đường tu luyện!</div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        setTimeout(() => overlay.classList.add('show'), 30);
+        setTimeout(() => {
+            overlay.classList.remove('show');
+            setTimeout(() => overlay.remove(), 500);
+        }, 6000);
+    }
     <% } %>
 </script>
 
