@@ -1439,177 +1439,278 @@ footer {
 /* 1. Thiên Thần (Angel) */
 .avatar-frame.angel {
     border: 4px solid #fff;
-    box-shadow: 0 0 15px #fff, 0 0 35px gold;
-    position: relative;
-    animation: angelGlow 3s infinite alternate;
+    box-shadow: 0 0 15px #fff, 0 0 30px #fef08a, inset 0 0 20px #fef08a;
+    animation: angelGlow 2s infinite alternate;
 }
 .avatar-frame.angel::before {
-    content: "🪽"; position: absolute; left: -38px; top: 42px; font-size: 70px;
-    transform: rotate(-12deg); filter: drop-shadow(0 0 8px white); z-index: 10;
+    content: "🪽"; position: absolute; left: -45px; top: 30px; font-size: 70px;
+    transform: rotate(-15deg); filter: drop-shadow(0 0 10px gold); z-index: 0;
+    animation: wingFlapLeft 2s infinite alternate ease-in-out;
 }
 .avatar-frame.angel::after {
-    content: "🪽"; position: absolute; right: -38px; top: 42px; font-size: 70px;
-    transform: scaleX(-1) rotate(-12deg); filter: drop-shadow(0 0 8px white); z-index: 10;
+    content: "🪽"; position: absolute; right: -45px; top: 30px; font-size: 70px;
+    transform: scaleX(-1) rotate(-15deg); filter: drop-shadow(0 0 10px gold); z-index: 0;
+    animation: wingFlapRight 2s infinite alternate ease-in-out;
 }
 
 /* 2. Ác Ma */
 .avatar-frame.demon {
     border: 4px solid #ef4444;
-    box-shadow: 0 0 18px red, 0 0 45px crimson;
-    animation: redAura 2s infinite alternate;
+    box-shadow: 0 0 20px #ef4444, 0 0 45px #991b1b, inset 0 0 20px #dc2626;
+    animation: redAura 1.5s infinite alternate;
 }
 .avatar-frame.demon::before {
-    content: "😈"; position: absolute; top: -22px; left: 50%;
-    transform: translateX(-50%); font-size: 38px; z-index: 10;
+    content: "😈"; position: absolute; top: -30px; left: 50%;
+    transform: translateX(-50%); font-size: 45px; z-index: 2;
+    filter: drop-shadow(0 0 10px red);
+    animation: floatUp 2s infinite alternate ease-in-out;
+}
+.avatar-frame.demon::after {
+    content: "🦇"; position: absolute; bottom: -20px; right: -25px; font-size: 35px; z-index: 0;
+    animation: flapBat 1.5s infinite alternate ease-in-out;
 }
 
 /* 3. Noel */
 .avatar-frame.christmas {
-    border: 5px solid #22c55e;
-    box-shadow: 0 0 20px #22c55e;
-    background: repeating-conic-gradient(red 0 10deg, white 10deg 20deg, green 20deg 30deg);
-    animation: spinBorder 15s linear infinite;
+    border: 4px solid #fff;
+    padding: 4px;
+}
+.avatar-frame.christmas .avatar-glow {
+    display: block;
+    background: repeating-conic-gradient(#ef4444 0 15deg, #fff 15deg 30deg, #22c55e 30deg 45deg);
+    animation: spinBorder 10s linear infinite;
+    inset: -4px;
+    z-index: 0;
+    box-shadow: 0 0 15px #22c55e, 0 0 25px #ef4444;
 }
 .avatar-frame.christmas::before {
-    content: "🎄"; position: absolute; top: -15px; left: -12px; font-size: 34px; z-index: 10;
+    content: "🎄"; position: absolute; top: -20px; left: -20px; font-size: 40px; z-index: 2;
+    filter: drop-shadow(0 0 8px #fff);
+    animation: bounceSlow 3s infinite alternate;
 }
 .avatar-frame.christmas::after {
-    content: "🎅"; position: absolute; right: -12px; top: -15px; font-size: 34px; z-index: 10;
+    content: "🎅"; position: absolute; right: -20px; bottom: -10px; font-size: 40px; z-index: 2;
+    filter: drop-shadow(0 0 8px #fff);
 }
 
 /* 4. Halloween */
 .avatar-frame.halloween {
-    border: 4px solid orange;
-    box-shadow: 0 0 25px orange;
-    background: conic-gradient(orange, black, orange);
+    border: 4px solid #f97316;
+    padding: 3px;
+}
+.avatar-frame.halloween .avatar-glow {
+    display: block;
+    background: conic-gradient(#f97316, #000, #9333ea, #000, #f97316);
+    animation: spinBorder 5s linear infinite;
+    inset: -4px;
+    z-index: 0;
+    box-shadow: 0 0 20px #f97316, 0 0 30px #9333ea;
 }
 .avatar-frame.halloween::before {
-    content: "🎃"; position: absolute; top: -18px; left: -8px; font-size: 36px; z-index: 10;
+    content: "🎃"; position: absolute; top: -20px; left: -15px; font-size: 40px; z-index: 2;
+    animation: floatUp 2s infinite alternate;
 }
 .avatar-frame.halloween::after {
-    content: "🦇"; position: absolute; right: -12px; top: -18px; font-size: 32px; z-index: 10;
+    content: "🦇"; position: absolute; right: -20px; top: -10px; font-size: 35px; z-index: 0;
+    animation: flapBat 1s infinite alternate;
 }
 
 /* 5. Tết */
 .avatar-frame.lunar {
-    border: 4px solid gold;
-    box-shadow: 0 0 20px gold;
+    border: 4px solid #facc15;
+    box-shadow: 0 0 20px #facc15, 0 0 40px #ef4444, inset 0 0 15px #facc15;
     background: linear-gradient(135deg, #dc2626, #fbbf24);
+    animation: angelGlow 2s infinite alternate;
 }
 .avatar-frame.lunar::before {
-    content: "🧧"; position: absolute; left: -10px; top: -15px; font-size: 32px; z-index: 10;
+    content: "🧧"; position: absolute; left: -15px; top: -15px; font-size: 35px; z-index: 2;
+    filter: drop-shadow(0 0 5px gold);
+    animation: floatUp 2.5s infinite alternate;
 }
 .avatar-frame.lunar::after {
-    content: "🏮"; position: absolute; right: -10px; top: -15px; font-size: 32px; z-index: 10;
+    content: "🏮"; position: absolute; right: -20px; top: 10px; font-size: 38px; z-index: 0;
+    filter: drop-shadow(0 0 8px red);
+    animation: swing 3s infinite alternate ease-in-out;
 }
 
 /* 6. Valentine */
 .avatar-frame.valentine {
-    border: 4px solid hotpink;
-    box-shadow: 0 0 20px deeppink;
+    border: 4px solid #fbcfe8;
+    box-shadow: 0 0 25px #ec4899, inset 0 0 15px #f43f5e;
+    background: linear-gradient(135deg, #fce7f3, #fbcfe8);
+    animation: heartbeat 1.5s infinite alternate;
 }
 .avatar-frame.valentine::before {
-    content: "💖"; position: absolute; left: -12px; top: 20px; font-size: 30px; z-index: 10;
+    content: "💖"; position: absolute; left: -15px; top: 15px; font-size: 35px; z-index: 2;
+    filter: drop-shadow(0 0 8px #f43f5e);
+    animation: floatUp 2s infinite alternate;
 }
 .avatar-frame.valentine::after {
-    content: "💕"; position: absolute; right: -12px; bottom: 20px; font-size: 28px; z-index: 10;
+    content: "💕"; position: absolute; right: -15px; bottom: 15px; font-size: 30px; z-index: 0;
+    filter: drop-shadow(0 0 8px #f43f5e);
+    animation: floatUp 2.5s infinite alternate;
 }
 
 /* 7. Băng Giá */
 .avatar-frame.ice {
-    border: 4px solid #7dd3fc;
-    box-shadow: 0 0 20px cyan;
-    background: linear-gradient(135deg, #dbeafe, #38bdf8);
+    border: 4px solid #e0f2fe;
+    box-shadow: 0 0 25px #38bdf8, inset 0 0 20px #0284c7;
+    background: linear-gradient(135deg, #bae6fd, #7dd3fc);
+}
+.avatar-frame.ice .avatar-glow {
+    display: block;
+    background: radial-gradient(circle, transparent 50%, #bae6fd 100%);
+    animation: pulseGlow 3s infinite alternate;
+    inset: -2px;
+    z-index: 0;
 }
 .avatar-frame.ice::before {
-    content: "❄️"; position: absolute; top: -15px; left: 0; font-size: 30px; z-index: 10;
+    content: "❄️"; position: absolute; top: -15px; left: -10px; font-size: 35px; z-index: 2;
+    filter: drop-shadow(0 0 8px #bae6fd);
+    animation: spinSlow 8s linear infinite;
 }
 .avatar-frame.ice::after {
-    content: "❄️"; position: absolute; right: 0; bottom: -12px; font-size: 30px; z-index: 10;
+    content: "❄️"; position: absolute; right: -10px; bottom: -15px; font-size: 30px; z-index: 0;
+    filter: drop-shadow(0 0 8px #bae6fd);
+    animation: spinSlow 6s linear infinite reverse;
 }
 
 /* 8. Hỏa Diệm */
 .avatar-frame.fire {
-    border: 4px solid #f97316;
-    box-shadow: 0 0 25px orange;
+    border: 4px solid #fdba74;
+    box-shadow: 0 0 30px #ea580c, inset 0 0 20px #c2410c;
+    background: linear-gradient(180deg, #f97316, #ef4444);
+    animation: flicker 0.5s infinite alternate;
 }
 .avatar-frame.fire::before {
-    content: "🔥"; position: absolute; top: -18px; left: 18px; font-size: 32px; z-index: 10;
+    content: "🔥"; position: absolute; top: -20px; left: 15px; font-size: 38px; z-index: 2;
+    filter: drop-shadow(0 0 10px orange);
+    animation: fireRise 1.5s infinite alternate;
 }
 .avatar-frame.fire::after {
-    content: "🔥"; position: absolute; right: 18px; bottom: -12px; font-size: 32px; z-index: 10;
+    content: "🔥"; position: absolute; right: 15px; bottom: -15px; font-size: 35px; z-index: 0;
+    filter: drop-shadow(0 0 10px orange);
+    animation: fireRise 1.8s infinite alternate reverse;
 }
 
 /* 9. Sakura */
 .avatar-frame.sakura {
-    border: 4px solid #f9a8d4;
-    box-shadow: 0 0 20px pink;
+    border: 4px solid #fbcfe8;
+    box-shadow: 0 0 25px #f472b6, inset 0 0 15px #db2777;
+    background: linear-gradient(135deg, #fdf2f8, #fbcfe8);
 }
 .avatar-frame.sakura::before {
-    content: "🌸"; position: absolute; top: -12px; left: -10px; font-size: 30px; z-index: 10;
+    content: "🌸"; position: absolute; top: -15px; left: -15px; font-size: 35px; z-index: 2;
+    filter: drop-shadow(0 0 8px pink);
+    animation: floatUp 3s infinite alternate;
 }
 .avatar-frame.sakura::after {
-    content: "🦋"; position: absolute; right: -10px; bottom: 10px; font-size: 30px; z-index: 10;
+    content: "🦋"; position: absolute; right: -15px; bottom: 15px; font-size: 32px; z-index: 0;
+    animation: wingFlapRight 1.5s infinite alternate;
 }
 
 /* 10. Cyberpunk */
 .avatar-frame.cyber {
-    border: 4px solid cyan;
+    border: 4px solid #22d3ee;
+    padding: 3px;
+}
+.avatar-frame.cyber .avatar-glow {
+    display: block;
     background: linear-gradient(90deg, #00ffff, #ff00ff, #00ffff);
     background-size: 300%;
-    animation: cyberMove 4s linear infinite;
+    animation: cyberMove 3s linear infinite;
     box-shadow: 0 0 20px cyan, 0 0 30px magenta;
+    inset: -4px;
+    z-index: 0;
 }
 .avatar-frame.cyber::before {
-    content: "⚡"; position: absolute; top: -18px; left: -8px; font-size: 30px; z-index: 10;
+    content: "⚡"; position: absolute; top: -20px; left: -10px; font-size: 35px; z-index: 2;
+    filter: drop-shadow(0 0 5px cyan);
+    animation: glitch 2s infinite;
 }
 .avatar-frame.cyber::after {
-    content: "⚡"; position: absolute; right: -8px; bottom: -18px; font-size: 30px; z-index: 10;
+    content: "⚡"; position: absolute; right: -10px; bottom: -20px; font-size: 35px; z-index: 0;
+    filter: drop-shadow(0 0 5px magenta);
+    animation: glitch 2.5s infinite;
 }
 
-/* NEW RARE CLASSES */
+/* RARE CLASSES */
 .avatar-frame.dragon_emperor {
     border: 4px solid #fbbf24;
-    box-shadow: 0 0 25px #fbbf24, 0 0 10px #f59e0b inset;
+    box-shadow: 0 0 30px #fbbf24, inset 0 0 20px #f59e0b;
     background: linear-gradient(135deg, #fef3c7, #fbbf24);
+    animation: angelGlow 2.5s infinite alternate;
 }
 .avatar-frame.dragon_emperor::before {
-    content: "🐉"; position: absolute; top: -25px; left: 50%; transform: translateX(-50%); font-size: 40px; z-index: 10;
+    content: "🐉"; position: absolute; top: -30px; left: 50%; transform: translateX(-50%); font-size: 50px; z-index: 2;
+    filter: drop-shadow(0 0 15px gold);
+    animation: floatUp 3s infinite alternate ease-in-out;
 }
 
 .avatar-frame.sword_saint {
     border: 4px solid #cbd5e1;
-    box-shadow: 0 0 20px #e2e8f0;
+    box-shadow: 0 0 25px #e2e8f0, inset 0 0 15px #94a3b8;
     animation: angelGlow 2s infinite alternate;
 }
 .avatar-frame.sword_saint::before {
-    content: "⚔️"; position: absolute; left: -15px; top: 15px; font-size: 35px; transform: rotate(-45deg); z-index: 10;
+    content: "⚔️"; position: absolute; left: -20px; top: 10px; font-size: 40px; transform: rotate(-45deg); z-index: 0;
+    filter: drop-shadow(0 0 10px #cbd5e1);
+    animation: swordHoverLeft 2s infinite alternate ease-in-out;
 }
 .avatar-frame.sword_saint::after {
-    content: "⚔️"; position: absolute; right: -15px; bottom: 15px; font-size: 35px; transform: rotate(135deg); z-index: 10;
+    content: "⚔️"; position: absolute; right: -20px; bottom: 10px; font-size: 40px; transform: rotate(135deg); z-index: 0;
+    filter: drop-shadow(0 0 10px #cbd5e1);
+    animation: swordHoverRight 2s infinite alternate ease-in-out;
+}
+@keyframes swordHoverLeft {
+    0% { transform: rotate(-45deg) translateY(0); }
+    100% { transform: rotate(-45deg) translateY(-10px); }
+}
+@keyframes swordHoverRight {
+    0% { transform: rotate(135deg) translateY(0); }
+    100% { transform: rotate(135deg) translateY(-10px); }
 }
 
 .avatar-frame.galaxy {
-    border: 4px solid #c084fc;
-    box-shadow: 0 0 25px #a855f7, 0 0 45px #c084fc;
-    background: radial-gradient(circle, #3b0764, #000);
+    border: 4px solid transparent;
+    padding: 3px;
+}
+.avatar-frame.galaxy .avatar-glow {
+    display: block;
+    background: radial-gradient(circle, #3b0764, #000, #c084fc);
+    background-size: 200%;
+    animation: pulseGlow 4s infinite alternate;
+    inset: -4px;
+    z-index: 0;
+    box-shadow: 0 0 30px #a855f7, 0 0 50px #c084fc;
 }
 .avatar-frame.galaxy::before {
-    content: "🌌"; position: absolute; top: -20px; left: -5px; font-size: 35px; z-index: 10;
+    content: "🌌"; position: absolute; top: -25px; left: -10px; font-size: 40px; z-index: 2;
+    animation: floatUp 3s infinite alternate;
 }
 .avatar-frame.galaxy::after {
-    content: "✨"; position: absolute; right: -15px; bottom: 15px; font-size: 35px; z-index: 10;
+    content: "✨"; position: absolute; right: -20px; bottom: 20px; font-size: 45px; z-index: 0;
+    animation: spinSlow 4s linear infinite;
+    filter: drop-shadow(0 0 10px #fff);
 }
 
 .avatar-frame.mythic {
-    border: 5px solid #fff;
-    box-shadow: 0 0 15px #60a5fa, 0 0 30px #c084fc, 0 0 45px #fbbf24;
+    border: 4px solid transparent;
+    padding: 4px;
+}
+.avatar-frame.mythic .avatar-glow {
+    display: block;
     background: linear-gradient(45deg, #60a5fa, #c084fc, #fbbf24, #f43f5e);
     background-size: 400%;
-    animation: cyberMove 5s ease infinite;
+    animation: cyberMove 3s ease infinite;
+    inset: -4px;
+    z-index: 0;
+    box-shadow: 0 0 20px #60a5fa, 0 0 40px #c084fc, 0 0 60px #fbbf24;
 }
 .avatar-frame.mythic::before {
-    content: "💎"; position: absolute; top: -22px; left: 50%; transform: translateX(-50%); font-size: 35px; z-index: 10;
+    content: "💎"; position: absolute; top: -30px; left: 50%; transform: translateX(-50%); font-size: 45px; z-index: 2;
+    filter: drop-shadow(0 0 20px #fff);
+    animation: floatUp 2s infinite alternate;
 }
 
 
@@ -1618,7 +1719,14 @@ footer {
     0% { transform: scale(0.98); filter: brightness(0.95); }
     100% { transform: scale(1.03); filter: brightness(1.15); }
 }
+@keyframes pulseGlow {
+    0% { transform: scale(1); filter: brightness(1); }
+    100% { transform: scale(1.05); filter: brightness(1.2); }
+}
 @keyframes spinBorder {
+    to { transform: rotate(360deg); }
+}
+@keyframes spinSlow {
     to { transform: rotate(360deg); }
 }
 @keyframes cyberMove {
@@ -1626,6 +1734,53 @@ footer {
     100% { background-position: 300%; }
 }
 @keyframes redAura {
-    0% { box-shadow: 0 0 10px red; }
-    100% { box-shadow: 0 0 35px crimson; }
+    0% { box-shadow: 0 0 20px red, inset 0 0 10px crimson; transform: scale(0.98); }
+    100% { box-shadow: 0 0 45px crimson, inset 0 0 25px red; transform: scale(1.02); }
+}
+@keyframes wingFlapLeft {
+    0% { transform: rotate(-15deg) scale(1); }
+    100% { transform: rotate(-5deg) scale(1.15); }
+}
+@keyframes wingFlapRight {
+    0% { transform: scaleX(-1) rotate(-15deg) scale(1); }
+    100% { transform: scaleX(-1) rotate(-5deg) scale(1.15); }
+}
+@keyframes flapBat {
+    0% { transform: translateY(0) scale(1); }
+    100% { transform: translateY(-10px) scale(1.1); }
+}
+@keyframes floatUp {
+    0% { transform: translateY(0) translateX(-50%); }
+    100% { transform: translateY(-8px) translateX(-50%); }
+}
+@keyframes bounceSlow {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-5px); }
+}
+@keyframes swing {
+    0% { transform: rotate(-10deg); }
+    100% { transform: rotate(10deg); }
+}
+@keyframes heartbeat {
+    0% { transform: scale(0.95); }
+    20% { transform: scale(1.05); }
+    40% { transform: scale(0.95); }
+    60% { transform: scale(1.05); }
+    100% { transform: scale(0.95); }
+}
+@keyframes flicker {
+    0% { opacity: 0.8; transform: scale(0.98); }
+    100% { opacity: 1; transform: scale(1.02); }
+}
+@keyframes fireRise {
+    0% { transform: translateY(0) scale(1); opacity: 0.8; }
+    100% { transform: translateY(-8px) scale(1.1); opacity: 1; }
+}
+@keyframes glitch {
+    0% { transform: translate(0); }
+    20% { transform: translate(-2px, 2px); }
+    40% { transform: translate(-2px, -2px); }
+    60% { transform: translate(2px, 2px); }
+    80% { transform: translate(2px, -2px); }
+    100% { transform: translate(0); }
 }
