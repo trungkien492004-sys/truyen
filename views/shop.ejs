@@ -225,7 +225,7 @@
                 <% } %>
                 <div>
                     <div class="badge-preview-box" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem 0; gap: 0.2rem;">
-                        <% const badgeValue = item.value.replace(/^([\uD800-\uDBFF][\uDC00-\uDFFF]|\S)\s*/, ''); %>
+                        <% const badgeValue = item.value; %>
                         <span class="game-title <%= getTitleRarityClass(item.value) %>" style="font-size: 0.75rem; padding: 4px 14px;"><%= badgeValue %></span>
                     </div>
                     <h3 class="item-title"><%= item.name %></h3>

@@ -348,3 +348,135 @@
   0% { transform: rotate(-10deg) translateY(0); }
   100% { transform: rotate(10deg) translateY(-2px); }
 }
+
+
+/* --- SPECIFIC BADGE EFFECTS --- */
+.game-title-dragonking::after {
+  content: '🐉';
+  position: absolute;
+  right: -12px;
+  top: -12px;
+  font-size: 1.5rem;
+  animation: floatParticle 3s infinite alternate;
+  filter: drop-shadow(0 0 5px gold);
+}
+.game-title-dragonking::before {
+  content: '🐉';
+  position: absolute;
+  left: -12px;
+  bottom: -8px;
+  font-size: 1.2rem;
+  animation: floatParticle 4s infinite alternate-reverse;
+  filter: drop-shadow(0 0 5px gold);
+  transform: scaleX(-1);
+}
+.game-title-swordmaster::after {
+  content: '⚔️';
+  position: absolute;
+  right: -8px;
+  font-size: 1.2rem;
+  animation: spinSlow 5s linear infinite;
+}
+.game-title-creator::before {
+  content: '✨';
+  position: absolute;
+  left: -5px;
+  animation: floatBob 2s infinite;
+}
+.game-title-chaos::after {
+  content: '🌪️';
+  position: absolute;
+  right: -8px;
+  animation: spinFast 2s linear infinite;
+}
+.game-title-admin-god::after {
+  content: '👑';
+  position: absolute;
+  right: -12px;
+  top: -10px;
+  font-size: 1.4rem;
+  animation: floatBob 2s infinite alternate, pulseBreath 2s infinite;
+  filter: drop-shadow(0 0 8px gold);
+}
+
+/* --- SPECIFIC FRAME EFFECTS --- */
+
+/* Azure Dragon (Thanh Long) */
+.frame-azure-dragon {
+  background: linear-gradient(135deg, #22543d, #38a169);
+  box-shadow: 0 0 25px rgba(56, 161, 105, 0.7);
+}
+.frame-azure-dragon::before {
+  content: '🐉'; position: absolute; bottom: -10px; left: -10px; font-size: 1.5rem; z-index: 10;
+  animation: floatBob 3s infinite alternate;
+}
+.frame-azure-dragon::after {
+  content: '⚡'; position: absolute; top: -5px; right: -5px; font-size: 1.2rem; z-index: 10;
+  animation: flash 1.5s infinite;
+}
+
+/* White Tiger (Bạch Hổ) */
+.frame-white-tiger {
+  background: linear-gradient(135deg, #e2e8f0, #cbd5e0);
+  box-shadow: 0 0 20px rgba(203, 213, 224, 0.8);
+  border: 2px solid #fff;
+}
+.frame-white-tiger::before {
+  content: '🐯'; position: absolute; top: -10px; right: -5px; font-size: 1.5rem; z-index: 10;
+  animation: shake 4s infinite;
+}
+.frame-white-tiger::after {
+  content: '🌩️'; position: absolute; bottom: -5px; left: -5px; font-size: 1.3rem; z-index: 10;
+  animation: flash 2s infinite;
+}
+
+/* Vermilion Bird (Chu Tước) */
+.frame-vermilion-bird {
+  background: linear-gradient(135deg, #9b2c2c, #e53e3e);
+  box-shadow: 0 0 25px rgba(229, 62, 62, 0.8);
+}
+.frame-vermilion-bird::before {
+  content: '🦚'; position: absolute; top: -15px; left: -5px; font-size: 1.5rem; z-index: 10;
+  animation: flutter 2s infinite alternate;
+}
+.frame-vermilion-bird::after {
+  content: '🔥'; position: absolute; bottom: -10px; right: -5px; font-size: 1.3rem; z-index: 10;
+  animation: burnFlame 1.5s infinite alternate;
+}
+
+/* Black Turtle (Huyền Vũ) */
+.frame-black-turtle {
+  background: linear-gradient(135deg, #1a202c, #2a4365);
+  box-shadow: 0 0 20px rgba(42, 67, 101, 0.8);
+}
+.frame-black-turtle::before {
+  content: '🐢'; position: absolute; bottom: -10px; left: 5px; font-size: 1.5rem; z-index: 10;
+  animation: floatBob 4s infinite alternate;
+}
+.frame-black-turtle::after {
+  content: '🌊'; position: absolute; top: -5px; right: -10px; font-size: 1.2rem; z-index: 10;
+  animation: pulseBreath 3s infinite;
+}
+
+/* Hell (Địa Phủ) */
+.frame-hell {
+  background: linear-gradient(135deg, #000000, #4a0000);
+  box-shadow: 0 0 25px rgba(120, 0, 0, 0.9);
+  border: 1px solid #742a2a;
+}
+.frame-hell::before {
+  content: '👻'; position: absolute; top: -12px; left: -10px; font-size: 1.4rem; z-index: 10;
+  animation: floatParticle 3s infinite alternate;
+  filter: drop-shadow(0 0 5px green);
+}
+.frame-hell::after {
+  content: '🔥'; position: absolute; bottom: -12px; right: -10px; font-size: 1.4rem; z-index: 10;
+  animation: burnFlame 1s infinite alternate;
+  filter: drop-shadow(0 0 5px purple);
+}
+
+@keyframes flash {
+  0% { opacity: 1; filter: brightness(1); }
+  50% { opacity: 0.5; filter: brightness(1.5); }
+  100% { opacity: 1; filter: brightness(1); }
+}

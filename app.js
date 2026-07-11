@@ -70,9 +70,12 @@ app.locals.getTitleRarityClass = (val) => {
     if (v.includes('tân binh')) return 'game-title-common';
     if (v.includes('hiệp khách')) return 'game-title-rare';
     if (v.includes('tiên nhân') || v.includes('ma đạo')) return 'game-title-epic';
-    if (v.includes('kiếm tôn') || v.includes('long vương')) return 'game-title-legendary';
-    if (v.includes('sáng thế') || v.includes('hỗn độn')) return 'game-title-mythic';
-    if (v.includes('vô cực') || v.includes('thiên đạo quản trị')) return 'game-title-transcendent';
+    if (v.includes('kiếm tôn')) return 'game-title-legendary game-title-swordmaster';
+    if (v.includes('long vương')) return 'game-title-legendary game-title-dragonking';
+    if (v.includes('sáng thế')) return 'game-title-mythic game-title-creator';
+    if (v.includes('hỗn độn')) return 'game-title-mythic game-title-chaos';
+    if (v.includes('vô cực')) return 'game-title-transcendent game-title-infinity';
+    if (v.includes('thiên đạo quản trị') || v.includes('admin')) return 'game-title-transcendent game-title-admin-god';
 
     return 'game-title-default';
 };

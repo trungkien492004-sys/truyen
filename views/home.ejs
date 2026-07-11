@@ -883,10 +883,10 @@
                                     <img src="<%= reader.avatar || '/css/silly_duck.png' %>" alt="avatar" class="avatar-img" style="border-width: 1px;">
                                 </div>
                                 <% if (reader.equipped_badge) { %>
-                                    <% const badgeText = reader.equipped_badge.replace(/^([\uD800-\uDBFF][\uDC00-\uDFFF]|\S)\s*/, ''); %>
-                                    <div style="display: flex; flex-direction: column; align-items: center; margin-top: -6px; z-index: 2; line-height: 1.1;">
-                                        <span class="game-title <%= getTitleRarityClass(reader.equipped_badge) %>" style="font-size: 0.5rem; padding: 2px 12px; transform: scale(0.65); white-space: nowrap;"><%= badgeText %></span>
-                                        <span style="font-size: 0.45rem; letter-spacing: 1px; text-shadow: 0 0 2px rgba(255,255,255,0.3); transform: scale(0.65); margin-top: -6px;"><%= getStarsByChapters(reader.chapters_read) %></span>
+                                    
+                                    <div style="position: absolute; top: -8px; right: -25px; display: flex; flex-direction: column; align-items: center; z-index: 10; line-height: 1.1; transform: scale(0.65); transform-origin: top right;">
+                                        <span class="game-title <%= getTitleRarityClass(reader.equipped_badge) %>" style="font-size: 0.6rem; padding: 3px 12px; white-space: nowrap;"><%= badgeText %></span>
+                                        <span style="font-size: 0.5rem; letter-spacing: 1px; text-shadow: 0 0 2px rgba(255,255,255,0.8); margin-top: 2px;"><%= getStarsByChapters(reader.chapters_read) %></span>
                                     </div>
                                 <% } %>
                             </div>
