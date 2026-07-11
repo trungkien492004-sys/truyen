@@ -565,6 +565,31 @@
                 }
             }
 
+            // Touch Swipe Support for Mobile
+            let touchStartX = 0;
+            let touchEndX = 0;
+
+            function handleSwipe() {
+                const SWIPE_THRESHOLD = 50;
+                if (touchEndX < touchStartX - SWIPE_THRESHOLD) {
+                    nextBanner();
+                }
+                if (touchEndX > touchStartX + SWIPE_THRESHOLD) {
+                    prevBanner();
+                }
+            }
+
+            if (slideContainer) {
+                slideContainer.addEventListener('touchstart', e => {
+                    touchStartX = e.changedTouches[0].screenX;
+                }, {passive: true});
+
+                slideContainer.addEventListener('touchend', e => {
+                    touchEndX = e.changedTouches[0].screenX;
+                    handleSwipe();
+                }, {passive: true});
+            }
+
             document.addEventListener('DOMContentLoaded', () => {
                 <% banners.forEach((banner, index) => { %>
                     (function() {
