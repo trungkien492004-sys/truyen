@@ -280,10 +280,10 @@
 </div>
 
 <% if (typeof user !== 'undefined' && user) { %>
-    <!-- Widget ghi nhận đọc chương lấy EXP (Chạy ngầm không hiển thị giao diện) -->
-    <div id="read-progress-widget" style="display: none !important;">
+    <!-- Widget ghi nhận đọc chương lấy EXP -->
+    <div id="read-progress-widget" style="position: fixed; bottom: 20px; right: 20px; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; padding: 8px 15px; display: flex; align-items: center; gap: 8px; z-index: 1000; font-size: 0.85rem; color: var(--text-secondary); box-shadow: 0 4px 15px rgba(0,0,0,0.3); transition: all 0.3s ease;">
         <div style="width: 8px; height: 8px; border-radius: 50%; background: #f59e0b; animation: pulse 1.5s infinite;" id="progress-dot"></div>
-        <span id="progress-text">📖 Đang ghi nhận đọc chương... (còn <span id="progress-timer">2:30</span>)</span>
+        <span id="progress-text">Đang nhận EXP... (<span id="progress-timer">1:30</span>)</span>
     </div>
     
     <style>
