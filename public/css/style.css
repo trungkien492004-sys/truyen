@@ -2029,3 +2029,128 @@ footer {
         font-size: 1rem;
     }
 }
+
+/* =========================================
+   BỘ KHUNG MỚI: KIM LOẠI/PHA LÊ + HẠT SÁNG BAY QUANH (không cánh)
+   ========================================= */
+
+/* 1. Thép Đen (Dark Steel) - nam tính, kim loại xám-đen sắc lạnh */
+.avatar-frame.dark_steel {
+    border: 4px solid transparent;
+    padding: 4px;
+}
+.avatar-frame.dark_steel .avatar-glow {
+    display: block;
+    background: conic-gradient(from 0deg, #e8edf5, #94a3b8 25%, #2a3242 50%, #5b6779 75%, #e8edf5 100%);
+    animation: spinBorder 10s linear infinite;
+    inset: -4px;
+    z-index: 0;
+    box-shadow: 0 0 20px rgba(148,163,184,0.6), 0 0 36px rgba(30,35,45,0.5);
+}
+.avatar-frame.dark_steel::before {
+    content: "⚔"; position: absolute; top: -26px; left: 50%; transform: translateX(-50%);
+    font-size: 30px; color: #cfd6e0; z-index: 2;
+    filter: drop-shadow(0 0 8px #8d97a8);
+    animation: floatUp 2.4s infinite alternate ease-in-out;
+}
+.avatar-frame.dark_steel::after {
+    content: ""; position: absolute; inset: -14px; z-index: -1; border-radius: 50%;
+    background:
+        radial-gradient(circle 3px at 8% 30%, #e8edf5 90%, transparent 100%),
+        radial-gradient(circle 2px at 88% 22%, #e8edf5 90%, transparent 100%),
+        radial-gradient(circle 3px at 92% 70%, #cfd6e0 90%, transparent 100%),
+        radial-gradient(circle 2px at 12% 78%, #cfd6e0 90%, transparent 100%);
+    animation: spinSlow 14s linear infinite;
+    opacity: 0.9;
+}
+
+/* 2. Long Nham Thạch (Magma Dragon) - nam tính, đỏ cam lửa */
+.avatar-frame.magma_dragon {
+    border: 4px solid transparent;
+    padding: 4px;
+}
+.avatar-frame.magma_dragon .avatar-glow {
+    display: block;
+    background: conic-gradient(from 0deg, #ffdca0, #ff6a2e 25%, #5c0f0f 50%, #c23a12 75%, #ffdca0 100%);
+    animation: spinBorder 8s linear infinite;
+    inset: -4px;
+    z-index: 0;
+    box-shadow: 0 0 25px rgba(255,90,30,0.7), 0 0 40px rgba(150,20,10,0.5);
+}
+.avatar-frame.magma_dragon::before {
+    content: "🐲"; position: absolute; top: -28px; left: 50%; transform: translateX(-50%);
+    font-size: 32px; z-index: 2;
+    filter: drop-shadow(0 0 10px #ff6a2e);
+    animation: floatUp 2s infinite alternate ease-in-out;
+}
+.avatar-frame.magma_dragon::after {
+    content: ""; position: absolute; inset: -14px; z-index: -1; border-radius: 50%;
+    background:
+        radial-gradient(circle 3px at 10% 25%, #ffdca0 90%, transparent 100%),
+        radial-gradient(circle 2px at 85% 18%, #ff9448 90%, transparent 100%),
+        radial-gradient(circle 3px at 90% 75%, #ff6a2e 90%, transparent 100%),
+        radial-gradient(circle 2px at 15% 82%, #ffdca0 90%, transparent 100%);
+    animation: spinSlow 11s linear infinite reverse;
+    opacity: 0.9;
+}
+
+/* 3. Pha Lê Băng (Ice Crystal) - nữ tính, trắng xanh thanh thoát */
+.avatar-frame.ice_crystal {
+    border: 4px solid transparent;
+    padding: 4px;
+}
+.avatar-frame.ice_crystal .avatar-glow {
+    display: block;
+    background: conic-gradient(from 0deg, #ffffff, #bfe9ff 25%, #5fc8ff 50%, #e8f8ff 75%, #ffffff 100%);
+    animation: spinBorder 12s linear infinite;
+    inset: -4px;
+    z-index: 0;
+    box-shadow: 0 0 25px rgba(140,215,255,0.7), 0 0 40px rgba(100,190,255,0.4);
+}
+.avatar-frame.ice_crystal::before {
+    content: "❋"; position: absolute; top: -26px; left: 50%; transform: translateX(-50%);
+    font-size: 30px; color: #e8f8ff; z-index: 2;
+    filter: drop-shadow(0 0 10px #5fc8ff);
+    animation: spinSlow 8s linear infinite;
+}
+.avatar-frame.ice_crystal::after {
+    content: ""; position: absolute; inset: -14px; z-index: -1; border-radius: 50%;
+    background:
+        radial-gradient(circle 3px at 12% 28%, #ffffff 90%, transparent 100%),
+        radial-gradient(circle 2px at 86% 20%, #cdeeff 90%, transparent 100%),
+        radial-gradient(circle 3px at 90% 72%, #bfe9ff 90%, transparent 100%),
+        radial-gradient(circle 2px at 14% 80%, #ffffff 90%, transparent 100%),
+        radial-gradient(circle 2px at 50% 8%, #e8f8ff 90%, transparent 100%);
+    animation: spinSlow 16s linear infinite;
+    opacity: 0.95;
+}
+
+/* 4. Hoàng Kim Hồng (Rose Gold) - nữ tính, hồng vàng sang trọng */
+.avatar-frame.rose_gold {
+    border: 4px solid transparent;
+    padding: 4px;
+}
+.avatar-frame.rose_gold .avatar-glow {
+    display: block;
+    background: conic-gradient(from 0deg, #fff1e8, #f2b8c6 25%, #c97b8e 50%, #f7d7c4 75%, #fff1e8 100%);
+    animation: spinBorder 11s linear infinite;
+    inset: -4px;
+    z-index: 0;
+    box-shadow: 0 0 22px rgba(233,160,177,0.7), 0 0 38px rgba(201,123,142,0.4);
+}
+.avatar-frame.rose_gold::before {
+    content: "❀"; position: absolute; top: -26px; left: 50%; transform: translateX(-50%);
+    font-size: 30px; color: #f2b8c6; z-index: 2;
+    filter: drop-shadow(0 0 10px #e69cad);
+    animation: floatUp 2.6s infinite alternate ease-in-out;
+}
+.avatar-frame.rose_gold::after {
+    content: ""; position: absolute; inset: -14px; z-index: -1; border-radius: 50%;
+    background:
+        radial-gradient(circle 3px at 10% 26%, #fff1e8 90%, transparent 100%),
+        radial-gradient(circle 2px at 87% 20%, #f7d7c4 90%, transparent 100%),
+        radial-gradient(circle 3px at 91% 74%, #f2b8c6 90%, transparent 100%),
+        radial-gradient(circle 2px at 13% 80%, #fff1e8 90%, transparent 100%);
+    animation: spinSlow 13s linear infinite reverse;
+    opacity: 0.9;
+}

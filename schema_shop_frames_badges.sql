@@ -16,7 +16,11 @@ INSERT INTO shop_items (name, type, price_exp, description, value) VALUES
 ('Khung Ma Vương', 'frame', 250, 'Khung viền bóng tối huyền bí, dành cho những kẻ chinh phục bóng đêm.', 'demon'),
 ('Khung Băng Giá', 'frame', 200, 'Khung viền lạnh lẽo tinh khiết như băng tuyết vĩnh cửu.', 'ice'),
 ('Khung Hỏa Diệm', 'frame', 200, 'Khung viền rực lửa nóng bỏng, thể hiện nhiệt huyết đọc truyện không ngừng.', 'fire'),
-('Khung Chiến Cơ', 'frame', 300, 'Khung viền công nghệ cao, quét tia sáng liên tục theo phong cách cơ khí tương lai.', 'cyber_v2')
+('Khung Chiến Cơ', 'frame', 300, 'Khung viền công nghệ cao, quét tia sáng liên tục theo phong cách cơ khí tương lai.', 'cyber_v2'),
+('Khung Thép Đen', 'frame', 280, 'Khung viền kim loại xám đen sắc lạnh, phong cách chiến binh mạnh mẽ.', 'dark_steel'),
+('Khung Long Nham Thạch', 'frame', 380, 'Khung viền đỏ cam rực lửa, mang sức mạnh của rồng lửa cổ đại.', 'magma_dragon'),
+('Khung Pha Lê Băng', 'frame', 280, 'Khung viền trắng xanh pha lê, thanh thoát và tinh khiết.', 'ice_crystal'),
+('Khung Hoàng Kim Hồng', 'frame', 320, 'Khung viền hồng vàng sang trọng, mềm mại và quý phái.', 'rose_gold')
 ;
 
 -- ===== HUY HIỆU CHAT (type = 'badge') =====
