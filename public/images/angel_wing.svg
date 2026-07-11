@@ -1,0 +1,572 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-180 -250 300 400" width="100%" height="100%">
+    <defs>
+        <linearGradient id="frontGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#FFFFFF" />
+            <stop offset="100%" stop-color="#FFFDF8" />
+        </linearGradient>
+        <linearGradient id="midGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#F6F4FF" />
+            <stop offset="100%" stop-color="#FFFFFF" />
+        </linearGradient>
+        <linearGradient id="shadowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#CFC6E8" />
+            <stop offset="100%" stop-color="#EAE5F5" />
+        </linearGradient>
+        
+        <style>
+            .wing-container { filter: drop-shadow(0 0 15px rgba(255,240,150,0.8)); }
+
+            .l0.i0 {
+                animation: float0_0 3s ease-in-out infinite alternate;
+                animation-delay: 0.00s;
+            }
+            @keyframes float0_0 {
+                0% { transform: rotate(-80deg); }
+                100% { transform: rotate(-75deg) scale(1.03); }
+            }
+            
+            .l0.i1 {
+                animation: float0_1 3s ease-in-out infinite alternate;
+                animation-delay: -0.15s;
+            }
+            @keyframes float0_1 {
+                0% { transform: rotate(-70.58823529411765deg); }
+                100% { transform: rotate(-65.58823529411765deg) scale(1.03); }
+            }
+            
+            .l0.i2 {
+                animation: float0_2 3s ease-in-out infinite alternate;
+                animation-delay: -0.30s;
+            }
+            @keyframes float0_2 {
+                0% { transform: rotate(-61.17647058823529deg); }
+                100% { transform: rotate(-56.17647058823529deg) scale(1.03); }
+            }
+            
+            .l0.i3 {
+                animation: float0_3 3s ease-in-out infinite alternate;
+                animation-delay: -0.45s;
+            }
+            @keyframes float0_3 {
+                0% { transform: rotate(-51.76470588235294deg); }
+                100% { transform: rotate(-46.76470588235294deg) scale(1.03); }
+            }
+            
+            .l0.i4 {
+                animation: float0_4 3s ease-in-out infinite alternate;
+                animation-delay: -0.60s;
+            }
+            @keyframes float0_4 {
+                0% { transform: rotate(-42.35294117647059deg); }
+                100% { transform: rotate(-37.35294117647059deg) scale(1.03); }
+            }
+            
+            .l0.i5 {
+                animation: float0_5 3s ease-in-out infinite alternate;
+                animation-delay: -0.75s;
+            }
+            @keyframes float0_5 {
+                0% { transform: rotate(-32.94117647058823deg); }
+                100% { transform: rotate(-27.941176470588232deg) scale(1.03); }
+            }
+            
+            .l0.i6 {
+                animation: float0_6 3s ease-in-out infinite alternate;
+                animation-delay: -0.90s;
+            }
+            @keyframes float0_6 {
+                0% { transform: rotate(-23.529411764705877deg); }
+                100% { transform: rotate(-18.529411764705877deg) scale(1.03); }
+            }
+            
+            .l0.i7 {
+                animation: float0_7 3s ease-in-out infinite alternate;
+                animation-delay: -1.05s;
+            }
+            @keyframes float0_7 {
+                0% { transform: rotate(-14.117647058823536deg); }
+                100% { transform: rotate(-9.117647058823536deg) scale(1.03); }
+            }
+            
+            .l0.i8 {
+                animation: float0_8 3s ease-in-out infinite alternate;
+                animation-delay: -1.20s;
+            }
+            @keyframes float0_8 {
+                0% { transform: rotate(-4.705882352941174deg); }
+                100% { transform: rotate(0.29411764705882604deg) scale(1.03); }
+            }
+            
+            .l0.i9 {
+                animation: float0_9 3s ease-in-out infinite alternate;
+                animation-delay: -1.35s;
+            }
+            @keyframes float0_9 {
+                0% { transform: rotate(4.705882352941174deg); }
+                100% { transform: rotate(9.705882352941174deg) scale(1.03); }
+            }
+            
+            .l0.i10 {
+                animation: float0_10 3s ease-in-out infinite alternate;
+                animation-delay: -1.50s;
+            }
+            @keyframes float0_10 {
+                0% { transform: rotate(14.117647058823536deg); }
+                100% { transform: rotate(19.117647058823536deg) scale(1.03); }
+            }
+            
+            .l0.i11 {
+                animation: float0_11 3s ease-in-out infinite alternate;
+                animation-delay: -1.65s;
+            }
+            @keyframes float0_11 {
+                0% { transform: rotate(23.529411764705884deg); }
+                100% { transform: rotate(28.529411764705884deg) scale(1.03); }
+            }
+            
+            .l0.i12 {
+                animation: float0_12 3s ease-in-out infinite alternate;
+                animation-delay: -1.80s;
+            }
+            @keyframes float0_12 {
+                0% { transform: rotate(32.941176470588246deg); }
+                100% { transform: rotate(37.941176470588246deg) scale(1.03); }
+            }
+            
+            .l0.i13 {
+                animation: float0_13 3s ease-in-out infinite alternate;
+                animation-delay: -1.95s;
+            }
+            @keyframes float0_13 {
+                0% { transform: rotate(42.35294117647058deg); }
+                100% { transform: rotate(47.35294117647058deg) scale(1.03); }
+            }
+            
+            .l0.i14 {
+                animation: float0_14 3s ease-in-out infinite alternate;
+                animation-delay: -2.10s;
+            }
+            @keyframes float0_14 {
+                0% { transform: rotate(51.76470588235293deg); }
+                100% { transform: rotate(56.76470588235293deg) scale(1.03); }
+            }
+            
+            .l0.i15 {
+                animation: float0_15 3s ease-in-out infinite alternate;
+                animation-delay: -2.25s;
+            }
+            @keyframes float0_15 {
+                0% { transform: rotate(61.176470588235304deg); }
+                100% { transform: rotate(66.1764705882353deg) scale(1.03); }
+            }
+            
+            .l0.i16 {
+                animation: float0_16 3s ease-in-out infinite alternate;
+                animation-delay: -2.40s;
+            }
+            @keyframes float0_16 {
+                0% { transform: rotate(70.58823529411765deg); }
+                100% { transform: rotate(75.58823529411765deg) scale(1.03); }
+            }
+            
+            .l0.i17 {
+                animation: float0_17 3s ease-in-out infinite alternate;
+                animation-delay: -2.55s;
+            }
+            @keyframes float0_17 {
+                0% { transform: rotate(80deg); }
+                100% { transform: rotate(85deg) scale(1.03); }
+            }
+            
+            .l1.i0 {
+                animation: float1_0 3s ease-in-out infinite alternate;
+                animation-delay: 0.00s;
+            }
+            @keyframes float1_0 {
+                0% { transform: rotate(-80deg); }
+                100% { transform: rotate(-75deg) scale(1.03); }
+            }
+            
+            .l1.i1 {
+                animation: float1_1 3s ease-in-out infinite alternate;
+                animation-delay: -0.15s;
+            }
+            @keyframes float1_1 {
+                0% { transform: rotate(-67.6923076923077deg); }
+                100% { transform: rotate(-62.69230769230769deg) scale(1.03); }
+            }
+            
+            .l1.i2 {
+                animation: float1_2 3s ease-in-out infinite alternate;
+                animation-delay: -0.30s;
+            }
+            @keyframes float1_2 {
+                0% { transform: rotate(-55.38461538461539deg); }
+                100% { transform: rotate(-50.38461538461539deg) scale(1.03); }
+            }
+            
+            .l1.i3 {
+                animation: float1_3 3s ease-in-out infinite alternate;
+                animation-delay: -0.45s;
+            }
+            @keyframes float1_3 {
+                0% { transform: rotate(-43.07692307692307deg); }
+                100% { transform: rotate(-38.07692307692307deg) scale(1.03); }
+            }
+            
+            .l1.i4 {
+                animation: float1_4 3s ease-in-out infinite alternate;
+                animation-delay: -0.60s;
+            }
+            @keyframes float1_4 {
+                0% { transform: rotate(-30.769230769230766deg); }
+                100% { transform: rotate(-25.769230769230766deg) scale(1.03); }
+            }
+            
+            .l1.i5 {
+                animation: float1_5 3s ease-in-out infinite alternate;
+                animation-delay: -0.75s;
+            }
+            @keyframes float1_5 {
+                0% { transform: rotate(-18.46153846153846deg); }
+                100% { transform: rotate(-13.46153846153846deg) scale(1.03); }
+            }
+            
+            .l1.i6 {
+                animation: float1_6 3s ease-in-out infinite alternate;
+                animation-delay: -0.90s;
+            }
+            @keyframes float1_6 {
+                0% { transform: rotate(-6.153846153846146deg); }
+                100% { transform: rotate(-1.1538461538461462deg) scale(1.03); }
+            }
+            
+            .l1.i7 {
+                animation: float1_7 3s ease-in-out infinite alternate;
+                animation-delay: -1.05s;
+            }
+            @keyframes float1_7 {
+                0% { transform: rotate(6.153846153846146deg); }
+                100% { transform: rotate(11.153846153846146deg) scale(1.03); }
+            }
+            
+            .l1.i8 {
+                animation: float1_8 3s ease-in-out infinite alternate;
+                animation-delay: -1.20s;
+            }
+            @keyframes float1_8 {
+                0% { transform: rotate(18.461538461538467deg); }
+                100% { transform: rotate(23.461538461538467deg) scale(1.03); }
+            }
+            
+            .l1.i9 {
+                animation: float1_9 3s ease-in-out infinite alternate;
+                animation-delay: -1.35s;
+            }
+            @keyframes float1_9 {
+                0% { transform: rotate(30.769230769230774deg); }
+                100% { transform: rotate(35.769230769230774deg) scale(1.03); }
+            }
+            
+            .l1.i10 {
+                animation: float1_10 3s ease-in-out infinite alternate;
+                animation-delay: -1.50s;
+            }
+            @keyframes float1_10 {
+                0% { transform: rotate(43.07692307692308deg); }
+                100% { transform: rotate(48.07692307692308deg) scale(1.03); }
+            }
+            
+            .l1.i11 {
+                animation: float1_11 3s ease-in-out infinite alternate;
+                animation-delay: -1.65s;
+            }
+            @keyframes float1_11 {
+                0% { transform: rotate(55.38461538461539deg); }
+                100% { transform: rotate(60.38461538461539deg) scale(1.03); }
+            }
+            
+            .l1.i12 {
+                animation: float1_12 3s ease-in-out infinite alternate;
+                animation-delay: -1.80s;
+            }
+            @keyframes float1_12 {
+                0% { transform: rotate(67.69230769230771deg); }
+                100% { transform: rotate(72.69230769230771deg) scale(1.03); }
+            }
+            
+            .l1.i13 {
+                animation: float1_13 3s ease-in-out infinite alternate;
+                animation-delay: -1.95s;
+            }
+            @keyframes float1_13 {
+                0% { transform: rotate(80deg); }
+                100% { transform: rotate(85deg) scale(1.03); }
+            }
+            
+            .l2.i0 {
+                animation: float2_0 3s ease-in-out infinite alternate;
+                animation-delay: 0.00s;
+            }
+            @keyframes float2_0 {
+                0% { transform: rotate(-80deg); }
+                100% { transform: rotate(-75deg) scale(1.03); }
+            }
+            
+            .l2.i1 {
+                animation: float2_1 3s ease-in-out infinite alternate;
+                animation-delay: -0.15s;
+            }
+            @keyframes float2_1 {
+                0% { transform: rotate(-62.22222222222222deg); }
+                100% { transform: rotate(-57.22222222222222deg) scale(1.03); }
+            }
+            
+            .l2.i2 {
+                animation: float2_2 3s ease-in-out infinite alternate;
+                animation-delay: -0.30s;
+            }
+            @keyframes float2_2 {
+                0% { transform: rotate(-44.44444444444444deg); }
+                100% { transform: rotate(-39.44444444444444deg) scale(1.03); }
+            }
+            
+            .l2.i3 {
+                animation: float2_3 3s ease-in-out infinite alternate;
+                animation-delay: -0.45s;
+            }
+            @keyframes float2_3 {
+                0% { transform: rotate(-26.66666666666667deg); }
+                100% { transform: rotate(-21.66666666666667deg) scale(1.03); }
+            }
+            
+            .l2.i4 {
+                animation: float2_4 3s ease-in-out infinite alternate;
+                animation-delay: -0.60s;
+            }
+            @keyframes float2_4 {
+                0% { transform: rotate(-8.888888888888886deg); }
+                100% { transform: rotate(-3.8888888888888857deg) scale(1.03); }
+            }
+            
+            .l2.i5 {
+                animation: float2_5 3s ease-in-out infinite alternate;
+                animation-delay: -0.75s;
+            }
+            @keyframes float2_5 {
+                0% { transform: rotate(8.888888888888886deg); }
+                100% { transform: rotate(13.888888888888886deg) scale(1.03); }
+            }
+            
+            .l2.i6 {
+                animation: float2_6 3s ease-in-out infinite alternate;
+                animation-delay: -0.90s;
+            }
+            @keyframes float2_6 {
+                0% { transform: rotate(26.666666666666657deg); }
+                100% { transform: rotate(31.666666666666657deg) scale(1.03); }
+            }
+            
+            .l2.i7 {
+                animation: float2_7 3s ease-in-out infinite alternate;
+                animation-delay: -1.05s;
+            }
+            @keyframes float2_7 {
+                0% { transform: rotate(44.44444444444444deg); }
+                100% { transform: rotate(49.44444444444444deg) scale(1.03); }
+            }
+            
+            .l2.i8 {
+                animation: float2_8 3s ease-in-out infinite alternate;
+                animation-delay: -1.20s;
+            }
+            @keyframes float2_8 {
+                0% { transform: rotate(62.22222222222223deg); }
+                100% { transform: rotate(67.22222222222223deg) scale(1.03); }
+            }
+            
+            .l2.i9 {
+                animation: float2_9 3s ease-in-out infinite alternate;
+                animation-delay: -1.35s;
+            }
+            @keyframes float2_9 {
+                0% { transform: rotate(80deg); }
+                100% { transform: rotate(85deg) scale(1.03); }
+            }
+            
+        </style>
+    </defs>
+    
+    <g class="wing-container" transform="translate(0, 50) rotate(30)">
+        
+            <g class="feather l0 i0" style="transform-origin: 0 0;">
+                <path d="M 0,0 C 20,-30 20,-120 0,-150 C -20,-120 -20,-30 0,0" fill="url(#shadowGrad)" stroke="rgba(255,215,0,0.5)" stroke-width="1.5" />
+                <path d="M 0,0 Q 0,-75 0,-150" stroke="rgba(255,255,255,0.7)" stroke-width="1" fill="none" />
+            </g>
+            <g class="feather l0 i1" style="transform-origin: 0 0;">
+                <path d="M 0,0 C 19.64705882352941,-28.764705882352946 19.64705882352941,-115.05882352941178 0,-143.82352941176472 C -19.64705882352941,-115.05882352941178 -19.64705882352941,-28.764705882352946 0,0" fill="url(#shadowGrad)" stroke="rgba(255,215,0,0.5)" stroke-width="1.5" />
+                <path d="M 0,0 Q 0,-71.91176470588236 0,-143.82352941176472" stroke="rgba(255,255,255,0.7)" stroke-width="1" fill="none" />
+            </g>
+            <g class="feather l0 i2" style="transform-origin: 0 0;">
+                <path d="M 0,0 C 19.294117647058822,-27.52941176470588 19.294117647058822,-110.11764705882352 0,-137.6470588235294 C -19.294117647058822,-110.11764705882352 -19.294117647058822,-27.52941176470588 0,0" fill="url(#shadowGrad)" stroke="rgba(255,215,0,0.5)" stroke-width="1.5" />
+                <path d="M 0,0 Q 0,-68.8235294117647 0,-137.6470588235294" stroke="rgba(255,255,255,0.7)" stroke-width="1" fill="none" />
+            </g>
+            <g class="feather l0 i3" style="transform-origin: 0 0;">
+                <path d="M 0,0 C 18.941176470588236,-26.294117647058826 18.941176470588236,-105.1764705882353 0,-131.47058823529412 C -18.941176470588236,-105.1764705882353 -18.941176470588236,-26.294117647058826 0,0" fill="url(#shadowGrad)" stroke="rgba(255,215,0,0.5)" stroke-width="1.5" />
+                <path d="M 0,0 Q 0,-65.73529411764706 0,-131.47058823529412" stroke="rgba(255,255,255,0.7)" stroke-width="1" fill="none" />
+            </g>
+            <g class="feather l0 i4" style="transform-origin: 0 0;">
+                <path d="M 0,0 C 18.58823529411765,-25.058823529411768 18.58823529411765,-100.23529411764707 0,-125.29411764705883 C -18.58823529411765,-100.23529411764707 -18.58823529411765,-25.058823529411768 0,0" fill="url(#shadowGrad)" stroke="rgba(255,215,0,0.5)" stroke-width="1.5" />
+                <path d="M 0,0 Q 0,-62.64705882352941 0,-125.29411764705883" stroke="rgba(255,255,255,0.7)" stroke-width="1" fill="none" />
+            </g>
+            <g class="feather l0 i5" style="transform-origin: 0 0;">
+                <path d="M 0,0 C 18.235294117647058,-23.82352941176471 18.235294117647058,-95.29411764705884 0,-119.11764705882354 C -18.235294117647058,-95.29411764705884 -18.235294117647058,-23.82352941176471 0,0" fill="url(#shadowGrad)" stroke="rgba(255,215,0,0.5)" stroke-width="1.5" />
+                <path d="M 0,0 Q 0,-59.55882352941177 0,-119.11764705882354" stroke="rgba(255,255,255,0.7)" stroke-width="1" fill="none" />
+            </g>
+            <g class="feather l0 i6" style="transform-origin: 0 0;">
+                <path d="M 0,0 C 17.88235294117647,-22.58823529411765 17.88235294117647,-90.3529411764706 0,-112.94117647058823 C -17.88235294117647,-90.3529411764706 -17.88235294117647,-22.58823529411765 0,0" fill="url(#shadowGrad)" stroke="rgba(255,215,0,0.5)" stroke-width="1.5" />
+                <path d="M 0,0 Q 0,-56.470588235294116 0,-112.94117647058823" stroke="rgba(255,255,255,0.7)" stroke-width="1" fill="none" />
+            </g>
+            <g class="feather l0 i7" style="transform-origin: 0 0;">
+                <path d="M 0,0 C 17.529411764705884,-21.35294117647059 17.529411764705884,-85.41176470588236 0,-106.76470588235294 C -17.529411764705884,-85.41176470588236 -17.529411764705884,-21.35294117647059 0,0" fill="url(#shadowGrad)" stroke="rgba(255,215,0,0.5)" stroke-width="1.5" />
+                <path d="M 0,0 Q 0,-53.38235294117647 0,-106.76470588235294" stroke="rgba(255,255,255,0.7)" stroke-width="1" fill="none" />
+            </g>
+            <g class="feather l0 i8" style="transform-origin: 0 0;">
+                <path d="M 0,0 C 17.176470588235297,-20.117647058823533 17.176470588235297,-80.47058823529413 0,-100.58823529411765 C -17.176470588235297,-80.47058823529413 -17.176470588235297,-20.117647058823533 0,0" fill="url(#shadowGrad)" stroke="rgba(255,215,0,0.5)" stroke-width="1.5" />
+                <path d="M 0,0 Q 0,-50.294117647058826 0,-100.58823529411765" stroke="rgba(255,255,255,0.7)" stroke-width="1" fill="none" />
+            </g>
+            <g class="feather l0 i9" style="transform-origin: 0 0;">
+                <path d="M 0,0 C 16.823529411764707,-18.88235294117647 16.823529411764707,-75.52941176470588 0,-94.41176470588235 C -16.823529411764707,-75.52941176470588 -16.823529411764707,-18.88235294117647 0,0" fill="url(#shadowGrad)" stroke="rgba(255,215,0,0.5)" stroke-width="1.5" />
+                <path d="M 0,0 Q 0,-47.205882352941174 0,-94.41176470588235" stroke="rgba(255,255,255,0.7)" stroke-width="1" fill="none" />
+            </g>
+            <g class="feather l0 i10" style="transform-origin: 0 0;">
+                <path d="M 0,0 C 16.470588235294116,-17.647058823529413 16.470588235294116,-70.58823529411765 0,-88.23529411764706 C -16.470588235294116,-70.58823529411765 -16.470588235294116,-17.647058823529413 0,0" fill="url(#shadowGrad)" stroke="rgba(255,215,0,0.5)" stroke-width="1.5" />
+                <path d="M 0,0 Q 0,-44.11764705882353 0,-88.23529411764706" stroke="rgba(255,255,255,0.7)" stroke-width="1" fill="none" />
+            </g>
+            <g class="feather l0 i11" style="transform-origin: 0 0;">
+                <path d="M 0,0 C 16.11764705882353,-16.411764705882355 16.11764705882353,-65.64705882352942 0,-82.05882352941177 C -16.11764705882353,-65.64705882352942 -16.11764705882353,-16.411764705882355 0,0" fill="url(#shadowGrad)" stroke="rgba(255,215,0,0.5)" stroke-width="1.5" />
+                <path d="M 0,0 Q 0,-41.029411764705884 0,-82.05882352941177" stroke="rgba(255,255,255,0.7)" stroke-width="1" fill="none" />
+            </g>
+            <g class="feather l0 i12" style="transform-origin: 0 0;">
+                <path d="M 0,0 C 15.76470588235294,-15.176470588235293 15.76470588235294,-60.705882352941174 0,-75.88235294117646 C -15.76470588235294,-60.705882352941174 -15.76470588235294,-15.176470588235293 0,0" fill="url(#shadowGrad)" stroke="rgba(255,215,0,0.5)" stroke-width="1.5" />
+                <path d="M 0,0 Q 0,-37.94117647058823 0,-75.88235294117646" stroke="rgba(255,255,255,0.7)" stroke-width="1" fill="none" />
+            </g>
+            <g class="feather l0 i13" style="transform-origin: 0 0;">
+                <path d="M 0,0 C 15.411764705882353,-13.941176470588239 15.411764705882353,-55.764705882352956 0,-69.70588235294119 C -15.411764705882353,-55.764705882352956 -15.411764705882353,-13.941176470588239 0,0" fill="url(#shadowGrad)" stroke="rgba(255,215,0,0.5)" stroke-width="1.5" />
+                <path d="M 0,0 Q 0,-34.852941176470594 0,-69.70588235294119" stroke="rgba(255,255,255,0.7)" stroke-width="1" fill="none" />
+            </g>
+            <g class="feather l0 i14" style="transform-origin: 0 0;">
+                <path d="M 0,0 C 15.058823529411764,-12.70588235294118 15.058823529411764,-50.82352941176472 0,-63.52941176470589 C -15.058823529411764,-50.82352941176472 -15.058823529411764,-12.70588235294118 0,0" fill="url(#shadowGrad)" stroke="rgba(255,215,0,0.5)" stroke-width="1.5" />
+                <path d="M 0,0 Q 0,-31.764705882352946 0,-63.52941176470589" stroke="rgba(255,255,255,0.7)" stroke-width="1" fill="none" />
+            </g>
+            <g class="feather l0 i15" style="transform-origin: 0 0;">
+                <path d="M 0,0 C 14.705882352941178,-11.470588235294121 14.705882352941178,-45.882352941176485 0,-57.3529411764706 C -14.705882352941178,-45.882352941176485 -14.705882352941178,-11.470588235294121 0,0" fill="url(#shadowGrad)" stroke="rgba(255,215,0,0.5)" stroke-width="1.5" />
+                <path d="M 0,0 Q 0,-28.6764705882353 0,-57.3529411764706" stroke="rgba(255,255,255,0.7)" stroke-width="1" fill="none" />
+            </g>
+            <g class="feather l0 i16" style="transform-origin: 0 0;">
+                <path d="M 0,0 C 14.352941176470589,-10.23529411764706 14.352941176470589,-40.94117647058824 0,-51.1764705882353 C -14.352941176470589,-40.94117647058824 -14.352941176470589,-10.23529411764706 0,0" fill="url(#shadowGrad)" stroke="rgba(255,215,0,0.5)" stroke-width="1.5" />
+                <path d="M 0,0 Q 0,-25.58823529411765 0,-51.1764705882353" stroke="rgba(255,255,255,0.7)" stroke-width="1" fill="none" />
+            </g>
+            <g class="feather l0 i17" style="transform-origin: 0 0;">
+                <path d="M 0,0 C 14,-9.000000000000002 14,-36.00000000000001 0,-45.00000000000001 C -14,-36.00000000000001 -14,-9.000000000000002 0,0" fill="url(#shadowGrad)" stroke="rgba(255,215,0,0.5)" stroke-width="1.5" />
+                <path d="M 0,0 Q 0,-22.500000000000004 0,-45.00000000000001" stroke="rgba(255,255,255,0.7)" stroke-width="1" fill="none" />
+            </g>
+            <g class="feather l1 i0" style="transform-origin: 0 0;">
+                <path d="M 0,0 C 16,-24 16,-96 0,-120 C -16,-96 -16,-24 0,0" fill="url(#midGrad)" stroke="rgba(255,215,0,0.5)" stroke-width="1.5" />
+                <path d="M 0,0 Q 0,-60 0,-120" stroke="rgba(255,255,255,0.7)" stroke-width="1" fill="none" />
+            </g>
+            <g class="feather l1 i1" style="transform-origin: 0 0;">
+                <path d="M 0,0 C 15.63076923076923,-22.70769230769231 15.63076923076923,-90.83076923076923 0,-113.53846153846153 C -15.63076923076923,-90.83076923076923 -15.63076923076923,-22.70769230769231 0,0" fill="url(#midGrad)" stroke="rgba(255,215,0,0.5)" stroke-width="1.5" />
+                <path d="M 0,0 Q 0,-56.76923076923077 0,-113.53846153846153" stroke="rgba(255,255,255,0.7)" stroke-width="1" fill="none" />
+            </g>
+            <g class="feather l1 i2" style="transform-origin: 0 0;">
+                <path d="M 0,0 C 15.261538461538462,-21.415384615384617 15.261538461538462,-85.66153846153847 0,-107.07692307692308 C -15.261538461538462,-85.66153846153847 -15.261538461538462,-21.415384615384617 0,0" fill="url(#midGrad)" stroke="rgba(255,215,0,0.5)" stroke-width="1.5" />
+                <path d="M 0,0 Q 0,-53.53846153846154 0,-107.07692307692308" stroke="rgba(255,255,255,0.7)" stroke-width="1" fill="none" />
+            </g>
+            <g class="feather l1 i3" style="transform-origin: 0 0;">
+                <path d="M 0,0 C 14.892307692307694,-20.123076923076926 14.892307692307694,-80.4923076923077 0,-100.61538461538463 C -14.892307692307694,-80.4923076923077 -14.892307692307694,-20.123076923076926 0,0" fill="url(#midGrad)" stroke="rgba(255,215,0,0.5)" stroke-width="1.5" />
+                <path d="M 0,0 Q 0,-50.307692307692314 0,-100.61538461538463" stroke="rgba(255,255,255,0.7)" stroke-width="1" fill="none" />
+            </g>
+            <g class="feather l1 i4" style="transform-origin: 0 0;">
+                <path d="M 0,0 C 14.523076923076923,-18.83076923076923 14.523076923076923,-75.32307692307693 0,-94.15384615384616 C -14.523076923076923,-75.32307692307693 -14.523076923076923,-18.83076923076923 0,0" fill="url(#midGrad)" stroke="rgba(255,215,0,0.5)" stroke-width="1.5" />
+                <path d="M 0,0 Q 0,-47.07692307692308 0,-94.15384615384616" stroke="rgba(255,255,255,0.7)" stroke-width="1" fill="none" />
+            </g>
+            <g class="feather l1 i5" style="transform-origin: 0 0;">
+                <path d="M 0,0 C 14.153846153846155,-17.538461538461544 14.153846153846155,-70.15384615384617 0,-87.69230769230771 C -14.153846153846155,-70.15384615384617 -14.153846153846155,-17.538461538461544 0,0" fill="url(#midGrad)" stroke="rgba(255,215,0,0.5)" stroke-width="1.5" />
+                <path d="M 0,0 Q 0,-43.846153846153854 0,-87.69230769230771" stroke="rgba(255,255,255,0.7)" stroke-width="1" fill="none" />
+            </g>
+            <g class="feather l1 i6" style="transform-origin: 0 0;">
+                <path d="M 0,0 C 13.784615384615387,-16.24615384615385 13.784615384615387,-64.9846153846154 0,-81.23076923076924 C -13.784615384615387,-64.9846153846154 -13.784615384615387,-16.24615384615385 0,0" fill="url(#midGrad)" stroke="rgba(255,215,0,0.5)" stroke-width="1.5" />
+                <path d="M 0,0 Q 0,-40.61538461538462 0,-81.23076923076924" stroke="rgba(255,255,255,0.7)" stroke-width="1" fill="none" />
+            </g>
+            <g class="feather l1 i7" style="transform-origin: 0 0;">
+                <path d="M 0,0 C 13.415384615384617,-14.953846153846156 13.415384615384617,-59.81538461538462 0,-74.76923076923077 C -13.415384615384617,-59.81538461538462 -13.415384615384617,-14.953846153846156 0,0" fill="url(#midGrad)" stroke="rgba(255,215,0,0.5)" stroke-width="1.5" />
+                <path d="M 0,0 Q 0,-37.38461538461539 0,-74.76923076923077" stroke="rgba(255,255,255,0.7)" stroke-width="1" fill="none" />
+            </g>
+            <g class="feather l1 i8" style="transform-origin: 0 0;">
+                <path d="M 0,0 C 13.046153846153846,-13.661538461538463 13.046153846153846,-54.64615384615385 0,-68.3076923076923 C -13.046153846153846,-54.64615384615385 -13.046153846153846,-13.661538461538463 0,0" fill="url(#midGrad)" stroke="rgba(255,215,0,0.5)" stroke-width="1.5" />
+                <path d="M 0,0 Q 0,-34.15384615384615 0,-68.3076923076923" stroke="rgba(255,255,255,0.7)" stroke-width="1" fill="none" />
+            </g>
+            <g class="feather l1 i9" style="transform-origin: 0 0;">
+                <path d="M 0,0 C 12.676923076923078,-12.369230769230773 12.676923076923078,-49.47692307692309 0,-61.84615384615386 C -12.676923076923078,-49.47692307692309 -12.676923076923078,-12.369230769230773 0,0" fill="url(#midGrad)" stroke="rgba(255,215,0,0.5)" stroke-width="1.5" />
+                <path d="M 0,0 Q 0,-30.92307692307693 0,-61.84615384615386" stroke="rgba(255,255,255,0.7)" stroke-width="1" fill="none" />
+            </g>
+            <g class="feather l1 i10" style="transform-origin: 0 0;">
+                <path d="M 0,0 C 12.307692307692307,-11.07692307692308 12.307692307692307,-44.30769230769232 0,-55.384615384615394 C -12.307692307692307,-44.30769230769232 -12.307692307692307,-11.07692307692308 0,0" fill="url(#midGrad)" stroke="rgba(255,215,0,0.5)" stroke-width="1.5" />
+                <path d="M 0,0 Q 0,-27.692307692307697 0,-55.384615384615394" stroke="rgba(255,255,255,0.7)" stroke-width="1" fill="none" />
+            </g>
+            <g class="feather l1 i11" style="transform-origin: 0 0;">
+                <path d="M 0,0 C 11.938461538461539,-9.784615384615385 11.938461538461539,-39.13846153846154 0,-48.92307692307693 C -11.938461538461539,-39.13846153846154 -11.938461538461539,-9.784615384615385 0,0" fill="url(#midGrad)" stroke="rgba(255,215,0,0.5)" stroke-width="1.5" />
+                <path d="M 0,0 Q 0,-24.461538461538463 0,-48.92307692307693" stroke="rgba(255,255,255,0.7)" stroke-width="1" fill="none" />
+            </g>
+            <g class="feather l1 i12" style="transform-origin: 0 0;">
+                <path d="M 0,0 C 11.56923076923077,-8.492307692307692 11.56923076923077,-33.96923076923077 0,-42.46153846153846 C -11.56923076923077,-33.96923076923077 -11.56923076923077,-8.492307692307692 0,0" fill="url(#midGrad)" stroke="rgba(255,215,0,0.5)" stroke-width="1.5" />
+                <path d="M 0,0 Q 0,-21.23076923076923 0,-42.46153846153846" stroke="rgba(255,255,255,0.7)" stroke-width="1" fill="none" />
+            </g>
+            <g class="feather l1 i13" style="transform-origin: 0 0;">
+                <path d="M 0,0 C 11.200000000000001,-7.200000000000002 11.200000000000001,-28.800000000000008 0,-36.00000000000001 C -11.200000000000001,-28.800000000000008 -11.200000000000001,-7.200000000000002 0,0" fill="url(#midGrad)" stroke="rgba(255,215,0,0.5)" stroke-width="1.5" />
+                <path d="M 0,0 Q 0,-18.000000000000004 0,-36.00000000000001" stroke="rgba(255,255,255,0.7)" stroke-width="1" fill="none" />
+            </g>
+            <g class="feather l2 i0" style="transform-origin: 0 0;">
+                <path d="M 0,0 C 12,-18 12,-72 0,-90 C -12,-72 -12,-18 0,0" fill="url(#frontGrad)" stroke="rgba(255,215,0,0.5)" stroke-width="1.5" />
+                <path d="M 0,0 Q 0,-45 0,-90" stroke="rgba(255,255,255,0.7)" stroke-width="1" fill="none" />
+            </g>
+            <g class="feather l2 i1" style="transform-origin: 0 0;">
+                <path d="M 0,0 C 11.6,-16.6 11.6,-66.4 0,-83 C -11.6,-66.4 -11.6,-16.6 0,0" fill="url(#frontGrad)" stroke="rgba(255,215,0,0.5)" stroke-width="1.5" />
+                <path d="M 0,0 Q 0,-41.5 0,-83" stroke="rgba(255,255,255,0.7)" stroke-width="1" fill="none" />
+            </g>
+            <g class="feather l2 i2" style="transform-origin: 0 0;">
+                <path d="M 0,0 C 11.200000000000001,-15.200000000000001 11.200000000000001,-60.800000000000004 0,-76 C -11.200000000000001,-60.800000000000004 -11.200000000000001,-15.200000000000001 0,0" fill="url(#frontGrad)" stroke="rgba(255,215,0,0.5)" stroke-width="1.5" />
+                <path d="M 0,0 Q 0,-38 0,-76" stroke="rgba(255,255,255,0.7)" stroke-width="1" fill="none" />
+            </g>
+            <g class="feather l2 i3" style="transform-origin: 0 0;">
+                <path d="M 0,0 C 10.799999999999999,-13.8 10.799999999999999,-55.2 0,-69 C -10.799999999999999,-55.2 -10.799999999999999,-13.8 0,0" fill="url(#frontGrad)" stroke="rgba(255,215,0,0.5)" stroke-width="1.5" />
+                <path d="M 0,0 Q 0,-34.5 0,-69" stroke="rgba(255,255,255,0.7)" stroke-width="1" fill="none" />
+            </g>
+            <g class="feather l2 i4" style="transform-origin: 0 0;">
+                <path d="M 0,0 C 10.4,-12.399999999999999 10.4,-49.599999999999994 0,-61.99999999999999 C -10.4,-49.599999999999994 -10.4,-12.399999999999999 0,0" fill="url(#frontGrad)" stroke="rgba(255,215,0,0.5)" stroke-width="1.5" />
+                <path d="M 0,0 Q 0,-30.999999999999996 0,-61.99999999999999" stroke="rgba(255,255,255,0.7)" stroke-width="1" fill="none" />
+            </g>
+            <g class="feather l2 i5" style="transform-origin: 0 0;">
+                <path d="M 0,0 C 10,-11 10,-44 0,-55 C -10,-44 -10,-11 0,0" fill="url(#frontGrad)" stroke="rgba(255,215,0,0.5)" stroke-width="1.5" />
+                <path d="M 0,0 Q 0,-27.5 0,-55" stroke="rgba(255,255,255,0.7)" stroke-width="1" fill="none" />
+            </g>
+            <g class="feather l2 i6" style="transform-origin: 0 0;">
+                <path d="M 0,0 C 9.6,-9.600000000000001 9.6,-38.400000000000006 0,-48.00000000000001 C -9.6,-38.400000000000006 -9.6,-9.600000000000001 0,0" fill="url(#frontGrad)" stroke="rgba(255,215,0,0.5)" stroke-width="1.5" />
+                <path d="M 0,0 Q 0,-24.000000000000004 0,-48.00000000000001" stroke="rgba(255,255,255,0.7)" stroke-width="1" fill="none" />
+            </g>
+            <g class="feather l2 i7" style="transform-origin: 0 0;">
+                <path d="M 0,0 C 9.2,-8.200000000000001 9.2,-32.800000000000004 0,-41.00000000000001 C -9.2,-32.800000000000004 -9.2,-8.200000000000001 0,0" fill="url(#frontGrad)" stroke="rgba(255,215,0,0.5)" stroke-width="1.5" />
+                <path d="M 0,0 Q 0,-20.500000000000004 0,-41.00000000000001" stroke="rgba(255,255,255,0.7)" stroke-width="1" fill="none" />
+            </g>
+            <g class="feather l2 i8" style="transform-origin: 0 0;">
+                <path d="M 0,0 C 8.8,-6.800000000000002 8.8,-27.200000000000006 0,-34.00000000000001 C -8.8,-27.200000000000006 -8.8,-6.800000000000002 0,0" fill="url(#frontGrad)" stroke="rgba(255,215,0,0.5)" stroke-width="1.5" />
+                <path d="M 0,0 Q 0,-17.000000000000004 0,-34.00000000000001" stroke="rgba(255,255,255,0.7)" stroke-width="1" fill="none" />
+            </g>
+            <g class="feather l2 i9" style="transform-origin: 0 0;">
+                <path d="M 0,0 C 8.4,-5.400000000000001 8.4,-21.600000000000005 0,-27.000000000000004 C -8.4,-21.600000000000005 -8.4,-5.400000000000001 0,0" fill="url(#frontGrad)" stroke="rgba(255,215,0,0.5)" stroke-width="1.5" />
+                <path d="M 0,0 Q 0,-13.500000000000002 0,-27.000000000000004" stroke="rgba(255,255,255,0.7)" stroke-width="1" fill="none" />
+            </g>
+    </g>
+</svg>

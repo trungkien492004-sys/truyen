@@ -1535,14 +1535,17 @@ footer {
     animation: angelGlow 2s infinite alternate;
 }
 .avatar-frame.angel::before {
-    content: "🪽"; position: absolute; left: -45px; top: 50%; margin-top: -35px; font-size: 70px;
-    transform: scaleX(-1) rotate(15deg); filter: drop-shadow(0 0 10px gold); z-index: 0;
-    animation: wingFlapLeft 2s infinite alternate ease-in-out;
+    content: ""; position: absolute; left: -50px; top: 50%; margin-top: -50px; 
+    width: 100px; height: 100px; z-index: 0;
+    background: url('/images/angel_wing.svg') no-repeat center center;
+    background-size: contain;
 }
 .avatar-frame.angel::after {
-    content: "🪽"; position: absolute; right: -45px; top: 50%; margin-top: -35px; font-size: 70px;
-    transform: rotate(-15deg); filter: drop-shadow(0 0 10px gold); z-index: 0;
-    animation: wingFlapRight 2s infinite alternate ease-in-out;
+    content: ""; position: absolute; right: -50px; top: 50%; margin-top: -50px; 
+    width: 100px; height: 100px; z-index: 0;
+    background: url('/images/angel_wing.svg') no-repeat center center;
+    background-size: contain;
+    transform: scaleX(-1);
 }
 
 /* 2. Ác Ma */
