@@ -139,12 +139,13 @@
 </script>
 
 <div class="chapters-container">
+    <% const isCollapsed = chapters && chapters.length >= 50; %>
     <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: rgba(255,255,255,0.05); padding: 1rem 1.5rem; border-radius: 12px; margin-bottom: 1rem; border: 1px solid rgba(255,255,255,0.1); transition: background 0.3s;" onclick="document.getElementById('chapters-wrapper').classList.toggle('collapsed'); this.querySelector('.arrow').classList.toggle('up')" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">
         <h2 class="section-title" style="margin: 0; font-size: 1.3rem;">📖 Danh sách chương (<%= chapters ? chapters.length : 0 %>)</h2>
-        <span class="arrow" style="transition: transform 0.3s; font-size: 1.2rem; transform: rotate(180deg);">▼</span>
+        <span class="arrow <%= isCollapsed ? '' : 'up' %>" style="transition: transform 0.3s; font-size: 1.2rem; <%= isCollapsed ? 'transform: rotate(180deg);' : '' %>">▼</span>
     </div>
     
-    <div id="chapters-wrapper" class="collapsed">
+    <div id="chapters-wrapper" class="<%= isCollapsed ? 'collapsed' : '' %>">
         <% if (!chapters || chapters.length === 0) { %>
             <p style="color: var(--text-secondary); text-align: center; padding: 2rem 0;">Truyện hiện tại chưa có chương nào. Vui lòng quay lại sau!</p>
         <% } else { %>
