@@ -14,7 +14,11 @@
                 📖 TruyenApp
             </a>
             
-            <ul class="nav-links">
+            <button id="mobile-menu-btn" class="mobile-menu-btn">
+                ☰ Menu
+            </button>
+            
+            <ul class="nav-links" id="nav-links">
                 <li><a href="/" class="nav-link">Trang chủ</a></li>
                 <li><a href="/leaderboard" class="nav-link">Bảng xếp hạng</a></li>
                 <% if (user) { %>
@@ -54,4 +58,15 @@
             </div>
         </div>
     </header>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const menuBtn = document.getElementById('mobile-menu-btn');
+            const navLinks = document.getElementById('nav-links');
+            if(menuBtn && navLinks) {
+                menuBtn.addEventListener('click', () => {
+                    navLinks.classList.toggle('active');
+                });
+            }
+        });
+    </script>
     <main>
