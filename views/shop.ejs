@@ -129,6 +129,57 @@
         margin-bottom: 1.5rem;
         min-height: 45px;
     }
+    
+    .badge-preview-text {
+        color: var(--text-primary);
+        font-weight: 700;
+        font-size: 1.1rem;
+        letter-spacing: 0.5px;
+    }
+    
+    @media (max-width: 768px) {
+        .shop-container {
+            padding: 0 0.5rem;
+            margin-top: 1rem;
+        }
+        .shop-header {
+            padding: 1.5rem 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .shop-header h2 {
+            font-size: 1.5rem;
+        }
+        .shop-tabs {
+            justify-content: flex-start;
+            overflow-x: auto;
+            white-space: nowrap;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+            gap: 0.5rem;
+            scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
+        }
+        .shop-tabs::-webkit-scrollbar {
+            display: none;
+        }
+        .shop-tab-btn {
+            padding: 0.6rem 1.2rem;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+        .shop-grid {
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 1rem;
+        }
+        .shop-card {
+            padding: 1rem;
+        }
+        .avatar-preview-box {
+            width: 80px;
+            height: 80px;
+        }
+    }
+    
     .item-price {
         display: flex;
         align-items: center;
