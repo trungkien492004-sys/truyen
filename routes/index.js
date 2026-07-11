@@ -247,6 +247,21 @@ router.get('/', async (req, res) => {
       }
     }
 
+    // 3f. Lấy các bình luận mới nhất
+    let recentComments = [];
+    try {
+      const { data: commentsData, error: commentsErr } = await supabase
+        .from('comments')
+        .select('id, content, created_at, user_id, story_id, chapter_id, users(display_name, avatar, equipped_frame, equipped_badge), stories(title)')
+        .order('created_at', { ascending: false })
+        .limit(6);
+      if (!commentsErr && commentsData) {
+        recentComments = commentsData;
+      }
+    } catch (e) {
+      console.error('Lỗi lấy bình luận mới nhất:', e);
+    }
+
     res.render('home', {
       title: 'Trang chủ - Web Đọc Truyện',
       user: req.user,
@@ -261,6 +276,7 @@ router.get('/', async (req, res) => {
       topBookmarks,
       banners,
       lastRead,
+      recentComments,
       activeGenre: null,
       searchQuery: null,
       filters: { status }

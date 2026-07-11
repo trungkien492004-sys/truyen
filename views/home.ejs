@@ -936,6 +936,42 @@
                     <% }) %>
                 </div>
             <% } %>
+
+            <!-- KHỐI BÌNH LUẬN MỚI NHẤT -->
+            <% if (typeof recentComments !== 'undefined' && recentComments.length > 0) { %>
+                <div class="rankings-container" style="position: relative !important; top: auto !important; margin-top: 2rem;">
+                    <h3 class="section-title" style="font-size: 1.3rem; margin-bottom: 1rem;">💬 Bình Luận Mới</h3>
+                    <% recentComments.forEach(comment => { %>
+                        <a href="/story/<%= comment.story_id %><%= comment.chapter_id ? '/chapter/' + comment.chapter_id : '' %>" class="ranking-item" style="text-decoration: none; color: inherit; display: flex; align-items: flex-start; transition: transform 0.2s; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.8rem; margin-bottom: 0.8rem;">
+                            
+                            <div style="display: flex; flex-direction: column; align-items: center; margin-right: 0.8rem; flex-shrink: 0; width: 45px;">
+                                <% const cFrameClass = (comment.users && comment.users.equipped_frame) ? comment.users.equipped_frame : 'default-frame'; %>
+                                <div class="avatar-frame <%= cFrameClass %>" style="width: 36px; height: 36px; padding: 2px;">
+                                    <div class="avatar-glow"></div>
+                                    <img src="<%= (comment.users && comment.users.avatar) ? comment.users.avatar : '/css/silly_duck.png' %>" alt="avatar" class="avatar-img" style="border-width: 1px;">
+                                </div>
+                            </div>
+                            
+                            <div class="ranking-info" style="flex: 1; overflow: hidden;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.2rem;">
+                                    <span style="font-weight: 600; font-size: 0.85rem; color: var(--accent-color);">
+                                        <%= (comment.users && comment.users.display_name) ? comment.users.display_name : 'Độc giả' %>
+                                    </span>
+                                    <span style="font-size: 0.7rem; color: var(--text-secondary);">
+                                        <%= new Date(comment.created_at).toLocaleDateString('vi-VN') %>
+                                    </span>
+                                </div>
+                                <div style="font-size: 0.85rem; color: var(--text-primary); line-height: 1.4; margin-bottom: 0.3rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; word-break: break-word;">
+                                    <%- comment.content.replace(/<[^>]*>?/gm, '').substring(0, 100) %>...
+                                </div>
+                                <div style="font-size: 0.75rem; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                    📖 <%= comment.stories ? comment.stories.title : 'Truyện' %>
+                                </div>
+                            </div>
+                        </a>
+                    <% }) %>
+                </div>
+            <% } %>
         </div>
     <% } %>
 </div>
