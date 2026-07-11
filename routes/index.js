@@ -127,6 +127,23 @@ async function awardReadingExp(userId, storyId, chapterNumber) {
   if (streak >= 7) {
     await unlockAchievement(userId, 'Kiên trì đọc sách');
   }
+  
+  // 4. Tự động cập nhật Rank (Tu Vi) cho người dùng
+  const { data: rankSettings } = await supabase.from('rank_settings').select('*').order('count', { ascending: false });
+  let newBadge = null;
+  if (rankSettings && rankSettings.length > 0) {
+      for (const s of rankSettings) {
+          if (chaptersRead >= s.count) {
+              newBadge = s.label;
+              break;
+          }
+      }
+      if (!newBadge) newBadge = rankSettings[rankSettings.length - 1].label;
+  }
+  if (newBadge) {
+      await supabase.from('users').update({ equipped_badge: newBadge }).eq('id', userId);
+  }
+
   return { earnedExp: true };
 }
 
