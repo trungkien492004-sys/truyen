@@ -152,54 +152,129 @@
     methodRadios.forEach(r => r.addEventListener('change', toggleForms));
     toggleForms();
 
-    function splitTextIntoChapters(rawText, fileName) {
-        const chapterHeaderRegex = /^(?:Chương|CHƯƠNG|Chap|CHAP|Chapter|CHAPTER|Phần|PHẦN|Part|PART)\s*\.?\s*(\d+(?:\.\d+)?)(?:[:\s,\-–]+(.*))?$/im;
-        const lines = rawText.split('\n');
-        const chapters = [];
-        let currentChapter = null;
-        let currentLines = [];
+    const pdfPreviewBox = document.getElementById('pdf-preview');
+    const pdfChaptersList = document.getElementById('pdf-chapters-list');
 
-        for (let i = 0; i < lines.length; i++) {
-            const line = lines[i].trim();
-            if (!line) continue;
-            const match = line.match(chapterHeaderRegex);
-
-            if (match) {
-                if (currentChapter !== null) {
-                    chapters.push({
-                        name: currentChapter.title + '.txt',
-                        type: 'txt',
-                        content: currentLines.map(l => `<p>${l}</p>`).join('')
-                    });
-                }
-                const chapNum = parseFloat(match[1]);
-                const chapTitle = match[2] ? match[2].trim() : '';
-                currentChapter = {
-                    title: chapTitle ? `Chương ${chapNum}: ${chapTitle}` : `Chương ${chapNum}`
-                };
-                currentLines = [];
-            } else if (currentChapter !== null) {
-                currentLines.push(line);
+    // Xem trước cấu trúc tách chương ngay khi chọn file PDF (chỉ hiện tiêu đề + số đoạn văn của mỗi chương,
+    // không hiển thị nội dung chi tiết - giúp kiểm tra tách đúng/sai trước khi bấm đăng)
+    if (pdfFileInput) {
+        pdfFileInput.addEventListener('change', async () => {
+            const file = pdfFileInput.files[0];
+            if (!file) {
+                pdfPreviewBox.style.display = 'none';
+                return;
             }
+
+            pdfPreviewBox.style.display = 'block';
+            pdfChaptersList.innerHTML = '<p style="color: var(--text-secondary); font-size: 0.9rem;">⏳ Đang phân tích cấu trúc PDF...</p>';
+
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                let fullText = '';
+
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const textContent = await page.getTextContent();
+                    fullText += extractPageTextByLines(textContent) + '\n';
+                }
+
+                const previewChapters = splitTextIntoChapters(fullText, file.name);
+
+                if (previewChapters.length === 1 && previewChapters[0].name.replace('.txt', '') === file.name.replace(/\.pdf$/i, '')) {
+                    pdfChaptersList.innerHTML = '<p style="color: var(--text-secondary); font-size: 0.9rem;">⚠️ Không phát hiện tiêu đề chương nào trong PDF này - toàn bộ nội dung sẽ được đăng thành <b>1 chương duy nhất</b>.</p>';
+                } else {
+                    pdfChaptersList.innerHTML = `<p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Phát hiện <b>${previewChapters.length}</b> chương:</p>` +
+                        previewChapters.map((ch, idx) => {
+                            const paragraphCount = (ch.content.match(/<p>/g) || []).length;
+                            return `<div style="padding: 0.4rem 0.6rem; border-bottom: 1px solid var(--border-color); font-size: 0.85rem;">
+                                <strong>${idx + 1}.</strong> ${ch.name.replace('.txt', '')}
+                                <span style="color: var(--text-secondary);"> — ${paragraphCount} đoạn văn</span>
+                            </div>`;
+                        }).join('');
+                }
+            } catch (err) {
+                pdfChaptersList.innerHTML = `<p style="color: #ef4444; font-size: 0.9rem;">Lỗi khi đọc PDF: ${err.message}</p>`;
+            }
+        });
+    }
+
+    // Regex tách chương KHÔNG yêu cầu tiêu đề đứng trọn 1 dòng riêng - nhận diện tại bất kỳ vị trí nào trong văn bản.
+    // (Đồng bộ với backend routes/admin.js: nhiều PDF khi trích xuất text bị dính dòng, tiêu đề "Chương X" nằm
+    // liền sát đoạn văn trước/sau, khiến regex kiểu ^...$ cũ chỉ bắt được số ít chương "may mắn" đứng riêng dòng.)
+    const CHAPTER_SPLIT_PATTERN = '(?:^|[\\n\\r]|(?<=[.!?…”"）)\\]]\\s))\\s*(Chương|CHƯƠNG|Chap|CHAP|Chapter|CHAPTER|Phần|PHẦN|Part|PART)\\s*\\.?\\s*(\\d+(?:\\.\\d+)?)\\s*(?:[:.\\-–,]\\s*)?([^\\n\\r]{0,80})?';
+
+    function splitTextIntoChapters(rawText, fileName) {
+        const regex = new RegExp(CHAPTER_SPLIT_PATTERN, 'g');
+        const matches = [];
+        let m;
+        while ((m = regex.exec(rawText)) !== null) {
+            matches.push({ index: m.index, matchedText: m[0], num: parseFloat(m[2]), titleTail: (m[3] || '').trim() });
+            if (m.index === regex.lastIndex) regex.lastIndex++;
         }
 
-        if (currentChapter !== null && currentLines.length > 0) {
-            chapters.push({
-                name: currentChapter.title + '.txt',
-                type: 'txt',
-                content: currentLines.map(l => `<p>${l}</p>`).join('')
-            });
-        }
-        
-        if (chapters.length === 0) {
-            chapters.push({
+        if (matches.length === 0) {
+            // Không tìm thấy tiêu đề chương nào -> toàn bộ nội dung là 1 chương duy nhất
+            return [{
                 name: fileName.replace(/\.pdf$/i, '.txt'),
                 type: 'txt',
-                content: lines.filter(l => l.trim()).map(l => `<p>${l.trim()}</p>`).join('')
+                content: rawText.split('\n').filter(l => l.trim()).map(l => `<p>${l.trim()}</p>`).join('')
+            }];
+        }
+
+        const chapters = [];
+        for (let i = 0; i < matches.length; i++) {
+            const cur = matches[i];
+            const next = matches[i + 1];
+            const contentStart = cur.index + cur.matchedText.length;
+            const contentEnd = next ? next.index : rawText.length;
+            const rawContent = rawText.slice(contentStart, contentEnd);
+
+            const chapNum = cur.num;
+            const chapTitle = cur.titleTail && cur.titleTail.length <= 60 ? cur.titleTail : '';
+            const title = chapTitle ? `Chương ${chapNum}: ${chapTitle}` : `Chương ${chapNum}`;
+
+            const contentHtml = rawContent
+                .split('\n')
+                .map(l => l.trim())
+                .filter(l => l.length > 0)
+                .map(l => `<p>${l}</p>`)
+                .join('');
+
+            chapters.push({
+                name: title + '.txt',
+                type: 'txt',
+                content: contentHtml
             });
         }
-        
+
         return chapters;
+    }
+
+    // Trích xuất text từ 1 trang PDF, ghép các mảnh text theo TỌA ĐỘ DÒNG THẬT (transform[5] = vị trí Y)
+    // thay vì nối phẳng bằng dấu cách - tránh tình trạng dính chữ/dính đoạn khi pdf.js trả về nhiều mảnh text
+    // rời rạc nằm trên các dòng khác nhau nhưng bị ghép chung thành 1 dòng logic.
+    function extractPageTextByLines(textContent) {
+        const items = textContent.items;
+        if (items.length === 0) return '';
+
+        // Nhóm các item theo tọa độ Y (làm tròn để cùng 1 dòng dù lệch nhẹ do font-metrics)
+        const lineMap = new Map();
+        for (const item of items) {
+            const y = Math.round(item.transform[5]);
+            if (!lineMap.has(y)) lineMap.set(y, []);
+            lineMap.get(y).push(item);
+        }
+
+        // Sắp xếp các dòng từ trên xuống dưới (tọa độ Y giảm dần trong hệ toạ độ PDF = từ trên xuống)
+        const sortedYs = Array.from(lineMap.keys()).sort((a, b) => b - a);
+
+        const lines = sortedYs.map(y => {
+            const lineItems = lineMap.get(y).sort((a, b) => a.transform[4] - b.transform[4]); // sắp theo tọa độ X (trái sang phải)
+            return lineItems.map(it => it.str).join('').trim();
+        });
+
+        return lines.filter(l => l.length > 0).join('\n');
     }
 
     async function uploadInBatches(storyId, processedFiles, submitBtn) {
@@ -260,7 +335,7 @@
                     submitBtn.textContent = `⏳ Đang đọc trang ${i}/${pdf.numPages}...`;
                     const page = await pdf.getPage(i);
                     const textContent = await page.getTextContent();
-                    const pageText = textContent.items.map(item => item.str).join(' ');
+                    const pageText = extractPageTextByLines(textContent);
                     fullText += pageText + '\n';
                 }
 

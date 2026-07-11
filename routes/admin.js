@@ -63,48 +63,59 @@ function extractPdfRawText(buffer) {
   });
 }
 
-// Hàm phân tích file PDF thành nhiều chương (tự động tách dựa theo đầu dòng "Chương X" / "Chapter X")
-async function parsePdfToChapters(buffer, storyId) {
-  const rawText = await extractPdfRawText(buffer);
+// Regex tách chương KHÔNG YÊU CẦU tiêu đề đứng trọn 1 dòng riêng - nhận diện tại BẤT KỲ vị trí nào trong toàn văn bản.
+// Lý do: nhiều PDF khi trích xuất text bị dính dòng (tiêu đề "Chương X" nằm liền sát đoạn văn trước/sau do ngắt trang
+// hoặc do cấu trúc PDF không có xuống dòng thật), khiến regex kiểu ^...$ chỉ bắt được số ít chương "may mắn" đứng riêng dòng.
+// Yêu cầu: phải có ranh giới từ (word boundary) hoặc đầu dòng/khoảng trắng trước từ khóa, để không bắt nhầm giữa từ khác.
+const CHAPTER_SPLIT_PATTERN = '(?:^|[\\n\\r]|(?<=[.!?…”"）)\\]]\\s))\\s*(Chương|CHƯƠNG|Chap|CHAP|Chapter|CHAPTER|Phần|PHẦN|Part|PART)\\s*\\.?\\s*(\\d+(?:\\.\\d+)?)\\s*(?:[:.\\-–,]\\s*)?([^\\n\\r]{0,80})?';
 
-  const chapterHeaderRegex = /^(?:Chương|CHƯƠNG|Chap|CHAP|Chapter|CHAPTER|Phần|PHẦN|Part|PART)\s*\.?\s*(\d+(?:\.\d+)?)(?:[:\s,\-–]+(.*))?$/im;
-
-  const lines = rawText.split('\n');
-  const chapters = [];
-  let currentChapter = null;
-  let currentLines = [];
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-    const match = line.match(chapterHeaderRegex);
-
-    if (match) {
-      if (currentChapter !== null) {
-        chapters.push({
-          ...currentChapter,
-          content: currentLines.filter(l => l.trim()).map(l => `<p>${l.trim()}</p>`).join('')
-        });
-      }
-      const chapNum = parseFloat(match[1]);
-      const chapTitle = match[2] ? match[2].trim() : '';
-      currentChapter = {
-        story_id: parseInt(storyId),
-        chapter_number: chapNum,
-        title: chapTitle ? `Chương ${chapNum}: ${chapTitle}` : `Chương ${chapNum}`
-      };
-      currentLines = [];
-    } else if (currentChapter !== null) {
-      currentLines.push(line);
-    }
+// Tách toàn văn bản thô thành nhiều chương dựa theo mọi vị trí khớp tiêu đề chương (không phụ thuộc ranh giới dòng)
+function splitRawTextIntoChapters(rawText, storyId) {
+  // Tạo instance regex riêng cho mỗi lần gọi (regex có cờ g giữ trạng thái lastIndex - dùng chung có thể lỗi khi chạy song song)
+  const regex = new RegExp(CHAPTER_SPLIT_PATTERN, 'g');
+  const matches = [];
+  let m;
+  while ((m = regex.exec(rawText)) !== null) {
+    matches.push({ index: m.index, matchedText: m[0], num: parseFloat(m[2]), titleTail: (m[3] || '').trim() });
+    if (m.index === regex.lastIndex) regex.lastIndex++; // tránh vòng lặp vô hạn với match rỗng
   }
 
-  if (currentChapter !== null && currentLines.length > 0) {
+  if (matches.length === 0) return [];
+
+  const chapters = [];
+  for (let i = 0; i < matches.length; i++) {
+    const cur = matches[i];
+    const next = matches[i + 1];
+    const contentStart = cur.index + cur.matchedText.length;
+    const contentEnd = next ? next.index : rawText.length;
+    const rawContent = rawText.slice(contentStart, contentEnd);
+
+    const chapNum = cur.num;
+    // Tiêu đề phụ chỉ lấy nếu ngắn gọn và không phải đã là phần đầu của đoạn văn kế tiếp (tránh nuốt nhầm câu văn dài)
+    const chapTitle = cur.titleTail && cur.titleTail.length <= 60 ? cur.titleTail : '';
+
+    const contentHtml = rawContent
+      .split('\n')
+      .map(l => l.trim())
+      .filter(l => l.length > 0)
+      .map(l => `<p>${l}</p>`)
+      .join('');
+
     chapters.push({
-      ...currentChapter,
-      content: currentLines.filter(l => l.trim()).map(l => `<p>${l.trim()}</p>`).join('')
+      story_id: parseInt(storyId),
+      chapter_number: chapNum,
+      title: chapTitle ? `Chương ${chapNum}: ${chapTitle}` : `Chương ${chapNum}`,
+      content: contentHtml
     });
   }
 
+  return chapters;
+}
+
+// Hàm phân tích file PDF thành nhiều chương (tự động tách dựa theo "Chương X" / "Chapter X" ở bất kỳ vị trí nào trong văn bản)
+async function parsePdfToChapters(buffer, storyId) {
+  const rawText = await extractPdfRawText(buffer);
+  const chapters = splitRawTextIntoChapters(rawText, storyId);
   return { chapters, rawText };
 }
 
@@ -146,58 +157,22 @@ function syncPdfChapterNumbers(chapters, existingMaxChapter) {
     };
   });
 }
-// Regex nhận diện tiêu đề chương, dùng chung cho PDF/Word/txt
-const CHAPTER_HEADER_REGEX = /^(?:Chương|CHƯƠNG|Chap|CHAP|Chapter|CHAPTER|Phần|PHẦN|Part|PART)\s*\.?\s*(\d+(?:\.\d+)?)(?:[:\s,\-–]+(.*))?$/im;
-
-// Đếm xem văn bản thô (đã bỏ thẻ HTML) có bao nhiêu dòng khớp tiêu đề chương - dùng để quyết định có nên tự tách nhiều chương hay không
+// Đếm xem văn bản thô có bao nhiêu tiêu đề chương khớp được (dùng để quyết định có nên tự tách nhiều chương hay không).
+// Dùng chung 1 nguồn sự thật với splitRawTextIntoChapters (CHAPTER_SPLIT_PATTERN) để không bị lệch pha giữa "đếm" và "tách".
 function countChapterHeaders(plainText) {
-  const lines = plainText.split('\n');
   let count = 0;
-  for (const line of lines) {
-    if (CHAPTER_HEADER_REGEX.test(line.trim())) count++;
+  const re = new RegExp(CHAPTER_SPLIT_PATTERN, 'g');
+  let m;
+  while ((m = re.exec(plainText)) !== null) {
+    count++;
+    if (m.index === re.lastIndex) re.lastIndex++;
   }
   return count;
 }
 
-// Tách một khối text thô thành nhiều chương dựa theo tiêu đề "Chương X" bên trong (giống logic PDF)
+// Tách một khối text thô (Word/txt) thành nhiều chương - dùng chung logic với PDF (splitRawTextIntoChapters)
 function splitPlainTextIntoChapters(plainText, storyId) {
-  const lines = plainText.split('\n');
-  const chapters = [];
-  let currentChapter = null;
-  let currentLines = [];
-
-  for (const rawLine of lines) {
-    const line = rawLine.trim();
-    const match = line.match(CHAPTER_HEADER_REGEX);
-
-    if (match) {
-      if (currentChapter !== null) {
-        chapters.push({
-          ...currentChapter,
-          content: currentLines.filter(l => l.trim()).map(l => `<p>${l.trim()}</p>`).join('')
-        });
-      }
-      const chapNum = parseFloat(match[1]);
-      const chapTitle = match[2] ? match[2].trim() : '';
-      currentChapter = {
-        story_id: parseInt(storyId),
-        chapter_number: chapNum,
-        title: chapTitle ? `Chương ${chapNum}: ${chapTitle}` : `Chương ${chapNum}`
-      };
-      currentLines = [];
-    } else if (currentChapter !== null) {
-      currentLines.push(line);
-    }
-  }
-
-  if (currentChapter !== null && currentLines.length > 0) {
-    chapters.push({
-      ...currentChapter,
-      content: currentLines.filter(l => l.trim()).map(l => `<p>${l.trim()}</p>`).join('')
-    });
-  }
-
-  return chapters;
+  return splitRawTextIntoChapters(plainText, storyId);
 }
 
 // Hàm phân tích 1 tệp tin (Word/Txt): mặc định 1 file = 1 chương (dựa theo tên file),
