@@ -1,0 +1,26 @@
+
+/* Fix spinning avatars inside spinning frames */
+@keyframes spinSlowReverse {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(-360deg); }
+}
+@keyframes spinFastReverse {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(-360deg); }
+}
+
+/* Reverse spin for the avatar image and the corner icon to keep them upright */
+.frame-magic .avatar-img,
+.frame-magic .avatar-corner {
+  animation: spinSlowReverse 5s linear infinite;
+}
+
+.frame-birthday .avatar-img,
+.frame-birthday .avatar-corner {
+  animation: spinSlowReverse 6s linear infinite;
+}
+
+.frame-mythic-halloween .avatar-img,
+.frame-mythic-halloween .avatar-corner {
+  animation: spinFastReverse 4s linear infinite;
+}

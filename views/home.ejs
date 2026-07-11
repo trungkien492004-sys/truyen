@@ -881,12 +881,16 @@
                                 <div class="avatar-frame <%= rFrameClass %>" style="width: 46px; height: 46px; padding: 2px;">
                                     <div class="avatar-glow"></div>
                                     <img src="<%= reader.avatar || '/css/silly_duck.png' %>" alt="avatar" class="avatar-img" style="border-width: 1px;">
+                                    <% if (reader.equipped_badge) { %>
+                                        <div class="avatar-corner" style="position: absolute; top: -4px; right: -4px; font-size: 0.8rem; background: rgba(0,0,0,0.6); border-radius: 50%; padding: 2px; z-index: 10; border: 1px solid gold; display: flex; justify-content: center; align-items: center; width: 18px; height: 18px;">
+                                            <%= getBadgeIcon(reader.equipped_badge) %>
+                                        </div>
+                                    <% } %>
                                 </div>
                                 <% if (reader.equipped_badge) { %>
-                                    
-                                    <div style="position: absolute; top: -8px; right: -25px; display: flex; flex-direction: column; align-items: center; z-index: 10; line-height: 1.1; transform: scale(0.65); transform-origin: top right;">
-                                        <span class="game-title <%= getTitleRarityClass(reader.equipped_badge) %>" style="font-size: 0.6rem; padding: 3px 12px; white-space: nowrap;"><%= reader.equipped_badge %></span>
-                                        <span style="font-size: 0.5rem; letter-spacing: 1px; text-shadow: 0 0 2px rgba(255,255,255,0.8); margin-top: 2px;"><%= getStarsByChapters(reader.chapters_read) %></span>
+                                    <div style="display: flex; flex-direction: column; align-items: center; margin-top: -6px; z-index: 2; line-height: 1.1;">
+                                        <span class="game-title <%= getTitleRarityClass(reader.equipped_badge) %>" style="font-size: 0.5rem; padding: 2px 12px; transform: scale(0.65); white-space: nowrap;"><%= reader.equipped_badge %></span>
+                                        <span style="font-size: 0.45rem; letter-spacing: 1px; text-shadow: 0 0 2px rgba(255,255,255,0.3); transform: scale(0.65); margin-top: -6px;"><%= getStarsByChapters(reader.chapters_read) %></span>
                                     </div>
                                 <% } %>
                             </div>

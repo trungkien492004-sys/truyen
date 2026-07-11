@@ -12,12 +12,8 @@
                 
                 <!-- Badge Icon at Top Right (avatar-corner) -->
                 <% if (userData.equipped_badge) { %>
-                    <% 
-                       const emojiMatch = userData.equipped_badge.match(/^([\uD800-\uDBFF][\uDC00-\uDFFF]|\S)/);
-                       const emoji = emojiMatch ? emojiMatch[1] : '⚔️';
-                    %>
-                    <div class="avatar-corner">
-                        <%= emoji %>
+                    <div class="avatar-corner" style="position: absolute; top: -5px; right: -5px; font-size: 1.2rem; background: rgba(0,0,0,0.7); border-radius: 50%; padding: 4px; z-index: 10; border: 2px solid gold; display: flex; justify-content: center; align-items: center; width: 28px; height: 28px;">
+                        <%= getBadgeIcon(userData.equipped_badge) %>
                     </div>
                 <% } else { %>
                     <div class="avatar-corner" style="font-size: 16px;">

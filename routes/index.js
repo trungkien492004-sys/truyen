@@ -1316,7 +1316,7 @@ router.get('/leaderboard', async (req, res) => {
       .select('*')
       .order('count', { ascending: false });
 
-    const { data: readers } = await supabase.from('leaderboard_by_exp').select('*').limit(20);
+    const { data: readers } = await supabase.from('leaderboard_by_exp').select('*').order('chapters_read', { ascending: false }).order('exp', { ascending: false }).limit(20);
     const leaderboard = (readers || []).map(r => ({ ...r, badge: getBadgeForCount(r.chapters_read || 0, rankSettings) }));
     res.render('leaderboard', {
       title: 'Bảng xếp hạng độc giả',
