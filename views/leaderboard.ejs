@@ -60,8 +60,15 @@
                             <td data-label="Huy hiệu" style="padding: 0.8rem 0.8rem;">
                                 <div style="display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
                                     <!-- Rank (Tu vi / Cảnh giới) -->
+                                    <%
+                                        let calculatedRank = 'Người mới';
+                                        if (typeof rankSettings !== 'undefined' && rankSettings) {
+                                            const found = rankSettings.find(r => (reader.chapters_read || 0) >= r.count);
+                                            if (found) calculatedRank = found.label;
+                                        }
+                                    %>
                                     <span style="font-size: 0.8rem; background: rgba(99, 102, 241, 0.1); color: var(--accent-color); padding: 0.25rem 0.6rem; border-radius: 12px; font-weight: 500; border: 1px solid rgba(99, 102, 241, 0.2); white-space: nowrap;">
-                                        <%= reader.equipped_badge ? reader.equipped_badge : 'Người mới' %>
+                                        <%= calculatedRank %>
                                     </span>
                                 </div>
                             </td>

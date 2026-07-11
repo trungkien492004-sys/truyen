@@ -177,75 +177,67 @@ router.get('/', async (req, res) => {
       query = query.eq('status', status);
     }
     
-    const { data: stories, error: storiesError } = await query.order('last_update_at', { ascending: false });
+    // Gộp tất cả các truy vấn độc lập vào chung một Promise.all để lấy dữ liệu song song (tối đa tốc độ)
+    const [
+      { data: stories, error: storiesError },
+      { data: genres, error: genresError },
+      { data: topDaily },
+      { data: topWeekly },
+      { data: topMonthly },
+      { data: topYearly },
+      { data: topRatedData }
+    ] = await Promise.all([
+      query.order('last_update_at', { ascending: false }),
+      supabase.from('genres').select('*'),
+      supabase.from('views_ranking_daily').select('*').order('view_count', { ascending: false }).limit(5),
+      supabase.from('views_ranking_weekly').select('*').order('view_count', { ascending: false }).limit(5),
+      supabase.from('views_ranking_monthly').select('*').order('view_count', { ascending: false }).limit(5),
+      supabase.from('views_ranking_yearly').select('*').order('view_count', { ascending: false }).limit(5),
+      supabase.from('views_ranking_rated').select('*').limit(5)
+    ]);
+
     if (storiesError) throw storiesError;
-
-    // 2. Lấy danh sách thể loại để hiển thị menu
-    const { data: genres, error: genresError } = await supabase
-      .from('genres')
-      .select('*');
-
     if (genresError) throw genresError;
 
-    // 3. Lấy bảng xếp hạng theo ngày, tuần, tháng, năm từ database views
-    const { data: topDaily } = await supabase.from('views_ranking_daily').select('*').order('view_count', { ascending: false }).limit(5);
-    const { data: topWeekly } = await supabase.from('views_ranking_weekly').select('*').order('view_count', { ascending: false }).limit(5);
-    const { data: topMonthly } = await supabase.from('views_ranking_monthly').select('*').order('view_count', { ascending: false }).limit(5);
-    const { data: topYearly } = await supabase.from('views_ranking_yearly').select('*').order('view_count', { ascending: false }).limit(5);
-
     // 3a. Lấy bảng xếp hạng đánh giá
-    const { data: topRatedData } = await supabase.from('views_ranking_rated').select('*').limit(5);
     const topRated = topRatedData || [];
 
-    // 3b. Lấy bảng xếp hạng độc giả (top người đọc nhiều nhất theo EXP) - không chặn trang chủ nếu lỗi/chưa có bảng
+    // Tối ưu hoá: Lấy song song các dữ liệu phụ (không quan trọng) bằng Promise.allSettled
+    const [
+      rankSettingsRes,
+      readersRes,
+      bookmarksRes,
+      bannersRes,
+      historyRes
+    ] = await Promise.allSettled([
+      supabase.from('rank_settings').select('*').order('count', { ascending: false }),
+      supabase.from('leaderboard_by_exp').select('*').order('chapters_read', { ascending: false }).order('exp', { ascending: false }).limit(5),
+      supabase.from('stories_bookmarks_count').select('*').order('bookmark_count', { ascending: false }).limit(5),
+      supabase.from('banners').select('*').order('created_at', { ascending: false }),
+      req.user && req.user.id ? supabase.from('reading_history').select('chapter_number, story_id, stories(title)').eq('user_id', req.user.id).order('updated_at', { ascending: false }).limit(1) : Promise.resolve({ data: null })
+    ]);
+
+    // 3b. Bảng xếp hạng độc giả
     let topReaders = [];
-    try {
-      const { data: rankSettings } = await supabase.from('rank_settings').select('*').order('count', { ascending: false });
-      const { data: readers } = await supabase.from('leaderboard_by_exp').select('*').order('chapters_read', { ascending: false }).order('exp', { ascending: false }).limit(5);
-      topReaders = (readers || []).map(r => ({ ...r, badge: getBadgeForCount(r.chapters_read || 0, rankSettings) }));
-    } catch (e) {
-      console.error('Lỗi lấy BXH độc giả (bỏ qua, không chặn trang chủ):', e);
+    if (readersRes.status === 'fulfilled' && readersRes.value.data) {
+      const rankSettings = (rankSettingsRes.status === 'fulfilled' && rankSettingsRes.value.data) ? rankSettingsRes.value.data : [];
+      topReaders = readersRes.value.data.map(r => ({ ...r, badge: getBadgeForCount(r.chapters_read || 0, rankSettings) }));
     }
 
-    // 3c. Lấy bảng xếp hạng Top Bookmark (được theo dõi nhiều nhất)
-    let topBookmarks = [];
-    try {
-      const { data: bookmarks } = await supabase.from('stories_bookmarks_count').select('*').order('bookmark_count', { ascending: false }).limit(5);
-      topBookmarks = bookmarks || [];
-    } catch (e) {
-      console.error('Lỗi lấy Top Bookmarks:', e);
-    }
+    // 3c. Bảng xếp hạng Top Bookmark
+    let topBookmarks = (bookmarksRes.status === 'fulfilled' && bookmarksRes.value.data) ? bookmarksRes.value.data : [];
 
-    // 3d. Lấy danh sách banner trang chủ
-    let banners = [];
-    try {
-      const { data: bannerData } = await supabase.from('banners').select('*').order('created_at', { ascending: false });
-      banners = bannerData || [];
-    } catch (e) {
-      console.error('Lỗi lấy danh sách banner:', e);
-    }
+    // 3d. Danh sách banner
+    let banners = (bannersRes.status === 'fulfilled' && bannersRes.value.data) ? bannersRes.value.data : [];
 
-    // 3e. Lấy lịch sử đọc gần nhất của độc giả (để hiển thị Bạn đang đọc)
+    // 3e. Lịch sử đọc gần nhất
     let lastRead = null;
-    if (req.user && req.user.id) {
-      try {
-        const { data: history, error: historyErr } = await supabase
-          .from('reading_history')
-          .select('chapter_number, story_id, stories(title)')
-          .eq('user_id', req.user.id)
-          .order('updated_at', { ascending: false })
-          .limit(1);
-        
-        if (!historyErr && history && history.length > 0) {
-          lastRead = {
-            story_id: history[0].story_id,
-            story_title: history[0].stories ? history[0].stories.title : '',
-            chapter_number: history[0].chapter_number
-          };
-        }
-      } catch (e) {
-        console.error('Lỗi lấy lịch sử đọc gần nhất:', e);
-      }
+    if (historyRes.status === 'fulfilled' && historyRes.value.data && historyRes.value.data.length > 0) {
+      lastRead = {
+        story_id: historyRes.value.data[0].story_id,
+        story_title: historyRes.value.data[0].stories ? historyRes.value.data[0].stories.title : '',
+        chapter_number: historyRes.value.data[0].chapter_number
+      };
     }
 
     // 3f. Lấy các bình luận mới nhất
@@ -1346,7 +1338,8 @@ router.get('/leaderboard', async (req, res) => {
       title: 'Bảng xếp hạng',
       user: req.user,
       leaderboard,
-      topAuthors
+      topAuthors,
+      rankSettings
     });
   } catch (err) {
     console.error('Lỗi lấy BXH độc giả:', err);
