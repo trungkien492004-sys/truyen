@@ -1358,7 +1358,7 @@ router.get('/shop', async (req, res) => {
     // 4. Lấy live info của user (để xem avatar & huy hiệu đang trang bị)
     const { data: userData } = await supabase
       .from('users')
-      .select('equipped_badge, equipped_avatar')
+      .select('equipped_badge, equipped_avatar, equipped_frame')
       .eq('id', req.user.id)
       .single();
 
