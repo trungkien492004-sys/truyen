@@ -139,28 +139,74 @@
 </script>
 
 <div class="chapters-container">
-    <h2 class="section-title">Danh sách chương</h2>
+    <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: rgba(255,255,255,0.05); padding: 1rem 1.5rem; border-radius: 12px; margin-bottom: 1rem; border: 1px solid rgba(255,255,255,0.1); transition: background 0.3s;" onclick="document.getElementById('chapters-wrapper').classList.toggle('collapsed'); this.querySelector('.arrow').classList.toggle('up')" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">
+        <h2 class="section-title" style="margin: 0; font-size: 1.3rem;">📖 Danh sách chương (<%= chapters ? chapters.length : 0 %>)</h2>
+        <span class="arrow" style="transition: transform 0.3s; font-size: 1.2rem; transform: rotate(180deg);">▼</span>
+    </div>
     
-    <% if (!chapters || chapters.length === 0) { %>
-        <p style="color: var(--text-secondary); text-align: center; padding: 2rem 0;">Truyện hiện tại chưa có chương nào. Vui lòng quay lại sau!</p>
-    <% } else { %>
-        <ul class="chapters-list">
-            <% chapters.forEach(chapter => { %>
-                <li>
-                    <a href="/story/<%= story.id %>/chapter/<%= chapter.chapter_number %>" class="chapter-item" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
-                        <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">
-                            <strong>Chương <%= chapter.chapter_number %></strong>: <%= chapter.title %>
-                        </span>
-                        <span style="font-size: 0.8rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.3rem; flex-shrink: 0;" title="Lượt xem chương">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.7;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                            <%= chapter.views || 0 %>
-                        </span>
-                    </a>
-                </li>
-            <% }) %>
-        </ul>
-    <% } %>
+    <div id="chapters-wrapper" class="collapsed">
+        <% if (!chapters || chapters.length === 0) { %>
+            <p style="color: var(--text-secondary); text-align: center; padding: 2rem 0;">Truyện hiện tại chưa có chương nào. Vui lòng quay lại sau!</p>
+        <% } else { %>
+            <div style="margin-bottom: 1rem;">
+                <input type="text" id="chapter-search" placeholder="Tìm kiếm chương (ví dụ: 1, 10, tiêu đề)..." style="width: 100%; padding: 0.8rem 1rem; border-radius: 8px; border: 1px solid var(--border-color); background: rgba(0,0,0,0.3); color: var(--text-primary); font-size: 0.95rem; outline: none; transition: border-color 0.3s;" oninput="searchChapters(this.value)" onfocus="this.style.borderColor='var(--accent-color)'" onblur="this.style.borderColor='var(--border-color)'">
+            </div>
+            <ul class="chapters-list" id="chapters-list-ul" style="max-height: 450px; overflow-y: auto; padding-right: 5px;">
+                <% chapters.forEach(chapter => { %>
+                    <li class="chapter-item-container" data-search="<%= chapter.chapter_number %> <%= chapter.title.toLowerCase() %>">
+                        <a href="/story/<%= story.id %>/chapter/<%= chapter.chapter_number %>" class="chapter-item" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
+                            <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">
+                                <strong>Chương <%= chapter.chapter_number %></strong>: <%= chapter.title %>
+                            </span>
+                            <span style="font-size: 0.8rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.3rem; flex-shrink: 0;" title="Lượt xem chương">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.7;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                <%= chapter.views || 0 %>
+                            </span>
+                        </a>
+                    </li>
+                <% }) %>
+            </ul>
+        <% } %>
+    </div>
 </div>
+
+<style>
+    #chapters-wrapper {
+        transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out, margin-top 0.3s;
+        max-height: 1000px;
+        opacity: 1;
+        overflow: hidden;
+    }
+    #chapters-wrapper.collapsed {
+        max-height: 0;
+        opacity: 0;
+        margin-top: -1rem;
+    }
+    .arrow.up {
+        transform: rotate(0deg) !important;
+    }
+    #chapters-list-ul::-webkit-scrollbar {
+        width: 6px;
+    }
+    #chapters-list-ul::-webkit-scrollbar-thumb {
+        background: rgba(255,255,255,0.2);
+        border-radius: 3px;
+    }
+</style>
+<script>
+    function searchChapters(query) {
+        query = query.toLowerCase();
+        const items = document.querySelectorAll('.chapter-item-container');
+        items.forEach(item => {
+            const text = item.getAttribute('data-search');
+            if (text.includes(query)) {
+                item.style.display = 'block';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    }
+</script>
 
 <div class="chapters-container" style="margin-top: 3rem;">
     <h2 class="section-title" style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; font-size: 1.3rem;">
