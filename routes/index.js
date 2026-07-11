@@ -208,7 +208,7 @@ router.get('/', async (req, res) => {
     let topReaders = [];
     try {
       const { data: rankSettings } = await supabase.from('rank_settings').select('*').order('count', { ascending: false });
-      const { data: readers } = await supabase.from('leaderboard_by_exp').select('*').limit(5);
+      const { data: readers } = await supabase.from('leaderboard_by_exp').select('*').order('chapters_read', { ascending: false }).order('exp', { ascending: false }).limit(5);
       topReaders = (readers || []).map(r => ({ ...r, badge: getBadgeForCount(r.chapters_read || 0, rankSettings) }));
     } catch (e) {
       console.error('Lỗi lấy BXH độc giả (bỏ qua, không chặn trang chủ):', e);
