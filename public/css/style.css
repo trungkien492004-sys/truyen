@@ -1535,12 +1535,12 @@ footer {
     animation: angelGlow 2s infinite alternate;
 }
 .avatar-frame.angel::before {
-    content: "🪽"; position: absolute; left: -45px; top: 10px; font-size: 70px;
+    content: "🪽"; position: absolute; left: -45px; top: 50%; margin-top: -35px; font-size: 70px;
     transform: scaleX(-1) rotate(15deg); filter: drop-shadow(0 0 10px gold); z-index: 0;
     animation: wingFlapLeft 2s infinite alternate ease-in-out;
 }
 .avatar-frame.angel::after {
-    content: "🪽"; position: absolute; right: -45px; top: 10px; font-size: 70px;
+    content: "🪽"; position: absolute; right: -45px; top: 50%; margin-top: -35px; font-size: 70px;
     transform: rotate(-15deg); filter: drop-shadow(0 0 10px gold); z-index: 0;
     animation: wingFlapRight 2s infinite alternate ease-in-out;
 }
