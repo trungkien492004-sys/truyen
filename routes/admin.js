@@ -103,6 +103,43 @@ async function parsePdfToChapters(buffer, storyId) {
 }
 
 // Hàm phân tích 1 tệp tin (Word/Txt) thành đúng 1 chương duy nhất (1 file = 1 chương)
+function normalizeChapterNumber(num) {
+  return Number.isFinite(num) ? Math.floor(num) : null;
+}
+
+function syncPdfChapterNumbers(chapters, existingMaxChapter) {
+  const numberedChapters = chapters.filter(ch => Number.isFinite(ch.chapter_number));
+  if (numberedChapters.length === 0) {
+    return chapters;
+  }
+
+  const minParsed = Math.min(...numberedChapters.map(ch => Math.floor(ch.chapter_number)));
+  const targetStart = Number.isFinite(existingMaxChapter) && existingMaxChapter > 0
+    ? Math.floor(existingMaxChapter) + 1
+    : minParsed;
+  const offset = targetStart - minParsed;
+
+  if (offset === 0) {
+    return chapters;
+  }
+
+  return chapters.map(chapter => {
+    if (!Number.isFinite(chapter.chapter_number)) {
+      return chapter;
+    }
+
+    const nextNumber = Math.floor(chapter.chapter_number) + offset;
+    const nextTitle = chapter.title
+      ? chapter.title.replace(/^Chương\s+\d+(?::\s*)?/i, `Chương ${nextNumber}: `).replace(/:\s*$/, '')
+      : `Chương ${nextNumber}`;
+
+    return {
+      ...chapter,
+      chapter_number: nextNumber,
+      title: nextTitle
+    };
+  });
+}
 async function parseSingleFileToChapter(file, storyId) {
   const isDocx = file.originalname.endsWith('.docx') || file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
   let html = '';
@@ -615,6 +652,19 @@ router.post('/chapter/add-pdf', upload.single('pdffile'), async (req, res) => {
     }
 
     let chapters = await parsePdfToChapters(req.file.buffer, story_id);
+    const { data: existingChapters } = await supabase
+      .from('chapters')
+      .select('chapter_number')
+      .eq('story_id', story_id);
+
+    const normalizedExisting = (existingChapters || [])
+      .map(c => normalizeChapterNumber(c.chapter_number))
+      .filter(Number.isFinite);
+    const existingMaxChapter = normalizedExisting.length > 0
+      ? Math.max(...normalizedExisting)
+      : null;
+
+    chapters = syncPdfChapterNumbers(chapters, existingMaxChapter);
 
     // Nếu PDF không có từ khóa chương nào được nhận diện -> đăng toàn bộ nội dung thành 1 chương duy nhất
     if (chapters.length === 0) {
@@ -631,13 +681,7 @@ router.post('/chapter/add-pdf', upload.single('pdffile'), async (req, res) => {
         return res.json({ success: false, error: 'Không tìm thấy chương nào trong PDF' });
       }
 
-      const { data: existingChapters } = await supabase
-        .from('chapters')
-        .select('chapter_number')
-        .eq('story_id', story_id);
-
-      const existingNumbers = existingChapters ? existingChapters.map(c => c.chapter_number) : [];
-      const nextNum = existingNumbers.length > 0 ? Math.floor(Math.max(...existingNumbers)) + 1 : 1;
+      const nextNum = Number.isFinite(existingMaxChapter) ? Math.floor(existingMaxChapter) + 1 : 1;
 
       chapters = [{
         story_id: parseInt(story_id),
@@ -646,7 +690,6 @@ router.post('/chapter/add-pdf', upload.single('pdffile'), async (req, res) => {
         content: html
       }];
     }
-
     const { error } = await supabase.from('chapters')
       .upsert(chapters, { onConflict: 'story_id,chapter_number' });
     if (error) throw error;
