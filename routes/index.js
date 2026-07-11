@@ -688,7 +688,7 @@ router.post('/chapter/read-confirm', async (req, res) => {
   }
 
   const elapsedMs = Date.now() - reading.startTime;
-  const requiredMs = 150 * 1000; // 2.5 phút (150 giây)
+  const requiredMs = 90 * 1000; // 1.5 phút (90 giây)
 
   if (elapsedMs < requiredMs) {
     const remainingSeconds = Math.ceil((requiredMs - elapsedMs) / 1000);
