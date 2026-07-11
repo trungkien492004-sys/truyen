@@ -520,7 +520,7 @@ router.get('/story/:id', async (req, res) => {
     try {
       const { data: commentsData } = await supabase
         .from('comments')
-        .select('*, users!comments_user_id_fkey(display_name, avatar, equipped_badge, equipped_frame)')
+        .select('*, users!comments_user_id_fkey(display_name, avatar, equipped_badge, equipped_frame, user_stats(chapters_read))')
         .eq('story_id', storyId)
         .is('chapter_number', null)
         .order('created_at', { ascending: true });
@@ -636,7 +636,7 @@ router.get('/story/:story_id/chapter/:chapter_number', async (req, res) => {
     try {
       const { data: commentsData } = await supabase
         .from('comments')
-        .select('*, users!comments_user_id_fkey(display_name, avatar, equipped_badge, equipped_frame)')
+        .select('*, users!comments_user_id_fkey(display_name, avatar, equipped_badge, equipped_frame, user_stats(chapters_read))')
         .eq('story_id', storyId)
         .eq('chapter_number', chapterNumber)
         .order('created_at', { ascending: true });
@@ -1041,7 +1041,7 @@ router.post('/story/:story_id/comment', async (req, res) => {
     const { data: newComment, error } = await supabase
       .from('comments')
       .insert([commentData])
-      .select('*, users!comments_user_id_fkey(display_name, avatar, equipped_badge, equipped_frame)')
+      .select('*, users!comments_user_id_fkey(display_name, avatar, equipped_badge, equipped_frame, user_stats(chapters_read))')
       .single();
 
     if (error) throw error;

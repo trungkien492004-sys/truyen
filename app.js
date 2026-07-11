@@ -66,26 +66,31 @@ app.locals.getTitleRarityClass = (val) => {
     if (v.includes('noel') || v.includes('giáng sinh') || v.includes('tuyết')) return 'game-title-noel';
     if (v.includes('halloween') || v.includes('bí ngô') || v.includes('ma cà rồng')) return 'game-title-halloween';
     
+    // Badges mới
+    if (v.includes('tân binh')) return 'game-title-common';
+    if (v.includes('hiệp khách')) return 'game-title-rare';
+    if (v.includes('tiên nhân') || v.includes('ma đạo')) return 'game-title-epic';
+    if (v.includes('kiếm tôn') || v.includes('long vương')) return 'game-title-legendary';
+    if (v.includes('sáng thế') || v.includes('hỗn độn')) return 'game-title-mythic';
+    if (v.includes('vô cực') || v.includes('thiên đạo quản trị')) return 'game-title-transcendent';
+
     return 'game-title-default';
 };
 
-app.locals.getBadgeStars = (val) => {
-    if (!val) return '';
-    const v = val.toLowerCase();
+app.locals.getStarsByChapters = (chaptersRead) => {
+    // Logic: Dựa vào số chương đọc để trả về số sao tương ứng (1 đến 5 sao)
+    // Rank 1 (Mới Nhú/Xuất Sớm): 1 sao
+    // Rank 2: 2 sao
+    // Rank 3: 3 sao
+    // Rank 4: 4 sao
+    // Rank 5 & 6: 5 sao
+    const count = parseInt(chaptersRead) || 0;
     
-    if (v.includes('thần thoại') || v.includes('vô cực') || v.includes('đế') || v.includes('hoàng') || v.includes('chúa') || v.includes('tôn')) return '⭐⭐⭐⭐⭐';
-    if (v.includes('admin') || v.includes('quản trị')) return '⭐⭐⭐⭐⭐';
-    if (v.includes('long') || v.includes('rồng') || v.includes('dragon')) return '⭐⭐⭐⭐';
-    if (v.includes('kiếm') || v.includes('sword') || v.includes('độc cô')) return '⭐⭐⭐⭐';
-    if (v.includes('ma') || v.includes('quỷ') || v.includes('demon')) return '⭐⭐⭐';
-    if (v.includes('thiên') || v.includes('angel') || v.includes('thần') || v.includes('tiên') || v.includes('sứ')) return '⭐⭐⭐';
-    if (v.includes('cyber') || v.includes('máy') || v.includes('đọc') || v.includes('sách')) return '⭐⭐';
-    if (v.includes('tinh hà') || v.includes('vũ trụ') || v.includes('galaxy') || v.includes('sao')) return '⭐⭐';
-    if (v.includes('hoa') || v.includes('sakura') || v.includes('đào')) return '⭐';
-    if (v.includes('noel') || v.includes('giáng sinh') || v.includes('tuyết')) return '⭐';
-    if (v.includes('halloween') || v.includes('bí ngô') || v.includes('ma cà rồng')) return '⭐';
-    
-    return '⭐';
+    if (count >= 1000) return '⭐⭐⭐⭐⭐'; // Huyền thoại / Vua
+    if (count >= 500) return '⭐⭐⭐⭐';  // Cao thủ
+    if (count >= 100) return '⭐⭐⭐';    // Thầy
+    if (count >= 50) return '⭐⭐';      // Nhập môn
+    return '⭐';                        // Xuất sớm / Người mới
 };
 
 // ĐĂNG KÝ CÁC TUYẾN ĐƯỜNG DẪN (ROUTES)

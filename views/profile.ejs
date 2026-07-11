@@ -6,7 +6,7 @@
         <!-- Avatar display with title overlay (MMORPG Style) -->
         <div style="display: flex; flex-direction: column; align-items: center; gap: 0.6rem;">
             <% const equippedFrameClass = userData.equipped_frame || 'default-frame' %>
-            <div class="avatar-frame <%= equippedFrameClass %>">
+            <div class="avatar-frame <%= equippedFrameClass %>" style="width: 90px; height: 90px; padding: 4px;">
                 <div class="avatar-glow"></div>
                 <img id="avatar-preview" src="<%= user.avatar || '/css/silly_duck.png' %>" class="avatar-img" alt="Avatar">
                 
@@ -28,30 +28,11 @@
             
             <!-- Badge Title below Avatar -->
             <% if (userData.equipped_badge) { %>
-                <% 
-                   const badgeText = userData.equipped_badge.replace(/^([\uD800-\uDBFF][\uDC00-\uDFFF]|\S)\s*/, '');
-                   const getTitleRarityClass = (val) => {
-                       if (!val) return 'game-title-default';
-                       const v = val.toLowerCase();
-                       if (v.includes('quản trị') || v.includes('admin')) return 'game-title-admin';
-                       if (v.includes('đế') || v.includes('chúa') || v.includes('thần') || v.includes('hoàng')) return 'game-title-legendary';
-                       if (v.includes('tiên') || v.includes('ma')) return 'game-title-magic';
-                       if (v.includes('kiếm') || v.includes('độc cô')) return 'game-title-sword';
-                       if (v.includes('sách') || v.includes('đọc') || v.includes('độc giả')) return 'game-title-cyber';
-                       return 'game-title-default';
-                   }
-                   const getStars = (val) => {
-                       const v = val.toLowerCase();
-                       if (v.includes('quản trị') || v.includes('admin') || v.includes('đế') || v.includes('chúa')) return '★★★★★';
-                       if (v.includes('hoàng') || v.includes('tiên') || v.includes('thần') || v.includes('kiếm')) return '★★★★';
-                       if (v.includes('ma') || v.includes('độc cô')) return '★★★';
-                       return '★★';
-                   }
-                %>
-                <div class="game-title <%= getTitleRarityClass(userData.equipped_badge) %>">
-                    <%= badgeText %>
+                <% const badgeText = userData.equipped_badge.replace(/^([\uD800-\uDBFF][\uDC00-\uDFFF]|\S)\s*/, ''); %>
+                <div style="display: flex; flex-direction: column; align-items: center; margin-top: -10px; z-index: 2; line-height: 1.1;">
+                    <span class="game-title <%= getTitleRarityClass(userData.equipped_badge) %>" style="font-size: 0.75rem; padding: 4px 14px; white-space: nowrap;"><%= badgeText %></span>
+                    <span style="font-size: 0.6rem; letter-spacing: 2px; text-shadow: 0 0 3px rgba(255,255,255,0.4); margin-top: 4px;"><%= getStarsByChapters(stats.chaptersRead) %></span>
                 </div>
-                <div class="rank-stars"><%= getStars(userData.equipped_badge) %></div>
             <% } %>
         </div>
 
@@ -78,18 +59,7 @@
                     
                     <!-- Huy hiệu tùy chỉnh (Equipped Badge) -->
                     <% if (user.equipped_badge) { %>
-                        <% 
-                           const getTitleRarityClass = (v) => {
-                               v = v.toLowerCase();
-                               if (v.includes('quản trị') || v.includes('admin')) return 'game-title-admin';
-                               if (v.includes('đế') || v.includes('chúa') || v.includes('thần') || v.includes('hoàng')) return 'game-title-legendary';
-                               if (v.includes('tiên') || v.includes('ma')) return 'game-title-magic';
-                               if (v.includes('kiếm') || v.includes('độc cô')) return 'game-title-sword';
-                               if (v.includes('sách') || v.includes('đọc') || v.includes('độc giả')) return 'game-title-cyber';
-                               return 'game-title-default';
-                           }
-                           const badgeText = user.equipped_badge.replace(/^([\uD800-\uDBFF][\uDC00-\uDFFF]|\S)\s*/, '');
-                        %>
+                        <% const badgeText = user.equipped_badge.replace(/^([\uD800-\uDBFF][\uDC00-\uDFFF]|\S)\s*/, ''); %>
                         <span class="game-title <%= getTitleRarityClass(user.equipped_badge) %>" style="font-size: 0.75rem; padding: 0.3rem 0.8rem; border-radius: 12px;"><%= badgeText %></span>
                     <% } %>
                     <% if (user.role === 'admin') { %>

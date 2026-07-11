@@ -201,8 +201,8 @@
                         <% if (comment.users && comment.users.equipped_badge) { %>
                             <% const badgeText = comment.users.equipped_badge.replace(/^([\uD800-\uDBFF][\uDC00-\uDFFF]|\S)\s*/, ''); %>
                             <div style="display: flex; flex-direction: column; align-items: center; margin-top: -6px; z-index: 2; line-height: 1.1;">
-                                <span class="game-title <%= getTitleRarityClass(comment.users.equipped_badge) %>" style="font-size: 0.6rem; padding: 3px 10px; white-space: nowrap;"><%= badgeText %></span>
-                                <span style="font-size: 0.45rem; margin-top: 2px; letter-spacing: 1px; text-shadow: 0 0 2px rgba(255,255,255,0.3);"><%= getBadgeStars(comment.users.equipped_badge) %></span>
+                                <span class="game-title <%= getTitleRarityClass(comment.users.equipped_badge) %>" style="font-size: 0.5rem; padding: 2px 12px; transform: scale(0.65); white-space: nowrap;"><%= badgeText %></span>
+                                <span style="font-size: 0.45rem; letter-spacing: 1px; text-shadow: 0 0 2px rgba(255,255,255,0.3); transform: scale(0.65); margin-top: -6px;"><%= getStarsByChapters(comment.users.user_stats ? comment.users.user_stats.chapters_read : 0) %></span>
                             </div>
                         <% } %>
                     </div>
@@ -255,8 +255,8 @@
                                             <% if (reply.users && reply.users.equipped_badge) { %>
                                                 <% const rBadgeText = reply.users.equipped_badge.replace(/^([\uD800-\uDBFF][\uDC00-\uDFFF]|\S)\s*/, ''); %>
                                                 <div style="display: flex; flex-direction: column; align-items: center; margin-top: -5px; z-index: 2; line-height: 1.1;">
-                                                    <span class="game-title <%= getTitleRarityClass(reply.users.equipped_badge) %>" style="font-size: 0.55rem; padding: 2px 8px; white-space: nowrap;"><%= rBadgeText %></span>
-                                                    <span style="font-size: 0.4rem; margin-top: 2px; letter-spacing: 1px; text-shadow: 0 0 2px rgba(255,255,255,0.3);"><%= getBadgeStars(reply.users.equipped_badge) %></span>
+                                                    <span class="game-title <%= getTitleRarityClass(reply.users.equipped_badge) %>" style="font-size: 0.5rem; padding: 2px 8px; transform: scale(0.65); white-space: nowrap;"><%= rBadgeText %></span>
+                                                    <span style="font-size: 0.45rem; letter-spacing: 1px; text-shadow: 0 0 2px rgba(255,255,255,0.3); transform: scale(0.65); margin-top: -6px;"><%= getStarsByChapters(reply.users.user_stats ? reply.users.user_stats.chapters_read : 0) %></span>
                                                 </div>
                                             <% } %>
                                         </div>

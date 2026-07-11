@@ -53,10 +53,10 @@
                                     <% if (reader.equipped_badge) { %>
                                         <% const badgeText = reader.equipped_badge.replace(/^([\uD800-\uDBFF][\uDC00-\uDFFF]|\S)\s*/, ''); %>
                                         <div style="display: flex; flex-direction: column; align-items: center; margin-top: -6px; z-index: 2; line-height: 1.1;">
-                                            <span class="game-title <%= getTitleRarityClass(reader.equipped_badge) %>" style="font-size: 0.65rem; padding: 4px 12px; white-space: nowrap;"><%= badgeText %></span>
-                                            <span style="font-size: 0.5rem; margin-top: 2px; letter-spacing: 1px; text-shadow: 0 0 2px rgba(255,255,255,0.3);"><%= getBadgeStars(reader.equipped_badge) %></span>
-                                        </div>
-                                    <% } %>
+                                        <span class="game-title <%= getTitleRarityClass(reader.equipped_badge) %>" style="font-size: 0.5rem; padding: 2px 12px; transform: scale(0.65); white-space: nowrap;"><%= badgeText %></span>
+                                        <span style="font-size: 0.45rem; letter-spacing: 1px; text-shadow: 0 0 2px rgba(255,255,255,0.3); transform: scale(0.65); margin-top: -6px;"><%= getStarsByChapters(reader.chapters_read) %></span>
+                                    </div>
+                                <% } %>
                                 </div>
                                 <span style="font-weight: 600;">
                                     <a href="/user/<%= reader.id %>" style="text-decoration: none; color: inherit; transition: color 0.2s;" onmouseover="this.style.color='var(--accent-color)'" onmouseout="this.style.color='inherit'">

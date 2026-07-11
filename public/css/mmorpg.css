@@ -1,0 +1,350 @@
+/* =========================================================================
+   MMORPG AVATAR FRAMES & BADGES SYSTEM (AAA GACHA STYLE)
+   ========================================================================= */
+
+/* --- TIER COLORS & VARIABLES --- */
+:root {
+  --rarity-common: #a0aec0;
+  --rarity-rare: #4299e1;
+  --rarity-epic: #9f7aea;
+  --rarity-legendary: #f6ad55;
+  --rarity-mythic: #f56565;
+  --rarity-transcendent: #fbbf24; /* Gold/Rainbow */
+}
+
+/* =========================================================================
+   1. BADGE (DANH HIỆU) SYSTEM
+   ========================================================================= */
+
+/* Base style for all game titles */
+.game-title {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  font-weight: 900;
+  color: #fff;
+  border-radius: 999px;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.4), inset 0 1px 1px rgba(255,255,255,0.3);
+  overflow: hidden;
+  z-index: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Base Shine Effect */
+.game-title::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -150%;
+  width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  transform: skewX(-20deg);
+  animation: shine 4s infinite;
+}
+
+/* 1. Common (Tân Binh) */
+.game-title-common {
+  background: linear-gradient(135deg, #718096, #4a5568);
+  border: 1px solid #a0aec0;
+}
+
+/* 2. Rare (Hiệp Khách) */
+.game-title-rare {
+  background: linear-gradient(135deg, #2b6cb0, #2c5282);
+  border: 1px solid #63b3ed;
+  box-shadow: 0 0 10px rgba(66, 153, 225, 0.5);
+}
+
+/* 3. Epic (Tiên Nhân, Ma Đạo) */
+.game-title-epic {
+  background: linear-gradient(135deg, #6b46c1, #553c9a);
+  border: 1px solid #b794f4;
+  box-shadow: 0 0 15px rgba(159, 122, 234, 0.6);
+}
+
+/* 4. Legendary (Kiếm Tôn, Long Vương) */
+.game-title-legendary {
+  background: linear-gradient(135deg, #dd6b20, #c05621);
+  border: 1px solid #fbd38d;
+  box-shadow: 0 0 20px rgba(237, 137, 54, 0.7);
+  animation: pulseGlowLeg 2s infinite alternate;
+}
+
+/* 5. Mythic (Hỗn Độn Thần Đế, Sáng Thế Thần) */
+.game-title-mythic {
+  background: linear-gradient(135deg, #c53030, #9b2c2c, #742a2a);
+  border: 1px solid #feb2b2;
+  box-shadow: 0 0 25px rgba(229, 62, 62, 0.8), inset 0 0 10px rgba(255, 100, 100, 0.5);
+  animation: breathMythic 3s infinite;
+}
+
+/* 6. Transcendent (Vô Cực Đại Đạo, Thiên Đạo Quản Trị) */
+.game-title-transcendent {
+  background: linear-gradient(135deg, #d69e2e, #b7791f, #f6e05e, #d69e2e);
+  background-size: 200% 200%;
+  border: 1px solid #fef08a;
+  color: #fff;
+  text-shadow: 0 2px 4px #000;
+  box-shadow: 0 0 30px rgba(251, 191, 36, 0.8), 0 0 10px #fff;
+  animation: rainbowPan 3s linear infinite;
+}
+
+/* Animated Wing for Mythic & Transcendent */
+.game-title-mythic::after, .game-title-transcendent::after {
+  content: '✨';
+  position: absolute;
+  right: 5px;
+  font-size: 0.8em;
+  animation: floatParticle 2s ease-in-out infinite alternate;
+}
+
+
+/* =========================================================================
+   2. AVATAR FRAMES SYSTEM
+   ========================================================================= */
+
+/* Base Frame Setup */
+.avatar-frame {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  z-index: 1;
+}
+
+/* Image styling to ensure it's circular and inside the frame */
+.avatar-frame .avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  z-index: 5; /* Avatar is above background effects, below foreground frames */
+  position: relative;
+}
+
+/* Default frame */
+.default-frame {
+  background: #2d3748;
+  border: 2px solid #4a5568;
+}
+
+/* --- THEMES --- */
+
+/* 1. Angel */
+.frame-angel {
+  background: linear-gradient(135deg, #ebf8ff, #bee3f8);
+  box-shadow: 0 0 20px rgba(190, 227, 248, 0.6);
+}
+.frame-angel::before {
+  content: ''; position: absolute; inset: -4px; border-radius: 50%;
+  border: 2px solid #90cdf4; border-top-color: #fff;
+  animation: spinSlow 8s linear infinite;
+}
+.frame-angel::after {
+  content: '👼'; position: absolute; top: -10px; font-size: 1.2rem; z-index: 10;
+  animation: floatBob 3s ease-in-out infinite alternate;
+}
+
+/* 2. Demon */
+.frame-demon {
+  background: linear-gradient(135deg, #1a202c, #4a0000);
+  box-shadow: 0 0 25px rgba(229, 62, 62, 0.5);
+}
+.frame-demon::before {
+  content: ''; position: absolute; inset: -5px; border-radius: 50%;
+  border: 3px dashed #fc8181;
+  animation: spinSlow 6s linear infinite reverse;
+}
+.frame-demon::after {
+  content: '🦇'; position: absolute; bottom: -8px; right: -8px; font-size: 1.2rem; z-index: 10;
+  animation: shake 2s infinite;
+}
+
+/* 3. Sword Fairy */
+.frame-sword {
+  background: linear-gradient(135deg, #e6fffa, #81e6d9);
+  box-shadow: 0 0 20px rgba(129, 230, 217, 0.6);
+}
+.frame-sword::before {
+  content: ''; position: absolute; inset: -8px; border-radius: 50%;
+  background: conic-gradient(from 0deg, transparent 0deg, rgba(79,209,197,0.8) 90deg, transparent 90deg);
+  mask: radial-gradient(transparent 60%, black 61%);
+  -webkit-mask: radial-gradient(transparent 60%, black 61%);
+  animation: spinFast 3s linear infinite;
+  z-index: 2;
+}
+.frame-sword::after {
+  content: '🗡️'; position: absolute; top: -5px; right: -5px; font-size: 1.2rem; z-index: 10;
+  animation: floatBob 2s infinite alternate;
+}
+
+/* 4. Dragon */
+.frame-dragon {
+  background: linear-gradient(135deg, #742a2a, #c53030);
+  box-shadow: 0 0 30px rgba(245, 101, 101, 0.8);
+}
+.frame-dragon::before {
+  content: ''; position: absolute; inset: -4px; border-radius: 50%;
+  border: 2px solid #feb2b2; border-bottom: 2px solid transparent;
+  animation: pulseBreath 2s infinite alternate;
+}
+.frame-dragon::after {
+  content: '🐉'; position: absolute; bottom: -5px; left: -10px; font-size: 1.5rem; z-index: 10;
+  filter: drop-shadow(0 0 5px red);
+  animation: floatParticle 3s infinite alternate;
+}
+
+/* 5. Phoenix */
+.frame-phoenix {
+  background: linear-gradient(135deg, #c05621, #ed8936);
+  box-shadow: 0 0 25px rgba(237, 137, 54, 0.8);
+}
+.frame-phoenix::before {
+  content: ''; position: absolute; inset: -6px; border-radius: 50%;
+  border: 2px dashed #fbd38d;
+  animation: spinSlow 4s linear infinite;
+}
+.frame-phoenix::after {
+  content: '🔥'; position: absolute; top: -10px; font-size: 1.2rem; z-index: 10;
+  animation: burnFlame 1s infinite alternate;
+}
+
+/* 6. Galaxy */
+.frame-galaxy {
+  background: linear-gradient(135deg, #1a202c, #2b6cb0, #6b46c1);
+  box-shadow: 0 0 20px rgba(107, 70, 193, 0.8);
+}
+.frame-galaxy::before {
+  content: ''; position: absolute; inset: -5px; border-radius: 50%;
+  border: 2px dotted #fff;
+  animation: spinSlow 10s linear infinite;
+}
+.frame-galaxy::after {
+  content: '🌌'; position: absolute; bottom: -5px; font-size: 1.2rem; z-index: 10;
+  animation: floatBob 4s infinite alternate;
+}
+
+/* 7. Cyberpunk */
+.frame-cyberpunk {
+  background: #000;
+  border: 2px solid #0ff;
+  box-shadow: 0 0 15px #0ff, inset 0 0 10px #0ff;
+}
+.frame-cyberpunk::before {
+  content: ''; position: absolute; inset: -2px; border-radius: 50%;
+  border-top: 2px solid #f0f; border-bottom: 2px solid #ff0;
+  animation: spinFast 1s linear infinite;
+}
+
+/* 8. Magic Circle */
+.frame-magic {
+  background: linear-gradient(135deg, #44337a, #805ad5);
+  box-shadow: 0 0 20px rgba(159, 122, 234, 0.7);
+}
+.frame-magic::before {
+  content: ''; position: absolute; inset: -15px; border-radius: 50%;
+  border: 1px solid rgba(214, 188, 250, 0.5);
+  background-image: repeating-conic-gradient(from 0deg, transparent 0deg 20deg, rgba(214,188,250,0.2) 20deg 40deg);
+  animation: spinSlow 12s linear infinite reverse;
+  z-index: 0;
+}
+.frame-magic::after {
+  content: '🔮'; position: absolute; bottom: -8px; right: -8px; font-size: 1.1rem; z-index: 10;
+}
+
+/* 9. Halloween Mythic */
+.frame-mythic-halloween {
+  background: linear-gradient(135deg, #000, #d69e2e);
+  box-shadow: 0 0 30px #d69e2e;
+}
+.frame-mythic-halloween::before {
+  content: '🦇'; position: absolute; top: -15px; left: -15px; font-size: 1.5rem; z-index: 10;
+  animation: flutter 0.5s infinite alternate;
+}
+.frame-mythic-halloween::after {
+  content: '🎃'; position: absolute; bottom: -10px; right: -10px; font-size: 1.5rem; z-index: 10;
+  animation: shake 2s infinite;
+}
+
+/* 10. Christmas Mythic */
+.frame-mythic-christmas {
+  background: linear-gradient(135deg, #9b2c2c, #276749);
+  box-shadow: 0 0 30px #f6e05e;
+}
+.frame-mythic-christmas::before {
+  content: '❄️'; position: absolute; top: -10px; left: -10px; font-size: 1.5rem; z-index: 10;
+  animation: spinSlow 3s linear infinite;
+}
+.frame-mythic-christmas::after {
+  content: '🦌'; position: absolute; bottom: -10px; right: -10px; font-size: 1.5rem; z-index: 10;
+  animation: floatBob 2s infinite alternate;
+}
+
+
+/* --- KEYFRAME ANIMATIONS --- */
+
+@keyframes shine {
+  0% { left: -150%; }
+  20% { left: 150%; }
+  100% { left: 150%; }
+}
+
+@keyframes pulseGlowLeg {
+  0% { box-shadow: 0 0 10px rgba(237, 137, 54, 0.4); }
+  100% { box-shadow: 0 0 25px rgba(237, 137, 54, 1); }
+}
+
+@keyframes breathMythic {
+  0% { box-shadow: 0 0 15px rgba(229, 62, 62, 0.5); transform: scale(1); }
+  50% { box-shadow: 0 0 35px rgba(229, 62, 62, 1); transform: scale(1.02); }
+  100% { box-shadow: 0 0 15px rgba(229, 62, 62, 0.5); transform: scale(1); }
+}
+
+@keyframes rainbowPan {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+
+@keyframes spinSlow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes spinFast {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes floatBob {
+  0% { transform: translateY(0px); }
+  100% { transform: translateY(-5px); }
+}
+
+@keyframes floatParticle {
+  0% { transform: translate(0, 0) scale(1); opacity: 0.5; }
+  100% { transform: translate(3px, -5px) scale(1.2); opacity: 1; }
+}
+
+@keyframes pulseBreath {
+  0% { transform: scale(1); opacity: 0.7; }
+  100% { transform: scale(1.1); opacity: 1; }
+}
+
+@keyframes burnFlame {
+  0% { filter: drop-shadow(0 0 2px orange); }
+  100% { filter: drop-shadow(0 0 8px red); }
+}
+
+@keyframes shake {
+  0% { transform: rotate(-5deg); }
+  50% { transform: rotate(5deg); }
+  100% { transform: rotate(-5deg); }
+}
+
+@keyframes flutter {
+  0% { transform: rotate(-10deg) translateY(0); }
+  100% { transform: rotate(10deg) translateY(-2px); }
+}
