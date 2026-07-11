@@ -254,7 +254,7 @@ router.get('/', async (req, res) => {
         .from('comments')
         .select('id, content, created_at, user_id, story_id, chapter_number, users!comments_user_id_fkey(display_name, avatar, equipped_frame, equipped_badge), stories(title)')
         .order('created_at', { ascending: false })
-        .limit(6);
+        .limit(5);
       if (!commentsErr && commentsData) {
         recentComments = commentsData;
       }
