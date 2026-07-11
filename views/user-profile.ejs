@@ -11,47 +11,8 @@
     <!-- Profile Header/Card (Read-Only) -->
     <div style="background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.9) 100%); border: 1px solid var(--border-color); border-radius: 16px; padding: 2.5rem; display: flex; flex-wrap: wrap; gap: 2rem; align-items: center; margin-bottom: 2rem; box-shadow: 0 10px 30px rgba(0,0,0,0.3); backdrop-filter: blur(10px);">
         <!-- Avatar display with title overlay (MMORPG Style) -->
-        <div style="display: flex; flex-direction: column; align-items: center; gap: 0.6rem;">
-            <% const equippedFrameClass = targetUser.equipped_frame || 'default-frame' %>
-            <div class="avatar-frame <%= equippedFrameClass %>">
-                <div class="avatar-glow"></div>
-                <img src="<%= targetUser.avatar || '/css/silly_duck.png' %>" class="avatar-img avatar-zoomable" alt="Avatar">
-                
-                <!-- Badge Icon at Top Right (avatar-corner) -->
-                <% if (targetUser.equipped_badge) { %>
-                    <div class="avatar-corner" style="position: absolute; top: -5px; right: -5px; font-size: 1.2rem; background: rgba(0,0,0,0.7); border-radius: 50%; padding: 4px; z-index: 10; border: 2px solid gold; display: flex; justify-content: center; align-items: center; width: 28px; height: 28px;">
-                        <%= getBadgeIcon(targetUser.equipped_badge) %>
-                    </div>
-                <% } %>
-            </div>
-            
-            <!-- Badge Title below Avatar -->
-            <% if (targetUser.equipped_badge) { %>
-                <% 
-                   const badgeText = targetUser.equipped_badge.replace(/^([\uD800-\uDBFF][\uDC00-\uDFFF]|\S)\s*/, '');
-                   const getTitleRarityClass = (val) => {
-                       if (!val) return 'game-title-default';
-                       const v = val.toLowerCase();
-                       if (v.includes('quản trị') || v.includes('admin')) return 'game-title-admin';
-                       if (v.includes('đế') || v.includes('chúa') || v.includes('thần') || v.includes('hoàng')) return 'game-title-legendary';
-                       if (v.includes('tiên') || v.includes('ma')) return 'game-title-magic';
-                       if (v.includes('kiếm') || v.includes('độc cô')) return 'game-title-sword';
-                       if (v.includes('sách') || v.includes('đọc') || v.includes('độc giả')) return 'game-title-cyber';
-                       return 'game-title-default';
-                   }
-                   const getStars = (val) => {
-                       const v = val.toLowerCase();
-                       if (v.includes('quản trị') || v.includes('admin') || v.includes('đế') || v.includes('chúa')) return '★★★★★';
-                       if (v.includes('hoàng') || v.includes('tiên') || v.includes('thần') || v.includes('kiếm')) return '★★★★';
-                       if (v.includes('ma') || v.includes('độc cô')) return '★★★';
-                       return '★★';
-                   }
-                %>
-                <div class="game-title <%= getTitleRarityClass(targetUser.equipped_badge) %>">
-                    <%= targetUser.equipped_badge %>
-                </div>
-                <div class="rank-stars"><%= getStars(targetUser.equipped_badge) %></div>
-            <% } %>
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 150px;">
+            <%- include('partials/avatar', { user: { ...targetUser, chapters_read: stats.chaptersRead }, size: 'large' }) %>
         </div>
 
         <div style="flex: 1; min-width: 250px;">

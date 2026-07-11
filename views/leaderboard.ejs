@@ -50,26 +50,7 @@
                                 <% } %>
                             </td>
                             <td data-label="Độc giả" style="padding: 0.8rem 0.8rem; display: flex; align-items: center; gap: 0.8rem;">
-                                <div style="position: relative; display: flex; flex-direction: column; align-items: center; gap: 0.3rem;">
-                                    <a href="/user/<%= reader.id %>" style="text-decoration: none; display: inline-block;">
-                                        <% const readerFrame = reader.equipped_frame || 'default-frame' %>
-                                        <div class="avatar-frame <%= readerFrame %>" style="width: 44px; height: 44px; padding: 2px;">
-                                            <div class="avatar-glow"></div>
-                                            <img src="<%= reader.avatar || '/css/silly_duck.png' %>" class="avatar-img" alt="avatar" style="border-width: 1px;">
-                                            <% if (reader.equipped_badge) { %>
-                                                <div class="avatar-corner" style="position: absolute; top: -4px; right: -4px; font-size: 0.8rem; background: rgba(0,0,0,0.6); border-radius: 50%; padding: 2px; z-index: 10; border: 1px solid gold; display: flex; justify-content: center; align-items: center; width: 18px; height: 18px;">
-                                                    <%= getBadgeIcon(reader.equipped_badge) %>
-                                                </div>
-                                            <% } %>
-                                        </div>
-                                    </a>
-                                    <% if (reader.equipped_badge) { %>
-                                        <div style="display: flex; flex-direction: column; align-items: center; margin-top: -6px; z-index: 2; line-height: 1.1;">
-                                            <span class="game-title <%= getTitleRarityClass(reader.equipped_badge) %>" style="font-size: 0.5rem; padding: 2px 12px; transform: scale(0.65); white-space: nowrap;"><%= reader.equipped_badge %></span>
-                                            <span style="font-size: 0.45rem; letter-spacing: 1px; text-shadow: 0 0 2px rgba(255,255,255,0.3); transform: scale(0.65); margin-top: -6px;"><%= getStarsByChapters(reader.chapters_read) %></span>
-                                        </div>
-                                    <% } %>
-                                </div>
+                                <%- include('partials/avatar', { user: reader, size: 'small' }) %>
                                 <span style="font-weight: 600;">
                                     <a href="/user/<%= reader.id %>" style="text-decoration: none; color: inherit; transition: color 0.2s;" onmouseover="this.style.color='var(--accent-color)'" onmouseout="this.style.color='inherit'">
                                         <%= reader.display_name %>
