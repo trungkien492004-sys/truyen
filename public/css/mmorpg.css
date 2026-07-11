@@ -137,6 +137,11 @@
 .frame-angel {
   background: linear-gradient(135deg, #ebf8ff, #bee3f8);
   box-shadow: 0 0 20px rgba(190, 227, 248, 0.6);
+  animation: angelShine 2s infinite alternate;
+}
+@keyframes angelShine {
+  0% { box-shadow: 0 0 10px rgba(190, 227, 248, 0.4), inset 0 0 10px #fff; filter: brightness(1); }
+  100% { box-shadow: 0 0 30px rgba(190, 227, 248, 1), 0 0 50px rgba(255, 255, 255, 0.8), inset 0 0 20px #fff; filter: brightness(1.2); }
 }
 .frame-angel::before {
   content: ''; position: absolute; inset: -4px; border-radius: 50%;
@@ -146,6 +151,7 @@
 .frame-angel::after {
   content: '👼'; position: absolute; top: -10px; font-size: 1.2rem; z-index: 10;
   animation: floatBob 3s ease-in-out infinite alternate;
+  filter: drop-shadow(0 0 8px rgba(255,255,255,1));
 }
 
 /* 2. Demon */
@@ -167,10 +173,15 @@
 .frame-sword {
   background: linear-gradient(135deg, #e6fffa, #81e6d9);
   box-shadow: 0 0 20px rgba(129, 230, 217, 0.6);
+  animation: swordShine 1.5s infinite alternate;
+}
+@keyframes swordShine {
+  0% { box-shadow: 0 0 10px rgba(129, 230, 217, 0.5); filter: drop-shadow(0 0 2px #fff); }
+  100% { box-shadow: 0 0 35px rgba(129, 230, 217, 1), 0 0 60px rgba(255, 255, 255, 0.6); filter: drop-shadow(0 0 10px #fff); }
 }
 .frame-sword::before {
   content: ''; position: absolute; inset: -8px; border-radius: 50%;
-  background: conic-gradient(from 0deg, transparent 0deg, rgba(79,209,197,0.8) 90deg, transparent 90deg);
+  background: conic-gradient(from 0deg, transparent 0deg, rgba(79,209,197,1) 90deg, #fff 100deg, transparent 110deg);
   mask: radial-gradient(transparent 60%, black 61%);
   -webkit-mask: radial-gradient(transparent 60%, black 61%);
   animation: spinFast 3s linear infinite;
@@ -179,21 +190,27 @@
 .frame-sword::after {
   content: '🗡️'; position: absolute; top: -5px; right: -5px; font-size: 1.2rem; z-index: 10;
   animation: floatBob 2s infinite alternate;
+  filter: drop-shadow(0 0 5px cyan);
 }
 
 /* 4. Dragon */
 .frame-dragon {
   background: linear-gradient(135deg, #742a2a, #c53030);
   box-shadow: 0 0 30px rgba(245, 101, 101, 0.8);
+  animation: dragonShine 1.2s infinite alternate;
+}
+@keyframes dragonShine {
+  0% { box-shadow: 0 0 15px rgba(245, 101, 101, 0.5); filter: contrast(1); }
+  100% { box-shadow: 0 0 40px rgba(245, 101, 101, 1), 0 0 80px rgba(255, 215, 0, 0.6); filter: contrast(1.2) drop-shadow(0 0 8px gold); }
 }
 .frame-dragon::before {
   content: ''; position: absolute; inset: -4px; border-radius: 50%;
   border: 2px solid #feb2b2; border-bottom: 2px solid transparent;
-  animation: pulseBreath 2s infinite alternate;
+  animation: pulseBreath 2s infinite alternate, spinSlow 10s linear infinite;
 }
 .frame-dragon::after {
   content: '🐉'; position: absolute; bottom: -5px; left: -10px; font-size: 1.5rem; z-index: 10;
-  filter: drop-shadow(0 0 5px red);
+  filter: drop-shadow(0 0 8px gold);
   animation: floatParticle 3s infinite alternate;
 }
 
