@@ -1225,6 +1225,13 @@ router.get('/profile', async (req, res) => {
       
     const ownedItems = (inventory || []).map(i => i.shop_items).filter(Boolean);
 
+    // Tính toán Rank (Hạng trên BXH Độc Giả)
+    const { count: higherExpCount } = await supabase
+      .from('user_stats')
+      .select('user_id', { count: 'exact', head: true })
+      .gt('exp', exp);
+    const userRank = higherExpCount !== null ? higherExpCount + 1 : '-';
+
     res.render('profile', {
       title: 'Trang cá nhân của tôi',
       user: req.user,
@@ -1236,7 +1243,8 @@ router.get('/profile', async (req, res) => {
         currentLevelExp,
         nextLevelExp,
         chaptersRead: chaptersCount || 0,
-        badge: badge ? badge.label : 'Người mới'
+        badge: badge ? badge.label : 'Người mới',
+        rank: userRank
       },
       achievements,
       notifications: notifications || [],
@@ -1539,11 +1547,18 @@ router.get('/user/:id', async (req, res) => {
     const nextLevelExp = 100;
     const currentLevelExp = exp % 100;
 
-    // 3. Lấy số chương đã đọc
+    // Lấy số chương đã đọc
     const { count: chaptersRead } = await supabase
       .from('chapter_reads')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', userId);
+
+    // Tính toán Rank (Hạng trên BXH Độc Giả)
+    const { count: higherExpCount } = await supabase
+      .from('user_stats')
+      .select('user_id', { count: 'exact', head: true })
+      .gt('exp', exp);
+    const userRank = higherExpCount !== null ? higherExpCount + 1 : '-';
 
     const stats = {
       level,
@@ -1552,7 +1567,8 @@ router.get('/user/:id', async (req, res) => {
       nextLevelExp,
       streak,
       chaptersRead: chaptersRead || 0,
-      badge: targetUserData.equipped_badge || 'Người mới'
+      badge: targetUserData.equipped_badge || 'Người mới',
+      rank: userRank
     };
 
     // 4. Lấy danh sách thành tựu đã mở khóa
