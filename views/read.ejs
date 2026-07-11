@@ -30,13 +30,40 @@
             <button class="btn btn-secondary toc-toggle-btn" style="display: flex; align-items: center; gap: 0.3rem;">
                 📖 Mục lục (C. <%= chapter.chapter_number %>) ▾
             </button>
-            <div class="toc-dropdown-content" style="display: none; position: absolute; left: 50%; transform: translateX(-50%); top: 100%; margin-top: 0.5rem; background: var(--bg-secondary); min-width: 280px; max-height: 350px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); z-index: 1000; padding: 0.4rem 0;">
-                <% chaptersList.forEach(c => { %>
-                    <% const isActive = c.chapter_number === chapter.chapter_number; %>
-                    <a href="/story/<%= story.id %>/chapter/<%= c.chapter_number %>" style="display: block; padding: 0.65rem 1.2rem; color: <%= isActive ? 'var(--accent-color)' : 'var(--text-primary)' %>; font-size: 0.88rem; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.02); font-weight: <%= isActive ? 'bold' : 'normal' %>; transition: background 0.2s;" class="toc-item <%= isActive ? 'toc-item-active' : '' %>">
-                        Chương <%= c.chapter_number %>: <%= c.title %>
-                    </a>
-                <% }) %>
+            <div class="toc-dropdown-content" style="display: none; position: absolute; left: 50%; transform: translateX(-50%); top: 100%; margin-top: 0.5rem; background: var(--bg-secondary); min-width: 280px; max-height: 350px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); z-index: 1000; padding: 0.4rem;">
+                <% if (chaptersList.length < 50) { %>
+                    <div style="padding-top: 0.3rem;">
+                        <% chaptersList.forEach(c => { %>
+                            <% const isActive = c.chapter_number === chapter.chapter_number; %>
+                            <a href="/story/<%= story.id %>/chapter/<%= c.chapter_number %>" style="display: block; padding: 0.5rem 1.2rem; color: <%= isActive ? 'var(--accent-color)' : 'var(--text-primary)' %>; font-size: 0.88rem; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.02); font-weight: <%= isActive ? 'bold' : 'normal' %>; transition: background 0.2s;" class="toc-item <%= isActive ? 'toc-item-active' : '' %>">
+                                Chương <%= c.chapter_number %>: <%= c.title %>
+                            </a>
+                        <% }) %>
+                    </div>
+                <% } else { %>
+                    <% 
+                        const chunkSize = 100;
+                        for (let i = 0; i < chaptersList.length; i += chunkSize) { 
+                            const chunk = chaptersList.slice(i, i + chunkSize);
+                            const start = chunk[0].chapter_number;
+                            const end = chunk[chunk.length - 1].chapter_number;
+                            const hasActive = chunk.some(c => c.chapter_number === chapter.chapter_number);
+                    %>
+                        <details style="margin-bottom: 0.3rem; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); border-radius: 6px;" <%= hasActive ? 'open' : '' %>>
+                            <summary style="padding: 0.6rem 1rem; cursor: pointer; font-weight: bold; color: var(--accent-color); outline: none; font-size: 0.9rem;">
+                                Chương <%= start %> - <%= end %>
+                            </summary>
+                            <div style="padding-top: 0.3rem;">
+                                <% chunk.forEach(c => { %>
+                                    <% const isActive = c.chapter_number === chapter.chapter_number; %>
+                                    <a href="/story/<%= story.id %>/chapter/<%= c.chapter_number %>" style="display: block; padding: 0.5rem 1.2rem; color: <%= isActive ? 'var(--accent-color)' : 'var(--text-primary)' %>; font-size: 0.88rem; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.02); font-weight: <%= isActive ? 'bold' : 'normal' %>; transition: background 0.2s;" class="toc-item <%= isActive ? 'toc-item-active' : '' %>">
+                                        Chương <%= c.chapter_number %>: <%= c.title %>
+                                    </a>
+                                <% }) %>
+                            </div>
+                        </details>
+                    <% } %>
+                <% } %>
             </div>
         </div>
 
