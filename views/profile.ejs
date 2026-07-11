@@ -8,16 +8,12 @@
             <% const equippedFrameClass = userData.equipped_frame || 'default-frame' %>
             <div class="avatar-frame <%= equippedFrameClass %>" style="width: 90px; height: 90px; padding: 4px;">
                 <div class="avatar-glow"></div>
-                <img id="avatar-preview" src="<%= user.avatar || '/css/silly_duck.png' %>" class="avatar-img" alt="Avatar">
+                <img id="avatar-preview" src="<%= user.avatar || '/css/silly_duck.png' %>" class="avatar-img avatar-zoomable" alt="Avatar">
                 
                 <!-- Badge Icon at Top Right (avatar-corner) -->
                 <% if (userData.equipped_badge) { %>
                     <div class="avatar-corner" style="position: absolute; top: -5px; right: -5px; font-size: 1.2rem; background: rgba(0,0,0,0.7); border-radius: 50%; padding: 4px; z-index: 10; border: 2px solid gold; display: flex; justify-content: center; align-items: center; width: 28px; height: 28px;">
                         <%= getBadgeIcon(userData.equipped_badge) %>
-                    </div>
-                <% } else { %>
-                    <div class="avatar-corner" style="font-size: 16px;">
-                        ⚔️
                     </div>
                 <% } %>
             </div>

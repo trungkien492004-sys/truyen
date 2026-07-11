@@ -13,8 +13,8 @@
             const modalImg = document.getElementById('avatar-zoom-img');
             
             document.body.addEventListener('click', (e) => {
-                if (e.target.classList.contains('avatar-img') || e.target.classList.contains('avatar-preview-img')) {
-                    e.preventDefault(); // Prevent navigating if wrapped in a link sometimes, though usually we want to navigate. Wait! If they are in a link, we shouldn't zoom, or we should zoom? "ấn vào avt chưa phòng to xem avt".
+                if (e.target.classList.contains('avatar-zoomable')) {
+                    e.preventDefault(); 
                     modalImg.src = e.target.src;
                     modal.style.display = 'flex';
                 }
