@@ -1,57 +1,46 @@
 <%
-    // Expects `user` and `size` parameters
-    // size can be 'small', 'medium', 'large'
-    
-    let config = {
-        frameSize: '44px',
-        padding: '2px',
-        cornerSize: '18px',
-        cornerFont: '0.8rem',
-        titleScale: 'scale(0.65)',
-        titleMarginTop: '-6px',
-        titlePadding: '2px 12px',
-        starFont: '0.45rem',
-        starMarginTop: '-6px'
-    };
-    
-    if (size === 'large') {
-        config = {
-            frameSize: '120px',
-            padding: '4px',
-            cornerSize: '28px',
-            cornerFont: '1.2rem',
-            titleScale: 'scale(1)',
-            titleMarginTop: '-10px',
-            titlePadding: '4px 16px',
-            starFont: '0.8rem',
-            starMarginTop: '0px'
-        };
-    } else if (size === 'small') {
-        // Leaderboard uses small, so small = default 44px
-    }
-
     const frameClass = user.equipped_frame || 'default-frame';
     const avatarSrc = user.avatar || '/css/silly_duck.png';
     const badge = user.equipped_badge;
     const chaptersRead = user.chapters_read || 0;
+    
+    // Default to large (Profile) which uses native CSS values
+    let containerStyle = "display: flex; flex-direction: column; align-items: center; gap: 0.6rem;";
+    let frameStyle = "";
+    let cornerStyle = "position: absolute; top: -5px; right: -5px; font-size: 1.2rem; background: rgba(0,0,0,0.7); border-radius: 50%; padding: 4px; z-index: 10; border: 2px solid gold; display: flex; justify-content: center; align-items: center; width: 28px; height: 28px;";
+    let titleContainerStyle = "display: flex; flex-direction: column; align-items: center;";
+    let titleStyle = "";
+    let starClass = "rank-stars";
+    let starStyle = "";
+    
+    // Small (Leaderboard) applies inline styles to scale down
+    if (size === 'small') {
+        containerStyle = "position: relative; display: flex; flex-direction: column; align-items: center; gap: 0.3rem;";
+        frameStyle = "width: 44px; height: 44px; padding: 2px;";
+        cornerStyle = "position: absolute; top: -4px; right: -4px; font-size: 0.8rem; background: rgba(0,0,0,0.6); border-radius: 50%; padding: 2px; z-index: 10; border: 1px solid gold; display: flex; justify-content: center; align-items: center; width: 18px; height: 18px;";
+        titleContainerStyle = "display: flex; flex-direction: column; align-items: center; margin-top: -6px; z-index: 2; line-height: 1.1;";
+        titleStyle = "font-size: 0.5rem; padding: 2px 12px; transform: scale(0.65); white-space: nowrap;";
+        starClass = "";
+        starStyle = "color: #ffd700; font-size: 0.45rem; letter-spacing: 1px; text-shadow: 0 0 2px rgba(255,255,255,0.3); transform: scale(0.65); margin-top: -6px;";
+    }
 %>
 
-<div style="position: relative; display: flex; flex-direction: column; align-items: center; gap: 0.3rem;">
+<div style="<%= containerStyle %>">
     <a href="/user/<%= user.id %>" style="text-decoration: none; display: inline-block;">
-        <div class="avatar-frame <%= frameClass %>" style="width: <%= config.frameSize %>; height: <%= config.frameSize %>; padding: <%= config.padding %>;">
+        <div class="avatar-frame <%= frameClass %>" style="<%= frameStyle %>">
             <div class="avatar-glow"></div>
             <img src="<%= avatarSrc %>" class="avatar-img avatar-zoomable" alt="avatar" style="border-width: 1px;">
             <% if (badge) { %>
-                <div class="avatar-corner" style="position: absolute; top: -4px; right: -4px; font-size: <%= config.cornerFont %>; background: rgba(0,0,0,0.7); border-radius: 50%; padding: 2px; z-index: 10; border: 1px solid gold; display: flex; justify-content: center; align-items: center; width: <%= config.cornerSize %>; height: <%= config.cornerSize %>;">
+                <div class="avatar-corner" style="<%= cornerStyle %>">
                     <%= getBadgeIcon(badge) %>
                 </div>
             <% } %>
         </div>
     </a>
     <% if (badge) { %>
-        <div style="display: flex; flex-direction: column; align-items: center; margin-top: <%= config.titleMarginTop %>; z-index: 2; line-height: 1.1;">
-            <span class="game-title <%= getTitleRarityClass(badge) %>" style="font-size: 0.6rem; padding: <%= config.titlePadding %>; transform: <%= config.titleScale %>; white-space: nowrap;"><%= badge %></span>
-            <span style="font-size: <%= config.starFont %>; letter-spacing: 1px; text-shadow: 0 0 2px rgba(255,255,255,0.3); transform: <%= config.titleScale %>; margin-top: <%= config.starMarginTop %>;"><%= getStarsByChapters(chaptersRead) %></span>
+        <div style="<%= titleContainerStyle %>">
+            <div class="game-title <%= getTitleRarityClass(badge) %>" style="<%= titleStyle %>"><%= badge %></div>
+            <div class="<%= starClass %>" style="<%= starStyle %>"><%= getStarsByChapters(chaptersRead) %></div>
         </div>
     <% } %>
 </div>
