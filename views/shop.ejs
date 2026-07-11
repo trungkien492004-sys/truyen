@@ -224,9 +224,10 @@
                     <span class="equipped-tag">Đang Dùng</span>
                 <% } %>
                 <div>
-                    <div class="badge-preview-box" style="display: flex; justify-content: center; padding: 1.5rem 0;">
+                    <div class="badge-preview-box" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem 0; gap: 0.2rem;">
                         <% const badgeValue = item.value.replace(/^([\uD800-\uDBFF][\uDC00-\uDFFF]|\S)\s*/, ''); %>
-                        <span class="game-title <%= getTitleRarityClass(item.value) %>" style="font-size: 0.75rem; padding: 4px 14px; transform: scale(0.95);"><%= badgeValue %></span>
+                        <span class="game-title <%= getTitleRarityClass(item.value) %>" style="font-size: 0.75rem; padding: 4px 14px;"><%= badgeValue %></span>
+                        <span style="font-size: 0.55rem; letter-spacing: 2px; text-shadow: 0 0 3px rgba(255,255,255,0.4);"><%= getBadgeStars(item.value) %></span>
                     </div>
                     <h3 class="item-title"><%= item.name %></h3>
                     <p class="item-desc"><%= item.description %></p>

@@ -1344,6 +1344,7 @@ router.get('/ranks', async (req, res) => {
     const { data: ranks, error } = await supabase
       .from('rank_settings')
       .select('*')
+      .order('order_index', { ascending: true })
       .order('count', { ascending: true });
 
     if (error) throw error;
@@ -1363,8 +1364,9 @@ router.get('/ranks', async (req, res) => {
 
 // Thêm thiết lập cấp bậc mới
 router.post('/ranks/add', async (req, res) => {
-  const { count, label, badge } = req.body;
+  const { count, label, badge, order_index } = req.body;
   const chapterCount = parseInt(count);
+  const orderIndex = parseInt(order_index) || 0;
 
   if (isNaN(chapterCount) || !label || !badge) {
     return res.redirect('/admin/ranks?error=' + encodeURIComponent('Thông tin nhập vào không hợp lệ.'));
@@ -1373,7 +1375,7 @@ router.post('/ranks/add', async (req, res) => {
   try {
     const { error } = await supabase
       .from('rank_settings')
-      .insert([{ count: chapterCount, label: label.trim(), badge: badge.trim() }]);
+      .insert([{ count: chapterCount, label: label.trim(), badge: badge.trim(), order_index: orderIndex }]);
 
     if (error) throw error;
     res.redirect('/admin/ranks?success=' + encodeURIComponent('Đã thêm Rank cấp bậc mới thành công!'));
@@ -1386,8 +1388,9 @@ router.post('/ranks/add', async (req, res) => {
 // Sửa thiết lập cấp bậc
 router.post('/ranks/edit/:id', async (req, res) => {
   const id = parseInt(req.params.id);
-  const { count, label, badge } = req.body;
+  const { count, label, badge, order_index } = req.body;
   const chapterCount = parseInt(count);
+  const orderIndex = parseInt(order_index) || 0;
 
   if (isNaN(chapterCount) || !label || !badge) {
     return res.redirect('/admin/ranks?error=' + encodeURIComponent('Thông tin nhập vào không hợp lệ.'));
@@ -1396,7 +1399,7 @@ router.post('/ranks/edit/:id', async (req, res) => {
   try {
     const { error } = await supabase
       .from('rank_settings')
-      .update({ count: chapterCount, label: label.trim(), badge: badge.trim() })
+      .update({ count: chapterCount, label: label.trim(), badge: badge.trim(), order_index: orderIndex })
       .eq('id', id);
 
     if (error) throw error;

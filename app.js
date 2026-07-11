@@ -69,6 +69,25 @@ app.locals.getTitleRarityClass = (val) => {
     return 'game-title-default';
 };
 
+app.locals.getBadgeStars = (val) => {
+    if (!val) return '';
+    const v = val.toLowerCase();
+    
+    if (v.includes('thần thoại') || v.includes('vô cực') || v.includes('đế') || v.includes('hoàng') || v.includes('chúa') || v.includes('tôn')) return '⭐⭐⭐⭐⭐';
+    if (v.includes('admin') || v.includes('quản trị')) return '⭐⭐⭐⭐⭐';
+    if (v.includes('long') || v.includes('rồng') || v.includes('dragon')) return '⭐⭐⭐⭐';
+    if (v.includes('kiếm') || v.includes('sword') || v.includes('độc cô')) return '⭐⭐⭐⭐';
+    if (v.includes('ma') || v.includes('quỷ') || v.includes('demon')) return '⭐⭐⭐';
+    if (v.includes('thiên') || v.includes('angel') || v.includes('thần') || v.includes('tiên') || v.includes('sứ')) return '⭐⭐⭐';
+    if (v.includes('cyber') || v.includes('máy') || v.includes('đọc') || v.includes('sách')) return '⭐⭐';
+    if (v.includes('tinh hà') || v.includes('vũ trụ') || v.includes('galaxy') || v.includes('sao')) return '⭐⭐';
+    if (v.includes('hoa') || v.includes('sakura') || v.includes('đào')) return '⭐';
+    if (v.includes('noel') || v.includes('giáng sinh') || v.includes('tuyết')) return '⭐';
+    if (v.includes('halloween') || v.includes('bí ngô') || v.includes('ma cà rồng')) return '⭐';
+    
+    return '⭐';
+};
+
 // ĐĂNG KÝ CÁC TUYẾN ĐƯỜNG DẪN (ROUTES)
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
