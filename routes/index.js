@@ -262,6 +262,15 @@ router.get('/', async (req, res) => {
       console.error('Lỗi lấy bình luận mới nhất:', e);
     }
 
+    // 3g. Lấy top tác giả
+    let topAuthors = [];
+    try {
+      const { data: authorsData } = await supabase.from('top_authors').select('*');
+      if (authorsData) topAuthors = authorsData;
+    } catch (e) {
+      console.error('Lỗi lấy top tác giả:', e);
+    }
+
     res.render('home', {
       title: 'Trang chủ - Web Đọc Truyện',
       user: req.user,
@@ -274,6 +283,7 @@ router.get('/', async (req, res) => {
       topRated,
       topReaders,
       topBookmarks,
+      topAuthors,
       banners,
       lastRead,
       recentComments,

@@ -972,6 +972,27 @@
                     <% }) %>
                 </div>
             <% } %>
+
+            <!-- KHỐI TOP TÁC GIẢ -->
+            <% if (typeof topAuthors !== 'undefined' && topAuthors.length > 0) { %>
+                <div class="rankings-container" style="position: relative !important; top: auto !important; margin-top: 2rem;">
+                    <h3 class="section-title" style="font-size: 1.3rem; margin-bottom: 1rem;">✍️ Top Tác Giả</h3>
+                    <% topAuthors.forEach((author, index) => { %>
+                        <div class="ranking-item" style="display: flex; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.8rem; margin-bottom: 0.8rem;">
+                            <div class="rank-number" style="width: 25px; text-align: center; font-weight: bold; font-size: 1.2rem; color: var(--accent-color); flex-shrink: 0;"><%= index + 1 %></div>
+                            
+                            <div class="ranking-info" style="flex: 1; margin-left: 0.8rem;">
+                                <div class="ranking-title" style="font-weight: 600; font-size: 0.95rem;">
+                                    <%= author.author %>
+                                </div>
+                                <div class="ranking-views" style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.2rem;">
+                                    📚 <%= author.story_count %> truyện
+                                </div>
+                            </div>
+                        </div>
+                    <% }) %>
+                </div>
+            <% } %>
         </div>
     <% } %>
 </div>
