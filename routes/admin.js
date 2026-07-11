@@ -44,55 +44,16 @@ async function uploadToSupabase(file, bucketName = 'uploads') {
 
 
 
-// Hàm phân tích file PDF thành nhiều chương (tự động tách dựa theo đầu dòng "Chương X" / "Chapter X")
-async function parsePdfToChapters(buffer, storyId) {
+// Hàm trích xuất toàn bộ text thô từ buffer PDF (dùng chung cho cả 2 luồng: tách nhiều chương và fallback 1 chương)
+function extractPdfRawText(buffer) {
   return new Promise((resolve, reject) => {
     const pdfParser = new PDFParser(this, 1);
-    
-    pdfParser.on('pdfParser_dataError', errData => reject(errData.parserError));
-    pdfParser.on('pdfParser_dataReady', pdfData => {
+
+    pdfParser.on('pdfParser_dataError', errData => reject(errData.parserError || new Error('Không đọc được nội dung file PDF.')));
+    pdfParser.on('pdfParser_dataReady', () => {
       try {
         const rawText = pdfParser.getRawTextContent().replace(/\r\n/g, '\n').replace(/-{3,}Page \(\d+\) Break-{3,}/g, '');
-        
-        const chapterHeaderRegex = /^(?:Chương|CHƯƠNG|Chap|CHAP|Chapter|CHAPTER|Phần|PHẦN|Part|PART)\s*\.?\s*(\d+(?:\.\d+)?)(?:[:\s,\-–]+(.*))?$/im;
-
-        const lines = rawText.split('\n');
-        const chapters = [];
-        let currentChapter = null;
-        let currentLines = [];
-
-        for (let i = 0; i < lines.length; i++) {
-          const line = lines[i].trim();
-          const match = line.match(chapterHeaderRegex);
-
-          if (match) {
-            if (currentChapter !== null) {
-              chapters.push({
-                ...currentChapter,
-                content: currentLines.filter(l => l.trim()).map(l => `<p>${l.trim()}</p>`).join('')
-              });
-            }
-            const chapNum = parseFloat(match[1]);
-            const chapTitle = match[2] ? match[2].trim() : '';
-            currentChapter = {
-              story_id: parseInt(storyId),
-              chapter_number: chapNum,
-              title: chapTitle ? `Chương ${chapNum}: ${chapTitle}` : `Chương ${chapNum}`
-            };
-            currentLines = [];
-          } else if (currentChapter !== null) {
-            currentLines.push(line);
-          }
-        }
-
-        if (currentChapter !== null && currentLines.length > 0) {
-          chapters.push({
-            ...currentChapter,
-            content: currentLines.filter(l => l.trim()).map(l => `<p>${l.trim()}</p>`).join('')
-          });
-        }
-
-        resolve(chapters);
+        resolve(rawText);
       } catch (err) {
         reject(err);
       }
@@ -100,6 +61,51 @@ async function parsePdfToChapters(buffer, storyId) {
 
     pdfParser.parseBuffer(buffer);
   });
+}
+
+// Hàm phân tích file PDF thành nhiều chương (tự động tách dựa theo đầu dòng "Chương X" / "Chapter X")
+async function parsePdfToChapters(buffer, storyId) {
+  const rawText = await extractPdfRawText(buffer);
+
+  const chapterHeaderRegex = /^(?:Chương|CHƯƠNG|Chap|CHAP|Chapter|CHAPTER|Phần|PHẦN|Part|PART)\s*\.?\s*(\d+(?:\.\d+)?)(?:[:\s,\-–]+(.*))?$/im;
+
+  const lines = rawText.split('\n');
+  const chapters = [];
+  let currentChapter = null;
+  let currentLines = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    const match = line.match(chapterHeaderRegex);
+
+    if (match) {
+      if (currentChapter !== null) {
+        chapters.push({
+          ...currentChapter,
+          content: currentLines.filter(l => l.trim()).map(l => `<p>${l.trim()}</p>`).join('')
+        });
+      }
+      const chapNum = parseFloat(match[1]);
+      const chapTitle = match[2] ? match[2].trim() : '';
+      currentChapter = {
+        story_id: parseInt(storyId),
+        chapter_number: chapNum,
+        title: chapTitle ? `Chương ${chapNum}: ${chapTitle}` : `Chương ${chapNum}`
+      };
+      currentLines = [];
+    } else if (currentChapter !== null) {
+      currentLines.push(line);
+    }
+  }
+
+  if (currentChapter !== null && currentLines.length > 0) {
+    chapters.push({
+      ...currentChapter,
+      content: currentLines.filter(l => l.trim()).map(l => `<p>${l.trim()}</p>`).join('')
+    });
+  }
+
+  return { chapters, rawText };
 }
 
 // Hàm phân tích 1 tệp tin (Word/Txt) thành đúng 1 chương duy nhất (1 file = 1 chương)
@@ -140,9 +146,66 @@ function syncPdfChapterNumbers(chapters, existingMaxChapter) {
     };
   });
 }
+// Regex nhận diện tiêu đề chương, dùng chung cho PDF/Word/txt
+const CHAPTER_HEADER_REGEX = /^(?:Chương|CHƯƠNG|Chap|CHAP|Chapter|CHAPTER|Phần|PHẦN|Part|PART)\s*\.?\s*(\d+(?:\.\d+)?)(?:[:\s,\-–]+(.*))?$/im;
+
+// Đếm xem văn bản thô (đã bỏ thẻ HTML) có bao nhiêu dòng khớp tiêu đề chương - dùng để quyết định có nên tự tách nhiều chương hay không
+function countChapterHeaders(plainText) {
+  const lines = plainText.split('\n');
+  let count = 0;
+  for (const line of lines) {
+    if (CHAPTER_HEADER_REGEX.test(line.trim())) count++;
+  }
+  return count;
+}
+
+// Tách một khối text thô thành nhiều chương dựa theo tiêu đề "Chương X" bên trong (giống logic PDF)
+function splitPlainTextIntoChapters(plainText, storyId) {
+  const lines = plainText.split('\n');
+  const chapters = [];
+  let currentChapter = null;
+  let currentLines = [];
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    const match = line.match(CHAPTER_HEADER_REGEX);
+
+    if (match) {
+      if (currentChapter !== null) {
+        chapters.push({
+          ...currentChapter,
+          content: currentLines.filter(l => l.trim()).map(l => `<p>${l.trim()}</p>`).join('')
+        });
+      }
+      const chapNum = parseFloat(match[1]);
+      const chapTitle = match[2] ? match[2].trim() : '';
+      currentChapter = {
+        story_id: parseInt(storyId),
+        chapter_number: chapNum,
+        title: chapTitle ? `Chương ${chapNum}: ${chapTitle}` : `Chương ${chapNum}`
+      };
+      currentLines = [];
+    } else if (currentChapter !== null) {
+      currentLines.push(line);
+    }
+  }
+
+  if (currentChapter !== null && currentLines.length > 0) {
+    chapters.push({
+      ...currentChapter,
+      content: currentLines.filter(l => l.trim()).map(l => `<p>${l.trim()}</p>`).join('')
+    });
+  }
+
+  return chapters;
+}
+
+// Hàm phân tích 1 tệp tin (Word/Txt): mặc định 1 file = 1 chương (dựa theo tên file),
+// nhưng nếu bên trong file có TỪ 2 tiêu đề "Chương X" trở lên thì tự động tách thành nhiều chương riêng biệt.
 async function parseSingleFileToChapter(file, storyId) {
   const isDocx = file.originalname.endsWith('.docx') || file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
   let html = '';
+  let plainText = '';
 
   if (isDocx) {
     const options = {
@@ -151,7 +214,7 @@ async function parseSingleFileToChapter(file, storyId) {
           const buffer = Buffer.from(imageBuffer, 'base64');
           const fileExt = element.contentType === 'image/jpeg' ? '.jpg' : '.png';
           const fileName = `word-img-${Date.now()}-${Math.round(Math.random() * 1E9)}${fileExt}`;
-          
+
           const { error: uploadErr } = await supabase.storage
             .from('uploads')
             .upload(fileName, buffer, {
@@ -170,11 +233,15 @@ async function parseSingleFileToChapter(file, storyId) {
       })
     };
 
-    const result = await mammoth.convertToHtml({ buffer: file.buffer }, options);
-    html = result.value;
+    const [htmlResult, textResult] = await Promise.all([
+      mammoth.convertToHtml({ buffer: file.buffer }, options),
+      mammoth.extractRawText({ buffer: file.buffer })
+    ]);
+    html = htmlResult.value;
+    plainText = textResult.value;
   } else {
-    const text = file.buffer.toString('utf-8');
-    html = text
+    plainText = file.buffer.toString('utf-8');
+    html = plainText
       .split('\n')
       .map(line => line.trim())
       .filter(line => line.length > 0)
@@ -182,7 +249,17 @@ async function parseSingleFileToChapter(file, storyId) {
       .join('');
   }
 
-  // Phân tích tên tệp tin để trích xuất số chương và tiêu đề chương
+  // Nếu phát hiện từ 2 tiêu đề "Chương X" trở lên bên trong nội dung -> tự động tách thành nhiều chương
+  // (Lưu ý: chỉ áp dụng tách theo plainText - với .docx sẽ mất định dạng ảnh nhúng khi tách nhiều chương,
+  // vì mammoth.extractRawText không giữ ảnh; nếu file có ảnh và nhiều chương, khuyến khích tách file trước khi upload)
+  if (countChapterHeaders(plainText) >= 2) {
+    const splitChapters = splitPlainTextIntoChapters(plainText, storyId);
+    if (splitChapters.length >= 2) {
+      return splitChapters;
+    }
+  }
+
+  // Mặc định: 1 file = 1 chương -> Phân tích tên tệp tin để trích xuất số chương và tiêu đề chương
   const fileName = path.basename(file.originalname, path.extname(file.originalname)).trim();
   let chapter_number = null;
   let title = '';
@@ -216,7 +293,6 @@ async function parseSingleFileToChapter(file, storyId) {
         // Tìm bất kỳ số đơn lẻ nào trong tên file
         const standaloneNumMatch = fileName.match(/(\d+(?:\.\d+)?)/);
         if (standaloneNumMatch) {
-          standaloneNumMatch
           chapter_number = parseFloat(standaloneNumMatch[1]);
         }
       }
@@ -225,12 +301,12 @@ async function parseSingleFileToChapter(file, storyId) {
     title = fileName;
   }
 
-  return {
+  return [{
     story_id: parseInt(storyId),
     chapter_number: chapter_number,
     title: title || null,
     content: html
-  };
+  }];
 }
 
 // Middleware kiểm tra quyền Admin
@@ -434,10 +510,10 @@ router.post('/chapter/add', upload.array('txtfile', 100), async (req, res) => {
         });
       }
 
-      // Quét từng file để tách chương (1 file = 1 chương)
+      // Quét từng file để tách chương (mặc định 1 file = 1 chương, tự tách nhiều chương nếu phát hiện nhiều tiêu đề "Chương X" bên trong file)
       for (const file of files) {
         const parsed = await parseSingleFileToChapter(file, story_id);
-        chaptersToInsert.push(parsed);
+        chaptersToInsert.push(...parsed);
       }
 
       // Lấy tất cả số chương hiện có của bộ truyện này trong database để đối chiếu
@@ -651,7 +727,13 @@ router.post('/chapter/add-pdf', upload.single('pdffile'), async (req, res) => {
       return res.json({ success: false, error: 'Thiếu file hoặc story_id' });
     }
 
-    let chapters = await parsePdfToChapters(req.file.buffer, story_id);
+    const { chapters: parsedChapters, rawText } = await parsePdfToChapters(req.file.buffer, story_id);
+    let chapters = parsedChapters;
+
+    if (!rawText || !rawText.trim()) {
+      return res.json({ success: false, error: 'Không đọc được nội dung văn bản từ file PDF này (có thể là PDF dạng ảnh scan, chưa hỗ trợ OCR).' });
+    }
+
     const { data: existingChapters } = await supabase
       .from('chapters')
       .select('chapter_number')
@@ -668,8 +750,6 @@ router.post('/chapter/add-pdf', upload.single('pdffile'), async (req, res) => {
 
     // Nếu PDF không có từ khóa chương nào được nhận diện -> đăng toàn bộ nội dung thành 1 chương duy nhất
     if (chapters.length === 0) {
-      const pdfData = await pdfParse(req.file.buffer);
-      const rawText = pdfData.text;
       const html = rawText
         .split('\n')
         .map(line => line.trim())
@@ -690,6 +770,15 @@ router.post('/chapter/add-pdf', upload.single('pdffile'), async (req, res) => {
         content: html
       }];
     }
+
+    // Loại bỏ các chương bị trùng chapter_number trong CÙNG một lần upload (tránh lỗi upsert "ON CONFLICT DO UPDATE command cannot affect row a second time")
+    const seenNumbers = new Set();
+    chapters = chapters.filter(ch => {
+      if (seenNumbers.has(ch.chapter_number)) return false;
+      seenNumbers.add(ch.chapter_number);
+      return true;
+    });
+
     const { error } = await supabase.from('chapters')
       .upsert(chapters, { onConflict: 'story_id,chapter_number' });
     if (error) throw error;

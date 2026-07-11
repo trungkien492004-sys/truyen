@@ -1,4 +1,5 @@
 const express = require('express');
+const compression = require('compression');
 const cookieSession = require('cookie-session');
 const path = require('path');
 const cookieParser = require('cookie-parser');
@@ -44,8 +45,11 @@ app.use((req, res, next) => {
 app.use(passport.initialize());
 app.use(passport.session());
 
+// Kích hoạt nén gzip/brotli để tối ưu tốc độ load
+app.use(compression());
+
 // Cấu hình thư mục chứa file tĩnh (public)
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'), { maxAge: '1d' }));
 
 
 
