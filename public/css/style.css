@@ -866,6 +866,7 @@ footer {
     .nav-links {
         order: 3 !important;
         width: 100% !important;
+        max-width: 100vw !important;
         display: flex !important;
         overflow-x: auto !important;
         white-space: nowrap !important;
@@ -874,6 +875,7 @@ footer {
         gap: 1.2rem !important;
         padding: 0.4rem 0 !important;
         -webkit-overflow-scrolling: touch !important;
+        scrollbar-width: none; /* Firefox */
         scrollbar-width: none !important;
         border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
         margin-top: 0.2rem !important;
