@@ -184,13 +184,25 @@
             <p style="color: var(--text-secondary); text-align: center; padding: 1.5rem 0; font-size: 0.92rem;">Chưa có bình luận nào. Hãy là người đầu tiên chia sẻ cảm nghĩ!</p>
         <% } else { %>
             <!-- Phân tách bình luận gốc và phản hồi -->
-            <% const topLevelComments = comments.filter(c => !c.parent_id); %>
+            <% 
+               const getTitleRarityClass = (val) => {
+                   if (!val) return 'game-title-default';
+                   const v = val.toLowerCase();
+                   if (v.includes('quản trị') || v.includes('admin')) return 'game-title-admin';
+                   if (v.includes('đế') || v.includes('chúa') || v.includes('thần') || v.includes('hoàng') || v.includes('độc cô')) return 'game-title-legendary';
+                   if (v.includes('tiên') || v.includes('ma') || v.includes('kiếm')) return 'game-title-magic';
+                   if (v.includes('sách') || v.includes('đọc') || v.includes('độc giả')) return 'game-title-cyber';
+                   return 'game-title-default';
+               };
+               const topLevelComments = comments.filter(c => !c.parent_id); 
+            %>
             <% topLevelComments.forEach(comment => { %>
                 <div class="comment-item" id="comment-<%= comment.id %>" style="display: flex; gap: 1rem; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 1rem;">
                     <a href="/user/<%= comment.user_id %>" style="flex-shrink: 0; display: inline-block; position: relative;">
-                        <% const cFrame = (comment.users && comment.users.equipped_frame) ? comment.users.equipped_frame : 'border: 1px solid var(--border-color);' %>
-                        <div style="width: 42px; height: 42px; border-radius: 50%; overflow: hidden; <%= cFrame %> transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform='scale(1)'">
-                            <img src="<%= comment.users ? comment.users.avatar : '/css/default-avatar.png' %>" alt="avatar" style="width: 100%; height: 100%; object-fit: cover;">
+                        <% const cFrameClass = (comment.users && comment.users.equipped_frame) ? comment.users.equipped_frame : 'default-frame'; %>
+                        <div class="avatar-frame <%= cFrameClass %>" style="width: 42px; height: 42px; padding: 2px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform='scale(1)'">
+                            <div class="avatar-glow"></div>
+                            <img src="<%= comment.users ? comment.users.avatar : '/css/default-avatar.png' %>" alt="avatar" class="avatar-img" style="border-width: 1px;">
                         </div>
                     </a>
                     
@@ -201,18 +213,8 @@
                                     <%= comment.users ? comment.users.display_name : 'Độc giả ẩn danh' %>
                                 </a>
                                 <% if (comment.users && comment.users.equipped_badge) { %>
-                                    <%
-                                       const getBadgeClass = (val) => {
-                                           if (!val) return 'user-badge-default';
-                                           const v = val.toLowerCase();
-                                           if (v.includes('quản trị') || v.includes('admin')) return 'user-badge-admin';
-                                           if (v.includes('đế') || v.includes('chúa') || v.includes('thần') || v.includes('hoàng') || v.includes('độc cô')) return 'user-badge-custom-gold';
-                                           if (v.includes('tiên') || v.includes('ma') || v.includes('kiếm')) return 'user-badge-custom-purple';
-                                           if (v.includes('sách') || v.includes('độc giả') || v.includes('đọc')) return 'user-badge-custom-rose';
-                                           return 'user-badge-default';
-                                       }
-                                    %>
-                                    <span class="user-badge-premium <%= getBadgeClass(comment.users.equipped_badge) %>" style="margin-left: 0.4rem; transform: scale(0.9); display: inline-flex; vertical-align: middle;"><%= comment.users.equipped_badge %></span>
+                                    <% const badgeText = comment.users.equipped_badge.replace(/^([\uD800-\uDBFF][\uDC00-\uDFFF]|\S)\s*/, ''); %>
+                                    <span class="game-title <%= getTitleRarityClass(comment.users.equipped_badge) %>" style="margin-left: 0.4rem; transform: scale(0.85); transform-origin: left center; display: inline-flex; vertical-align: middle;"><%= badgeText %></span>
                                 <% } %>
                             </span>
                             <span style="font-size: 0.78rem; color: var(--text-secondary);"><%= new Date(comment.created_at).toLocaleDateString('vi-VN', { hour: '2-digit', minute: '2-digit' }) %></span>
@@ -245,9 +247,10 @@
                                 <% replies.forEach(reply => { %>
                                     <div class="comment-item" id="comment-<%= reply.id %>" style="display: flex; gap: 0.8rem;">
                                         <a href="/user/<%= reply.user_id %>" style="flex-shrink: 0; display: inline-block; position: relative;">
-                                            <% const rFrame = (reply.users && reply.users.equipped_frame) ? reply.users.equipped_frame : 'border: 1px solid var(--border-color);' %>
-                                            <div style="width: 32px; height: 32px; border-radius: 50%; overflow: hidden; <%= rFrame %> transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform='scale(1)'">
-                                                <img src="<%= reply.users ? reply.users.avatar : '/css/default-avatar.png' %>" alt="avatar" style="width: 100%; height: 100%; object-fit: cover;">
+                                            <% const rFrameClass = (reply.users && reply.users.equipped_frame) ? reply.users.equipped_frame : 'default-frame'; %>
+                                            <div class="avatar-frame <%= rFrameClass %>" style="width: 32px; height: 32px; padding: 2px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform='scale(1)'">
+                                                <div class="avatar-glow"></div>
+                                                <img src="<%= reply.users ? reply.users.avatar : '/css/default-avatar.png' %>" alt="avatar" class="avatar-img" style="border-width: 1px;">
                                             </div>
                                         </a>
                                         <div style="flex: 1;">
@@ -257,18 +260,8 @@
                                                         <%= reply.users ? reply.users.display_name : 'Độc giả ẩn danh' %>
                                                     </a>
                                                     <% if (reply.users && reply.users.equipped_badge) { %>
-                                                        <%
-                                                           const getBadgeClass = (val) => {
-                                                               if (!val) return 'user-badge-default';
-                                                               const v = val.toLowerCase();
-                                                               if (v.includes('quản trị') || v.includes('admin')) return 'user-badge-admin';
-                                                               if (v.includes('đế') || v.includes('chúa') || v.includes('thần') || v.includes('hoàng') || v.includes('độc cô')) return 'user-badge-custom-gold';
-                                                               if (v.includes('tiên') || v.includes('ma') || v.includes('kiếm')) return 'user-badge-custom-purple';
-                                                               if (v.includes('sách') || v.includes('độc giả') || v.includes('đọc')) return 'user-badge-custom-rose';
-                                                               return 'user-badge-default';
-                                                           }
-                                                        %>
-                                                        <span class="user-badge-premium <%= getBadgeClass(reply.users.equipped_badge) %>" style="margin-left: 0.4rem; transform: scale(0.85); display: inline-flex; vertical-align: middle;"><%= reply.users.equipped_badge %></span>
+                                                        <% const rBadgeText = reply.users.equipped_badge.replace(/^([\uD800-\uDBFF][\uDC00-\uDFFF]|\S)\s*/, ''); %>
+                                                        <span class="game-title <%= getTitleRarityClass(reply.users.equipped_badge) %>" style="margin-left: 0.4rem; transform: scale(0.8); transform-origin: left center; display: inline-flex; vertical-align: middle;"><%= rBadgeText %></span>
                                                     <% } %>
                                                 </span>
                                                 <span style="font-size: 0.75rem; color: var(--text-secondary);"><%= new Date(reply.created_at).toLocaleDateString('vi-VN', { hour: '2-digit', minute: '2-digit' }) %></span>

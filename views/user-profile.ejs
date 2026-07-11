@@ -10,22 +10,25 @@
 
     <!-- Profile Header/Card (Read-Only) -->
     <div style="background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.9) 100%); border: 1px solid var(--border-color); border-radius: 16px; padding: 2.5rem; display: flex; flex-wrap: wrap; gap: 2rem; align-items: center; margin-bottom: 2rem; box-shadow: 0 10px 30px rgba(0,0,0,0.3); backdrop-filter: blur(10px);">
-        <!-- Avatar display with title overlay -->
+        <!-- Avatar display with title overlay (MMORPG Style) -->
         <div style="display: flex; flex-direction: column; align-items: center; gap: 0.6rem;">
-            <div style="position: relative; display: inline-block;">
-                <% const frameStyle = targetUser.equipped_frame || 'border: 4px solid var(--accent-color); box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);' %>
-                <div class="avatar-wrapper" style="position: relative; width: 140px; height: 140px; border-radius: 50%; overflow: hidden; <%= frameStyle %>">
-                    <img src="<%= targetUser.avatar || '/css/default-avatar.png' %>" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;">
-                </div>
+            <% const equippedFrameClass = targetUser.equipped_frame || 'default-frame' %>
+            <div class="avatar-frame <%= equippedFrameClass %>">
+                <div class="avatar-glow"></div>
+                <img src="<%= targetUser.avatar || '/css/default-avatar.png' %>" class="avatar-img" alt="Avatar">
                 
-                <!-- Badge Icon at Top Right -->
+                <!-- Badge Icon at Top Right (avatar-corner) -->
                 <% if (targetUser.equipped_badge) { %>
                     <% 
                        const emojiMatch = targetUser.equipped_badge.match(/^([\uD800-\uDBFF][\uDC00-\uDFFF]|\S)/);
-                       const emoji = emojiMatch ? emojiMatch[1] : '⭐';
+                       const emoji = emojiMatch ? emojiMatch[1] : '⚔️';
                     %>
-                    <div style="position: absolute; top: -5px; right: -5px; width: 38px; height: 38px; background: #0f172a; border: 2.5px solid var(--accent-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 10;" title="Danh hiệu active">
+                    <div class="avatar-corner">
                         <%= emoji %>
+                    </div>
+                <% } else { %>
+                    <div class="avatar-corner" style="font-size: 16px;">
+                        ⚔️
                     </div>
                 <% } %>
             </div>
@@ -34,17 +37,28 @@
             <% if (targetUser.equipped_badge) { %>
                 <% 
                    const badgeText = targetUser.equipped_badge.replace(/^([\uD800-\uDBFF][\uDC00-\uDFFF]|\S)\s*/, '');
-                   const getBadgeClass = (val) => {
-                       if (!val) return 'user-badge-default';
+                   const getTitleRarityClass = (val) => {
+                       if (!val) return 'game-title-default';
                        const v = val.toLowerCase();
-                       if (v.includes('quản trị') || v.includes('admin')) return 'user-badge-admin';
-                       if (v.includes('đế') || v.includes('chúa') || v.includes('thần') || v.includes('hoàng') || v.includes('độc cô')) return 'user-badge-custom-gold';
-                       if (v.includes('tiên') || v.includes('ma') || v.includes('kiếm')) return 'user-badge-custom-purple';
-                       if (v.includes('sách') || v.includes('độc giả') || v.includes('đọc')) return 'user-badge-custom-rose';
-                       return 'user-badge-default';
+                       if (v.includes('quản trị') || v.includes('admin')) return 'game-title-admin';
+                       if (v.includes('đế') || v.includes('chúa') || v.includes('thần') || v.includes('hoàng')) return 'game-title-legendary';
+                       if (v.includes('tiên') || v.includes('ma')) return 'game-title-magic';
+                       if (v.includes('kiếm') || v.includes('độc cô')) return 'game-title-sword';
+                       if (v.includes('sách') || v.includes('đọc') || v.includes('độc giả')) return 'game-title-cyber';
+                       return 'game-title-default';
+                   }
+                   const getStars = (val) => {
+                       const v = val.toLowerCase();
+                       if (v.includes('quản trị') || v.includes('admin') || v.includes('đế') || v.includes('chúa')) return '★★★★★';
+                       if (v.includes('hoàng') || v.includes('tiên') || v.includes('thần') || v.includes('kiếm')) return '★★★★';
+                       if (v.includes('ma') || v.includes('độc cô')) return '★★★';
+                       return '★★';
                    }
                 %>
-                <span class="user-badge-premium <%= getBadgeClass(targetUser.equipped_badge) %>" style="font-size: 0.8rem; padding: 0.25rem 0.75rem; border-radius: 12px; white-space: nowrap;"><%= badgeText %></span>
+                <div class="game-title <%= getTitleRarityClass(targetUser.equipped_badge) %>">
+                    <%= badgeText %>
+                </div>
+                <div class="rank-stars"><%= getStars(targetUser.equipped_badge) %></div>
             <% } %>
         </div>
 

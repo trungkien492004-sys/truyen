@@ -1157,8 +1157,7 @@ footer {
     }
     .ranking-tabs {
         margin-bottom: 0.6rem !important;
-        overflow-x: auto;
-        white-space: nowrap;
+        flex-wrap: wrap;
         border-bottom: 1px solid var(--border-color);
         gap: 0.5rem;
     }
@@ -1204,75 +1203,231 @@ footer {
 
 /* PREMIUM MMORPG STYLES FOR AVATAR BORDERS & BADGES */
 
-/* Pulsating glow animations for avatar frames */
-@keyframes pulse-gold {
-    0% { box-shadow: 0 0 8px rgba(234, 179, 8, 0.4), inset 0 0 5px rgba(234, 179, 8, 0.2); }
-    100% { box-shadow: 0 0 20px rgba(234, 179, 8, 0.95), inset 0 0 12px rgba(234, 179, 8, 0.5); }
+/* Core avatar frame */
+.avatar-frame {
+    position: relative;
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    padding: 7px;
+    overflow: visible;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+    transition: all 0.3s ease;
 }
 
-@keyframes pulse-blue {
-    0% { box-shadow: 0 0 8px rgba(59, 130, 246, 0.4), inset 0 0 5px rgba(59, 130, 246, 0.2); }
-    100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.95), inset 0 0 12px rgba(59, 130, 246, 0.5); }
+.avatar-img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(255,255,255,0.2);
+    z-index: 2;
+    background: #0f172a;
 }
 
-@keyframes pulse-purple {
-    0% { box-shadow: 0 0 8px rgba(168, 85, 247, 0.4), inset 0 0 5px rgba(168, 85, 247, 0.2); }
-    100% { box-shadow: 0 0 20px rgba(168, 85, 247, 0.95), inset 0 0 12px rgba(168, 85, 247, 0.5); }
+.avatar-glow {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    filter: blur(8px);
+    opacity: 0.9;
+    animation: aura 2.5s infinite alternate;
+    z-index: -1;
 }
 
-@keyframes pulse-pink {
-    0% { box-shadow: 0 0 8px rgba(236, 72, 153, 0.4), inset 0 0 5px rgba(236, 72, 153, 0.2); }
-    100% { box-shadow: 0 0 20px rgba(236, 72, 153, 0.95), inset 0 0 12px rgba(236, 72, 153, 0.5); }
+.avatar-corner {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    background: #111827;
+    border: 3px solid #ffd700;
+    box-shadow: 0 0 12px #ffd700, inset 0 0 6px #ffffff;
+    z-index: 20;
+    transition: all 0.3s ease;
 }
 
-/* Premium Badge Titles (MMORPG style) */
-.user-badge-premium {
-    font-size: 0.72rem;
-    padding: 0.25rem 0.65rem;
-    border-radius: 50px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+/* Conic spinning ring background for custom frames */
+.avatar-frame::before {
+    content: "";
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    animation: spin 8s linear infinite;
+    z-index: -2;
+    filter: blur(2px);
+    opacity: 0.85;
+}
+
+/* 1. Legendary (Gold) Frame */
+.avatar-frame.legendary {
+    background: linear-gradient(145deg, #fff7c2, #ffd700, #eab308, #ffd700, #fff7c2);
+    box-shadow: 0 0 15px #ffd700, 0 0 35px rgba(255,215,0,0.7), 0 0 60px rgba(255,215,0,0.35);
+}
+.avatar-frame.legendary::before {
+    background: conic-gradient(#ffd700, #fff7c2, #ffd700, #eab308, #ffd700);
+}
+.avatar-frame.legendary .avatar-glow {
+    background: radial-gradient(circle, rgba(253, 224, 71, 0.4) 0%, transparent 70%);
+}
+
+/* 2. Magic (Blue) Frame */
+.avatar-frame.magic {
+    background: linear-gradient(135deg, #60a5fa, #3b82f6, #2563eb, #1d4ed8);
+    box-shadow: 0 0 15px #3b82f6, 0 0 35px rgba(59, 130, 246, 0.7);
+}
+.avatar-frame.magic::before {
+    background: conic-gradient(#60a5fa, #ffffff, #3b82f6, #1d4ed8, #60a5fa);
+}
+.avatar-frame.magic .avatar-glow {
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.4) 0%, transparent 70%);
+}
+.avatar-frame.magic .avatar-corner {
+    border-color: #3b82f6;
+    box-shadow: 0 0 12px #3b82f6, inset 0 0 6px #ffffff;
+}
+
+/* 3. Sword (Purple) Frame */
+.avatar-frame.sword {
+    background: linear-gradient(135deg, #f5d0fe, #c084fc, #a855f7, #7e22ce);
+    box-shadow: 0 0 15px #a855f7, 0 0 35px rgba(168, 85, 247, 0.7);
+}
+.avatar-frame.sword::before {
+    background: conic-gradient(#f5d0fe, #ffffff, #a855f7, #7e22ce, #f5d0fe);
+}
+.avatar-frame.sword .avatar-glow {
+    background: radial-gradient(circle, rgba(168, 85, 247, 0.4) 0%, transparent 70%);
+}
+.avatar-frame.sword .avatar-corner {
+    border-color: #a855f7;
+    box-shadow: 0 0 12px #a855f7, inset 0 0 6px #ffffff;
+}
+
+/* 4. Cyberpunk (Animated Pink/Cyan) Frame */
+.avatar-frame.cyber {
+    background: linear-gradient(135deg, #ec4899, #06b6d4, #ec4899, #06b6d4);
+    background-size: 300%;
+    animation: cyberMove 4s linear infinite;
+    box-shadow: 0 0 20px #ec4899, 0 0 30px #06b6d4;
+}
+.avatar-frame.cyber::before {
+    background: conic-gradient(#ec4899, #06b6d4, #ffffff, #ec4899);
+}
+.avatar-frame.cyber .avatar-glow {
+    background: radial-gradient(circle, rgba(236, 72, 153, 0.4) 0%, transparent 70%);
+}
+.avatar-frame.cyber .avatar-corner {
+    border-color: #ec4899;
+    box-shadow: 0 0 12px #ec4899, inset 0 0 6px #06b6d4;
+}
+
+/* 5. Default Frame (Metallic Sleek) */
+.avatar-frame.default-frame {
+    background: linear-gradient(135deg, #475569, #1e293b, #475569);
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+}
+.avatar-frame.default-frame::before {
+    background: conic-gradient(#64748b, #cbd5e1, #64748b);
+    animation-duration: 15s;
+    opacity: 0.3;
+}
+.avatar-frame.default-frame .avatar-glow {
+    display: none;
+}
+.avatar-frame.default-frame .avatar-corner {
+    border-color: #64748b;
+    box-shadow: 0 0 6px rgba(0,0,0,0.4);
+}
+
+/* MMORPG Badge Titles (Polygonal cut) */
+.game-title {
     display: inline-flex;
     align-items: center;
-    gap: 0.2rem;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-    text-shadow: 0 1px 2px rgba(0,0,0,0.6);
-    border: 1px solid rgba(255,255,255,0.1);
-    color: #ffffff !important;
+    gap: 6px;
+    padding: 6px 18px;
+    font-weight: 900;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: white !important;
+    clip-path: polygon(8% 0, 92% 0, 100% 50%, 92% 100%, 8% 100%, 0 50%);
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+    box-shadow: 0 3px 10px rgba(0,0,0,0.5);
+    border: 1px solid rgba(255,255,255,0.25);
+    z-index: 10;
 }
 
-/* Badge variants based on value content */
-.user-badge-admin {
-    background: linear-gradient(135deg, #f59e0b, #d97706) !important;
-    border-color: rgba(245, 158, 11, 0.6) !important;
-    box-shadow: 0 0 10px rgba(245, 158, 11, 0.4) !important;
+.game-title-admin {
+    background: linear-gradient(180deg, #ffd700, #f97316, #b45309) !important;
+    box-shadow: 0 0 12px rgba(249, 115, 22, 0.6) !important;
 }
 
-.user-badge-reader {
-    background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
-    border-color: rgba(59, 130, 246, 0.6) !important;
+.game-title-legendary {
+    background: linear-gradient(180deg, #ffe88f, #eab308, #b45309) !important;
+    box-shadow: 0 0 12px rgba(234, 179, 8, 0.6) !important;
 }
 
-.user-badge-custom-gold {
-    background: linear-gradient(135deg, #fbbf24, #d97706) !important;
-    border-color: rgba(251, 191, 36, 0.7) !important;
-    box-shadow: 0 0 8px rgba(251, 191, 36, 0.35) !important;
+.game-title-magic {
+    background: linear-gradient(180deg, #93c5fd, #3b82f6, #1d4ed8) !important;
+    box-shadow: 0 0 12px rgba(59, 130, 246, 0.6) !important;
 }
 
-.user-badge-custom-purple {
-    background: linear-gradient(135deg, #c084fc, #8b5cf6) !important;
-    border-color: rgba(192, 132, 252, 0.7) !important;
-    box-shadow: 0 0 8px rgba(192, 132, 252, 0.35) !important;
+.game-title-sword {
+    background: linear-gradient(180deg, #f5d0fe, #a855f7, #6b21a8) !important;
+    box-shadow: 0 0 12px rgba(168, 85, 247, 0.6) !important;
 }
 
-.user-badge-custom-rose {
-    background: linear-gradient(135deg, #fda4af, #f43f5e) !important;
-    border-color: rgba(253, 164, 175, 0.7) !important;
-    box-shadow: 0 0 8px rgba(253, 164, 175, 0.35) !important;
+.game-title-cyber {
+    background: linear-gradient(180deg, #fda4af, #ec4899, #9d174d) !important;
+    box-shadow: 0 0 12px rgba(236, 72, 153, 0.6) !important;
 }
 
-.user-badge-default {
-    background: linear-gradient(135deg, #10b981, #047857) !important;
-    border-color: rgba(16, 185, 129, 0.5) !important;
+.game-title-default {
+    background: linear-gradient(180deg, #a7f3d0, #10b981, #065f46) !important;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.5) !important;
+}
+
+/* Rank Stars Rating */
+.rank-stars {
+    margin-top: 4px;
+    color: #ffd700;
+    font-size: 16px;
+    text-shadow: 0 0 8px #ffd700;
+    letter-spacing: 2px;
+}
+
+/* Animations */
+@keyframes aura {
+    0% {
+        transform: scale(0.96);
+        opacity: 0.6;
+    }
+    100% {
+        transform: scale(1.05);
+        opacity: 1;
+    }
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes cyberMove {
+    0% {
+        background-position: 0%;
+    }
+    100% {
+        background-position: 300%;
+    }
 }

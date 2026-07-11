@@ -30,7 +30,7 @@
                 <% } else { %>
                     <% leaderboard.forEach((reader, index) => { %>
                         <tr style="border-bottom: 1px solid rgba(255,255,255,0.03); transition: background-color 0.2s;" class="leaderboard-row">
-                            <td style="padding: 1rem 0.8rem; text-align: center;">
+                            <td data-label="Hạng" style="padding: 1rem 0.8rem; text-align: center;">
                                 <% if (index === 0) { %>
                                     <span style="font-size: 1.4rem;" title="Quán quân">🥇</span>
                                 <% } else if (index === 1) { %>
@@ -41,22 +41,49 @@
                                     <span style="font-weight: bold; color: var(--text-secondary);"><%= index + 1 %></span>
                                 <% } %>
                             </td>
-                            <td style="padding: 1rem 0.8rem; display: flex; align-items: center; gap: 0.8rem;">
-                                <img src="<%= reader.avatar || '/css/default-avatar.png' %>" alt="avatar" style="width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border-color); object-fit: cover;">
-                                <span style="font-weight: 600;"><%= reader.display_name %></span>
-                            </td>
-                            <td style="padding: 1rem 0.8rem;">
-                                <span style="font-size: 0.8rem; background: rgba(99, 102, 241, 0.1); color: var(--accent-color); padding: 0.25rem 0.6rem; border-radius: 12px; font-weight: 500; border: 1px solid rgba(99, 102, 241, 0.2);">
-                                    <%= reader.badge ? reader.badge.label : 'Người mới' %>
+                            <td data-label="Độc giả" style="padding: 0.8rem 0.8rem; display: flex; align-items: center; gap: 0.8rem;">
+                                <a href="/user/<%= reader.id %>" style="text-decoration: none; display: inline-block;">
+                                    <% const readerFrame = reader.equipped_frame || 'default-frame' %>
+                                    <div class="avatar-frame <%= readerFrame %>" style="width: 44px; height: 44px; padding: 2px;">
+                                        <div class="avatar-glow"></div>
+                                        <img src="<%= reader.avatar || '/css/default-avatar.png' %>" class="avatar-img" alt="avatar" style="border-width: 1px;">
+                                    </div>
+                                </a>
+                                <span style="font-weight: 600;">
+                                    <a href="/user/<%= reader.id %>" style="text-decoration: none; color: inherit; transition: color 0.2s;" onmouseover="this.style.color='var(--accent-color)'" onmouseout="this.style.color='inherit'">
+                                        <%= reader.display_name %>
+                                    </a>
                                 </span>
                             </td>
-                            <td style="padding: 1rem 0.8rem; text-align: center; font-weight: bold; color: #10b981;">
+                            <td data-label="Huy hiệu" style="padding: 0.8rem 0.8rem;">
+                                <% if (reader.equipped_badge) { %>
+                                    <% 
+                                       const badgeText = reader.equipped_badge.replace(/^([\uD800-\uDBFF][\uDC00-\uDFFF]|\S)\s*/, '');
+                                       const getTitleRarityClass = (val) => {
+                                           if (!val) return 'game-title-default';
+                                           const v = val.toLowerCase();
+                                           if (v.includes('quản trị') || v.includes('admin')) return 'game-title-admin';
+                                           if (v.includes('đế') || v.includes('chúa') || v.includes('thần') || v.includes('hoàng')) return 'game-title-legendary';
+                                           if (v.includes('tiên') || v.includes('ma')) return 'game-title-magic';
+                                           if (v.includes('kiếm') || v.includes('độc cô')) return 'game-title-sword';
+                                           if (v.includes('sách') || v.includes('đọc') || v.includes('độc giả')) return 'game-title-cyber';
+                                           return 'game-title-default';
+                                       }
+                                    %>
+                                    <span class="game-title <%= getTitleRarityClass(reader.equipped_badge) %>" style="font-size: 0.65rem; padding: 4px 10px; transform: scale(0.9); transform-origin: left center;"><%= badgeText %></span>
+                                <% } else { %>
+                                    <span style="font-size: 0.8rem; background: rgba(99, 102, 241, 0.1); color: var(--accent-color); padding: 0.25rem 0.6rem; border-radius: 12px; font-weight: 500; border: 1px solid rgba(99, 102, 241, 0.2);">
+                                        <%= reader.badge ? reader.badge.label : 'Người mới' %>
+                                    </span>
+                                <% } %>
+                            </td>
+                            <td data-label="Cấp độ" style="padding: 1rem 0.8rem; text-align: center; font-weight: bold; color: #10b981;">
                                 Lvl <%= Math.floor((reader.exp || 0) / 100) + 1 %>
                             </td>
-                            <td style="padding: 1rem 0.8rem; text-align: right; font-weight: 500;">
+                            <td data-label="Số chương" style="padding: 1rem 0.8rem; text-align: right; font-weight: 500;">
                                 <%= reader.chapters_read || 0 %>
                             </td>
-                            <td style="padding: 1rem 0.8rem; text-align: right; font-weight: bold; color: var(--accent-color);">
+                            <td data-label="EXP" style="padding: 1rem 0.8rem; text-align: right; font-weight: bold; color: var(--accent-color);">
                                 <%= reader.exp || 0 %>
                             </td>
                         </tr>
@@ -71,23 +98,46 @@
     .leaderboard-row:hover {
         background-color: rgba(255, 255, 255, 0.02);
     }
-    @media (max-width: 600px) {
-        .leaderboard-table th:nth-child(3),
-        .leaderboard-table td:nth-child(3) {
-            display: none;
+    
+    @media (max-width: 768px) {
+        .leaderboard-table thead { display: none; }
+        .leaderboard-table, .leaderboard-table tbody, .leaderboard-table tr, .leaderboard-table td {
+            display: block;
+            width: 100%;
         }
-        .leaderboard-table th, .leaderboard-table td {
-            padding: 0.8rem 0.4rem !important;
-            font-size: 0.85rem;
+        .leaderboard-table tr {
+            background: rgba(255, 255, 255, 0.02);
+            margin-bottom: 1.5rem;
+            border-radius: 12px;
+            padding: 0.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
-        .leaderboard-table th:nth-child(1), .leaderboard-table td:nth-child(1) {
-            width: 45px !important;
+        .leaderboard-table td {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            padding: 0.8rem 1rem !important;
+            text-align: right !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03) !important;
         }
-        .leaderboard-table th:nth-child(5), .leaderboard-table td:nth-child(5) {
-            width: 80px !important;
+        .leaderboard-table td:last-child {
+            border-bottom: none !important;
         }
-        .leaderboard-table th:nth-child(6), .leaderboard-table td:nth-child(6) {
-            width: 70px !important;
+        .leaderboard-table td::before {
+            content: attr(data-label);
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            text-align: left;
+            flex-shrink: 0;
+            margin-right: 1rem;
+        }
+        .leaderboard-table td[data-label="Độc giả"] {
+            flex-direction: row-reverse !important;
+        }
+        .leaderboard-table td[data-label="Độc giả"]::before {
+            margin-right: 0;
+            margin-left: 1rem;
         }
     }
 </style>
