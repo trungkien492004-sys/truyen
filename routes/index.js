@@ -70,12 +70,12 @@ async function unlockAchievement(userId, achievementName) {
 
 // Hàm gamification: ghi nhận lượt đọc chương (tính EXP 1 lần/chương) + cập nhật streak đọc liên tục
 async function awardReadingExp(userId, storyId, chapterNumber) {
-  // 1. Thử ghi nhận vào chapter_reads - nếu đã tồn tại (đọc lại chương cũ) thì bỏ qua, không cộng EXP nữa
+  // 1. Ghi nhận vào chapter_reads (chỉ để lưu lịch sử các chương duy nhất đã đọc)
   const { error: insertErr } = await supabase
     .from('chapter_reads')
     .insert([{ user_id: userId, story_id: storyId, chapter_number: chapterNumber }]);
 
-  // Mã lỗi 23505 = vi phạm UNIQUE constraint -> nghĩa là chương này đã được tính EXP trước đó rồi
+  // Mã lỗi 23505 = vi phạm UNIQUE constraint (đã đọc trước đó). Chúng ta vẫn tiếp tục cộng EXP!
   const alreadyCounted = insertErr && insertErr.code === '23505';
   if (insertErr && !alreadyCounted) {
     console.error('Lỗi ghi nhận chapter_reads:', insertErr);
@@ -91,14 +91,14 @@ async function awardReadingExp(userId, storyId, chapterNumber) {
     .eq('user_id', userId)
     .single();
 
-  let exp = stats ? stats.exp : 0;
-  let streak = stats ? stats.streak_days : 0;
+  let exp = stats ? (stats.exp || 0) : 0;
+  let streak = stats ? (stats.streak_days || 0) : 0;
+  let chaptersRead = stats ? (stats.chapters_read || 0) : 0;
   const lastDate = stats ? stats.last_read_date : null;
 
-  // Cộng EXP chỉ khi đây là lượt đọc MỚI (chương chưa từng tính EXP trước đó)
-  if (!alreadyCounted) {
-    exp += EXP_PER_CHAPTER;
-  }
+  // Luôn cộng EXP và Số chương đã đọc, bất kể đọc mới hay đọc lại!
+  exp += EXP_PER_CHAPTER;
+  chaptersRead += 1;
 
   // Cập nhật streak: nếu đã đọc hôm nay rồi thì giữ nguyên, nếu hôm qua thì +1, nếu không thì reset về 1
   if (lastDate !== todayStr) {
@@ -114,28 +114,20 @@ async function awardReadingExp(userId, storyId, chapterNumber) {
   }
 
   await supabase.from('user_stats').upsert(
-    { user_id: userId, exp, streak_days: streak, last_read_date: todayStr, updated_at: new Date().toISOString() },
+    { user_id: userId, exp: exp, chapters_read: chaptersRead, streak_days: streak, last_read_date: todayStr, updated_at: new Date().toISOString() },
     { onConflict: 'user_id' }
   );
 
-  // 3. Kiểm tra mở khóa thành tựu
-  if (!alreadyCounted) {
-    const { count } = await supabase
-      .from('chapter_reads')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId);
-    
-    const totalRead = count || 0;
-    if (totalRead >= 1) await unlockAchievement(userId, 'Độc giả mới');
-    if (totalRead >= 20) await unlockAchievement(userId, 'Mọt sách thực thụ');
-    if (totalRead >= 100) await unlockAchievement(userId, 'Đại học giả');
-    if (totalRead >= 500) await unlockAchievement(userId, 'Huyền thoại độc giả');
-  }
+  // 3. Kiểm tra mở khóa thành tựu dựa trên tổng Số chương đã đọc (chaptersRead)
+  if (chaptersRead >= 1) await unlockAchievement(userId, 'Độc giả mới');
+  if (chaptersRead >= 20) await unlockAchievement(userId, 'Mọt sách thực thụ');
+  if (chaptersRead >= 100) await unlockAchievement(userId, 'Đại học giả');
+  if (chaptersRead >= 500) await unlockAchievement(userId, 'Huyền thoại độc giả');
 
   if (streak >= 7) {
     await unlockAchievement(userId, 'Kiên trì đọc sách');
   }
-  return { earnedExp: !alreadyCounted };
+  return { earnedExp: true };
 }
 
 // Hàm hỗ trợ upload file lên Supabase Storage
