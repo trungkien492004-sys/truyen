@@ -17,7 +17,7 @@ passport.use(new GoogleStrategy({
 
       const googleId = profile.id;
       const displayName = profile.displayName || profile.username || 'Độc giả';
-      const avatar = profile.photos && profile.photos[0] ? profile.photos[0].value : '/css/default-avatar.png';
+      const avatar = '/css/silly_duck.png'; // Luôn dùng Vịt Vàng làm avatar tân thủ
 
       // 1. Tìm xem người dùng đã tồn tại trong database chưa
       const { data: existingUser, error: findError } = await supabase
