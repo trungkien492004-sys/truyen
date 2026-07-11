@@ -99,71 +99,58 @@
     }
     
     @media (max-width: 768px) {
-        .leaderboard-table thead { display: none; }
-        .leaderboard-table, .leaderboard-table tbody, .leaderboard-table tr, .leaderboard-table td {
-            display: block;
-            width: 100%;
-            box-sizing: border-box;
+        /* Keep it as a table but hide less important columns */
+        .leaderboard-table th:nth-child(3),
+        .leaderboard-table td:nth-child(3), /* Huy hiệu */
+        .leaderboard-table th:nth-child(5),
+        .leaderboard-table td:nth-child(5), /* Cấp độ */
+        .leaderboard-table th:nth-child(6),
+        .leaderboard-table td:nth-child(6) { /* EXP */
+            display: none !important;
         }
-        .leaderboard-table tr {
-            background: rgba(15, 23, 42, 0.6);
-            margin-bottom: 1rem;
-            border-radius: 16px;
-            padding: 1rem;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        
+        .leaderboard-table th, .leaderboard-table td {
+            padding: 0.8rem 0.4rem !important;
+            font-size: 0.85rem !important;
+        }
+        
+        .leaderboard-table td[data-label="Độc giả"] {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem !important;
+        }
+        
+        .leaderboard-row {
+            cursor: pointer;
             position: relative;
         }
-        .leaderboard-table td {
-            display: flex !important;
-            justify-content: space-between !important;
-            align-items: center !important;
-            padding: 0.5rem 0 !important;
-            text-align: right !important;
-            border: none !important;
-        }
-        .leaderboard-table td::before {
-            content: attr(data-label);
-            font-weight: 600;
-            color: var(--text-secondary);
-            font-size: 0.85rem;
-            text-align: left;
-            flex-shrink: 0;
-            margin-right: 1rem;
-        }
-        /* Special handling for Rank and User */
-        .leaderboard-table td[data-label="Hạng"] {
+        .leaderboard-row::after {
+            content: "❯";
             position: absolute;
-            top: -10px;
-            left: -10px;
-            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            display: flex !important;
-            justify-content: center !important;
-            align-items: center !important;
-            padding: 0 !important;
-            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.5);
-            font-weight: bold;
-            color: white;
-            z-index: 10;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            opacity: 0.5;
         }
-        .leaderboard-table td[data-label="Hạng"]::before {
-            display: none;
-        }
-        .leaderboard-table td[data-label="Độc giả"] {
-            flex-direction: row !important;
-            justify-content: flex-start !important;
-            padding-bottom: 0.8rem !important;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
-            margin-bottom: 0.5rem !important;
-            padding-left: 1.5rem !important; /* Make room for rank badge */
-        }
-        .leaderboard-table td[data-label="Độc giả"]::before {
-            display: none;
+        .leaderboard-table td:last-child {
+            padding-right: 25px !important; /* Make room for arrow */
         }
     }
 </style>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        if (window.innerWidth <= 768) {
+            const rows = document.querySelectorAll('.leaderboard-row');
+            rows.forEach(row => {
+                row.addEventListener('click', () => {
+                    const link = row.querySelector('a').href;
+                    if (link) window.location.href = link;
+                });
+            });
+        }
+    });
+</script>
 
 <%- include('partials/footer') %>

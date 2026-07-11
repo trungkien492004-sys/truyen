@@ -163,20 +163,43 @@
             display: none;
         }
         .shop-tab-btn {
-            padding: 0.6rem 1.2rem;
-            font-size: 0.9rem;
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
             flex-shrink: 0;
         }
         .shop-grid {
-            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-            gap: 1rem;
+            grid-template-columns: 1fr 1fr; /* Force 2 columns on mobile */
+            gap: 0.5rem;
         }
         .shop-card {
-            padding: 1rem;
+            padding: 0.8rem 0.5rem;
+            border: 1px solid rgba(99, 102, 241, 0.4); /* Stronger border */
+            border-radius: 12px;
         }
         .avatar-preview-box {
-            width: 80px;
-            height: 80px;
+            width: 65px;
+            height: 65px;
+            margin-bottom: 0.8rem;
+        }
+        .badge-preview-box {
+            padding: 0.5rem;
+            margin-bottom: 0.8rem;
+        }
+        .badge-preview-text {
+            font-size: 0.85rem;
+        }
+        .shop-card h3 {
+            font-size: 0.95rem;
+            margin-bottom: 0.4rem;
+        }
+        .item-price {
+            font-size: 0.9rem;
+            margin-bottom: 0.8rem;
+        }
+        .btn-buy {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.8rem;
+            border-radius: 6px;
         }
     }
     
