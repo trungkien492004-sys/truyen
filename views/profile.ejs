@@ -267,23 +267,50 @@
     
     @media (max-width: 768px) {
         .profile-container {
-            padding: 1rem 0.5rem !important;
+            padding: 0.5rem !important;
         }
         .profile-grid {
             grid-template-columns: 1fr !important;
             gap: 1rem !important;
         }
         .profile-container > div:first-child {
-            padding: 1.5rem 1rem !important;
+            padding: 1rem !important;
             flex-direction: column !important;
             text-align: center !important;
+            gap: 1rem !important;
+        }
+        /* Reduce avatar size */
+        .profile-container > div:first-child .avatar-frame {
+            width: 70px !important;
+            height: 70px !important;
         }
         .display-name-input {
             text-align: center;
             max-width: 100% !important;
+            font-size: 1rem !important;
+            padding: 0.4rem 1.8rem 0.4rem 0.6rem !important;
         }
         form > div {
             justify-content: center;
+        }
+        /* Reduce padding inside cards */
+        .profile-grid > div > div {
+            padding: 1rem !important;
+        }
+        h3 {
+            font-size: 1.1rem !important;
+            margin-bottom: 0.8rem !important;
+        }
+        .achievement-card {
+            padding: 0.8rem !important;
+        }
+        /* Make tags wrap tighter */
+        form > div:last-child {
+            gap: 0.5rem !important;
+        }
+        form > div:last-child span, form > div:last-child a {
+            font-size: 0.75rem !important;
+            padding: 0.2rem 0.6rem !important;
         }
     }
 </style>
