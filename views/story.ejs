@@ -202,7 +202,7 @@
                         <% const cFrameClass = (comment.users && comment.users.equipped_frame) ? comment.users.equipped_frame : 'default-frame'; %>
                         <div class="avatar-frame <%= cFrameClass %>" style="width: 42px; height: 42px; padding: 2px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform='scale(1)'">
                             <div class="avatar-glow"></div>
-                            <img src="<%= comment.users ? comment.users.avatar : '/css/default-avatar.png' %>" alt="avatar" class="avatar-img" style="border-width: 1px;">
+                            <img src="<%= comment.users ? comment.users.avatar : '/css/silly_duck.png' %>" alt="avatar" class="avatar-img" style="border-width: 1px;">
                         </div>
                     </a>
                     
@@ -250,7 +250,7 @@
                                             <% const rFrameClass = (reply.users && reply.users.equipped_frame) ? reply.users.equipped_frame : 'default-frame'; %>
                                             <div class="avatar-frame <%= rFrameClass %>" style="width: 32px; height: 32px; padding: 2px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform='scale(1)'">
                                                 <div class="avatar-glow"></div>
-                                                <img src="<%= reply.users ? reply.users.avatar : '/css/default-avatar.png' %>" alt="avatar" class="avatar-img" style="border-width: 1px;">
+                                                <img src="<%= reply.users ? reply.users.avatar : '/css/silly_duck.png' %>" alt="avatar" class="avatar-img" style="border-width: 1px;">
                                             </div>
                                         </a>
                                         <div style="flex: 1;">

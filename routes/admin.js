@@ -1247,7 +1247,7 @@ router.post('/shop/add', upload.single('avatar_file'), async (req, res) => {
       if (req.file) {
         value = await uploadToSupabase(req.file, 'uploads');
       } else {
-        value = '/css/default-avatar.png'; // default
+        value = '/css/silly_duck.png'; // default
       }
     } else {
       value = value_text ? value_text.trim() : '';

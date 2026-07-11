@@ -1330,22 +1330,20 @@ footer {
     box-shadow: 0 0 12px #ec4899, inset 0 0 6px #06b6d4;
 }
 
-/* 5. Default Frame (Metallic Sleek) */
+/* 5. Default Frame (No Frame) */
 .avatar-frame.default-frame {
-    background: linear-gradient(135deg, #475569, #1e293b, #475569);
-    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    background: transparent;
+    box-shadow: none;
+    border: none;
 }
 .avatar-frame.default-frame::before {
-    background: conic-gradient(#64748b, #cbd5e1, #64748b);
-    animation-duration: 15s;
-    opacity: 0.3;
+    display: none;
 }
 .avatar-frame.default-frame .avatar-glow {
     display: none;
 }
 .avatar-frame.default-frame .avatar-corner {
-    border-color: #64748b;
-    box-shadow: 0 0 6px rgba(0,0,0,0.4);
+    display: none;
 }
 
 /* MMORPG Badge Titles (Polygonal cut) */

@@ -8,7 +8,7 @@
             <% const equippedFrameClass = userData.equipped_frame || 'default-frame' %>
             <div class="avatar-frame <%= equippedFrameClass %>">
                 <div class="avatar-glow"></div>
-                <img id="avatar-preview" src="<%= user.avatar || '/css/default-avatar.png' %>" class="avatar-img" alt="Avatar">
+                <img id="avatar-preview" src="<%= user.avatar || '/css/silly_duck.png' %>" class="avatar-img" alt="Avatar">
                 
                 <!-- Badge Icon at Top Right (avatar-corner) -->
                 <% if (userData.equipped_badge) { %>
@@ -151,7 +151,7 @@
                                     <% } else if (item.type === 'frame') { %>
                                         <div style="min-height: 50px; display: flex; align-items: center; justify-content: center;">
                                             <div style="position: relative; width: 44px; height: 44px; border-radius: 50%; overflow: hidden; <%= item.value %>">
-                                                <img src="<%= user.avatar || '/css/default-avatar.png' %>" alt="avatar" style="width: 100%; height: 100%; object-fit: cover;">
+                                                <img src="<%= user.avatar || '/css/silly_duck.png' %>" alt="avatar" style="width: 100%; height: 100%; object-fit: cover;">
                                             </div>
                                         </div>
                                     <% } %>

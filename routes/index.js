@@ -1488,7 +1488,7 @@ router.post('/shop/equip/:id', async (req, res) => {
       if (action === 'equip') {
         updateData.avatar = item.value;
       } else {
-        updateData.avatar = '/css/default-avatar.png';
+        updateData.avatar = '/css/silly_duck.png';
       }
     } else if (item.type === 'frame') {
       updateData.equipped_frame = action === 'equip' ? item.value : null;
@@ -1506,7 +1506,7 @@ router.post('/shop/equip/:id', async (req, res) => {
       req.user.equipped_badge = action === 'equip' ? item.value : null;
     } else if (item.type === 'avatar') {
       req.user.equipped_avatar = action === 'equip' ? item.value : null;
-      req.user.avatar = action === 'equip' ? item.value : '/css/default-avatar.png';
+      req.user.avatar = action === 'equip' ? item.value : '/css/silly_duck.png';
     } else if (item.type === 'frame') {
       req.user.equipped_frame = action === 'equip' ? item.value : null;
     }

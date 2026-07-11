@@ -854,17 +854,28 @@
                 <div class="rankings-container" style="position: relative !important; top: auto !important;">
                     <h3 class="section-title" style="font-size: 1.3rem; margin-bottom: 1rem;">🥇 BXH Độc Giả</h3>
                     <% topReaders.forEach((reader, index) => { %>
-                        <div class="ranking-item" style="cursor: default;">
-                            <div class="rank-number"><%= index + 1 %></div>
-                            <img src="<%= reader.avatar || '/css/default-avatar.png' %>" alt="avatar" class="ranking-cover" style="border-radius: 50%;">
-                            <div class="ranking-info">
-                                <div class="ranking-title"><%= reader.display_name %></div>
-                                <div class="ranking-views">
+                        <a href="/user/<%= reader.id %>" class="ranking-item" style="text-decoration: none; color: inherit; display: flex; align-items: center; transition: transform 0.2s; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem; margin-bottom: 0.5rem;">
+                            <div class="rank-number" style="width: 25px; text-align: center; font-weight: bold; font-size: 1.2rem; color: var(--accent-color);"><%= index + 1 %></div>
+                            
+                            <% const rFrameClass = reader.equipped_frame || 'default-frame'; %>
+                            <div class="avatar-frame <%= rFrameClass %>" style="width: 45px; height: 45px; padding: 2px; flex-shrink: 0; margin: 0 0.5rem;">
+                                <div class="avatar-glow"></div>
+                                <img src="<%= reader.avatar || '/css/silly_duck.png' %>" alt="avatar" class="avatar-img" style="border-width: 1px;">
+                            </div>
+                            
+                            <div class="ranking-info" style="flex: 1;">
+                                <div class="ranking-title" style="font-weight: 600; font-size: 0.95rem;">
+                                    <%= reader.display_name %>
+                                    <% if (reader.equipped_badge) { %>
+                                        <span style="font-size: 0.7rem; color: var(--accent-color); margin-left: 0.3rem;">[<%= reader.equipped_badge.replace(/^([\uD800-\uDBFF][\uDC00-\uDFFF]|\S)\s*/, '') %>]</span>
+                                    <% } %>
+                                </div>
+                                <div class="ranking-views" style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.2rem;">
                                     ⭐ <%= reader.exp %> EXP · 📖 <%= reader.chapters_read %> chương
                                     <% if (reader.streak_days > 0) { %> · 🔥 <%= reader.streak_days %> ngày<% } %>
                                 </div>
                             </div>
-                        </div>
+                        </a>
                     <% }) %>
                 </div>
             <% } %>

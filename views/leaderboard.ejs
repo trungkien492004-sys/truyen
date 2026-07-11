@@ -46,7 +46,7 @@
                                     <% const readerFrame = reader.equipped_frame || 'default-frame' %>
                                     <div class="avatar-frame <%= readerFrame %>" style="width: 44px; height: 44px; padding: 2px;">
                                         <div class="avatar-glow"></div>
-                                        <img src="<%= reader.avatar || '/css/default-avatar.png' %>" class="avatar-img" alt="avatar" style="border-width: 1px;">
+                                        <img src="<%= reader.avatar || '/css/silly_duck.png' %>" class="avatar-img" alt="avatar" style="border-width: 1px;">
                                     </div>
                                 </a>
                                 <span style="font-weight: 600;">
@@ -70,11 +70,17 @@
                                            return 'game-title-default';
                                        }
                                     %>
-                                    <span class="game-title <%= getTitleRarityClass(reader.equipped_badge) %>" style="font-size: 0.65rem; padding: 4px 10px; transform: scale(0.9); transform-origin: left center;"><%= badgeText %></span>
+                                    <div style="display: flex; align-items: center; gap: 0.3rem;">
+                                        <span style="font-size: 0.75rem; background: rgba(16, 185, 129, 0.15); color: #10b981; padding: 0.2rem 0.5rem; border-radius: 8px; font-weight: 600; border: 1px solid rgba(16, 185, 129, 0.3); white-space: nowrap;">🏆 Hạng #<%= index + 1 %></span>
+                                        <span class="game-title <%= getTitleRarityClass(reader.equipped_badge) %>" style="font-size: 0.65rem; padding: 4px 10px; transform: scale(0.9); transform-origin: left center; white-space: nowrap;"><%= badgeText %></span>
+                                    </div>
                                 <% } else { %>
-                                    <span style="font-size: 0.8rem; background: rgba(99, 102, 241, 0.1); color: var(--accent-color); padding: 0.25rem 0.6rem; border-radius: 12px; font-weight: 500; border: 1px solid rgba(99, 102, 241, 0.2);">
-                                        <%= reader.badge ? reader.badge.label : 'Người mới' %>
-                                    </span>
+                                    <div style="display: flex; align-items: center; gap: 0.3rem;">
+                                        <span style="font-size: 0.75rem; background: rgba(16, 185, 129, 0.15); color: #10b981; padding: 0.2rem 0.5rem; border-radius: 8px; font-weight: 600; border: 1px solid rgba(16, 185, 129, 0.3); white-space: nowrap;">🏆 Hạng #<%= index + 1 %></span>
+                                        <span style="font-size: 0.8rem; background: rgba(99, 102, 241, 0.1); color: var(--accent-color); padding: 0.25rem 0.6rem; border-radius: 12px; font-weight: 500; border: 1px solid rgba(99, 102, 241, 0.2); white-space: nowrap;">
+                                            <%= reader.badge ? reader.badge.label : 'Người mới' %>
+                                        </span>
+                                    </div>
                                 <% } %>
                             </td>
                             <td data-label="Cấp độ" style="padding: 1rem 0.8rem; text-align: center; font-weight: bold; color: #10b981;">
