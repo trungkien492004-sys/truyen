@@ -184,6 +184,8 @@ async function parseSingleFileToChapter(file, storyId) {
         }
       }
     }
+    // Thông minh: Giữ lại toàn bộ tên file gốc làm tiêu đề chương nếu không đúng định dạng 3 phần
+    title = fileName;
   }
 
   return {
