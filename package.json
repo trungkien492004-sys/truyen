@@ -20,6 +20,7 @@
   "homepage": "https://github.com/trungkien492004-sys/truyen#readme",
   "dependencies": {
     "@supabase/supabase-js": "^2.110.2",
+    "cheerio": "^1.2.0",
     "cookie-parser": "^1.4.7",
     "cookie-session": "^2.1.1",
     "dotenv": "^17.4.2",
