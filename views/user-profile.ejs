@@ -56,7 +56,7 @@
                    }
                 %>
                 <div class="game-title <%= getTitleRarityClass(targetUser.equipped_badge) %>">
-                    <%= badgeText %>
+                    <%= targetUser.equipped_badge %>
                 </div>
                 <div class="rank-stars"><%= getStars(targetUser.equipped_badge) %></div>
             <% } %>

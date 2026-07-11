@@ -885,7 +885,7 @@
                                 <% if (reader.equipped_badge) { %>
                                     
                                     <div style="position: absolute; top: -8px; right: -25px; display: flex; flex-direction: column; align-items: center; z-index: 10; line-height: 1.1; transform: scale(0.65); transform-origin: top right;">
-                                        <span class="game-title <%= getTitleRarityClass(reader.equipped_badge) %>" style="font-size: 0.6rem; padding: 3px 12px; white-space: nowrap;"><%= badgeText %></span>
+                                        <span class="game-title <%= getTitleRarityClass(reader.equipped_badge) %>" style="font-size: 0.6rem; padding: 3px 12px; white-space: nowrap;"><%= reader.equipped_badge %></span>
                                         <span style="font-size: 0.5rem; letter-spacing: 1px; text-shadow: 0 0 2px rgba(255,255,255,0.8); margin-top: 2px;"><%= getStarsByChapters(reader.chapters_read) %></span>
                                     </div>
                                 <% } %>

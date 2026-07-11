@@ -17,8 +17,8 @@
                     <th style="padding: 1rem 0.8rem; text-align: center; width: 80px;">Hạng</th>
                     <th style="padding: 1rem 0.8rem;">Độc giả</th>
                     <th style="padding: 1rem 0.8rem;">Huy hiệu</th>
-                    <th style="padding: 1rem 0.8rem; text-align: center;">Cấp độ</th>
                     <th style="padding: 1rem 0.8rem; text-align: right; width: 120px;">Số chương</th>
+                    <th style="padding: 1rem 0.8rem; text-align: center;">Cấp độ</th>
                     <th style="padding: 1rem 0.8rem; text-align: right; width: 100px;">EXP</th>
                 </tr>
             </thead>
@@ -53,7 +53,7 @@
                                     <% if (reader.equipped_badge) { %>
                                         
                                         <div style="position: absolute; top: -8px; right: -25px; display: flex; flex-direction: column; align-items: center; z-index: 10; line-height: 1.1; transform: scale(0.65); transform-origin: top right;">
-                                            <span class="game-title <%= getTitleRarityClass(reader.equipped_badge) %>" style="font-size: 0.6rem; padding: 3px 12px; white-space: nowrap;"><%= badgeText %></span>
+                                            <span class="game-title <%= getTitleRarityClass(reader.equipped_badge) %>" style="font-size: 0.6rem; padding: 3px 12px; white-space: nowrap;"><%= reader.equipped_badge %></span>
                                             <span style="font-size: 0.5rem; letter-spacing: 1px; text-shadow: 0 0 2px rgba(255,255,255,0.8); margin-top: 2px;"><%= getStarsByChapters(reader.chapters_read) %></span>
                                         </div>
                                     <% } %>
@@ -72,11 +72,11 @@
                                     </span>
                                 </div>
                             </td>
-                            <td data-label="Cấp độ" style="padding: 1rem 0.8rem; text-align: center; font-weight: bold; color: #10b981;">
-                                Lvl <%= Math.floor((reader.exp || 0) / 100) + 1 %>
-                            </td>
                             <td data-label="Số chương" style="padding: 1rem 0.8rem; text-align: right; font-weight: 500;">
                                 <%= reader.chapters_read || 0 %>
+                            </td>
+                            <td data-label="Cấp độ" style="padding: 1rem 0.8rem; text-align: center; font-weight: bold; color: #10b981;">
+                                Lvl <%= Math.floor((reader.exp || 0) / 100) + 1 %>
                             </td>
                             <td data-label="EXP" style="padding: 1rem 0.8rem; text-align: right; font-weight: bold; color: var(--accent-color);">
                                 <%= reader.exp || 0 %>
