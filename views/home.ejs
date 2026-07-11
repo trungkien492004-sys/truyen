@@ -854,11 +854,11 @@
                 <div class="rankings-container" style="position: relative !important; top: auto !important;">
                     <h3 class="section-title" style="font-size: 1.3rem; margin-bottom: 1rem;">🥇 BXH Độc Giả</h3>
                     <% topReaders.forEach((reader, index) => { %>
-                        <a href="/user/<%= reader.id %>" class="ranking-item" style="text-decoration: none; color: inherit; display: flex; align-items: center; transition: transform 0.2s; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem; margin-bottom: 0.5rem;">
-                            <div class="rank-number" style="width: 25px; text-align: center; font-weight: bold; font-size: 1.2rem; color: var(--accent-color);"><%= index + 1 %></div>
+                        <a href="/user/<%= reader.id %>" class="ranking-item" style="text-decoration: none; color: inherit; display: flex; align-items: center; transition: transform 0.2s; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.8rem; margin-bottom: 0.8rem;">
+                            <div class="rank-number" style="width: 30px; text-align: center; font-weight: bold; font-size: 1.3rem; color: var(--accent-color);"><%= index + 1 %></div>
                             
                             <% const rFrameClass = reader.equipped_frame || 'default-frame'; %>
-                            <div class="avatar-frame <%= rFrameClass %>" style="width: 45px; height: 45px; padding: 2px; flex-shrink: 0; margin: 0 0.5rem;">
+                            <div class="avatar-frame <%= rFrameClass %>" style="width: 48px; height: 48px; padding: 2px; flex-shrink: 0; margin: 0 1.2rem 0 1.5rem;">
                                 <div class="avatar-glow"></div>
                                 <img src="<%= reader.avatar || '/css/silly_duck.png' %>" alt="avatar" class="avatar-img" style="border-width: 1px;">
                             </div>
