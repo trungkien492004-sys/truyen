@@ -754,6 +754,7 @@
                     <div class="ranking-tab active" data-tab="daily">Ngày</div>
                     <div class="ranking-tab" data-tab="weekly">Tuần</div>
                     <div class="ranking-tab" data-tab="monthly">Tháng</div>
+                    <div class="ranking-tab" data-tab="rated">Đánh Giá</div>
                     <div class="ranking-tab" data-tab="bookmarks">Theo Dõi</div>
                     <div class="ranking-tab" data-tab="alltime">All-Time</div>
                 </div>
@@ -806,6 +807,24 @@
                                 <div class="ranking-info">
                                     <div class="ranking-title"><%= item.title %></div>
                                     <div class="ranking-views">👁️ <%= item.view_count %> lượt đọc</div>
+                                </div>
+                            </a>
+                        <% }) %>
+                    <% } %>
+                </div>
+
+                <!-- Bảng xếp hạng Đánh Giá -->
+                <div class="ranking-list" id="top-rated">
+                    <% if (topRated.length === 0) { %>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; padding: 1rem 0;">Chưa có dữ liệu đánh giá.</p>
+                    <% } else { %>
+                        <% topRated.forEach((item, index) => { %>
+                            <a href="/story/<%= item.id %>" class="ranking-item">
+                                <div class="rank-number"><%= index + 1 %></div>
+                                <img src="<%= item.cover_url %>" alt="<%= item.title %>" class="ranking-cover">
+                                <div class="ranking-info">
+                                    <div class="ranking-title"><%= item.title %></div>
+                                    <div class="ranking-views" style="color: #fbbf24;">⭐ <%= parseFloat(item.avg_score).toFixed(1) %> (<%= item.rating_count %> lượt)</div>
                                 </div>
                             </a>
                         <% }) %>

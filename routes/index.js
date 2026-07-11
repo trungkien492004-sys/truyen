@@ -200,6 +200,10 @@ router.get('/', async (req, res) => {
     const { data: topMonthly } = await supabase.from('views_ranking_monthly').select('*').order('view_count', { ascending: false }).limit(5);
     const { data: topYearly } = await supabase.from('views_ranking_yearly').select('*').order('view_count', { ascending: false }).limit(5);
 
+    // 3a. Lấy bảng xếp hạng đánh giá
+    const { data: topRatedData } = await supabase.from('views_ranking_rated').select('*').limit(5);
+    const topRated = topRatedData || [];
+
     // 3b. Lấy bảng xếp hạng độc giả (top người đọc nhiều nhất theo EXP) - không chặn trang chủ nếu lỗi/chưa có bảng
     let topReaders = [];
     try {
@@ -260,6 +264,7 @@ router.get('/', async (req, res) => {
       topWeekly: topWeekly || [],
       topMonthly: topMonthly || [],
       topYearly: topYearly || [],
+      topRated,
       topReaders,
       topBookmarks,
       banners,

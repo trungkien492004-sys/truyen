@@ -73,9 +73,11 @@ app.locals.getTitleRarityClass = (val) => {
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
 const indexRoutes = require('./routes/index');
+const cronRoutes = require('./routes/cron');
 
 app.use('/auth', authRoutes);
 app.use('/admin', adminRoutes);
+app.use('/api/cron', cronRoutes);
 app.use('/', indexRoutes); // Router này đặt cuối cùng để tránh xung đột định tuyến
 
 // Xử lý lỗi 404 (Không tìm thấy trang)
