@@ -252,7 +252,7 @@ router.get('/', async (req, res) => {
     try {
       const { data: commentsData, error: commentsErr } = await supabase
         .from('comments')
-        .select('id, content, created_at, user_id, story_id, chapter_id, users(display_name, avatar, equipped_frame, equipped_badge), stories(title)')
+        .select('id, content, created_at, user_id, story_id, chapter_number, users!comments_user_id_fkey(display_name, avatar, equipped_frame, equipped_badge), stories(title)')
         .order('created_at', { ascending: false })
         .limit(6);
       if (!commentsErr && commentsData) {
@@ -1336,10 +1336,16 @@ router.get('/leaderboard', async (req, res) => {
 
     const { data: readers } = await supabase.from('leaderboard_by_exp').select('*').order('chapters_read', { ascending: false }).order('exp', { ascending: false }).limit(20);
     const leaderboard = (readers || []).map(r => ({ ...r, badge: getBadgeForCount(r.chapters_read || 0, rankSettings) }));
+    
+    let topAuthors = [];
+    const { data: authorsData } = await supabase.from('top_authors').select('*').limit(20);
+    if (authorsData) topAuthors = authorsData;
+
     res.render('leaderboard', {
-      title: 'Bảng xếp hạng độc giả',
+      title: 'Bảng xếp hạng',
       user: req.user,
-      leaderboard
+      leaderboard,
+      topAuthors
     });
   } catch (err) {
     console.error('Lỗi lấy BXH độc giả:', err);

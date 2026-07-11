@@ -6,12 +6,20 @@
     </div>
 
     <div style="background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.9) 100%); border: 1px solid var(--border-color); border-radius: 16px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 10px 30px rgba(0,0,0,0.3); backdrop-filter: blur(10px); text-align: center;">
-        <h2 style="margin: 0 0 0.5rem 0; font-size: 2rem; background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: bold;">🏆 Bảng Xếp Hạng Độc Giả</h2>
-        <p style="color: var(--text-secondary); font-size: 0.95rem; margin: 0;">Vinh danh những mọt sách kiên trì và tích cực nhất của thư viện!</p>
+        <h2 style="margin: 0 0 0.5rem 0; font-size: 2rem; background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: bold;">🏆 Bảng Xếp Hạng</h2>
+        <p style="color: var(--text-secondary); font-size: 0.95rem; margin: 0;">Vinh danh những cá nhân xuất sắc nhất của thư viện!</p>
     </div>
 
-    <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.15); overflow-x: auto;">
-        <table class="leaderboard-table" style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.95rem;">
+    <!-- TABS -->
+    <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+        <button class="tab-btn active" onclick="switchTab('readers')" style="background: none; border: none; color: var(--text-primary); font-size: 1.1rem; font-weight: bold; cursor: pointer; padding: 0.5rem 1rem; border-bottom: 3px solid var(--accent-color); transition: all 0.2s;">Độc Giả</button>
+        <button class="tab-btn" onclick="switchTab('authors')" style="background: none; border: none; color: var(--text-secondary); font-size: 1.1rem; font-weight: bold; cursor: pointer; padding: 0.5rem 1rem; border-bottom: 3px solid transparent; transition: all 0.2s;">Tác Giả</button>
+    </div>
+
+    <!-- TAB ĐỘC GIẢ -->
+    <div id="tab-readers" class="tab-content" style="display: block;">
+        <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.15); overflow-x: auto;">
+            <table class="leaderboard-table" style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.95rem;">
             <thead>
                 <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-secondary); font-weight: bold;">
                     <th style="padding: 1rem 0.8rem; text-align: center; width: 80px;">Hạng</th>
@@ -93,6 +101,50 @@
     </div>
 </div>
 
+<!-- TAB TÁC GIẢ -->
+<div id="tab-authors" class="tab-content" style="display: none;">
+    <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.15); overflow-x: auto;">
+        <table class="leaderboard-table" style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.95rem;">
+            <thead>
+                <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-secondary); font-weight: bold;">
+                    <th style="padding: 1rem 0.8rem; text-align: center; width: 80px;">Hạng</th>
+                    <th style="padding: 1rem 0.8rem;">Tác giả</th>
+                    <th style="padding: 1rem 0.8rem; text-align: right;">Số lượng truyện</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (typeof topAuthors === 'undefined' || topAuthors.length === 0) { %>
+                    <tr>
+                        <td colspan="3" style="padding: 2rem; text-align: center; color: var(--text-secondary);">Chưa có dữ liệu tác giả nào.</td>
+                    </tr>
+                <% } else { %>
+                    <% topAuthors.forEach((author, index) => { %>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.03); transition: background-color 0.2s;" class="leaderboard-row">
+                            <td style="padding: 1rem 0.8rem; text-align: center;">
+                                <% if (index === 0) { %>
+                                    <span style="font-size: 1.4rem;" title="Quán quân">🥇</span>
+                                <% } else if (index === 1) { %>
+                                    <span style="font-size: 1.4rem;" title="Á quân">🥈</span>
+                                <% } else if (index === 2) { %>
+                                    <span style="font-size: 1.4rem;" title="Hạng ba">🥉</span>
+                                <% } else { %>
+                                    <span style="font-weight: bold; color: var(--text-secondary);"><%= index + 1 %></span>
+                                <% } %>
+                            </td>
+                            <td style="padding: 1rem 0.8rem; font-weight: 600; color: var(--text-primary);">
+                                <%= author.author %>
+                            </td>
+                            <td style="padding: 1rem 0.8rem; text-align: right; font-weight: bold; color: var(--accent-color);">
+                                <%= author.story_count %>
+                            </td>
+                        </tr>
+                    <% }) %>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+</div>
+
 <style>
     .leaderboard-row:hover {
         background-color: rgba(255, 255, 255, 0.02);
@@ -140,13 +192,26 @@
     }
 </style>
 <script>
+    function switchTab(tabName) {
+        document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.style.color = 'var(--text-secondary)';
+            btn.style.borderBottomColor = 'transparent';
+        });
+
+        document.getElementById('tab-' + tabName).style.display = 'block';
+        const activeBtn = event.currentTarget || document.querySelector(`.tab-btn[onclick*="${tabName}"]`);
+        activeBtn.style.color = 'var(--text-primary)';
+        activeBtn.style.borderBottomColor = 'var(--accent-color)';
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         if (window.innerWidth <= 768) {
-            const rows = document.querySelectorAll('.leaderboard-row');
+            const rows = document.querySelectorAll('#tab-readers .leaderboard-row');
             rows.forEach(row => {
                 row.addEventListener('click', () => {
-                    const link = row.querySelector('a').href;
-                    if (link) window.location.href = link;
+                    const link = row.querySelector('a');
+                    if (link && link.href) window.location.href = link.href;
                 });
             });
         }
