@@ -24,9 +24,9 @@ passport.use(new GoogleStrategy({
         .from('users')
         .select('*')
         .eq('google_id', googleId)
-        .single();
+        .maybeSingle();
 
-      if (findError && findError.code !== 'PGRST116') { // PGRST116 là mã lỗi không tìm thấy dòng nào (PostgREST)
+      if (findError) {
         console.error('Lỗi khi truy vấn user từ Supabase:', findError);
         return done(findError, null);
       }
@@ -81,10 +81,13 @@ passport.deserializeUser(async (googleId, done) => {
       .from('users')
       .select('*')
       .eq('google_id', googleId)
-      .single();
+      .maybeSingle();
 
     if (error) {
       return done(error, null);
+    }
+    if (!user) {
+      return done(null, false);
     }
     done(null, user);
   } catch (err) {
