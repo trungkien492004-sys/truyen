@@ -30,9 +30,12 @@
                 const maxWidth = el.parentElement ? el.parentElement.clientWidth || 78 : 78;
                 let fontSize = parseFloat(getComputedStyle(el).fontSize);
                 let guard = 0;
-                while (el.scrollWidth > maxWidth && fontSize > 6 && guard < 30) {
+                // Dùng setProperty với 'important' vì class CSS .game-title-sidebar-scale khai báo
+                // font-size với !important - inline style thường (el.style.fontSize = ...) không
+                // thể thắng !important nên bị vô hiệu hoàn toàn, khiến scrollWidth không đổi dù đã set.
+                while (el.scrollWidth > maxWidth && fontSize > 6 && guard < 40) {
                     fontSize -= 0.5;
-                    el.style.fontSize = fontSize + 'px';
+                    el.style.setProperty('font-size', fontSize + 'px', 'important');
                     guard++;
                 }
             });
