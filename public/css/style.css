@@ -1461,15 +1461,18 @@ footer {
     box-shadow: 0 0 30px rgba(212,175,55,0.8), 0 6px 18px rgba(0,0,0,0.5) !important;
     border: 2px solid #fff4c2 !important;
 }
-/* Thu nhỏ ĐỀU mọi huy hiệu khi hiện trong khối BXH Độc Giả sidebar (trang chủ) - dùng transform
-   scale thay vì ép font-size cố định, để GIỮ NGUYÊN tỉ lệ chênh lệch giữa các tầng rarity
-   (Thiên Đạo Quản Trị vẫn to hơn hẳn các huy hiệu khác, chỉ là cả cụm được thu nhỏ đồng đều). */
+/* Thu nhỏ huy hiệu khi hiện trong khối BXH Độc Giả sidebar (trang chủ) - set cứng font-size/padding
+   nhỏ qua class riêng thay vì transform/zoom (vốn không tương thích mọi trình duyệt và làm badge
+   tràn layout đè lên số thứ tự bên cạnh). Vẫn giữ chênh lệch: admin-god to hơn 1 chút so với còn lại. */
 .game-title-sidebar-scale {
-    /* Dùng zoom thay vì transform: scale() - zoom co lại luôn KÍCH THƯỚC LAYOUT thật của phần tử,
-       trong khi transform chỉ vẽ lại hình ảnh và giữ nguyên không gian chiếm chỗ gốc (khiến badge
-       to tràn ra đè lên số thứ tự #4 bên cạnh). animation: none để tránh animation ghi đè transform. */
-    zoom: 0.72;
+    font-size: 0.62rem !important;
+    padding: 3px 12px !important;
     animation: none !important;
+    transform: none !important;
+}
+.game-title-sidebar-scale.game-title-admin-god {
+    font-size: 0.75rem !important;
+    padding: 4px 16px !important;
 }
 
 @keyframes cyberMove {
