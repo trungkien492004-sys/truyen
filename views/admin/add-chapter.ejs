@@ -358,6 +358,15 @@
         return chapters;
     }
 
+    // Loại bỏ "lone surrogate" (nửa cặp ký tự Unicode UTF-16 bị lỗi, thường do PDF nhúng font đặc
+    // biệt/emoji bị OCR hoặc trích xuất text sai) - nếu không lọc, JSON.stringify() sẽ tạo ra chuỗi
+    // \uXXXX không hợp lệ, khiến backend JSON.parse() báo lỗi "unsupported Unicode escape sequence"
+    // và toàn bộ lô chương đó không đăng được (dù nội dung nhìn có vẻ bình thường trên preview).
+    function stripLoneSurrogates(str) {
+        if (!str) return str;
+        return str.replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]/g, '');
+    }
+
     // Trích xuất text từ 1 trang PDF, ghép các mảnh text theo TỌA ĐỘ DÒNG THẬT (transform[5] = vị trí Y)
     // thay vì nối phẳng bằng dấu cách - tránh tình trạng dính chữ/dính đoạn khi pdf.js trả về nhiều mảnh text
     // rời rạc nằm trên các dòng khác nhau nhưng bị ghép chung thành 1 dòng logic.
@@ -381,7 +390,7 @@
             return lineItems.map(it => it.str).join('').trim();
         });
 
-        return lines.filter(l => l.length > 0).join('\n');
+        return stripLoneSurrogates(lines.filter(l => l.length > 0).join('\n'));
     }
 
     // Đọc file EPUB (thực chất là 1 file ZIP) bằng JSZip, lấy đúng thứ tự chương qua "spine" trong content.opf,
@@ -463,7 +472,13 @@
         const MAX_RETRIES = 3; // Tự động thử lại nếu 1 lô bị lỗi tạm thời (timeout, mạng chập chờn...)
 
         for (let i = 0; i < processedFiles.length; i += BATCH_SIZE) {
-            const batch = processedFiles.slice(i, i + BATCH_SIZE);
+            // Lớp bảo vệ cuối: lọc lone surrogate khỏi content trước khi gửi lên server, phòng
+            // trường hợp ký tự lỗi lọt qua bước trích xuất PDF/EPUB ban đầu (ví dụ do parser Word
+            // hoặc nguồn khác không đi qua extractPageTextByLines/extractEpubFullText).
+            const batch = processedFiles.slice(i, i + BATCH_SIZE).map(f => ({
+                ...f,
+                content: typeof f.content === 'string' ? stripLoneSurrogates(f.content) : f.content
+            }));
             let lastError = null;
             let ok = false;
 
