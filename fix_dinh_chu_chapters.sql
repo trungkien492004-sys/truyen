@@ -18,17 +18,23 @@ WHERE story_id = '15'
   AND (LENGTH(content) - LENGTH(REPLACE(content, '<p>', ''))) / 3 <= 1
 ORDER BY chapter_number;
 
--- BƯỚC 2: Sửa các chương bị dính - chèn ranh giới đoạn văn dựa theo dấu kết câu.
+-- BƯỚC 2: Sửa các chương bị dính - chèn ranh giới đoạn văn NGAY SAU mọi dấu kết câu
+-- (. ! ? … ” " ）) ) bất kể ký tự theo sau là gì (có thể dính liền không có khoảng trắng,
+-- hoặc câu tiếp theo bắt đầu bằng chữ thường/dấu ngoặc kép mở "), rồi dọn các thẻ <p></p> rỗng
+-- phát sinh do 2 dấu kết câu liền nhau (ví dụ ."  hoặc !").
 -- CHẠY BƯỚC NÀY SAU KHI đã xem trước ở Bước 1 và xác nhận đúng các chương cần sửa.
 UPDATE chapters
-SET content = '<p>' || TRIM(BOTH '<p></p>' FROM (
-        regexp_replace(
-            regexp_replace(content, '^<p>|</p>$', '', 'g'),
-            '([.!?…”"）)])\s+([A-ZÀÁẢÃẠÂẤẦẨẪẬĂẮẰẲẴẶÊẾỀỂỄỆÔỐỒỔỖỘƠỚỜỞỠỢÍÌỈĨỊÚÙỦŨỤƯỨỪỬỮỰÝỲỶỸỴĐ])',
-            '\1</p><p>\2',
-            'g'
-        )
-    )) || '</p>'
+SET content = '<p>' || regexp_replace(
+        TRIM(BOTH '<p></p>' FROM (
+            regexp_replace(
+                regexp_replace(content, '^<p>|</p>$', '', 'g'),
+                '([.!?…]|”|")',
+                '\1</p><p>',
+                'g'
+            )
+        )),
+        '<p></p>', '', 'g'
+    ) || '</p>'
 WHERE story_id = '15'
   AND (LENGTH(content) - LENGTH(REPLACE(content, '<p>', ''))) / 3 <= 1;
 

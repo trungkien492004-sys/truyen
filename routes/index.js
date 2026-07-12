@@ -346,6 +346,16 @@ router.get('/', async (req, res) => {
       console.error('Lỗi lấy rank_up_events hôm nay:', e);
     }
 
+    // Gộp bảng "Đột Phá Cảnh Giới Hôm Nay" làm 1 slide trong CHUNG carousel banner admin -
+    // dùng chung cơ chế trượt tự động/kéo tay đã có sẵn, thay vì hiển thị tách riêng như trước.
+    // Chỉ chèn slide này khi thực sự có ít nhất 1 sự kiện đột phá trong ngày hôm nay.
+    if (rankUpEventsToday.length > 0) {
+      banners = [
+        { id: 'rankup-board-slide', type: 'rankup_board', created_at: new Date().toISOString() },
+        ...banners
+      ];
+    }
+
     res.render('home', {
       title: 'Trang chủ - Web Đọc Truyện',
       user: req.user,
