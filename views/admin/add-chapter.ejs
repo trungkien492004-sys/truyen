@@ -47,7 +47,20 @@
                         <input type="radio" name="publish_method" value="pdf">
                         📕 Tải PDF (tự động tách chương)
                     </label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 500;">
+                        <input type="radio" name="publish_method" value="epub">
+                        📗 Tải EPUB (tự động tách chương)
+                    </label>
                 </div>
+            </div>
+
+            <!-- TÙY CHỌN: ĐĂNG TIẾP THÔNG MINH (bỏ qua các chương đã có sẵn trong truyện) -->
+            <div class="form-group" id="smart-continue-box" style="display: none; background: rgba(16, 185, 129, 0.08); border-left: 4px solid #10b981; padding: 1rem; border-radius: 0 8px 8px 0; margin-bottom: 1.5rem;">
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 500; margin: 0;">
+                    <input type="checkbox" id="smart_continue" name="smart_continue" checked style="width: auto; margin: 0; cursor: pointer;">
+                    🧠 Đăng tiếp thông minh: nếu file có nhiều chương hơn truyện đang có, tự động bỏ qua các chương đã đăng rồi và chỉ đăng phần còn thiếu
+                </label>
+                <div id="smart-continue-info" style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.5rem;"></div>
             </div>
 
             <!-- KHỐI FORM 1: ĐĂNG THỦ CÔNG (MANUAL) -->
@@ -112,6 +125,25 @@
                 </div>
             </div>
 
+            <!-- KHỐI FORM 4: UPLOAD EPUB TỰ ĐỘNG TÁCH CHƯƠNG -->
+            <div id="form-epub" style="display: none;">
+                <div style="background: rgba(16, 185, 129, 0.07); border-left: 4px solid #10b981; padding: 1rem; border-radius: 0 8px 8px 0; margin-bottom: 1.5rem; font-size: 0.9rem; line-height: 1.8;">
+                    <strong>📗 Hướng dẫn upload EPUB tự động tách chương:</strong><br>
+                    • Hệ thống sẽ đọc toàn bộ nội dung sách EPUB theo đúng thứ tự và <b>tự động tách thành nhiều chương riêng biệt</b>.<br>
+                    • Nhận diện đầu chương qua các từ khóa: <code>Chương 1</code>, <code>Chapter 5</code>, <code>Phần 3</code>...<br>
+                    • Rất phù hợp cho các file EPUB dài (hàng nghìn chương) - kết hợp cùng "Đăng tiếp thông minh" ở trên để chỉ đăng phần còn thiếu.
+                </div>
+                <div class="form-group">
+                    <label for="epubfile">Chọn file EPUB *</label>
+                    <input type="file" id="epubfile" name="epubfile" accept=".epub">
+                    <span style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.3rem; display: block;">Hệ thống sẽ tự phân tích cấu trúc sách và tách chương theo tiêu đề.</span>
+                </div>
+                <div id="epub-preview" style="display:none; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; margin-top: 1rem;">
+                    <strong>📋 Xem trước các chương sẽ được tách:</strong>
+                    <div id="epub-chapters-list" style="margin-top: 0.8rem; max-height: 300px; overflow-y: auto;"></div>
+                </div>
+            </div>
+
             <button type="submit" id="submit-btn" class="btn btn-primary" style="width: 100%; padding: 0.8rem; font-size: 1rem; margin-top: 1.5rem;">BẮT ĐẦU ĐĂNG CHƯƠNG</button>
         </form>
     <% } %>
@@ -119,6 +151,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 </script>
@@ -135,22 +168,58 @@
     const chapContentInput = document.getElementById('content');
     const bulkFileInput = document.getElementById('txtfile');
     const pdfFileInput = document.getElementById('pdffile');
+    const formEpub = document.getElementById('form-epub');
+    const epubFileInput = document.getElementById('epubfile');
+    const smartContinueBox = document.getElementById('smart-continue-box');
+    const smartContinueInfo = document.getElementById('smart-continue-info');
 
     function toggleForms() {
         const m = document.querySelector('input[name="publish_method"]:checked').value;
         formManual.style.display = m === 'manual' ? 'block' : 'none';
         formBulk.style.display   = m === 'bulk'   ? 'block' : 'none';
         formPdf.style.display    = m === 'pdf'    ? 'block' : 'none';
+        formEpub.style.display   = m === 'epub'   ? 'block' : 'none';
 
         chapNumInput.required     = m === 'manual';
         chapTitleInput.required   = m === 'manual';
         chapContentInput.required = m === 'manual';
         bulkFileInput.required    = m === 'bulk';
         pdfFileInput.required     = m === 'pdf';
+        epubFileInput.required    = m === 'epub';
+
+        // Chỉ hiện tùy chọn "Đăng tiếp thông minh" cho các luồng tự động tách nhiều chương
+        smartContinueBox.style.display = (m === 'bulk' || m === 'pdf' || m === 'epub') ? 'block' : 'none';
     }
 
     methodRadios.forEach(r => r.addEventListener('change', toggleForms));
     toggleForms();
+
+    // Lấy số chương lớn nhất đang có sẵn của truyện đang chọn, để tính điểm "đăng tiếp"
+    async function getExistingChapterCount(storyId) {
+        try {
+            const resp = await fetch(`/admin/chapter/count?story_id=${storyId}`);
+            const data = await resp.json();
+            return data.count || 0;
+        } catch (err) {
+            return 0;
+        }
+    }
+
+    // Lọc bỏ N chương đầu tiên nếu tick "Đăng tiếp thông minh" và số chương tách được > số chương đã có
+    async function applySmartContinue(processedFiles, storyId) {
+        const enabled = document.getElementById('smart_continue').checked;
+        if (!enabled) return processedFiles;
+
+        const existingCount = await getExistingChapterCount(storyId);
+        if (existingCount > 0 && processedFiles.length > existingCount) {
+            const skipped = processedFiles.slice(0, existingCount);
+            const remaining = processedFiles.slice(existingCount);
+            smartContinueInfo.innerHTML = `✅ Truyện đã có <b>${existingCount}</b> chương. Tự động bỏ qua ${skipped.length} chương đầu, chỉ đăng tiếp <b>${remaining.length}</b> chương còn thiếu (từ chương ${existingCount + 1}).`;
+            return remaining;
+        }
+        smartContinueInfo.innerHTML = `Truyện hiện có ${existingCount} chương - không cần bỏ qua chương nào, sẽ đăng đủ ${processedFiles.length} chương tách được.`;
+        return processedFiles;
+    }
 
     const pdfPreviewBox = document.getElementById('pdf-preview');
     const pdfChaptersList = document.getElementById('pdf-chapters-list');
@@ -195,6 +264,44 @@
                 }
             } catch (err) {
                 pdfChaptersList.innerHTML = `<p style="color: #ef4444; font-size: 0.9rem;">Lỗi khi đọc PDF: ${err.message}</p>`;
+            }
+        });
+    }
+
+    const epubPreviewBox = document.getElementById('epub-preview');
+    const epubChaptersList = document.getElementById('epub-chapters-list');
+
+    // Xem trước cấu trúc tách chương ngay khi chọn file EPUB
+    if (epubFileInput) {
+        epubFileInput.addEventListener('change', async () => {
+            const file = epubFileInput.files[0];
+            if (!file) {
+                epubPreviewBox.style.display = 'none';
+                return;
+            }
+
+            epubPreviewBox.style.display = 'block';
+            epubChaptersList.innerHTML = '<p style="color: var(--text-secondary); font-size: 0.9rem;">⏳ Đang phân tích cấu trúc EPUB...</p>';
+
+            try {
+                const fakeBtn = { textContent: '' };
+                const fullText = await extractEpubFullText(file, fakeBtn);
+                const previewChapters = splitTextIntoChapters(fullText, file.name.replace(/\.epub$/i, '.pdf'));
+
+                if (previewChapters.length === 1) {
+                    epubChaptersList.innerHTML = '<p style="color: var(--text-secondary); font-size: 0.9rem;">⚠️ Không phát hiện tiêu đề chương nào trong EPUB này - toàn bộ nội dung sẽ được đăng thành <b>1 chương duy nhất</b>.</p>';
+                } else {
+                    epubChaptersList.innerHTML = `<p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Phát hiện <b>${previewChapters.length}</b> chương:</p>` +
+                        previewChapters.slice(0, 30).map((ch, idx) => {
+                            const paragraphCount = (ch.content.match(/<p>/g) || []).length;
+                            return `<div style="padding: 0.4rem 0.6rem; border-bottom: 1px solid var(--border-color); font-size: 0.85rem;">
+                                <strong>${idx + 1}.</strong> ${ch.name.replace('.txt', '')}
+                                <span style="color: var(--text-secondary);"> — ${paragraphCount} đoạn văn</span>
+                            </div>`;
+                        }).join('') + (previewChapters.length > 30 ? `<p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.5rem;">... và ${previewChapters.length - 30} chương khác</p>` : '');
+                }
+            } catch (err) {
+                epubChaptersList.innerHTML = `<p style="color: #ef4444; font-size: 0.9rem;">Lỗi khi đọc EPUB: ${err.message}</p>`;
             }
         });
     }
@@ -277,6 +384,67 @@
         return lines.filter(l => l.length > 0).join('\n');
     }
 
+    // Đọc file EPUB (thực chất là 1 file ZIP) bằng JSZip, lấy đúng thứ tự chương qua "spine" trong content.opf,
+    // tách thẻ HTML lấy text thuần, rồi tái sử dụng splitTextIntoChapters giống hệt PDF.
+    async function extractEpubFullText(file, submitBtn) {
+        const zip = await JSZip.loadAsync(file);
+
+        // 1. Đọc META-INF/container.xml để tìm đường dẫn tới file content.opf
+        const containerXmlFile = zip.file('META-INF/container.xml');
+        if (!containerXmlFile) throw new Error('File EPUB không hợp lệ: thiếu META-INF/container.xml.');
+        const containerXml = await containerXmlFile.async('string');
+        const opfPathMatch = containerXml.match(/full-path="([^"]+)"/);
+        if (!opfPathMatch) throw new Error('Không tìm thấy file content.opf trong EPUB (file có thể bị lỗi cấu trúc).');
+        const opfPath = opfPathMatch[1];
+        const opfDir = opfPath.includes('/') ? opfPath.substring(0, opfPath.lastIndexOf('/') + 1) : '';
+
+        // 2. Đọc content.opf để lấy danh sách manifest (id -> href) và spine (thứ tự đọc thật)
+        const opfFile = zip.file(opfPath);
+        if (!opfFile) throw new Error(`Không đọc được file ${opfPath} trong EPUB.`);
+        const opfXml = await opfFile.async('string');
+        const manifest = {};
+        const manifestRegex = /<item\s+[^>]*id="([^"]+)"[^>]*href="([^"]+)"[^>]*\/?>/g;
+        let mm;
+        while ((mm = manifestRegex.exec(opfXml)) !== null) {
+            manifest[mm[1]] = mm[2];
+        }
+        // Một số EPUB đặt href trước id trong thẻ - bắt thêm chiều ngược lại để chắc chắn
+        const manifestRegex2 = /<item\s+[^>]*href="([^"]+)"[^>]*id="([^"]+)"[^>]*\/?>/g;
+        while ((mm = manifestRegex2.exec(opfXml)) !== null) {
+            manifest[mm[2]] = mm[1];
+        }
+
+        const spineIds = [];
+        const spineRegex = /<itemref\s+[^>]*idref="([^"]+)"/g;
+        let sm;
+        while ((sm = spineRegex.exec(opfXml)) !== null) {
+            spineIds.push(sm[1]);
+        }
+
+        const orderedHrefs = spineIds.map(id => manifest[id]).filter(Boolean);
+        if (orderedHrefs.length === 0) throw new Error('Không đọc được thứ tự nội dung sách (spine) trong EPUB.');
+
+        // 3. Đọc từng file XHTML theo đúng thứ tự, strip HTML tags lấy text thuần
+        let fullText = '';
+        for (let i = 0; i < orderedHrefs.length; i++) {
+            submitBtn.textContent = `⏳ Đang đọc phần ${i + 1}/${orderedHrefs.length} của EPUB...`;
+            const href = orderedHrefs[i];
+            const fullHref = (opfDir + href).replace(/\\/g, '/');
+            const zipFile = zip.file(fullHref) || zip.file(decodeURIComponent(fullHref));
+            if (!zipFile) continue;
+
+            const xhtml = await zipFile.async('string');
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(xhtml, 'text/html');
+            // Xoá thẻ style/script để không lẫn CSS/JS vào text
+            doc.querySelectorAll('style, script').forEach(el => el.remove());
+            const bodyText = doc.body ? doc.body.textContent : doc.documentElement.textContent;
+            fullText += bodyText.replace(/\n{2,}/g, '\n').trim() + '\n';
+        }
+
+        return fullText;
+    }
+
     async function uploadInBatches(storyId, processedFiles, submitBtn) {
         const BATCH_SIZE = 50; // Giới hạn 50 chương mỗi lần gửi
         let successCount = 0;
@@ -340,8 +508,41 @@
                 }
 
                 submitBtn.textContent = '⏳ Đang xử lý text...';
-                const processedFiles = splitTextIntoChapters(fullText, file.name);
-                
+                let processedFiles = splitTextIntoChapters(fullText, file.name);
+                processedFiles = await applySmartContinue(processedFiles, storyId);
+
+                await uploadInBatches(storyId, processedFiles, submitBtn);
+                window.location.href = '/admin/chapter/add?success=' + encodeURIComponent(`Đã tải lên ${processedFiles.length} chương thành công`);
+            } catch (err) {
+                alert('Có lỗi xảy ra: ' + err.message);
+                const sb = document.getElementById('submit-btn');
+                sb.disabled = false;
+                sb.textContent = 'BẮT ĐẦU ĐĂNG CHƯƠNG';
+            }
+        }
+
+        // ── EPUB ──────────────────────────────────────────────
+        else if (selectedMethod === 'epub') {
+            e.preventDefault();
+            const submitBtn = document.getElementById('submit-btn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = '⏳ Đang đọc EPUB trên trình duyệt...';
+            try {
+                const storyId = document.getElementById('story_id').value;
+                const file = epubFileInput.files[0];
+                if (!file) {
+                    alert('Vui lòng chọn file EPUB.');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'BẮT ĐẦU ĐĂNG CHƯƠNG';
+                    return;
+                }
+
+                const fullText = await extractEpubFullText(file, submitBtn);
+
+                submitBtn.textContent = '⏳ Đang xử lý text...';
+                let processedFiles = splitTextIntoChapters(fullText, file.name.replace(/\.epub$/i, '.pdf'));
+                processedFiles = await applySmartContinue(processedFiles, storyId);
+
                 await uploadInBatches(storyId, processedFiles, submitBtn);
                 window.location.href = '/admin/chapter/add?success=' + encodeURIComponent(`Đã tải lên ${processedFiles.length} chương thành công`);
             } catch (err) {
@@ -399,8 +600,11 @@
                     }
                 }
                 
-                await uploadInBatches(storyId, processedFiles, submitBtn);
-                window.location.href = '/admin/chapter/add?success=' + encodeURIComponent(`Đã tải lên ${processedFiles.length} chương thành công`);
+                const storyIdBulk = document.getElementById('story_id').value;
+                const filteredFiles = await applySmartContinue(processedFiles, storyIdBulk);
+
+                await uploadInBatches(storyIdBulk, filteredFiles, submitBtn);
+                window.location.href = '/admin/chapter/add?success=' + encodeURIComponent(`Đã tải lên ${filteredFiles.length} chương thành công`);
             } catch (err) {
                 alert('Có lỗi xảy ra: ' + err.message);
                 const sb = document.getElementById('submit-btn');

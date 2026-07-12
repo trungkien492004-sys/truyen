@@ -150,6 +150,16 @@ async function awardReadingExp(userId, storyId, chapterNumber) {
           message: `⚡ Đột phá cảnh giới! Bạn đã tiến lên "${labelAfter}"!`,
           link: '/profile'
         }]);
+        // Ghi lại sự kiện lên rank để hiện banner công khai trên trang chủ trong ngày hôm nay
+        try {
+          await supabase.from('rank_up_events').insert([{
+            user_id: userId,
+            from_rank: labelBefore || 'Nhập môn',
+            to_rank: labelAfter
+          }]);
+        } catch (e) {
+          console.error('Lỗi ghi rank_up_events:', e);
+        }
       }
     }
   } catch (err) {
@@ -292,6 +302,22 @@ router.get('/', async (req, res) => {
       console.error('Lỗi lấy top tác giả:', e);
     }
 
+    // 3h. Lấy các sự kiện "Đột Phá Cảnh Giới" xảy ra trong hôm nay, để hiện banner công khai trên trang chủ
+    let rankUpEventsToday = [];
+    try {
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const { data: eventsData } = await supabase
+        .from('rank_up_events')
+        .select('id, from_rank, to_rank, created_at, users(display_name, avatar, equipped_frame, equipped_badge)')
+        .gte('created_at', todayStart.toISOString())
+        .order('created_at', { ascending: false })
+        .limit(10);
+      if (eventsData) rankUpEventsToday = eventsData;
+    } catch (e) {
+      console.error('Lỗi lấy rank_up_events hôm nay:', e);
+    }
+
     res.render('home', {
       title: 'Trang chủ - Web Đọc Truyện',
       user: req.user,
@@ -308,6 +334,7 @@ router.get('/', async (req, res) => {
       banners,
       lastRead,
       recentComments,
+      rankUpEventsToday,
       activeGenre: null,
       searchQuery: null,
       filters: { status }

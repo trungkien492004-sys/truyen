@@ -432,6 +432,23 @@ router.get('/chapter/add', async (req, res) => {
   }
 });
 
+// TRẢ VỀ SỐ CHƯƠNG HIỆN CÓ CỦA 1 TRUYỆN (dùng cho tính năng "Đăng tiếp thông minh")
+router.get('/chapter/count', async (req, res) => {
+  const { story_id } = req.query;
+  if (!story_id) return res.json({ count: 0 });
+  try {
+    const { count, error } = await supabase
+      .from('chapters')
+      .select('*', { count: 'exact', head: true })
+      .eq('story_id', story_id);
+    if (error) throw error;
+    res.json({ count: count || 0 });
+  } catch (err) {
+    console.error('Lỗi đếm số chương:', err);
+    res.json({ count: 0 });
+  }
+});
+
 // THỰC HIỆN ĐĂNG CHƯƠNG (HỖ TRỢ CẢ MANUAL VÀ BULK - UPLOAD NHIỀU FILE)
 router.post('/chapter/add', upload.array('txtfile', 100), async (req, res) => {
   const { story_id, publish_method, chapter_number, title, content } = req.body;
