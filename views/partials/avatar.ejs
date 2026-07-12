@@ -10,16 +10,21 @@
     let cornerStyle = "position: absolute; top: -5px; right: -5px; font-size: 1.2rem; background: rgba(0,0,0,0.7); border-radius: 50%; padding: 4px; z-index: 10; border: 2px solid gold; display: flex; justify-content: center; align-items: center; width: 28px; height: 28px;";
     let titleContainerStyle = "display: flex; flex-direction: column; align-items: center;";
     let titleStyle = "";
+    let titleExtraClass = "";
     let starClass = "rank-stars";
     let starStyle = "";
-    
+
     // Small (Leaderboard) applies inline styles to scale down
     if (size === 'small') {
-        containerStyle = "position: relative; display: flex; flex-direction: column; align-items: center; gap: 0.3rem;";
+        containerStyle = "position: relative; display: flex; flex-direction: column; align-items: center; gap: 0.3rem; max-width: 78px;";
         frameStyle = "width: 56px; height: 56px; padding: 2px;";
         cornerStyle = "position: absolute; top: -4px; right: -4px; font-size: 0.8rem; background: rgba(0,0,0,0.6); border-radius: 50%; padding: 2px; z-index: 10; border: 1px solid gold; display: flex; justify-content: center; align-items: center; width: 18px; height: 18px;";
-        titleContainerStyle = "display: flex; flex-direction: column; align-items: center; margin-top: 2px; z-index: 2; line-height: 1.1;";
-        titleStyle = "font-size: 0.65rem; padding: 2px 10px; white-space: nowrap;";
+        titleContainerStyle = "display: flex; flex-direction: column; align-items: center; margin-top: 2px; z-index: 2; line-height: 1.1; max-width: 78px; overflow: hidden;";
+        // KHÔNG ép font-size cứng ở đây nữa (gây bug to nhỏ lẫn lộn giữa các tầng rarity) -
+        // dùng class .game-title-sidebar-scale (định nghĩa trong style.css) để CSS class tự
+        // quyết định size theo đúng tầng rarity, chỉ giới hạn overflow để không tràn ra ngoài.
+        titleStyle = "white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 78px;";
+        titleExtraClass = "game-title-sidebar-scale";
         starClass = "";
         starStyle = "color: #ffd700; font-size: 0.65rem; letter-spacing: 1px; text-shadow: 0 0 2px rgba(255,255,255,0.3); margin-top: 2px;";
     }
@@ -39,7 +44,7 @@
     </a>
     <% if (badge) { %>
         <div style="<%= titleContainerStyle %>">
-            <div class="game-title <%= getTitleRarityClass(badge) %>" style="<%= titleStyle %>"><%= badge %></div>
+            <div class="game-title <%= getTitleRarityClass(badge) %> <%= titleExtraClass %>" style="<%= titleStyle %>"><%= badge %></div>
             <div class="<%= starClass %>" style="<%= starStyle %>"><%= getStarsByChapters(chaptersRead) %></div>
         </div>
     <% } %>

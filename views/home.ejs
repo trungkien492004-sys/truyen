@@ -1072,8 +1072,8 @@
                                     <% } %>
                                 </div>
                                 <% if (reader.equipped_badge) { %>
-                                    <div style="display: flex; flex-direction: column; align-items: center; margin-top: -4px; z-index: 2; line-height: 1.1;">
-                                        <span class="game-title <%= getTitleRarityClass(reader.equipped_badge) %> game-title-sidebar-scale" style="white-space: nowrap;"><%= reader.equipped_badge %></span>
+                                    <div style="display: flex; flex-direction: column; align-items: center; margin-top: -4px; z-index: 2; line-height: 1.1; max-width: 78px; overflow: hidden;">
+                                        <span class="game-title <%= getTitleRarityClass(reader.equipped_badge) %> game-title-sidebar-scale" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 78px;"><%= reader.equipped_badge %></span>
                                         <span style="font-size: 0.6rem; letter-spacing: 1px; text-shadow: 0 0 2px rgba(255,255,255,0.3); margin-top: 2px;"><%= getStarsByChapters(reader.chapters_read) %></span>
                                     </div>
                                 <% } %>
