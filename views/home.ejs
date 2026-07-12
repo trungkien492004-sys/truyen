@@ -1057,10 +1057,10 @@
                 <div class="rankings-container" style="position: relative !important; top: auto !important;">
                     <h3 class="section-title" style="font-size: 1.3rem; margin-bottom: 1rem;">🥇 BXH Độc Giả</h3>
                     <% topReaders.forEach((reader, index) => { %>
-                        <a href="/user/<%= reader.id %>" class="ranking-item" style="text-decoration: none; color: inherit; display: flex; align-items: center; transition: transform 0.2s; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.8rem; margin-bottom: 0.8rem;">
+                        <a href="/user/<%= reader.id %>" class="ranking-item" style="text-decoration: none; color: inherit; display: flex; align-items: center; transition: transform 0.2s; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1.6rem; margin-bottom: 0.8rem; min-height: 78px;">
                             <div class="rank-number" style="width: 25px; text-align: center; font-weight: bold; font-size: 1.2rem; color: var(--accent-color); flex-shrink: 0;"><%= index + 1 %></div>
-                            
-                            <div style="display: flex; flex-direction: column; align-items: center; margin: 0 0.8rem; flex-shrink: 0; width: 65px;">
+
+                            <div style="position: relative; display: flex; flex-direction: column; align-items: center; margin: 0 0.8rem; flex-shrink: 0; width: 65px;">
                                 <% const rFrameClass = reader.equipped_frame || 'default-frame'; %>
                                 <div class="avatar-frame <%= rFrameClass %>" style="width: 46px; height: 46px; padding: 2px;">
                                     <div class="avatar-glow"></div>
@@ -1072,8 +1072,11 @@
                                     <% } %>
                                 </div>
                                 <% if (reader.equipped_badge) { %>
-                                    <div style="display: flex; flex-direction: column; align-items: center; margin-top: -4px; z-index: 2; line-height: 1.1; max-width: 78px;">
-                                        <span class="game-title <%= getTitleRarityClass(reader.equipped_badge) %> game-title-sidebar-scale game-title-autofit" style="white-space: nowrap; max-width: 78px; display: inline-flex;"><%= reader.equipped_badge %></span>
+                                    <!-- position: absolute để badge được phép RỘNG HƠN cột avatar (65px) mà không đẩy layout
+                                         xung quanh - chỉ "nổi" đè lên khoảng trống, dừng lại sát nhưng KHÔNG chạm cột STT bên trái
+                                         (giới hạn maxWidth trong JS autofit tính theo khoảng cách thật tới rank-number). -->
+                                    <div class="game-title-fit-wrap" style="position: absolute; top: 40px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; z-index: 2; line-height: 1.1; width: max-content; max-width: 110px;">
+                                        <span class="game-title <%= getTitleRarityClass(reader.equipped_badge) %> game-title-sidebar-scale game-title-autofit" style="white-space: nowrap; display: inline-flex;"><%= reader.equipped_badge %></span>
                                         <span style="font-size: 0.6rem; letter-spacing: 1px; text-shadow: 0 0 2px rgba(255,255,255,0.3); margin-top: 2px;"><%= getStarsByChapters(reader.chapters_read) %></span>
                                     </div>
                                 <% } %>

@@ -16,14 +16,16 @@
 
     // Small (Leaderboard) applies inline styles to scale down
     if (size === 'small') {
-        containerStyle = "position: relative; display: flex; flex-direction: column; align-items: center; gap: 0.3rem; max-width: 78px;";
+        containerStyle = "position: relative; display: flex; flex-direction: column; align-items: center; gap: 0.3rem; max-width: 78px; padding-bottom: 1.4rem;";
         frameStyle = "width: 56px; height: 56px; padding: 2px;";
         cornerStyle = "position: absolute; top: -4px; right: -4px; font-size: 0.8rem; background: rgba(0,0,0,0.6); border-radius: 50%; padding: 2px; z-index: 10; border: 1px solid gold; display: flex; justify-content: center; align-items: center; width: 18px; height: 18px;";
-        titleContainerStyle = "display: flex; flex-direction: column; align-items: center; margin-top: 2px; z-index: 2; line-height: 1.1; max-width: 78px;";
+        // position: absolute để badge được phép RỘNG HƠN cột avatar (78px) mà không đẩy layout
+        // ngang của bảng - chỉ "nổi" đè lên khoảng trống bên dưới, JS autofit co font vừa max-width.
+        titleContainerStyle = "position: absolute; top: 62px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; z-index: 2; line-height: 1.1; width: max-content; max-width: 110px;";
         // KHÔNG ép font-size cứng ở đây nữa (gây bug to nhỏ lẫn lộn giữa các tầng rarity) -
         // dùng class .game-title-sidebar-scale (định nghĩa trong style.css) để CSS class tự
-        // quyết định size theo đúng tầng rarity, chỉ giới hạn overflow để không tràn ra ngoài.
-        titleStyle = "white-space: nowrap; max-width: 78px; display: inline-flex;";
+        // quyết định size theo đúng tầng rarity, JS autofit (footer.ejs) co nhỏ nếu vẫn tràn.
+        titleStyle = "white-space: nowrap; display: inline-flex;";
         titleExtraClass = "game-title-sidebar-scale game-title-autofit";
         starClass = "";
         starStyle = "color: #ffd700; font-size: 0.65rem; letter-spacing: 1px; text-shadow: 0 0 2px rgba(255,255,255,0.3); margin-top: 2px;";
