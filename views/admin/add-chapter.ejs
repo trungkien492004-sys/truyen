@@ -438,7 +438,16 @@
             const doc = parser.parseFromString(xhtml, 'text/html');
             // Xoá thẻ style/script để không lẫn CSS/JS vào text
             doc.querySelectorAll('style, script').forEach(el => el.remove());
-            const bodyText = doc.body ? doc.body.textContent : doc.documentElement.textContent;
+
+            // QUAN TRỌNG: doc.body.textContent nối liền text của mọi thẻ <p> thành 1 dòng dài duy nhất
+            // (trình duyệt không tự chèn xuống dòng giữa các thẻ block). Phải tự chèn \n sau mỗi thẻ
+            // xuống dòng (p, div, br, h1-h6, li) TRƯỚC khi lấy text, để mỗi đoạn văn/dòng trong EPUB
+            // vẫn giữ được ranh giới dòng riêng - tránh tình trạng dính chữ như PDF gặp phải trước đây.
+            const root = doc.body || doc.documentElement;
+            root.querySelectorAll('p, div, br, h1, h2, h3, h4, h5, h6, li').forEach(el => {
+                el.insertAdjacentText('afterend', '\n');
+            });
+            const bodyText = root.textContent;
             fullText += bodyText.replace(/\n{2,}/g, '\n').trim() + '\n';
         }
 
