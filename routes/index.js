@@ -144,7 +144,11 @@ async function awardReadingExp(userId, storyId, chapterNumber) {
       const labelAfter = rankAfter ? rankAfter.label : null;
 
       if (labelAfter && labelAfter !== labelBefore) {
-        rankUp = { from: labelBefore || 'Nhập môn', to: labelAfter };
+        // Không hard-code tên rank cụ thể (vd "Nhập môn") làm fallback, vì admin có thể đổi tên/ngưỡng
+        // các cấp bậc bất cứ lúc nào trong trang quản trị rank_settings. "Người mới" chỉ là nhãn trung lập
+        // cho trường hợp user chưa từng đạt bất kỳ ngưỡng nào trước đó (mới tinh, 0 chương).
+        const fallbackLabel = 'Người mới';
+        rankUp = { from: labelBefore || fallbackLabel, to: labelAfter };
         await supabase.from('notifications').insert([{
           user_id: userId,
           message: `⚡ Đột phá cảnh giới! Bạn đã tiến lên "${labelAfter}"!`,
@@ -154,7 +158,7 @@ async function awardReadingExp(userId, storyId, chapterNumber) {
         try {
           await supabase.from('rank_up_events').insert([{
             user_id: userId,
-            from_rank: labelBefore || 'Nhập môn',
+            from_rank: labelBefore || fallbackLabel,
             to_rank: labelAfter
           }]);
         } catch (e) {

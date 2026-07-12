@@ -1,16 +1,49 @@
 <%- include('partials/header') %>
 
-<!-- BANNER ĐỘT PHÁ CẢNH GIỚI TRONG NGÀY (hiện công khai cho mọi người xem) -->
+<!-- BANNER ĐỘT PHÁ CẢNH GIỚI TRONG NGÀY - dạng carousel tự trượt qua từng người, giống banner Telegram có sẵn -->
 <% if (typeof rankUpEventsToday !== 'undefined' && rankUpEventsToday && rankUpEventsToday.length > 0) { %>
-<div style="max-width: 1000px; margin: 1.5rem auto 0 auto; padding: 0 1rem;">
-    <div style="display: flex; flex-direction: column; gap: 0.6rem;">
-        <% rankUpEventsToday.forEach(ev => { %>
-            <div style="position: relative; background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 60%, #1e1b4b 100%); border: 2px solid #fbbf24; border-radius: 14px; padding: 0.9rem 1.5rem; display: flex; align-items: center; gap: 1rem; box-shadow: 0 0 20px rgba(251,191,36,0.35), 0 6px 20px rgba(0,0,0,0.4); overflow: hidden;">
-                <span style="font-size: 1.6rem; filter: drop-shadow(0 0 8px #fbbf24);">⚡</span>
+<style>
+    .rankup-carousel {
+        max-width: 1000px;
+        margin: 1.5rem auto 0 auto;
+        padding: 0 1rem;
+    }
+    .rankup-carousel-track {
+        position: relative;
+        background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 60%, #1e1b4b 100%);
+        border: 2px solid #fbbf24;
+        border-radius: 14px;
+        box-shadow: 0 0 20px rgba(251,191,36,0.35), 0 6px 20px rgba(0,0,0,0.4);
+        overflow: hidden;
+        height: 68px;
+    }
+    .rankup-carousel-slide {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 0 1.5rem;
+        opacity: 0;
+        transform: translateX(30px);
+        transition: opacity 0.5s ease, transform 0.5s ease;
+        pointer-events: none;
+    }
+    .rankup-carousel-slide.active {
+        opacity: 1;
+        transform: translateX(0);
+        pointer-events: auto;
+    }
+</style>
+<div class="rankup-carousel">
+    <div class="rankup-carousel-track" id="rankup-carousel-track">
+        <% rankUpEventsToday.forEach((ev, idx) => { %>
+            <div class="rankup-carousel-slide<%= idx === 0 ? ' active' : '' %>">
+                <span style="font-size: 1.6rem; filter: drop-shadow(0 0 8px #fbbf24); flex-shrink: 0;">⚡</span>
                 <% if (ev.users && ev.users.avatar) { %>
                     <img src="<%= ev.users.avatar %>" alt="avatar" style="width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2px solid #fbbf24; flex-shrink: 0;">
                 <% } %>
-                <div style="flex: 1;">
+                <div style="flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">
                     <span style="font-weight: 700; color: #fff;"><%= ev.users ? ev.users.display_name : 'Độc giả' %></span>
                     <span style="color: var(--text-secondary);"> vừa đột phá cảnh giới: </span>
                     <span style="color: #94a3b8;"><%= ev.from_rank %></span>
@@ -20,6 +53,18 @@
         <% }) %>
     </div>
 </div>
+<script>
+    (function() {
+        const slides = document.querySelectorAll('#rankup-carousel-track .rankup-carousel-slide');
+        if (slides.length <= 1) return;
+        let current = 0;
+        setInterval(() => {
+            slides[current].classList.remove('active');
+            current = (current + 1) % slides.length;
+            slides[current].classList.add('active');
+        }, 3500);
+    })();
+</script>
 <% } %>
 
 <!-- Phần quảng cáo / Giới thiệu và tìm kiếm -->
