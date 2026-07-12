@@ -58,34 +58,28 @@ app.locals.getTitleRarityClass = (val) => {
     if (!val) return 'game-title-default';
     const v = val.toLowerCase();
 
-    // QUAN TRỌNG: kiểm tra các badge hệ thống theo ĐÚNG THỨ TỰ CẤP BẬC (thấp -> cao) TRƯỚC,
-    // để không bị các từ khóa theme chung chung (vd: "sách", "thần", "tôn"...) bắt nhầm và gán
-    // sai rarity - từng gây ra bug "Mọt Sách Thực Thụ" (cấp thấp) hiển thị to/nổi bật hơn cả
-    // "Thiên Đạo Quản Trị" (cấp cao nhất) vì bị nhầm sang class theme "cyber".
-    if (v.includes('thiên đạo quản trị')) return 'game-title-transcendent game-title-admin-god';
-    if (v.includes('vô cực')) return 'game-title-transcendent game-title-infinity';
-    if (v.includes('hỗn độn')) return 'game-title-mythic game-title-chaos';
-    if (v.includes('sáng thế')) return 'game-title-mythic game-title-creator';
-    if (v.includes('long vương')) return 'game-title-legendary game-title-dragonking';
-    if (v.includes('kiếm tôn')) return 'game-title-legendary game-title-swordmaster';
-    if (v.includes('tiên nhân') || v.includes('ma đạo')) return 'game-title-epic';
-    if (v.includes('hiệp khách')) return 'game-title-rare';
-    if (v.includes('tân binh') || v.includes('mọt sách') || v.includes('độc giả mới') || v.includes('người mới')) return 'game-title-common';
-
-    // Admin cấp quản trị khác (không phải huy hiệu theo cấp bậc đọc truyện)
     if (v.includes('admin') || v.includes('quản trị')) return 'game-title-mythic';
-
-    // Các theme trang trí mua trong shop (không liên quan cấp bậc/rarity)
     if (v.includes('long') || v.includes('rồng') || v.includes('dragon')) return 'game-title-dragon';
     if (v.includes('kiếm') || v.includes('sword') || v.includes('độc cô')) return 'game-title-sword';
     if (v.includes('ma') || v.includes('quỷ') || v.includes('demon')) return 'game-title-demon';
     if (v.includes('thiên') || v.includes('angel') || v.includes('thần') || v.includes('tiên') || v.includes('sứ')) return 'game-title-angel';
-    if (v.includes('thần thoại') || v.includes('đế') || v.includes('hoàng') || v.includes('chúa') || v.includes('tôn')) return 'game-title-mythic';
-    if (v.includes('cyber') || v.includes('máy')) return 'game-title-cyber';
+    if (v.includes('thần thoại') || v.includes('vô cực') || v.includes('đế') || v.includes('hoàng') || v.includes('chúa') || v.includes('tôn')) return 'game-title-mythic';
+    if (v.includes('cyber') || v.includes('máy') || v.includes('đọc') || v.includes('sách')) return 'game-title-cyber';
     if (v.includes('tinh hà') || v.includes('vũ trụ') || v.includes('galaxy') || v.includes('sao')) return 'game-title-galaxy';
     if (v.includes('hoa') || v.includes('sakura') || v.includes('đào')) return 'game-title-sakura';
     if (v.includes('noel') || v.includes('giáng sinh') || v.includes('tuyết')) return 'game-title-noel';
     if (v.includes('halloween') || v.includes('bí ngô') || v.includes('ma cà rồng')) return 'game-title-halloween';
+
+    // Badges mới
+    if (v.includes('tân binh')) return 'game-title-common';
+    if (v.includes('hiệp khách')) return 'game-title-rare';
+    if (v.includes('tiên nhân') || v.includes('ma đạo')) return 'game-title-epic';
+    if (v.includes('kiếm tôn')) return 'game-title-legendary game-title-swordmaster';
+    if (v.includes('long vương')) return 'game-title-legendary game-title-dragonking';
+    if (v.includes('sáng thế')) return 'game-title-mythic game-title-creator';
+    if (v.includes('hỗn độn')) return 'game-title-mythic game-title-chaos';
+    if (v.includes('vô cực')) return 'game-title-transcendent game-title-infinity';
+    if (v.includes('thiên đạo quản trị') || v.includes('admin')) return 'game-title-transcendent game-title-admin-god';
 
     return 'game-title-default';
 };

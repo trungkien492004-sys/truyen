@@ -1442,13 +1442,15 @@ footer {
     color: #b48608;
 }
 
-/* 6. Cyber */
+/* 6. Cyber (thu nhỏ lại: badge "Mọt Sách Thực Thụ" đang dùng theme này bị trông to/nổi hơn hẳn các huy hiệu khác) */
 .game-title-cyber {
     background: linear-gradient(90deg, cyan, magenta, cyan) !important;
     background-size: 300%;
     animation: cyberMove 3s linear infinite;
-    border: 2px solid white;
-    box-shadow: 0 0 20px cyan, 0 5px 18px rgba(0,0,0,0.4) !important;
+    border: 1px solid white;
+    box-shadow: 0 0 10px cyan, 0 3px 10px rgba(0,0,0,0.4) !important;
+    padding: 4px 14px !important;
+    font-size: 0.75rem !important;
 }
 @keyframes cyberMove {
     0% { background-position: 0% 50%; }
