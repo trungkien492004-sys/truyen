@@ -335,11 +335,18 @@ router.get('/', async (req, res) => {
         .gte('created_at', todayStart.toISOString())
         .order('created_at', { ascending: false })
         .limit(30);
-      // Chỉ giữ lại các sự kiện đột phá THẬT (bậc sau khác bậc trước) - phòng trường hợp
-      // dữ liệu cũ/backfill lỡ ghi nhầm record không có thay đổi bậc thực sự.
+      // Chỉ giữ lại các sự kiện đột phá THẬT: bậc sau phải khác bậc trước, VÀ bậc sau không được
+      // là bậc THẤP NHẤT hiện có (lấy động từ rank_settings, không hard-code tên cụ thể như
+      // "Xuất sớm" - vì admin có thể đổi tên/thứ tự bậc bất kỳ lúc nào trong trang quản trị).
+      // Phòng trường hợp dữ liệu cũ/backfill lỡ ghi nhầm record không có đột phá thực sự.
+      const rankSettingsForFilter = (rankSettingsRes.status === 'fulfilled' && rankSettingsRes.value.data) ? rankSettingsRes.value.data : [];
+      const lowestRankLabel = rankSettingsForFilter.length > 0
+        ? rankSettingsForFilter.reduce((lowest, r) => (r.count < lowest.count ? r : lowest), rankSettingsForFilter[0]).label
+        : null;
+
       if (eventsData) {
         rankUpEventsToday = eventsData
-          .filter(ev => ev.from_rank !== ev.to_rank)
+          .filter(ev => ev.from_rank !== ev.to_rank && (!lowestRankLabel || ev.to_rank !== lowestRankLabel))
           .slice(0, 10);
       }
     } catch (e) {
