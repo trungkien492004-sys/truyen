@@ -1442,15 +1442,24 @@ footer {
     color: #b48608;
 }
 
-/* 6. Cyber (thu nhỏ lại: badge "Mọt Sách Thực Thụ" đang dùng theme này bị trông to/nổi hơn hẳn các huy hiệu khác) */
+/* 6. Cyber - kích cỡ giống hệt các huy hiệu thường khác (kế thừa .game-title base), chỉ khác màu/hiệu ứng */
 .game-title-cyber {
     background: linear-gradient(90deg, cyan, magenta, cyan) !important;
     background-size: 300%;
     animation: cyberMove 3s linear infinite;
     border: 1px solid white;
     box-shadow: 0 0 10px cyan, 0 3px 10px rgba(0,0,0,0.4) !important;
-    padding: 4px 14px !important;
-    font-size: 0.75rem !important;
+}
+
+/* Thiên Đạo Quản Trị - tầng rarity CAO NHẤT: to hơn hẳn, glow mạnh hơn, vàng cam đậm sang trọng */
+.game-title-admin-god {
+    padding: 8px 26px !important;
+    font-size: 1rem !important;
+    background: linear-gradient(135deg, #fff4c2, #f5d576, #d4af37, #b8860b) !important;
+    background-size: 200% 200%;
+    animation: rainbowPan 3s linear infinite, floatBob 2s infinite alternate !important;
+    box-shadow: 0 0 30px rgba(212,175,55,0.8), 0 6px 18px rgba(0,0,0,0.5) !important;
+    border: 2px solid #fff4c2 !important;
 }
 @keyframes cyberMove {
     0% { background-position: 0% 50%; }

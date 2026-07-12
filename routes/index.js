@@ -130,25 +130,41 @@ async function awardReadingExp(userId, storyId, chapterNumber) {
   }
 
   // 4. Kiểm tra xem có "lên rank / đột phá cảnh giới" hay không (dựa trên rank_settings)
+  // QUAN TRỌNG: mọi tên bậc, ngưỡng, và cả THỨ TỰ (#1, #2...) đều tính ĐỘNG hoàn toàn từ bảng
+  // rank_settings - không hard-code bất kỳ tên bậc cụ thể nào. Nếu admin đổi tên/ngưỡng/thứ tự
+  // trong trang quản trị, banner + logic lên rank sẽ tự động phản ánh đúng ngay lập tức.
   let rankUp = null;
   try {
-    const { data: rankSettings } = await supabase
+    // Sort tăng dần theo count: bậc thấp nhất (count nhỏ nhất) đứng đầu mảng -> index 0 = "#1" (thấp nhất)
+    const { data: rankSettingsAsc } = await supabase
       .from('rank_settings')
       .select('*')
-      .order('count', { ascending: false });
+      .order('count', { ascending: true });
 
-    if (rankSettings && rankSettings.length > 0) {
-      const rankBefore = rankSettings.find(r => chaptersReadBefore >= r.count);
-      const rankAfter = rankSettings.find(r => chaptersRead >= r.count);
-      const labelBefore = rankBefore ? rankBefore.label : null;
-      const labelAfter = rankAfter ? rankAfter.label : null;
+    if (rankSettingsAsc && rankSettingsAsc.length > 0) {
+      // Tìm bậc cao nhất mà user đã đạt được: duyệt từ cuối mảng (count lớn nhất) về đầu,
+      // lấy bậc đầu tiên mà user đủ điều kiện.
+      const findRankIndex = (chapCount) => {
+        for (let i = rankSettingsAsc.length - 1; i >= 0; i--) {
+          if (chapCount >= rankSettingsAsc[i].count) return i;
+        }
+        return -1; // Chưa đạt bậc nào (index -1 = "chưa xếp hạng")
+      };
 
-      if (labelAfter && labelAfter !== labelBefore) {
-        // Không hard-code tên rank cụ thể (vd "Nhập môn") làm fallback, vì admin có thể đổi tên/ngưỡng
-        // các cấp bậc bất cứ lúc nào trong trang quản trị rank_settings. "Người mới" chỉ là nhãn trung lập
-        // cho trường hợp user chưa từng đạt bất kỳ ngưỡng nào trước đó (mới tinh, 0 chương).
-        const fallbackLabel = 'Người mới';
-        rankUp = { from: labelBefore || fallbackLabel, to: labelAfter };
+      const idxBefore = findRankIndex(chaptersReadBefore);
+      const idxAfter = findRankIndex(chaptersRead);
+      const labelBefore = idxBefore >= 0 ? rankSettingsAsc[idxBefore].label : null;
+      const labelAfter = idxAfter >= 0 ? rankSettingsAsc[idxAfter].label : null;
+
+      // Chỉ tính là "đột phá" khi thực sự tăng bậc (idxAfter > idxBefore), không phải chỉ đổi tên
+      if (idxAfter > idxBefore && labelAfter) {
+        const fallbackLabel = 'Chưa xếp hạng';
+        rankUp = {
+          from: labelBefore || fallbackLabel,
+          to: labelAfter,
+          rankBeforeNum: idxBefore + 1,  // +1 vì idx bắt đầu từ 0, "#1" = bậc thấp nhất
+          rankAfterNum: idxAfter + 1
+        };
         await supabase.from('notifications').insert([{
           user_id: userId,
           message: `⚡ Đột phá cảnh giới! Bạn đã tiến lên "${labelAfter}"!`,
@@ -159,7 +175,9 @@ async function awardReadingExp(userId, storyId, chapterNumber) {
           await supabase.from('rank_up_events').insert([{
             user_id: userId,
             from_rank: labelBefore || fallbackLabel,
-            to_rank: labelAfter
+            to_rank: labelAfter,
+            rank_before_num: idxBefore + 1,
+            rank_after_num: idxAfter + 1
           }]);
         } catch (e) {
           console.error('Lỗi ghi rank_up_events:', e);
@@ -313,7 +331,7 @@ router.get('/', async (req, res) => {
       todayStart.setHours(0, 0, 0, 0);
       const { data: eventsData } = await supabase
         .from('rank_up_events')
-        .select('id, from_rank, to_rank, created_at, users(display_name, avatar, equipped_frame, equipped_badge)')
+        .select('id, from_rank, to_rank, rank_before_num, rank_after_num, created_at, users(display_name, avatar, equipped_frame, equipped_badge)')
         .gte('created_at', todayStart.toISOString())
         .order('created_at', { ascending: false })
         .limit(10);

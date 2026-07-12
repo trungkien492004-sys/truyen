@@ -1,68 +1,149 @@
 <%- include('partials/header') %>
 
-<!-- BANNER ĐỘT PHÁ CẢNH GIỚI TRONG NGÀY - dạng carousel tự trượt qua từng người, giống banner Telegram có sẵn -->
+<!-- BẢNG SỰ KIỆN "ĐỘT PHÁ CẢNH GIỚI HÔM NAY" - leaderboard event card, không phải ticker cuộn.
+     Chỉ hiện người THỰC SỰ TĂNG BẬC tu vi (rank_before_num > rank_after_num về độ mạnh, tức
+     idx tăng), hiện 2-3 dòng cùng lúc, tự động chuyển trang bằng fade nếu có nhiều hơn 3 sự kiện. -->
 <% if (typeof rankUpEventsToday !== 'undefined' && rankUpEventsToday && rankUpEventsToday.length > 0) { %>
 <style>
-    .rankup-carousel {
+    .rankup-board-wrap {
         max-width: 1000px;
         margin: 1.5rem auto 0 auto;
         padding: 0 1rem;
     }
-    .rankup-carousel-track {
+    .rankup-board {
         position: relative;
-        background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 60%, #1e1b4b 100%);
-        border: 2px solid #fbbf24;
-        border-radius: 14px;
-        box-shadow: 0 0 20px rgba(251,191,36,0.35), 0 6px 20px rgba(0,0,0,0.4);
-        overflow: hidden;
-        height: 68px;
+        background: linear-gradient(135deg, #1a1530 0%, #0d0a1a 55%, #1a1530 100%);
+        border: 2px solid #d4af37;
+        border-radius: 18px;
+        box-shadow: 0 0 25px rgba(212,175,55,0.35), 0 8px 24px rgba(0,0,0,0.5), inset 0 0 30px rgba(212,175,55,0.05);
+        padding: 0.9rem 1.4rem;
+        min-height: 96px;
     }
-    .rankup-carousel-slide {
-        position: absolute;
-        inset: 0;
+    .rankup-board-title {
         display: flex;
         align-items: center;
-        gap: 1rem;
-        padding: 0 1.5rem;
-        opacity: 0;
-        transform: translateX(30px);
-        transition: opacity 0.5s ease, transform 0.5s ease;
-        pointer-events: none;
+        gap: 0.5rem;
+        font-family: 'Outfit', sans-serif;
+        font-weight: 800;
+        font-size: 0.95rem;
+        letter-spacing: 1px;
+        color: #f5d576;
+        text-shadow: 0 0 10px rgba(245,213,118,0.5);
+        margin-bottom: 0.6rem;
+        text-transform: uppercase;
     }
-    .rankup-carousel-slide.active {
-        opacity: 1;
-        transform: translateX(0);
-        pointer-events: auto;
+    .rankup-board-page {
+        display: none;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    .rankup-board-page.active {
+        display: flex;
+        animation: rankupFadeIn 0.5s ease;
+    }
+    @keyframes rankupFadeIn {
+        from { opacity: 0; transform: translateY(6px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .rankup-row {
+        display: flex;
+        align-items: center;
+        gap: 0.7rem;
+    }
+    .rankup-row-medal {
+        font-size: 1.2rem;
+        width: 26px;
+        text-align: center;
+        flex-shrink: 0;
+    }
+    .rankup-row-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid #d4af37;
+        flex-shrink: 0;
+    }
+    .rankup-row-name {
+        font-weight: 700;
+        color: #fff;
+        font-size: 0.85rem;
+        min-width: 100px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .rankup-row-realm {
+        font-size: 0.8rem;
+        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .rankup-row-realm .from {
+        color: #94a3b8;
+    }
+    .rankup-row-realm .to {
+        background: linear-gradient(90deg, #f5d576, #d4af37);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 700;
+    }
+    .rankup-row-num {
+        font-size: 0.75rem;
+        color: #d4af37;
+        font-weight: 700;
+        flex-shrink: 0;
+        white-space: nowrap;
+    }
+    @media (max-width: 600px) {
+        .rankup-row-realm { display: none; }
     }
 </style>
-<div class="rankup-carousel">
-    <div class="rankup-carousel-track" id="rankup-carousel-track">
-        <% rankUpEventsToday.forEach((ev, idx) => { %>
-            <div class="rankup-carousel-slide<%= idx === 0 ? ' active' : '' %>">
-                <span style="font-size: 1.6rem; filter: drop-shadow(0 0 8px #fbbf24); flex-shrink: 0;">⚡</span>
-                <% if (ev.users && ev.users.avatar) { %>
-                    <img src="<%= ev.users.avatar %>" alt="avatar" style="width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2px solid #fbbf24; flex-shrink: 0;">
-                <% } %>
-                <div style="flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">
-                    <span style="font-weight: 700; color: #fff;"><%= ev.users ? ev.users.display_name : 'Độc giả' %></span>
-                    <span style="color: var(--text-secondary);"> vừa đột phá cảnh giới: </span>
-                    <span style="color: #94a3b8;"><%= ev.from_rank %></span>
-                    <span style="color: #fbbf24; font-weight: 700;"> ➜ <%= ev.to_rank %></span>
+<div class="rankup-board-wrap">
+    <div class="rankup-board">
+        <div class="rankup-board-title">🏆 Đột Phá Cảnh Giới Hôm Nay</div>
+        <div id="rankup-board-pages">
+            <%
+                const medals = ['🥇', '🥈', '🥉'];
+                const pageSize = 3;
+                const pages = [];
+                for (let i = 0; i < rankUpEventsToday.length; i += pageSize) {
+                    pages.push(rankUpEventsToday.slice(i, i + pageSize));
+                }
+            %>
+            <% pages.forEach((page, pageIdx) => { %>
+                <div class="rankup-board-page<%= pageIdx === 0 ? ' active' : '' %>">
+                    <% page.forEach((ev, rowIdx) => { %>
+                        <div class="rankup-row">
+                            <span class="rankup-row-medal"><%= medals[rowIdx] || '🏅' %></span>
+                            <% if (ev.users && ev.users.avatar) { %>
+                                <img src="<%= ev.users.avatar %>" alt="avatar" class="rankup-row-avatar">
+                            <% } %>
+                            <span class="rankup-row-name"><%= ev.users ? ev.users.display_name : 'Độc giả' %></span>
+                            <span class="rankup-row-realm">
+                                <span class="from"><%= ev.from_rank %></span> ➜ <span class="to"><%= ev.to_rank %></span>
+                            </span>
+                            <% if (ev.rank_before_num && ev.rank_after_num) { %>
+                                <span class="rankup-row-num">Bậc #<%= ev.rank_before_num %> ➜ #<%= ev.rank_after_num %></span>
+                            <% } %>
+                        </div>
+                    <% }) %>
                 </div>
-            </div>
-        <% }) %>
+            <% }) %>
+        </div>
     </div>
 </div>
 <script>
     (function() {
-        const slides = document.querySelectorAll('#rankup-carousel-track .rankup-carousel-slide');
-        if (slides.length <= 1) return;
+        const pages = document.querySelectorAll('#rankup-board-pages .rankup-board-page');
+        if (pages.length <= 1) return;
         let current = 0;
         setInterval(() => {
-            slides[current].classList.remove('active');
-            current = (current + 1) % slides.length;
-            slides[current].classList.add('active');
-        }, 3500);
+            pages[current].classList.remove('active');
+            current = (current + 1) % pages.length;
+            pages[current].classList.add('active');
+        }, 4500);
     })();
 </script>
 <% } %>
