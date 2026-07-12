@@ -1461,6 +1461,14 @@ footer {
     box-shadow: 0 0 30px rgba(212,175,55,0.8), 0 6px 18px rgba(0,0,0,0.5) !important;
     border: 2px solid #fff4c2 !important;
 }
+/* Thu nhỏ ĐỀU mọi huy hiệu khi hiện trong khối BXH Độc Giả sidebar (trang chủ) - dùng transform
+   scale thay vì ép font-size cố định, để GIỮ NGUYÊN tỉ lệ chênh lệch giữa các tầng rarity
+   (Thiên Đạo Quản Trị vẫn to hơn hẳn các huy hiệu khác, chỉ là cả cụm được thu nhỏ đồng đều). */
+.game-title-sidebar-scale {
+    transform: scale(0.72);
+    transform-origin: center;
+}
+
 @keyframes cyberMove {
     0% { background-position: 0% 50%; }
     100% { background-position: 100% 50%; }

@@ -58,6 +58,11 @@ app.locals.getTitleRarityClass = (val) => {
     if (!val) return 'game-title-default';
     const v = val.toLowerCase();
 
+    // Ưu tiên tuyệt đối: "Thiên Đạo Quản Trị" (huy hiệu admin cấp cao nhất) phải được kiểm tra
+    // TRƯỚC MỌI dòng khác - nếu không, dòng match chung chung "admin/quản trị" bên dưới sẽ
+    // bắt trước và trả về game-title-mythic thay vì game-title-admin-god (bug đã xảy ra thực tế).
+    if (v.includes('thiên đạo quản trị')) return 'game-title-transcendent game-title-admin-god';
+
     if (v.includes('admin') || v.includes('quản trị')) return 'game-title-mythic';
     if (v.includes('long') || v.includes('rồng') || v.includes('dragon')) return 'game-title-dragon';
     if (v.includes('kiếm') || v.includes('sword') || v.includes('độc cô')) return 'game-title-sword';
