@@ -1471,8 +1471,9 @@ footer {
     transform: none !important;
 }
 .game-title-sidebar-scale.game-title-admin-god {
-    font-size: 0.75rem !important;
-    padding: 4px 16px !important;
+    /* To hơn size thường (0.62rem) khoảng 15% */
+    font-size: 0.71rem !important;
+    padding: 4px 14px !important;
 }
 
 @keyframes cyberMove {
