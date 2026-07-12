@@ -11,15 +11,29 @@
         document.addEventListener('DOMContentLoaded', () => {
             const modal = document.getElementById('avatar-zoom-modal');
             const modalImg = document.getElementById('avatar-zoom-img');
-            
+
             document.body.addEventListener('click', (e) => {
                 if (e.target.classList.contains('avatar-zoomable')) {
-                    e.preventDefault(); 
+                    e.preventDefault();
                     modalImg.src = e.target.src;
                     modal.style.display = 'flex';
                 }
                 if (e.target.id === 'avatar-zoom-modal' || e.target.id === 'avatar-zoom-img') {
                     modal.style.display = 'none';
+                }
+            });
+
+            // Tự động thu nhỏ font-size của huy hiệu (.game-title-autofit) cho đến khi chữ
+            // vừa khít trong khung - GIỮ NGUYÊN VẸN toàn bộ chữ (không cắt bớt, không xuống dòng),
+            // chỉ giảm cỡ chữ dần từng bước nhỏ cho tới khi hết tràn.
+            document.querySelectorAll('.game-title-autofit').forEach(el => {
+                const maxWidth = el.parentElement ? el.parentElement.clientWidth || 78 : 78;
+                let fontSize = parseFloat(getComputedStyle(el).fontSize);
+                let guard = 0;
+                while (el.scrollWidth > maxWidth && fontSize > 6 && guard < 30) {
+                    fontSize -= 0.5;
+                    el.style.fontSize = fontSize + 'px';
+                    guard++;
                 }
             });
         });
