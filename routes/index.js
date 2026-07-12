@@ -334,8 +334,14 @@ router.get('/', async (req, res) => {
         .select('id, from_rank, to_rank, rank_before_num, rank_after_num, created_at, users(display_name, avatar, equipped_frame, equipped_badge)')
         .gte('created_at', todayStart.toISOString())
         .order('created_at', { ascending: false })
-        .limit(10);
-      if (eventsData) rankUpEventsToday = eventsData;
+        .limit(30);
+      // Chỉ giữ lại các sự kiện đột phá THẬT (bậc sau khác bậc trước) - phòng trường hợp
+      // dữ liệu cũ/backfill lỡ ghi nhầm record không có thay đổi bậc thực sự.
+      if (eventsData) {
+        rankUpEventsToday = eventsData
+          .filter(ev => ev.from_rank !== ev.to_rank)
+          .slice(0, 10);
+      }
     } catch (e) {
       console.error('Lỗi lấy rank_up_events hôm nay:', e);
     }
@@ -558,13 +564,28 @@ router.get('/story/:id', async (req, res) => {
     const storyGenres = storyGenresData ? storyGenresData.map(g => g.genres) : [];
 
     // 3. Lấy danh sách chương của truyện
-    const { data: chapters, error: chaptersErr } = await supabase
-      .from('chapters')
-      .select('id, chapter_number, title, created_at, views')
-      .eq('story_id', storyId)
-      .order('chapter_number', { ascending: true });
+    // Supabase/PostgREST giới hạn tối đa 1000 dòng mỗi query - với truyện có >1000 chương phải
+    // phân trang lấy nhiều lần rồi gộp lại, nếu không danh sách sẽ bị cắt cụt ở chương thứ 1000.
+    let chapters = [];
+    {
+      const PAGE_SIZE = 1000;
+      let from = 0;
+      while (true) {
+        const { data: pageData, error: pageErr } = await supabase
+          .from('chapters')
+          .select('id, chapter_number, title, created_at, views')
+          .eq('story_id', storyId)
+          .order('chapter_number', { ascending: true })
+          .range(from, from + PAGE_SIZE - 1);
 
-    if (chaptersErr) throw chaptersErr;
+        if (pageErr) throw pageErr;
+        if (!pageData || pageData.length === 0) break;
+
+        chapters = chapters.concat(pageData);
+        if (pageData.length < PAGE_SIZE) break;
+        from += PAGE_SIZE;
+      }
+    }
 
     // 4. Nếu người dùng đã đăng nhập: lấy tiến độ đọc + trạng thái bookmark + điểm đã chấm của truyện này
     let readingProgress = null;
@@ -1627,7 +1648,7 @@ router.get('/user/:id', async (req, res) => {
     // 1. Lấy thông tin user
     const { data: targetUserData, error: userErr } = await supabase
       .from('users')
-      .select('id, display_name, avatar, bio, equipped_badge, equipped_avatar, role, created_at')
+      .select('id, display_name, avatar, bio, equipped_badge, equipped_avatar, equipped_frame, role, created_at')
       .eq('id', userId)
       .single();
 
@@ -1649,11 +1670,9 @@ router.get('/user/:id', async (req, res) => {
     const nextLevelExp = 100;
     const currentLevelExp = exp % 100;
 
-    // Lấy số chương đã đọc
-    const { count: chaptersRead } = await supabase
-      .from('chapter_reads')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId);
+    // Dùng chapters_read từ user_stats (đồng bộ với /profile, BXH độc giả và logic lên rank) -
+    // KHÔNG dùng chapter_reads (bảng chỉ đếm chương duy nhất, không tính đọc lại) để tránh 2 nơi hiển thị lệch nhau.
+    const chaptersRead = statsData ? (statsData.chapters_read || 0) : 0;
 
     // Tính toán Rank (Hạng trên BXH Độc Giả)
     const { count: higherExpCount } = await supabase
