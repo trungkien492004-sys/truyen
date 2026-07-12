@@ -10,6 +10,55 @@ const PDFParser = require('pdf2json');
 // Sử dụng Memory Storage để chạy không đĩa (tương thích Vercel Serverless)
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } }); // 50MB limit cho PDF
 
+// Lấy TOÀN BỘ chapter_number hiện có của 1 truyện, phân trang lấy nhiều lần để không bị giới hạn
+// mặc định 1000 dòng/query của Supabase/PostgREST (bug đã gặp: truyện >1000 chương bị đối chiếu
+// trùng sai vì chỉ lấy được 1000 chương đầu, có nguy cơ upsert đè nhầm dữ liệu chương cũ).
+async function getAllExistingChapterNumbers(storyId) {
+  let all = [];
+  const PAGE_SIZE = 1000;
+  let from = 0;
+  while (true) {
+    const { data: pageData, error } = await supabase
+      .from('chapters')
+      .select('chapter_number')
+      .eq('story_id', storyId)
+      .range(from, from + PAGE_SIZE - 1);
+
+    if (error) throw error;
+    if (!pageData || pageData.length === 0) break;
+
+    all = all.concat(pageData);
+    if (pageData.length < PAGE_SIZE) break;
+    from += PAGE_SIZE;
+  }
+  return all;
+}
+
+// Lấy TOÀN BỘ chương (id + chapter_number) của 1 truyện, sắp theo chapter_number tăng dần -
+// dùng chung cơ chế phân trang như getAllExistingChapterNumbers, cho các thao tác cần đủ cả id
+// (ví dụ sắp xếp lại thứ tự chương khi admin đổi số thứ tự 1 chương cụ thể).
+async function getAllChaptersWithId(storyId) {
+  let all = [];
+  const PAGE_SIZE = 1000;
+  let from = 0;
+  while (true) {
+    const { data: pageData, error } = await supabase
+      .from('chapters')
+      .select('id, chapter_number')
+      .eq('story_id', storyId)
+      .order('chapter_number', { ascending: true })
+      .range(from, from + PAGE_SIZE - 1);
+
+    if (error) throw error;
+    if (!pageData || pageData.length === 0) break;
+
+    all = all.concat(pageData);
+    if (pageData.length < PAGE_SIZE) break;
+    from += PAGE_SIZE;
+  }
+  return all;
+}
+
 // Hàm hỗ trợ upload file lên Supabase Storage
 async function uploadToSupabase(file, bucketName = 'uploads') {
   if (!file) return null;
@@ -508,12 +557,9 @@ router.post('/chapter/add', upload.array('txtfile', 100), async (req, res) => {
         chaptersToInsert.push(...parsed);
       }
 
-      // Lấy tất cả số chương hiện có của bộ truyện này trong database để đối chiếu
-      const { data: existingChapters } = await supabase
-        .from('chapters')
-        .select('chapter_number')
-        .eq('story_id', story_id);
-      
+      // Lấy tất cả số chương hiện có của bộ truyện này trong database để đối chiếu (đã phân trang, không giới hạn 1000)
+      const existingChapters = await getAllExistingChapterNumbers(story_id);
+
       const existingNumbers = new Set(existingChapters ? existingChapters.map(c => c.chapter_number) : []);
       const usedNumbers = new Set();
 
@@ -653,12 +699,9 @@ router.post('/chapter/add-json', async (req, res) => {
       });
     }
 
-    // Lấy tất cả số chương hiện có của bộ truyện này trong database để đối chiếu
-    const { data: existingChapters } = await supabase
-      .from('chapters')
-      .select('chapter_number')
-      .eq('story_id', story_id);
-    
+    // Lấy tất cả số chương hiện có của bộ truyện này trong database để đối chiếu (đã phân trang, không giới hạn 1000)
+    const existingChapters = await getAllExistingChapterNumbers(story_id);
+
     const existingNumbers = new Set(existingChapters ? existingChapters.map(c => c.chapter_number) : []);
     const usedNumbers = new Set();
 
@@ -726,10 +769,8 @@ router.post('/chapter/add-pdf', upload.single('pdffile'), async (req, res) => {
       return res.json({ success: false, error: 'Không đọc được nội dung văn bản từ file PDF này (có thể là PDF dạng ảnh scan, chưa hỗ trợ OCR).' });
     }
 
-    const { data: existingChapters } = await supabase
-      .from('chapters')
-      .select('chapter_number')
-      .eq('story_id', story_id);
+    // Đã phân trang, không giới hạn 1000 chương
+    const existingChapters = await getAllExistingChapterNumbers(story_id);
 
     const normalizedExisting = (existingChapters || [])
       .map(c => normalizeChapterNumber(c.chapter_number))
@@ -918,11 +959,29 @@ router.get('/story/edit/:id', async (req, res) => {
     const linkedGenreIds = linkedGenres ? linkedGenres.map(g => g.genre_id) : [];
 
     // Lấy danh sách chương của truyện
-    const { data: chapters } = await supabase
-      .from('chapters')
-      .select('id, chapter_number, title')
-      .eq('story_id', storyId)
-      .order('chapter_number', { ascending: true });
+    // Supabase/PostgREST giới hạn tối đa 1000 dòng mỗi query - với truyện có >1000 chương phải
+    // phân trang lấy nhiều lần rồi gộp lại, nếu không danh sách chương ở trang sửa truyện (admin)
+    // sẽ bị cắt cụt ở chương thứ 1000 (đã từng xảy ra và sửa ở trang công khai, giờ áp dụng thêm ở đây).
+    let chapters = [];
+    {
+      const PAGE_SIZE = 1000;
+      let from = 0;
+      while (true) {
+        const { data: pageData, error: pageErr } = await supabase
+          .from('chapters')
+          .select('id, chapter_number, title')
+          .eq('story_id', storyId)
+          .order('chapter_number', { ascending: true })
+          .range(from, from + PAGE_SIZE - 1);
+
+        if (pageErr) throw pageErr;
+        if (!pageData || pageData.length === 0) break;
+
+        chapters = chapters.concat(pageData);
+        if (pageData.length < PAGE_SIZE) break;
+        from += PAGE_SIZE;
+      }
+    }
 
     const success = req.query.success || null;
     const error = req.query.error || null;
@@ -1088,9 +1147,8 @@ router.post('/chapter/edit/:id', async (req, res) => {
 
     // Nếu thay đổi số thứ tự chương, tiến hành sắp xếp lại
     if (currentChap.chapter_number !== targetChapterNumber) {
-        // Lấy tất cả các chương, sắp xếp theo chapter_number
-        const { data: allChapters, error: allErr } = await supabase.from('chapters').select('id, chapter_number').eq('story_id', currentChap.story_id).order('chapter_number', { ascending: true });
-        if (allErr) throw allErr;
+        // Lấy tất cả các chương, sắp xếp theo chapter_number (đã phân trang, không giới hạn 1000)
+        const allChapters = await getAllChaptersWithId(currentChap.story_id);
 
         const currentIndex = allChapters.findIndex(c => c.id === chapterId);
         if (currentIndex !== -1) {
