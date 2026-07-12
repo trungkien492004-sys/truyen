@@ -10,12 +10,11 @@
 -- AN TOÀN: chỉ chạy cho chương của 1 truyện cụ thể (thay STORY_ID_CAN_SUA bên dưới),
 -- và chỉ sửa các chương thực sự đang bị dính (số lượng thẻ <p> <= 1).
 
--- BƯỚC 1: Xem trước những chương nào của truyện đang bị dính (kiểm tra trước khi sửa)
--- Thay 'STORY_ID_CAN_SUA' bằng id thật của truyện "Con Đường Bá Chủ" (xem trong bảng stories).
+-- BƯỚC 1: Xem trước những chương nào của truyện (id = 15) đang bị dính (kiểm tra trước khi sửa)
 SELECT id, chapter_number, title,
        (LENGTH(content) - LENGTH(REPLACE(content, '<p>', ''))) / 3 AS so_doan_van
 FROM chapters
-WHERE story_id = 'STORY_ID_CAN_SUA'
+WHERE story_id = '15'
   AND (LENGTH(content) - LENGTH(REPLACE(content, '<p>', ''))) / 3 <= 1
 ORDER BY chapter_number;
 
@@ -30,12 +29,12 @@ SET content = '<p>' || TRIM(BOTH '<p></p>' FROM (
             'g'
         )
     )) || '</p>'
-WHERE story_id = 'STORY_ID_CAN_SUA'
+WHERE story_id = '15'
   AND (LENGTH(content) - LENGTH(REPLACE(content, '<p>', ''))) / 3 <= 1;
 
 -- BƯỚC 3: Kiểm tra lại kết quả sau khi sửa
 SELECT id, chapter_number, title,
        (LENGTH(content) - LENGTH(REPLACE(content, '<p>', ''))) / 3 AS so_doan_van
 FROM chapters
-WHERE story_id = 'STORY_ID_CAN_SUA'
+WHERE story_id = '15'
 ORDER BY chapter_number;
