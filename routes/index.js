@@ -1279,10 +1279,9 @@ router.get('/profile', async (req, res) => {
       .order('created_at', { ascending: false })
       .limit(30);
 
-    const { count: chaptersCount } = await supabase
-      .from('chapter_reads')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', req.user.id);
+    // Dùng chapters_read từ user_stats (đồng bộ với BXH độc giả và logic lên rank) -
+    // KHÔNG dùng chapter_reads (bảng chỉ đếm chương duy nhất, không tính đọc lại) để tránh 2 nơi hiển thị lệch nhau.
+    const chaptersCount = stats ? (stats.chapters_read || 0) : 0;
 
     // Lấy cài đặt Rank từ database
     const { data: rankSettings } = await supabase
@@ -1290,7 +1289,7 @@ router.get('/profile', async (req, res) => {
       .select('*')
       .order('count', { ascending: false });
 
-    const badge = getBadgeForCount(chaptersCount || 0, rankSettings);
+    const badge = getBadgeForCount(chaptersCount, rankSettings);
 
     const { data: inventory } = await supabase
       .from('user_inventory')
