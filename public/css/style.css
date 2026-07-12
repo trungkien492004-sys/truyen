@@ -1451,16 +1451,37 @@ footer {
     box-shadow: 0 0 10px cyan, 0 3px 10px rgba(0,0,0,0.4) !important;
 }
 
-/* Thiên Đạo Quản Trị - tầng rarity CAO NHẤT: to hơn hẳn, glow mạnh hơn, vàng cam đậm sang trọng */
+/* Thiên Đạo Quản Trị - tầng rarity CAO NHẤT: to hơn hẳn, glow mạnh hơn, lồng lộn nhiều màu sang trọng.
+   Kết hợp gradient đa sắc (vàng-cam-hồng-tím) chạy động + glow đổi màu theo nhịp + viền sáng lấp lánh. */
 .game-title-admin-god {
     padding: 8px 26px !important;
     font-size: 1rem !important;
-    background: linear-gradient(135deg, #fff4c2, #f5d576, #d4af37, #b8860b) !important;
-    background-size: 200% 200%;
-    animation: rainbowPan 3s linear infinite, floatBob 2s infinite alternate !important;
+    background: linear-gradient(90deg, #fff4c2, #f5d576, #ff8a3d, #ff5fa2, #b366ff, #5fc9ff, #f5d576, #fff4c2) !important;
+    background-size: 400% 100% !important;
+    animation: adminGodRainbow 4s linear infinite, adminGodGlow 2s ease-in-out infinite alternate, adminGodFloat 2.4s ease-in-out infinite alternate !important;
     box-shadow: 0 0 30px rgba(212,175,55,0.8), 0 6px 18px rgba(0,0,0,0.5) !important;
     border: 2px solid #fff4c2 !important;
+    background-clip: padding-box;
 }
+.game-title-admin-god::before,
+.game-title-admin-god::after {
+    color: #fff8e1 !important;
+    text-shadow: 0 0 6px #ffd700, 0 0 12px #ff8a3d;
+}
+@keyframes adminGodRainbow {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 400% 50%; }
+}
+@keyframes adminGodGlow {
+    0% { box-shadow: 0 0 18px rgba(255,138,61,0.7), 0 0 34px rgba(255,95,162,0.5), 0 6px 18px rgba(0,0,0,0.5); }
+    50% { box-shadow: 0 0 28px rgba(179,102,255,0.85), 0 0 46px rgba(95,201,255,0.6), 0 6px 18px rgba(0,0,0,0.5); }
+    100% { box-shadow: 0 0 34px rgba(212,175,55,0.9), 0 0 52px rgba(255,215,0,0.6), 0 6px 18px rgba(0,0,0,0.5); }
+}
+@keyframes adminGodFloat {
+    from { transform: translateY(0); }
+    to { transform: translateY(-3px); }
+}
+
 /* Thu nhỏ huy hiệu khi hiện trong khối BXH Độc Giả sidebar (trang chủ) - set cứng font-size/padding
    nhỏ qua class riêng thay vì transform/zoom (vốn không tương thích mọi trình duyệt và làm badge
    tràn layout đè lên số thứ tự bên cạnh). Vẫn giữ chênh lệch: admin-god to hơn 1 chút so với còn lại. */
@@ -1471,9 +1492,12 @@ footer {
     transform: none !important;
 }
 .game-title-sidebar-scale.game-title-admin-god {
-    /* To hơn size thường (0.62rem) khoảng 15% */
+    /* To hơn size thường (0.62rem) khoảng 15%, và GIỮ LẠI animation lồng lộn màu mè
+       (không bị tắt bởi rule .game-title-sidebar-scale ở trên) vì đây là tầng cao nhất,
+       cần nổi bật ngay cả khi thu nhỏ trong sidebar/leaderboard. */
     font-size: 0.71rem !important;
     padding: 4px 14px !important;
+    animation: adminGodRainbow 4s linear infinite, adminGodGlow 2s ease-in-out infinite alternate, adminGodFloat 2.4s ease-in-out infinite alternate !important;
 }
 
 @keyframes cyberMove {
