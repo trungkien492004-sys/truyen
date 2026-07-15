@@ -10,7 +10,7 @@
             <h1 class="read-title" style="margin: 0 0 0.5rem 0;">Chương <%= chapter.chapter_number %>: <%= chapter.title %></h1>
             <p style="color: var(--text-secondary); font-size: 1rem; margin: 0;">Truyện: <strong><%= story.title %></strong></p>
         </div>
-        <% if (user && user.role === 'admin') { %>
+        <% if (user && (user.role === 'admin' || user.role === 'sp_admin')) { %>
             <a href="/admin/chapter/edit/<%= chapter.id %>?redirect_to=/story/<%= story.id %>/chapter/<%= chapter.chapter_number %>" class="btn btn-secondary" style="border: 1px solid var(--accent-color); color: var(--accent-color); font-size: 0.85rem; padding: 0.4rem 0.8rem; border-radius: 6px; white-space: nowrap; font-weight: 500;">
                 ✏️ Sửa Chương
             </a>
@@ -80,8 +80,13 @@
     </div>
 
     <!-- Nội dung chương truyện (Có thể chứa cả chữ và các thẻ ảnh đan xen) -->
-    <div class="read-content">
+    <div class="read-content" id="chapter-content">
         <%- chapter.content %>
+    </div>
+
+    <!-- Đếm số từ - hiển thị góc trái dưới -->
+    <div id="word-count-badge" style="display: inline-flex; align-items: center; gap: 0.4rem; margin-top: 1.2rem; padding: 0.45rem 0.9rem; background: rgba(99, 102, 241, 0.12); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 20px; font-size: 0.82rem; color: var(--text-secondary); font-weight: 500;">
+        📖 <span id="word-count-num">...</span> từ
     </div>
 
     <!-- Thanh chuyển hướng chương dưới -->
@@ -191,6 +196,20 @@
             });
         });
     });
+
+    // Đếm số từ trong nội dung chương
+    (function countWords() {
+        const contentEl = document.getElementById('chapter-content');
+        const countEl = document.getElementById('word-count-num');
+        if (!contentEl || !countEl) return;
+        // Lấy text thuần, loại bỏ HTML tags
+        const text = contentEl.innerText || contentEl.textContent || '';
+        // Tách từ bằng dấu cách/xuống dòng, lọc chuỗi rỗng
+        const words = text.trim().split(/\s+/).filter(w => w.length > 0);
+        const count = words.length;
+        // Format số có dấu phẩy mỗi nghìn
+        countEl.textContent = count.toLocaleString('vi-VN');
+    })();
 </script>
 
 <div class="read-container" style="margin-top: 3rem; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 16px; padding: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.15); margin-bottom: 2rem;">

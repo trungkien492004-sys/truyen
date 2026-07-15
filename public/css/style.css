@@ -2204,3 +2204,141 @@ footer {
     animation: spinSlow 13s linear infinite reverse;
     opacity: 0.9;
 }
+
+/* Premium visual refresh for badges and frames */
+.avatar-frame {
+  transition: transform 0.25s ease, box-shadow 0.25s ease, filter 0.25s ease;
+}
+
+.avatar-frame:hover {
+  transform: translateY(-2px) scale(1.01);
+}
+
+.avatar-corner {
+  box-shadow: 0 0 14px rgba(255, 215, 0, 0.4), inset 0 0 8px rgba(255, 255, 255, 0.35);
+}
+
+.avatar-corner:hover {
+  transform: scale(1.06) rotate(3deg);
+}
+
+.game-title {
+  overflow: hidden;
+  isolation: isolate;
+  transition: transform 0.25s ease, filter 0.25s ease, box-shadow 0.25s ease;
+}
+
+.game-title::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(255,255,255,0.18), transparent 34%, rgba(255,255,255,0.06));
+  pointer-events: none;
+  z-index: -1;
+}
+
+.game-title::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1px solid rgba(255,255,255,0.18);
+  pointer-events: none;
+  mix-blend-mode: screen;
+  opacity: 0.85;
+}
+
+.game-title:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.06) saturate(1.08);
+}
+
+.game-title-admin-god,
+.game-title-transcendent {
+  overflow: visible;
+}
+
+.badge-premium {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.95rem;
+  border-radius: 999px;
+  backdrop-filter: blur(10px);
+}
+
+.badge-premium .badge-premium-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: currentColor;
+  box-shadow: 0 0 10px currentColor;
+  flex: none;
+}
+
+.frame-preview-shell {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  padding: 5px;
+  background: linear-gradient(145deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02));
+  box-shadow: 0 10px 24px rgba(0,0,0,0.25);
+}
+
+.frame-preview-shell::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.12);
+  pointer-events: none;
+}
+
+/* Elite badge and frame variants */
+.badge-premium.is-legendary {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.18), rgba(245, 158, 11, 0.12));
+  color: #fde68a;
+  border-color: rgba(253, 230, 138, 0.45);
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 10px 30px rgba(245, 158, 11, 0.18);
+}
+
+.badge-premium.is-mythic {
+  background: linear-gradient(135deg, rgba(244, 63, 94, 0.18), rgba(168, 85, 247, 0.12));
+  color: #fecdd3;
+  border-color: rgba(248, 113, 113, 0.45);
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 10px 30px rgba(244, 63, 94, 0.18);
+}
+
+.badge-premium.is-transcendent {
+  background: linear-gradient(135deg, rgba(253, 224, 71, 0.18), rgba(96, 165, 250, 0.12), rgba(244, 114, 182, 0.12));
+  color: #fef3c7;
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.08), 0 12px 34px rgba(251, 191, 36, 0.25);
+}
+
+.badge-premium-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  flex: none;
+  background: currentColor;
+  box-shadow: 0 0 10px currentColor, 0 0 18px currentColor;
+}
+
+.frame-preview-shell.is-legendary {
+  background: linear-gradient(145deg, rgba(245, 158, 11, 0.18), rgba(255,255,255,0.02));
+  box-shadow: 0 12px 28px rgba(245, 158, 11, 0.2);
+}
+
+.frame-preview-shell.is-mythic {
+  background: linear-gradient(145deg, rgba(244, 63, 94, 0.16), rgba(168, 85, 247, 0.06));
+  box-shadow: 0 12px 28px rgba(244, 63, 94, 0.2);
+}
+
+.frame-preview-shell.is-transcendent {
+  background: linear-gradient(145deg, rgba(251, 191, 36, 0.18), rgba(59, 130, 246, 0.08), rgba(236, 72, 153, 0.08));
+  box-shadow: 0 12px 34px rgba(251, 191, 36, 0.22);
+}

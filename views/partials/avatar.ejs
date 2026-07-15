@@ -46,7 +46,10 @@
     </a>
     <% if (badge) { %>
         <div style="<%= titleContainerStyle %>">
-            <div class="game-title <%= getTitleRarityClass(badge) %> <%= titleExtraClass %>" style="<%= titleStyle %>"><%= badge %></div>
+            <div class="game-title badge-premium <%= getTitleRarityClass(badge) %> <%= getTitleRarityClass(badge).includes('transcendent') ? 'is-transcendent' : getTitleRarityClass(badge).includes('mythic') ? 'is-mythic' : getTitleRarityClass(badge).includes('legendary') ? 'is-legendary' : '' %> <%= titleExtraClass %>" style="<%= titleStyle %>">
+                <span class="badge-premium-dot"></span>
+                <span><%= badge %></span>
+            </div>
             <div class="<%= starClass %>" style="<%= starStyle %>"><%= getStarsByChapters(chaptersRead) %></div>
         </div>
     <% } %>

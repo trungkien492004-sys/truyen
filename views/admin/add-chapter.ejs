@@ -23,6 +23,13 @@
             <!-- 1. CHỌN TRUYỆN -->
             <div class="form-group">
                 <label for="story_id">Chọn Bộ Truyện Đọc *</label>
+                <!-- Ô tìm kiếm truyện -->
+                <div style="position: relative; margin-bottom: 0.5rem;">
+                    <input type="text" id="story-search" placeholder="🔍 Tìm kiếm truyện theo tên..." autocomplete="off"
+                        style="width: 100%; padding: 0.7rem 1rem; background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 8px; font-size: 0.95rem; outline: none; box-sizing: border-box;"
+                        oninput="filterStories(this.value)">
+                    <span id="story-search-count" style="position: absolute; right: 0.8rem; top: 50%; transform: translateY(-50%); font-size: 0.8rem; color: var(--text-secondary); pointer-events: none;"></span>
+                </div>
                 <select id="story_id" name="story_id" style="width: 100%; padding: 0.8rem 1rem; background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 8px; font-size: 1rem; outline: none;" required>
                     <option value="">-- Chọn truyện --</option>
                     <% stories.forEach(story => { %>
@@ -157,6 +164,34 @@
 </script>
 
 <script>
+    // Hàm lọc danh sách truyện theo từ khóa tìm kiếm
+    function filterStories(keyword) {
+        const select = document.getElementById('story_id');
+        const countEl = document.getElementById('story-search-count');
+        const options = Array.from(select.options);
+        const kw = keyword.trim().toLowerCase();
+        let visibleCount = 0;
+
+        options.forEach(opt => {
+            if (!opt.value) {
+                opt.style.display = '';
+                return;
+            }
+            const match = !kw || opt.text.toLowerCase().includes(kw);
+            opt.style.display = match ? '' : 'none';
+            if (match) visibleCount++;
+        });
+
+        // Nếu option đang chọn bị ẩn, reset về mặc định
+        const selectedOpt = select.options[select.selectedIndex];
+        if (selectedOpt && selectedOpt.style.display === 'none') {
+            select.value = '';
+        }
+
+        // Hiển thị số kết quả
+        countEl.textContent = kw ? `${visibleCount} kết quả` : '';
+    }
+
     // Logic ẩn/hiện form dựa trên phương thức đăng
     const methodRadios = document.querySelectorAll('input[name="publish_method"]');
     const formManual = document.getElementById('form-manual');
@@ -358,13 +393,19 @@
         return chapters;
     }
 
-    // Loại bỏ "lone surrogate" (nửa cặp ký tự Unicode UTF-16 bị lỗi, thường do PDF nhúng font đặc
-    // biệt/emoji bị OCR hoặc trích xuất text sai) - nếu không lọc, JSON.stringify() sẽ tạo ra chuỗi
-    // \uXXXX không hợp lệ, khiến backend JSON.parse() báo lỗi "unsupported Unicode escape sequence"
-    // và toàn bộ lô chương đó không đăng được (dù nội dung nhìn có vẻ bình thường trên preview).
+    // Loại bỏ các ký tự Unicode gây lỗi khi lưu vào database (PDF trích xuất từ font đặc biệt/lỗi
+    // OCR thường sinh ra ký tự rác không hợp lệ):
+    // 1. "Lone surrogate" - nửa cặp ký tự UTF-16 bị lỗi, khiến JSON.stringify() tạo \uXXXX không hợp lệ.
+    // 2. NULL byte ( ) - PostgreSQL/Supabase KHÔNG BAO GIỜ chấp nhận ký tự này trong cột TEXT,
+    //    đây chính là nguyên nhân thực sự gây lỗi "unsupported Unicode escape sequence" ở phía
+    //    database khi insert (không phải lỗi JSON.parse như tưởng ban đầu).
+    // 3. Các ký tự điều khiển C0 khác (ngoại trừ \n \r \t) - cũng thường không hợp lệ trong text thường.
     function stripLoneSurrogates(str) {
         if (!str) return str;
-        return str.replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]/g, '');
+        return str
+            .replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]/g, '')
+            .replace(/ /g, '')
+            .replace(/[--]/g, '');
     }
 
     // Trích xuất text từ 1 trang PDF, ghép các mảnh text theo TỌA ĐỘ DÒNG THẬT (transform[5] = vị trí Y)

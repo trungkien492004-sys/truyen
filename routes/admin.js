@@ -101,7 +101,15 @@ function extractPdfRawText(buffer) {
     pdfParser.on('pdfParser_dataError', errData => reject(errData.parserError || new Error('Không đọc được nội dung file PDF.')));
     pdfParser.on('pdfParser_dataReady', () => {
       try {
-        const rawText = pdfParser.getRawTextContent().replace(/\r\n/g, '\n').replace(/-{3,}Page \(\d+\) Break-{3,}/g, '');
+        // Loại bỏ dòng "---Page (N) Break---" do pdf2json tự sinh, VÀ dòng số trang in thật sự nằm sẵn
+        // trong nội dung file PDF gốc (kiểu "Trang 8488" đứng riêng 1 dòng ở đầu/cuối mỗi trang) -
+        // nếu không lọc, chữ "Trang XXXX" sẽ bị dính vào giữa câu văn khi các trang được nối lại.
+        // Chỉ khớp khi "Trang"/"trang" + số đứng MỘT MÌNH trên dòng đó (không có chữ nào khác),
+        // để không xóa nhầm câu văn có chứa từ "trang" (ví dụ "trang giấy", "trang bị").
+        const rawText = pdfParser.getRawTextContent()
+          .replace(/\r\n/g, '\n')
+          .replace(/-{3,}Page \(\d+\) Break-{3,}/g, '')
+          .replace(/^[ \t]*[Tt]rang\s*\.?\s*\d+[ \t]*$/gm, '');
         resolve(rawText);
       } catch (err) {
         reject(err);
@@ -333,12 +341,20 @@ async function parseSingleFileToChapter(file, storyId) {
   }];
 }
 
-// Middleware kiểm tra quyền Admin
+// Middleware kiểm tra quyền Admin (admin hoặc sp_admin đều được vào)
 function isAdmin(req, res, next) {
-  if (req.isAuthenticated() && req.user.role === 'admin') {
+  if (req.isAuthenticated() && (req.user.role === 'admin' || req.user.role === 'sp_admin')) {
     return next();
   }
   res.status(403).send('Bị từ chối truy cập: Quyền quản trị viên yêu cầu.');
+}
+
+// Middleware chỉ dành riêng cho admin thực sự (không cho sp_admin)
+function isFullAdmin(req, res, next) {
+  if (req.isAuthenticated() && req.user.role === 'admin') {
+    return next();
+  }
+  res.status(403).send('Bị từ chối truy cập: Tính năng này chỉ dành cho Admin cao cấp.');
 }
 
 // Áp dụng middleware kiểm tra Admin cho toàn bộ các tuyến ở đây
@@ -1068,8 +1084,8 @@ router.post('/story/edit/:id', upload.single('cover'), async (req, res) => {
   }
 });
 
-// THỰC HIỆN XÓA TRUYỆN (VÀ CÁC THÔNG TIN LIÊN QUAN CASCADE)
-router.post('/story/delete/:id', async (req, res) => {
+// THỰC HIỆN XÓA TRUYỆN (VÀ CÁC THÔNG TIN LIÊN QUAN CASCADE) - Chỉ admin thực sự mới được xóa
+router.post('/story/delete/:id', isFullAdmin, async (req, res) => {
   const storyId = parseInt(req.params.id);
   try {
     const { error } = await supabase
