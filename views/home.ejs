@@ -814,20 +814,20 @@
         <input type="hidden" name="q" value="<%= searchQuery || '' %>">
         <input type="hidden" name="genre" value="<%= (typeof filters !== 'undefined' && filters.genre) ? filters.genre : (activeGenre ? activeGenre.slug : '') %>">
 
-        <select name="status" style="padding: 0.5rem 0.8rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 0.85rem;">
+        <select name="status" onchange="this.form.submit()" style="padding: 0.5rem 0.8rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 0.85rem;">
             <option value="">Mọi trạng thái</option>
             <option value="ongoing" <%= (typeof filters !== 'undefined' && filters.status === 'ongoing') ? 'selected' : '' %>>Đang tiến hành</option>
             <option value="completed" <%= (typeof filters !== 'undefined' && filters.status === 'completed') ? 'selected' : '' %>>Đã hoàn thành</option>
         </select>
 
-        <select name="min_chapters" style="padding: 0.5rem 0.8rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 0.85rem;">
+        <select name="min_chapters" onchange="this.form.submit()" style="padding: 0.5rem 0.8rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 0.85rem;">
             <option value="">Số chương bất kỳ</option>
             <option value="50" <%= (typeof filters !== 'undefined' && filters.minChapters === '50') ? 'selected' : '' %>>Từ 50 chương</option>
             <option value="100" <%= (typeof filters !== 'undefined' && filters.minChapters === '100') ? 'selected' : '' %>>Từ 100 chương</option>
             <option value="200" <%= (typeof filters !== 'undefined' && filters.minChapters === '200') ? 'selected' : '' %>>Từ 200 chương</option>
         </select>
 
-        <select name="year" style="padding: 0.5rem 0.8rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 0.85rem;">
+        <select name="year" onchange="this.form.submit()" style="padding: 0.5rem 0.8rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 0.85rem;">
             <option value="">Mọi năm</option>
             <% const currentYear = new Date().getFullYear(); %>
             <% for (let y = currentYear; y >= 2020; y--) { %>
@@ -835,7 +835,7 @@
             <% } %>
         </select>
 
-        <select name="sort" style="padding: 0.5rem 0.8rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 0.85rem;">
+        <select name="sort" onchange="this.form.submit()" style="padding: 0.5rem 0.8rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 0.85rem;">
             <option value="newest" <%= (typeof filters === 'undefined' || filters.sort === 'newest') ? 'selected' : '' %>>Mới cập nhật</option>
             <option value="oldest" <%= (typeof filters !== 'undefined' && filters.sort === 'oldest') ? 'selected' : '' %>>Cũ nhất</option>
             <option value="most_chapters" <%= (typeof filters !== 'undefined' && filters.sort === 'most_chapters') ? 'selected' : '' %>>Nhiều chương nhất</option>
@@ -845,7 +845,6 @@
             <option value="view_all" <%= (typeof filters !== 'undefined' && filters.sort === 'view_all') ? 'selected' : '' %>>Lượt xem: Mọi thời điểm</option>
         </select>
 
-        <button type="submit" class="btn btn-secondary" style="font-size: 0.85rem;">Lọc nâng cao</button>
         <a href="/random" class="btn btn-secondary" style="font-size: 0.85rem;">🎲 Hôm nay đọc gì?</a>
     </form>
 </div>
