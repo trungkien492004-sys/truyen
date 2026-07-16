@@ -586,6 +586,26 @@ router.get('/search', async (req, res) => {
   }
 });
 
+// Tuyến đường API lấy gợi ý tìm kiếm truyện hoặc tác giả
+router.get('/api/search-suggestions', async (req, res) => {
+  const q = req.query.q ? req.query.q.trim() : '';
+  if (!q) {
+    return res.json({ success: true, results: [] });
+  }
+  try {
+    const { data, error } = await supabase
+      .from('stories')
+      .select('id, title, author, cover_url')
+      .or(`title.ilike.%${q}%,author.ilike.%${q}%`)
+      .limit(6);
+    if (error) throw error;
+    res.json({ success: true, results: data || [] });
+  } catch (err) {
+    console.error('Lỗi gợi ý tìm kiếm:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // LỌC THEO THỂ LOẠI
 router.get('/genre/:slug', async (req, res) => {
   const slug = req.params.slug;
