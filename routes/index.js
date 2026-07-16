@@ -709,7 +709,7 @@ router.get('/story/:story_id/chapter/:chapter_number', async (req, res) => {
 
     // 3. Ghi nhận lượt xem (Views) có chống buff ảo
     const ipAddress = req.headers['x-forwarded-for'] || req.ip || 'unknown';
-    const cooldownTime = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+    const cooldownTime = new Date(Date.now() - 30 * 1000).toISOString();
 
     supabase
       .from('story_views')
