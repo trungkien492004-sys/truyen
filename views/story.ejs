@@ -8,7 +8,14 @@
     <img src="<%= story.cover_url %>" alt="<%= story.title %>" class="story-detail-cover">
     
     <div class="story-detail-info">
-        <h1 class="story-detail-title"><%= story.title %></h1>
+        <div style="display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; margin-bottom: 0.5rem;">
+            <h1 class="story-detail-title" style="margin: 0;"><%= story.title %></h1>
+            <% if (typeof user !== 'undefined' && user && (user.role === 'admin' || user.role === 'sp_admin')) { %>
+                <a href="/admin/story/edit/<%= story.id %>" class="btn btn-secondary" style="padding: 0.3rem 0.8rem; font-size: 0.8rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.3rem; text-decoration: none; border: 1px solid rgba(59, 130, 246, 0.3); background: rgba(59, 130, 246, 0.15); color: #3b82f6; font-weight: 500; transition: all 0.2s;">
+                    ✏️ Sửa Truyện
+                </a>
+            <% } %>
+        </div>
         <div class="story-detail-author">Tác giả: <strong><%= story.author %></strong></div>
         
         <div class="story-detail-meta" style="margin-bottom: 1.2rem;">
@@ -156,8 +163,8 @@
                 <% if (chapters.length < 50) { %>
                     <ul class="chapters-list" style="margin-top: 0; padding-top: 0.5rem;">
                         <% chapters.forEach(chapter => { %>
-                            <li class="chapter-item-container" data-search="<%= chapter.chapter_number %> <%= chapter.title.toLowerCase() %>">
-                                <a href="/story/<%= story.id %>/chapter/<%= chapter.chapter_number %>" class="chapter-item" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
+                            <li class="chapter-item-container" data-search="<%= chapter.chapter_number %> <%= chapter.title.toLowerCase() %>" style="display: flex; align-items: center; gap: 0.5rem; width: 100%;">
+                                <a href="/story/<%= story.id %>/chapter/<%= chapter.chapter_number %>" class="chapter-item" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex: 1; min-width: 0;">
                                     <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">
                                         <strong>Chương <%= chapter.chapter_number %></strong><% if (chapter.title) { %>: <%= chapter.title %><% } %>
                                     </span>
@@ -166,6 +173,11 @@
                                         <%= chapter.views || 0 %>
                                     </span>
                                 </a>
+                                <% if (typeof user !== 'undefined' && user && (user.role === 'admin' || user.role === 'sp_admin')) { %>
+                                    <a href="/admin/chapter/edit/<%= chapter.id %>?redirect_to=/story/<%= story.id %>" class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; border-radius: 4px; border: 1px solid rgba(59, 130, 246, 0.3); background: rgba(59, 130, 246, 0.15); color: #3b82f6; font-weight: 500; text-decoration: none; white-space: nowrap; flex-shrink: 0;" title="Sửa chương nhanh">
+                                        ✏️ Sửa
+                                    </a>
+                                <% } %>
                             </li>
                         <% }) %>
                     </ul>
@@ -183,8 +195,8 @@
                             </summary>
                             <ul class="chapters-list" style="margin-top: 0; padding-top: 0.5rem;">
                                 <% chunk.forEach(chapter => { %>
-                                    <li class="chapter-item-container" data-search="<%= chapter.chapter_number %> <%= chapter.title.toLowerCase() %>">
-                                        <a href="/story/<%= story.id %>/chapter/<%= chapter.chapter_number %>" class="chapter-item" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
+                                    <li class="chapter-item-container" data-search="<%= chapter.chapter_number %> <%= chapter.title.toLowerCase() %>" style="display: flex; align-items: center; gap: 0.5rem; width: 100%;">
+                                        <a href="/story/<%= story.id %>/chapter/<%= chapter.chapter_number %>" class="chapter-item" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex: 1; min-width: 0;">
                                             <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">
                                                 <strong>Chương <%= chapter.chapter_number %></strong><% if (chapter.title) { %>: <%= chapter.title %><% } %>
                                             </span>
@@ -193,6 +205,11 @@
                                                 <%= chapter.views || 0 %>
                                             </span>
                                         </a>
+                                        <% if (typeof user !== 'undefined' && user && (user.role === 'admin' || user.role === 'sp_admin')) { %>
+                                            <a href="/admin/chapter/edit/<%= chapter.id %>?redirect_to=/story/<%= story.id %>" class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; border-radius: 4px; border: 1px solid rgba(59, 130, 246, 0.3); background: rgba(59, 130, 246, 0.15); color: #3b82f6; font-weight: 500; text-decoration: none; white-space: nowrap; flex-shrink: 0;" title="Sửa chương nhanh">
+                                                ✏️ Sửa
+                                            </a>
+                                        <% } %>
                                     </li>
                                 <% }) %>
                             </ul>
