@@ -1739,6 +1739,164 @@ router.get('/chapter/add-manual', (req, res) => res.redirect('/admin/chapter/add
 router.post('/chapter/add-manual', (req, res) => res.redirect('/admin/chapter/add'));
 router.get('/chapter/add-bulk', (req, res) => res.redirect('/admin/chapter/add'));
 router.post('/chapter/add-bulk', (req, res) => res.redirect('/admin/chapter/add'));
+// Hàm tự tạo cấu trúc file EPUB tiêu chuẩn từ dữ liệu truyện và chương truyện
+function generateEpub(story, chapters) {
+  const AdmZip = require('adm-zip');
+  const zip = new AdmZip();
+
+  // 1. mimetype (không nén - compression method = 0)
+  zip.addFile('mimetype', Buffer.from('application/epub+zip'), '', 0);
+
+  // 2. META-INF/container.xml
+  const containerXml = `<?xml version="1.0" encoding="UTF-8"?>
+<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+    <rootfiles>
+        <rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/>
+    </rootfiles>
+</container>`;
+  zip.addFile('META-INF/container.xml', Buffer.from(containerXml));
+
+  // 3. TOC.ncx (Mục lục cấu trúc)
+  let tocNcx = `<?xml version="1.0" encoding="UTF-8"?>
+<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1">
+    <head>
+        <meta name="dtb:uid" content="urn:uuid:${story.id}"/>
+        <meta name="dtb:depth" content="1"/>
+        <meta name="dtb:totalPageCount" content="0"/>
+        <meta name="dtb:maxPageNumber" content="0"/>
+    </head>
+    <docTitle>
+        <text>${story.title}</text>
+    </docTitle>
+    <navMap>`;
+
+  chapters.forEach((ch, idx) => {
+    tocNcx += `
+        <navPoint id="navPoint-${idx + 1}" playOrder="${idx + 1}">
+            <navLabel>
+                <text>${ch.title}</text>
+            </navLabel>
+            <content src="chapter-${idx + 1}.xhtml"/>
+        </navPoint>`;
+  });
+
+  tocNcx += `
+    </navMap>
+</ncx>`;
+  zip.addFile('OEBPS/toc.ncx', Buffer.from(tocNcx));
+
+  // 4. Content.opf (Khai báo manifest & spine thứ tự chương)
+  let contentOpf = `<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" unique-identifier="BookID" version="2.0">
+    <metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">
+        <dc:title>${story.title}</dc:title>
+        <dc:creator opf:role="aut">${story.author || 'Ẩn danh'}</dc:creator>
+        <dc:language>vi</dc:language>
+        <dc:identifier id="BookID" opf:scheme="UUID">urn:uuid:${story.id}</dc:identifier>
+    </metadata>
+    <manifest>
+        <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>`;
+
+  chapters.forEach((ch, idx) => {
+    contentOpf += `
+        <item id="chapter-${idx + 1}" href="chapter-${idx + 1}.xhtml" media-type="application/xhtml+xml"/>`;
+  });
+
+  contentOpf += `
+    </manifest>
+    <spine toc="ncx">`;
+
+  chapters.forEach((ch, idx) => {
+    contentOpf += `
+        <itemref idref="chapter-${idx + 1}"/>`;
+  });
+
+  contentOpf += `
+    </spine>
+</package>`;
+  zip.addFile('OEBPS/content.opf', Buffer.from(contentOpf));
+
+  // 5. Nội dung các chương (XHTML tiêu chuẩn)
+  chapters.forEach((ch, idx) => {
+    const content = ch.content || '';
+    const xhtml = `<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>${ch.title}</title>
+</head>
+<body>
+    <h2>${ch.title}</h2>
+    ${content}
+</body>
+</html>`;
+    zip.addFile(`OEBPS/chapter-${idx + 1}.xhtml`, Buffer.from(xhtml));
+  });
+
+  return zip.toBuffer();
+}
+
+// TUYẾN ĐƯỜNG TẢI TRUYỆN DƯỚI DẠNG FILE EPUB
+router.get('/story/download-epub/:id', async (req, res) => {
+  const storyId = parseInt(req.params.id);
+  try {
+    const { data: story, error: storyErr } = await supabase
+      .from('stories')
+      .select('*')
+      .eq('id', storyId)
+      .single();
+
+    if (storyErr || !story) {
+      return res.status(404).send('Không tìm thấy truyện.');
+    }
+
+    // Lấy toàn bộ chương truyện bằng phân trang tránh giới hạn 1000 hàng của Supabase
+    let chapters = [];
+    let page = 0;
+    const limit = 1000;
+    let hasMore = true;
+    while (hasMore) {
+      const { data: batch, error: chapErr } = await supabase
+        .from('chapters')
+        .select('*')
+        .eq('story_id', storyId)
+        .order('chapter_number', { ascending: true })
+        .range(page * limit, (page + 1) * limit - 1);
+
+      if (chapErr) {
+        console.error('Lỗi lấy chương để tải EPUB:', chapErr);
+        break;
+      }
+
+      if (!batch || batch.length === 0) {
+        hasMore = false;
+      } else {
+        chapters = chapters.concat(batch);
+        if (batch.length < limit) {
+          hasMore = false;
+        } else {
+          page++;
+        }
+      }
+    }
+
+    if (chapters.length === 0) {
+      return res.status(400).send('Truyện chưa có chương nào để tải.');
+    }
+
+    const epubBuffer = generateEpub(story, chapters);
+    const safeTitle = story.title
+      .replace(/[^a-zA-Z0-9ÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚÝàáâãèéêìíòóôõùúýĂăĐđĨĩŨũƠơƯưẠ-ỹ]/g, '_')
+      .substring(0, 100);
+
+    res.setHeader('Content-Type', 'application/epub+zip');
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(safeTitle)}.epub"`);
+    res.send(epubBuffer);
+  } catch (err) {
+    console.error('Lỗi tải xuống EPUB:', err);
+    res.status(500).send('Lỗi hệ thống khi tạo file EPUB.');
+  }
+});
 
 module.exports = router;
 

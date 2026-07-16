@@ -1,7 +1,10 @@
 <%- include('../partials/header') %>
 
-<div style="margin-bottom: 1.5rem;">
+<div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
     <a href="/admin" style="color: var(--text-secondary); font-size: 0.9rem;">&larr; Quay lại Trang quản trị</a>
+    <a href="/admin/story/download-epub/<%= story.id %>" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.2); color: #10b981; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 0.3rem;">
+        📥 Tải File EPUB
+    </a>
 </div>
 
 <div class="form-container" style="max-width: 700px;">
