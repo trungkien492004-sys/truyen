@@ -923,8 +923,34 @@
                             <a href="/story/<%= story.id %>" class="btn btn-secondary btn-primary" style="margin-top: auto; font-size: 0.85rem; padding: 0.5rem;">Đọc ngay</a>
                         </div>
                     </div>
-                <% }) %>
             </div>
+
+            <!-- Phân trang trang chủ -->
+            <% if (typeof totalPages !== 'undefined' && totalPages > 1) { %>
+                <div class="pagination" style="display: flex; justify-content: center; align-items: center; gap: 0.5rem; margin-top: 2rem;">
+                    <% 
+                      let urlParams = '';
+                      if (filters && filters.status) {
+                          urlParams += `status=${filters.status}&`;
+                      }
+                    %>
+                    <% if (currentPage > 1) { %>
+                        <a href="/?<%= urlParams %>page=<%= currentPage - 1 %>" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; border-radius: 8px;">&larr; Trước</a>
+                    <% } %>
+                    
+                    <% for (let i = 1; i <= totalPages; i++) { %>
+                        <% if (i === currentPage) { %>
+                            <span class="btn btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; border-radius: 8px; font-weight: bold; pointer-events: none;"><%= i %></span>
+                        <% } else { %>
+                            <a href="/?<%= urlParams %>page=<%= i %>" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; border-radius: 8px;"><%= i %></a>
+                        <% } %>
+                    <% } %>
+                    
+                    <% if (currentPage < totalPages) { %>
+                        <a href="/?<%= urlParams %>page=<%= currentPage + 1 %>" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; border-radius: 8px;">Sau &rarr;</a>
+                    <% } %>
+                </div>
+            <% } %>
         <% } %>
     </div>
 

@@ -230,16 +230,20 @@ router.get('/', async (req, res) => {
   res.setHeader('Expires', '0');
   try {
     const status = req.query.status || ''; // '', 'ongoing', 'completed'
+    const page = parseInt(req.query.page) || 1;
+    const limit = 12;
+    const fromRange = (page - 1) * limit;
+    const toRange = fromRange + limit - 1;
 
-    // 1. Lấy tất cả danh sách truyện, sắp xếp theo truyện có chương MỚI CẬP NHẬT gần nhất lên đầu
-    let query = supabase.from('stories_with_last_update').select('*');
+    // 1. Lấy danh sách truyện phân trang, sắp xếp theo truyện có chương MỚI CẬP NHẬT gần nhất lên đầu
+    let query = supabase.from('stories_with_last_update').select('*', { count: 'exact' });
     if (status === 'ongoing' || status === 'completed') {
       query = query.eq('status', status);
     }
     
     // Gộp tất cả các truy vấn độc lập vào chung một Promise.all để lấy dữ liệu song song (tối đa tốc độ)
     const [
-      { data: stories, error: storiesError },
+      { data: stories, count: totalCount, error: storiesError },
       { data: genres, error: genresError },
       { data: topDaily },
       { data: topWeekly },
@@ -247,7 +251,7 @@ router.get('/', async (req, res) => {
       { data: topYearly },
       { data: topRatedData }
     ] = await Promise.all([
-      query.order('last_update_at', { ascending: false }),
+      query.order('last_update_at', { ascending: false }).range(fromRange, toRange),
       supabase.from('genres').select('*'),
       supabase.from('views_ranking_daily').select('*').order('view_count', { ascending: false }).limit(5),
       supabase.from('views_ranking_weekly').select('*').order('view_count', { ascending: false }).limit(5),
@@ -363,6 +367,8 @@ router.get('/', async (req, res) => {
       ];
     }
 
+    const totalPages = Math.ceil((totalCount || 0) / limit);
+
     res.render('home', {
       title: 'Trang chủ - Web Đọc Truyện',
       user: req.user,
@@ -382,6 +388,8 @@ router.get('/', async (req, res) => {
       rankUpEventsToday,
       activeGenre: null,
       searchQuery: null,
+      currentPage: page,
+      totalPages,
       filters: { status }
     });
   } catch (err) {

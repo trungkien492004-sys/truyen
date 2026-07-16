@@ -36,7 +36,13 @@
 
 <!-- Danh sách truyện đã đăng -->
 <div class="admin-box" style="margin-top: 2rem;">
-    <h2 class="section-title" style="font-size: 1.4rem;">Danh Sách Các Bộ Truyện</h2>
+    <h2 class="section-title" style="font-size: 1.4rem; margin-bottom: 0.5rem;">Danh Sách Các Bộ Truyện</h2>
+    
+    <!-- Ô tìm kiếm truyện trong admin -->
+    <div style="margin-bottom: 1.5rem; max-width: 450px;">
+        <input type="text" id="admin-story-search" placeholder="🔍 Gõ từ khóa tìm nhanh truyện (tên, tác giả, người đặt)..." 
+            style="width: 100%; padding: 0.7rem 1rem; background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 8px; font-size: 0.9rem; outline: none; box-sizing: border-box;">
+    </div>
     
     <% if (stories.length === 0) { %>
         <p style="color: var(--text-secondary); text-align: center; padding: 2rem 0;">Chưa có bộ truyện nào được tạo. Hãy bấm vào "Đăng bộ truyện mới" để bắt đầu.</p>
@@ -87,5 +93,31 @@
         </table>
     <% } %>
 </div>
+
+<script>
+    const searchInput = document.getElementById('admin-story-search');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const query = this.value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+            const rows = document.querySelectorAll('.admin-table tbody tr');
+            
+            rows.forEach(row => {
+                const titleCell = row.querySelector('td:nth-child(2)');
+                const authorCell = row.querySelector('td:nth-child(3)');
+                const commissionedCell = row.querySelector('td:nth-child(4)');
+                
+                const title = titleCell ? titleCell.textContent.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") : '';
+                const author = authorCell ? authorCell.textContent.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") : '';
+                const commissioned = commissionedCell ? commissionedCell.textContent.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") : '';
+                
+                if (title.includes(query) || author.includes(query) || commissioned.includes(query)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    }
+</script>
 
 <%- include('../partials/footer') %>
