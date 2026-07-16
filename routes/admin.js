@@ -1218,6 +1218,40 @@ router.post('/chapter/edit/:id', async (req, res) => {
   }
 });
 
+// Hàm tự động đánh lại số chương liên tục từ 1, 2, 3... sau khi xóa chương
+async function reorderChapters(storyId) {
+  try {
+    const { data: chapters, error } = await supabase
+      .from('chapters')
+      .select('id, chapter_number')
+      .eq('story_id', storyId)
+      .order('chapter_number', { ascending: true });
+
+    if (error) {
+      console.error('Lỗi khi lấy danh sách chương để sắp xếp lại:', error);
+      return;
+    }
+
+    if (!chapters || chapters.length === 0) return;
+
+    for (let i = 0; i < chapters.length; i++) {
+      const expectedNumber = i + 1;
+      if (chapters[i].chapter_number !== expectedNumber) {
+        const { error: updateError } = await supabase
+          .from('chapters')
+          .update({ chapter_number: expectedNumber })
+          .eq('id', chapters[i].id);
+        
+        if (updateError) {
+          console.error(`Lỗi cập nhật số chương cho ID ${chapters[i].id}:`, updateError);
+        }
+      }
+    }
+  } catch (e) {
+    console.error('Lỗi hệ thống trong reorderChapters:', e);
+  }
+}
+
 // XÓA CHƯƠNG HÀNG LOẠT HOẶC XÓA TẤT CẢ CHƯƠNG
 router.post('/chapter/delete-bulk', async (req, res) => {
   const { ids, action, story_id } = req.body;
@@ -1246,6 +1280,11 @@ router.post('/chapter/delete-bulk', async (req, res) => {
       .in('id', ids.map(id => parseInt(id)));
 
     if (error) throw error;
+
+    if (story_id) {
+      await reorderChapters(parseInt(story_id));
+    }
+
     res.json({ success: true, message: `Đã xóa thành công ${ids.length} chương được chọn!` });
 
   } catch (err) {
@@ -1260,14 +1299,31 @@ router.post('/chapter/delete/:id', async (req, res) => {
   const redirectTo = req.body.redirect_to || '/admin';
 
   try {
-    const { error } = await supabase
+    // 1. Lấy story_id của chương truyện trước khi xóa
+    const { data: chapter, error: getError } = await supabase
+      .from('chapters')
+      .select('story_id')
+      .eq('id', chapterId)
+      .single();
+
+    if (getError || !chapter) {
+      throw new Error('Không tìm thấy chương truyện cần xóa.');
+    }
+
+    const storyId = chapter.story_id;
+
+    // 2. Thực hiện xóa chương truyện
+    const { error: deleteError } = await supabase
       .from('chapters')
       .delete()
       .eq('id', chapterId);
 
-    if (error) throw error;
+    if (deleteError) throw deleteError;
 
-    res.redirect(`${redirectTo}?success=${encodeURIComponent('Đã xóa chương thành công!')}`);
+    // 3. Tự động sắp xếp và đánh lại số chương liên tiếp
+    await reorderChapters(storyId);
+
+    res.redirect(`${redirectTo}?success=${encodeURIComponent('Đã xóa chương thành công và tự động đánh lại số chương liên tục!')}`);
   } catch (err) {
     console.error('Lỗi xóa chương:', err);
     res.redirect(`${redirectTo}?error=${encodeURIComponent(err.message || 'Lỗi hệ thống khi xóa chương.')}`);
