@@ -10,6 +10,20 @@ const PDFParser = require('pdf2json');
 // Sử dụng Memory Storage để chạy không đĩa (tương thích Vercel Serverless)
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } }); // 50MB limit cho PDF
 
+// Hàm tự động định dạng text thuần sang HTML có thẻ <p> nếu chưa có
+function formatContentToHtml(content) {
+  if (!content) return '';
+  if (/<p>|<br>|<div>/i.test(content)) {
+    return content;
+  }
+  return content
+    .split(/\r?\n/)
+    .map(line => line.trim())
+    .filter(line => line.length > 0)
+    .map(line => `<p>${line}</p>`)
+    .join('\n');
+}
+
 // Lấy TOÀN BỘ chapter_number hiện có của 1 truyện, phân trang lấy nhiều lần để không bị giới hạn
 // mặc định 1000 dòng/query của Supabase/PostgREST (bug đã gặp: truyện >1000 chương bị đối chiếu
 // trùng sai vì chỉ lấy được 1000 chương đầu, có nguy cơ upsert đè nhầm dữ liệu chương cũ).
@@ -547,7 +561,7 @@ router.post('/chapter/add', upload.array('txtfile', 100), async (req, res) => {
         story_id: parseInt(story_id),
         chapter_number: parseFloat(chapter_number),
         title: title.trim(),
-        content: content
+        content: formatContentToHtml(content)
       });
       successMessage = `Đã đăng Chương ${chapter_number}: "${title}" thành công!`;
 
@@ -1158,7 +1172,7 @@ router.post('/chapter/edit/:id', async (req, res) => {
     if (fetchErr || !currentChap) throw new Error('Không tìm thấy chương.');
 
     // Cập nhật nội dung và tiêu đề trước
-    const { error: updateContentErr } = await supabase.from('chapters').update({ title: newTitle, content: content }).eq('id', chapterId);
+    const { error: updateContentErr } = await supabase.from('chapters').update({ title: newTitle, content: formatContentToHtml(content) }).eq('id', chapterId);
     if (updateContentErr) throw updateContentErr;
 
     // Nếu thay đổi số thứ tự chương, tiến hành sắp xếp lại

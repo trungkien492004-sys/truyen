@@ -1,22 +1,46 @@
--- Chạy trong Supabase Dashboard > SQL Editor để tìm chương nào đang bị thiếu (gap)
--- trong dãy số chương liên tục của 1 truyện.
--- Thay 15 bằng đúng story_id của "Con Đường Bá Chủ" nếu khác.
+const supabase = require('C:/Users/Kien/.gemini/antigravity/scratch/truyen/config/supabase');
 
-WITH nums AS (
-  SELECT chapter_number,
-         LEAD(chapter_number) OVER (ORDER BY chapter_number) AS next_number
-  FROM chapters
-  WHERE story_id = 15
-)
-SELECT chapter_number AS sau_chuong_nay, next_number AS toi_chuong_nay, (next_number - chapter_number - 1) AS so_chuong_bi_thieu
-FROM nums
-WHERE next_number - chapter_number > 1
-ORDER BY chapter_number;
+async function run() {
+  const { data: stories, error } = await supabase.from('stories').select('id, title');
+  if (error) {
+    console.error(error);
+    return;
+  }
 
--- Đồng thời kiểm tra có chương nào bị trùng số không (nguyên nhân gây dedupe nhầm khi upload)
-SELECT chapter_number, COUNT(*) AS so_lan_trung
-FROM chapters
-WHERE story_id = 15
-GROUP BY chapter_number
-HAVING COUNT(*) > 1
-ORDER BY chapter_number;
+  console.log('Story chapters check:');
+  for (const story of stories) {
+    const { data: chapters, error: chapErr } = await supabase
+      .from('chapters')
+      .select('chapter_number')
+      .eq('story_id', story.id)
+      .order('chapter_number', { ascending: true });
+
+    if (chapErr) {
+      console.error(chapErr);
+      continue;
+    }
+
+    if (chapters.length === 0) {
+      console.log(`- [ID: ${story.id}] "${story.title}": 0 chapters`);
+      continue;
+    }
+
+    const min = chapters[0].chapter_number;
+    const max = chapters[chapters.length - 1].chapter_number;
+    const count = chapters.length;
+
+    // Check if there are gaps
+    let gaps = [];
+    for (let i = 0; i < chapters.length - 1; i++) {
+      const cur = chapters[i].chapter_number;
+      const next = chapters[i + 1].chapter_number;
+      if (next - cur > 1) {
+        gaps.push(`${cur}->${next}`);
+      }
+    }
+
+    console.log(`- [ID: ${story.id}] "${story.title}": Count ${count} chapters, Range [${min} - ${max}]. Gaps: ${gaps.slice(0, 5).join(', ')}${gaps.length > 5 ? '...' : ''}`);
+  }
+}
+
+run();

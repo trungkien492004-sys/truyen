@@ -1623,7 +1623,7 @@ router.post('/shop/equip/:id', async (req, res) => {
     }
 
     // 2. Nếu là trang bị, kiểm tra xem người dùng có sở hữu trong inventory không
-    if (action === 'equip' && req.user.role !== 'admin') {
+    if (action === 'equip' && req.user.role !== 'admin' && req.user.role !== 'sp_admin') {
       const { data: own } = await supabase
         .from('user_inventory')
         .select('id')
