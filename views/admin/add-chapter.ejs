@@ -208,6 +208,15 @@
     const smartContinueBox = document.getElementById('smart-continue-box');
     const smartContinueInfo = document.getElementById('smart-continue-info');
 
+    function readFileAsArrayBuffer(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = () => reject(reader.error || new Error('Không thể đọc tệp tin.'));
+            reader.readAsArrayBuffer(file);
+        });
+    }
+
     let cachedEpubArrayBuffer = null;
     let cachedPdfArrayBuffer = null;
 
@@ -216,7 +225,7 @@
             const file = epubFileInput.files[0];
             if (file) {
                 try {
-                    cachedEpubArrayBuffer = await file.arrayBuffer();
+                    cachedEpubArrayBuffer = await readFileAsArrayBuffer(file);
                     console.log('EPUB pre-loaded successfully.');
                 } catch (err) {
                     console.error('Failed to pre-load EPUB:', err);
@@ -232,7 +241,7 @@
             const file = pdfFileInput.files[0];
             if (file) {
                 try {
-                    cachedPdfArrayBuffer = await file.arrayBuffer();
+                    cachedPdfArrayBuffer = await readFileAsArrayBuffer(file);
                     console.log('PDF pre-loaded successfully.');
                 } catch (err) {
                     console.error('Failed to pre-load PDF:', err);
@@ -308,7 +317,7 @@
             pdfChaptersList.innerHTML = '<p style="color: var(--text-secondary); font-size: 0.9rem;">⏳ Đang phân tích cấu trúc PDF...</p>';
 
             try {
-                const arrayBuffer = await file.arrayBuffer();
+                const arrayBuffer = await readFileAsArrayBuffer(file);
                 const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
                 let fullText = '';
 
@@ -561,7 +570,7 @@
     // Đọc file EPUB (thực chất là 1 file ZIP) bằng JSZip, lấy đúng thứ tự chương qua "spine" trong content.opf,
     // tách thẻ HTML lấy text và ảnh, rồi tài sử dụng splitTextIntoChapters giống hệt PDF.
     async function extractEpubFullText(file, submitBtn) {
-        const arrayBuffer = cachedEpubArrayBuffer || await file.arrayBuffer();
+        const arrayBuffer = cachedEpubArrayBuffer || await readFileAsArrayBuffer(file);
         const zip = await JSZip.loadAsync(arrayBuffer);
  
         // 1. Đọc META-INF/container.xml để tìm đường dẫn tới file content.opf
@@ -699,7 +708,7 @@
                     return;
                 }
 
-                const arrayBuffer = cachedPdfArrayBuffer || await file.arrayBuffer();
+                const arrayBuffer = cachedPdfArrayBuffer || await readFileAsArrayBuffer(file);
                 const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
                 let fullText = '';
                 
@@ -777,7 +786,7 @@
                 for (let file of files) {
                     const isDocx = file.name.endsWith('.docx');
                     if (isDocx) {
-                        const arrayBuffer = await file.arrayBuffer();
+                        const arrayBuffer = await readFileAsArrayBuffer(file);
                         const result = await mammoth.convertToHtml({ arrayBuffer });
                         let html = result.value;
                         const parser = new DOMParser();
