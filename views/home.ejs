@@ -1091,7 +1091,7 @@
 
                 <!-- Bảng xếp hạng Đánh Giá -->
                 <div class="ranking-list" id="top-rated">
-                    <% if (topRated.length === 0) { %>
+                    <% if (typeof topRated === 'undefined' || topRated.length === 0) { %>
                         <p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; padding: 1rem 0;">Chưa có dữ liệu đánh giá.</p>
                     <% } else { %>
                         <% topRated.forEach((item, index) => { %>
