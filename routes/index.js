@@ -235,18 +235,18 @@ async function fetchTopAuthors(limitCount = 20) {
       return [];
     }
     
-    const { data: views, error: viewErr } = await supabase
-      .from('story_views')
-      .select('story_id');
+    const { data: chapters, error: chaptersErr } = await supabase
+      .from('chapters')
+      .select('story_id, views');
         
-    if (viewErr) {
-      console.error('Lỗi lấy lượt xem cho BXH tác giả:', viewErr);
+    if (chaptersErr) {
+      console.error('Lỗi lấy lượt xem chương cho BXH tác giả:', chaptersErr);
       return [];
     }
     
     const storyViews = {};
-    views.forEach(v => {
-      storyViews[v.story_id] = (storyViews[v.story_id] || 0) + 1;
+    chapters.forEach(c => {
+      storyViews[c.story_id] = (storyViews[c.story_id] || 0) + (c.views || 0);
     });
     
     const authorMap = {};
@@ -476,6 +476,7 @@ router.get('/search', async (req, res) => {
   const minChapters = req.query.min_chapters ? parseInt(req.query.min_chapters) : 0;
   const year = req.query.year ? parseInt(req.query.year) : null;
   const sort = req.query.sort || 'newest'; // newest | oldest | most_chapters | title_az
+  const viewSort = req.query.view_sort || ''; // '', 'daily', 'monthly', 'all'
 
   try {
     const { data: genres } = await supabase.from('genres').select('*');
@@ -547,22 +548,34 @@ router.get('/search', async (req, res) => {
 
     if (sort === 'most_chapters') {
       stories = stories.sort((a, b) => b.chapter_count - a.chapter_count);
-    } else if (sort === 'view_daily' || sort === 'view_monthly' || sort === 'view_all') {
-      let viewQuery = supabase.from('story_views').select('story_id');
-      if (sort === 'view_daily') {
-        const dailyStart = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-        viewQuery = viewQuery.gte('created_at', dailyStart);
-      } else if (sort === 'view_monthly') {
-        const monthlyStart = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-        viewQuery = viewQuery.gte('created_at', monthlyStart);
-      }
-      const { data: viewsData } = await viewQuery;
+    }
+
+    if (viewSort === 'daily' || viewSort === 'monthly' || viewSort === 'all') {
       const viewCounts = {};
-      if (viewsData) {
-        viewsData.forEach(v => {
-          viewCounts[v.story_id] = (viewCounts[v.story_id] || 0) + 1;
-        });
+      if (viewSort === 'all') {
+        const { data: chapters } = await supabase.from('chapters').select('story_id, views');
+        if (chapters) {
+          chapters.forEach(c => {
+            viewCounts[c.story_id] = (viewCounts[c.story_id] || 0) + (c.views || 0);
+          });
+        }
+      } else {
+        let viewQuery = supabase.from('story_views').select('story_id');
+        if (viewSort === 'daily') {
+          const dailyStart = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+          viewQuery = viewQuery.gte('created_at', dailyStart);
+        } else if (viewSort === 'monthly') {
+          const monthlyStart = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+          viewQuery = viewQuery.gte('created_at', monthlyStart);
+        }
+        const { data: viewsData } = await viewQuery;
+        if (viewsData) {
+          viewsData.forEach(v => {
+            viewCounts[v.story_id] = (viewCounts[v.story_id] || 0) + 1;
+          });
+        }
       }
+
       stories = stories.sort((a, b) => {
         const vA = viewCounts[a.id] || 0;
         const vB = viewCounts[b.id] || 0;
@@ -578,7 +591,7 @@ router.get('/search', async (req, res) => {
       topDaily: [], topWeekly: [], topMonthly: [], topYearly: [], topBookmarks: [], // ẩn bảng xếp hạng khi tìm kiếm
       activeGenre,
       searchQuery: query,
-      filters: { genre: genreSlug, status, minChapters: req.query.min_chapters || '', year: req.query.year || '', sort }
+      filters: { genre: genreSlug, status, minChapters: req.query.min_chapters || '', year: req.query.year || '', sort, view_sort: viewSort }
     });
   } catch (err) {
     console.error('Lỗi tìm kiếm:', err);

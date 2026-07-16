@@ -899,9 +899,13 @@
             <option value="oldest" <%= (typeof filters !== 'undefined' && filters.sort === 'oldest') ? 'selected' : '' %>>Cũ nhất</option>
             <option value="most_chapters" <%= (typeof filters !== 'undefined' && filters.sort === 'most_chapters') ? 'selected' : '' %>>Nhiều chương nhất</option>
             <option value="title_az" <%= (typeof filters !== 'undefined' && filters.sort === 'title_az') ? 'selected' : '' %>>Tên A-Z</option>
-            <option value="view_daily" <%= (typeof filters !== 'undefined' && filters.sort === 'view_daily') ? 'selected' : '' %>>Lượt xem: Hôm nay</option>
-            <option value="view_monthly" <%= (typeof filters !== 'undefined' && filters.sort === 'view_monthly') ? 'selected' : '' %>>Lượt xem: Tháng này</option>
-            <option value="view_all" <%= (typeof filters !== 'undefined' && filters.sort === 'view_all') ? 'selected' : '' %>>Lượt xem: Mọi thời điểm</option>
+        </select>
+
+        <select name="view_sort" onchange="this.form.submit()" style="padding: 0.5rem 0.8rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 0.85rem;">
+            <option value="">Lượt xem: Mặc định</option>
+            <option value="daily" <%= (typeof filters !== 'undefined' && filters.view_sort === 'daily') ? 'selected' : '' %>>Lượt xem: Hôm nay</option>
+            <option value="monthly" <%= (typeof filters !== 'undefined' && filters.view_sort === 'monthly') ? 'selected' : '' %>>Lượt xem: Tháng này</option>
+            <option value="all" <%= (typeof filters !== 'undefined' && filters.view_sort === 'all') ? 'selected' : '' %>>Lượt xem: Mọi thời điểm</option>
         </select>
 
         <a href="/random" class="btn btn-secondary" style="font-size: 0.85rem;">🎲 Hôm nay đọc gì?</a>
