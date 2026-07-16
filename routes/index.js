@@ -656,8 +656,7 @@ router.get('/story/:id', async (req, res) => {
         .from('comments')
         .select('*, users!comments_user_id_fkey(display_name, avatar, equipped_badge, equipped_frame, user_stats(chapters_read))')
         .eq('story_id', storyId)
-        .is('chapter_number', null)
-        .order('created_at', { ascending: true });
+        .order('created_at', { ascending: false });
       
       comments = commentsData || [];
       for (const c of comments) {

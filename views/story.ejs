@@ -316,7 +316,11 @@
                                 <a href="/user/<%= comment.user_id %>" style="text-decoration: none; color: inherit; transition: color 0.2s;" onmouseover="this.style.color='var(--accent-color)'" onmouseout="this.style.color='inherit'">
                                     <%= comment.users ? comment.users.display_name : 'Độc giả ẩn danh' %>
                                 </a>
-
+                                <% if (comment.chapter_number) { %>
+                                    <span style="background: rgba(59, 130, 246, 0.15); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.25); padding: 0.1rem 0.4rem; border-radius: 4px; font-size: 0.72rem; margin-left: 0.4rem; font-weight: 500;">
+                                        Chương <%= comment.chapter_number %>
+                                    </span>
+                                <% } %>
                             </span>
                             <span style="font-size: 0.78rem; color: var(--text-secondary);"><%= new Date(comment.created_at).toLocaleDateString('vi-VN', { hour: '2-digit', minute: '2-digit' }) %></span>
                         </div>
