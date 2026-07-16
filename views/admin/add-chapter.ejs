@@ -436,9 +436,98 @@
 
     // Đọc file EPUB (thực chất là 1 file ZIP) bằng JSZip, lấy đúng thứ tự chương qua "spine" trong content.opf,
     // tách thẻ HTML lấy text thuần, rồi tái sử dụng splitTextIntoChapters giống hệt PDF.
+    // Helper to resolve relative path inside EPUB ZIP
+    function resolveRelativePath(basePath, relativePath) {
+        const parts = basePath.split('/');
+        parts.pop(); // remove file name
+        const relParts = relativePath.split('/');
+        for (const part of relParts) {
+            if (part === '.') continue;
+            if (part === '..') {
+                parts.pop();
+            } else {
+                parts.push(part);
+            }
+        }
+        return parts.join('/');
+    }
+
+    async function extractTextAndImages(doc, zip, xhtmlPath, submitBtn) {
+        let result = '';
+        
+        async function traverse(node) {
+            if (node.nodeType === 3) { // TEXT_NODE
+                result += node.nodeValue;
+            } else if (node.nodeType === 1) { // ELEMENT_NODE
+                const tagName = node.tagName.toLowerCase();
+                
+                if (tagName === 'style' || tagName === 'script') {
+                    return;
+                }
+                
+                if (tagName === 'img') {
+                    const src = node.getAttribute('src');
+                    if (src) {
+                        try {
+                            const resolvedPath = resolveRelativePath(xhtmlPath, src);
+                            const imgFile = zip.file(resolvedPath) || zip.file(decodeURIComponent(resolvedPath));
+                            if (imgFile) {
+                                const ext = resolvedPath.split('.').pop().toLowerCase();
+                                const mimeType = ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg' : ext === 'gif' ? 'image/gif' : 'image/png';
+                                
+                                submitBtn.textContent = `⏳ Đang tải ảnh ${resolvedPath} lên Supabase...`;
+                                const blob = await imgFile.async('blob');
+                                const publicUrl = await uploadBlobToSupabase(blob, mimeType);
+                                
+                                result += `\n<img src="${publicUrl}" alt="Ảnh minh họa" style="max-width:100%; display:block; margin:1rem auto; border-radius:8px;">\n`;
+                            }
+                        } catch (err) {
+                            console.error('Lỗi xử lý ảnh trong EPUB:', err);
+                        }
+                    }
+                    return;
+                }
+                
+                if (tagName === 'image' && node.getAttribute('xlink:href')) {
+                    const href = node.getAttribute('xlink:href');
+                    try {
+                        const resolvedPath = resolveRelativePath(xhtmlPath, href);
+                        const imgFile = zip.file(resolvedPath) || zip.file(decodeURIComponent(resolvedPath));
+                        if (imgFile) {
+                            const ext = resolvedPath.split('.').pop().toLowerCase();
+                            const mimeType = ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg' : ext === 'gif' ? 'image/gif' : 'image/png';
+                            
+                            submitBtn.textContent = `⏳ Đang tải ảnh ${resolvedPath} lên Supabase...`;
+                            const blob = await imgFile.async('blob');
+                            const publicUrl = await uploadBlobToSupabase(blob, mimeType);
+                            
+                            result += `\n<img src="${publicUrl}" alt="Ảnh minh họa" style="max-width:100%; display:block; margin:1rem auto; border-radius:8px;">\n`;
+                        }
+                    } catch (err) {
+                        console.error('Lỗi xử lý ảnh SVG trong EPUB:', err);
+                    }
+                    return;
+                }
+                
+                for (const child of node.childNodes) {
+                    await traverse(child);
+                }
+                
+                if (['p', 'div', 'br', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'tr'].includes(tagName)) {
+                    result += '\n';
+                }
+            }
+        }
+        
+        await traverse(doc.body || doc.documentElement);
+        return result;
+    }
+
+    // Đọc file EPUB (thực chất là 1 file ZIP) bằng JSZip, lấy đúng thứ tự chương qua "spine" trong content.opf,
+    // tách thẻ HTML lấy text và ảnh, rồi tài sử dụng splitTextIntoChapters giống hệt PDF.
     async function extractEpubFullText(file, submitBtn) {
         const zip = await JSZip.loadAsync(file);
-
+ 
         // 1. Đọc META-INF/container.xml để tìm đường dẫn tới file content.opf
         const containerXmlFile = zip.file('META-INF/container.xml');
         if (!containerXmlFile) throw new Error('File EPUB không hợp lệ: thiếu META-INF/container.xml.');
@@ -447,7 +536,7 @@
         if (!opfPathMatch) throw new Error('Không tìm thấy file content.opf trong EPUB (file có thể bị lỗi cấu trúc).');
         const opfPath = opfPathMatch[1];
         const opfDir = opfPath.includes('/') ? opfPath.substring(0, opfPath.lastIndexOf('/') + 1) : '';
-
+ 
         // 2. Đọc content.opf để lấy danh sách manifest (id -> href) và spine (thứ tự đọc thật)
         const opfFile = zip.file(opfPath);
         if (!opfFile) throw new Error(`Không đọc được file ${opfPath} trong EPUB.`);
@@ -458,23 +547,22 @@
         while ((mm = manifestRegex.exec(opfXml)) !== null) {
             manifest[mm[1]] = mm[2];
         }
-        // Một số EPUB đặt href trước id trong thẻ - bắt thêm chiều ngược lại để chắc chắn
         const manifestRegex2 = /<item\s+[^>]*href="([^"]+)"[^>]*id="([^"]+)"[^>]*\/?>/g;
         while ((mm = manifestRegex2.exec(opfXml)) !== null) {
             manifest[mm[2]] = mm[1];
         }
-
+ 
         const spineIds = [];
         const spineRegex = /<itemref\s+[^>]*idref="([^"]+)"/g;
         let sm;
         while ((sm = spineRegex.exec(opfXml)) !== null) {
             spineIds.push(sm[1]);
         }
-
+ 
         const orderedHrefs = spineIds.map(id => manifest[id]).filter(Boolean);
         if (orderedHrefs.length === 0) throw new Error('Không đọc được thứ tự nội dung sách (spine) trong EPUB.');
-
-        // 3. Đọc từng file XHTML theo đúng thứ tự, strip HTML tags lấy text thuần
+ 
+        // 3. Đọc từng file XHTML theo đúng thứ tự, trích xuất text kèm ảnh
         let fullText = '';
         for (let i = 0; i < orderedHrefs.length; i++) {
             submitBtn.textContent = `⏳ Đang đọc phần ${i + 1}/${orderedHrefs.length} của EPUB...`;
@@ -482,25 +570,15 @@
             const fullHref = (opfDir + href).replace(/\\/g, '/');
             const zipFile = zip.file(fullHref) || zip.file(decodeURIComponent(fullHref));
             if (!zipFile) continue;
-
+ 
             const xhtml = await zipFile.async('string');
             const parser = new DOMParser();
             const doc = parser.parseFromString(xhtml, 'text/html');
-            // Xoá thẻ style/script để không lẫn CSS/JS vào text
-            doc.querySelectorAll('style, script').forEach(el => el.remove());
-
-            // QUAN TRỌNG: doc.body.textContent nối liền text của mọi thẻ <p> thành 1 dòng dài duy nhất
-            // (trình duyệt không tự chèn xuống dòng giữa các thẻ block). Phải tự chèn \n sau mỗi thẻ
-            // xuống dòng (p, div, br, h1-h6, li) TRƯỚC khi lấy text, để mỗi đoạn văn/dòng trong EPUB
-            // vẫn giữ được ranh giới dòng riêng - tránh tình trạng dính chữ như PDF gặp phải trước đây.
-            const root = doc.body || doc.documentElement;
-            root.querySelectorAll('p, div, br, h1, h2, h3, h4, h5, h6, li').forEach(el => {
-                el.insertAdjacentText('afterend', '\n');
-            });
-            const bodyText = root.textContent;
+ 
+            const bodyText = await extractTextAndImages(doc, zip, fullHref, submitBtn);
             fullText += bodyText.replace(/\n{2,}/g, '\n').trim() + '\n';
         }
-
+ 
         return fullText;
     }
 
