@@ -235,13 +235,31 @@ async function fetchTopAuthors(limitCount = 20) {
       return [];
     }
     
-    const { data: chapters, error: chaptersErr } = await supabase
-      .from('chapters')
-      .select('story_id, views');
+    let chapters = [];
+    let page = 0;
+    const limit = 1000;
+    let hasMore = true;
+    while (hasMore) {
+      const { data: batch, error: chaptersErr } = await supabase
+        .from('chapters')
+        .select('story_id, views')
+        .range(page * limit, (page + 1) * limit - 1);
         
-    if (chaptersErr) {
-      console.error('Lỗi lấy lượt xem chương cho BXH tác giả:', chaptersErr);
-      return [];
+      if (chaptersErr) {
+        console.error('Lỗi lấy lượt xem chương cho BXH tác giả:', chaptersErr);
+        return [];
+      }
+      
+      if (!batch || batch.length === 0) {
+        hasMore = false;
+      } else {
+        chapters = chapters.concat(batch);
+        if (batch.length < limit) {
+          hasMore = false;
+        } else {
+          page++;
+        }
+      }
     }
     
     const storyViews = {};
@@ -553,12 +571,33 @@ router.get('/search', async (req, res) => {
     if (viewSort === 'daily' || viewSort === 'monthly' || viewSort === 'all') {
       const viewCounts = {};
       if (viewSort === 'all') {
-        const { data: chapters } = await supabase.from('chapters').select('story_id, views');
-        if (chapters) {
-          chapters.forEach(c => {
-            viewCounts[c.story_id] = (viewCounts[c.story_id] || 0) + (c.views || 0);
-          });
+        let chapters = [];
+        let page = 0;
+        const limit = 1000;
+        let hasMore = true;
+        while (hasMore) {
+          const { data: batch, error: chapErr } = await supabase
+            .from('chapters')
+            .select('story_id, views')
+            .range(page * limit, (page + 1) * limit - 1);
+          if (chapErr) {
+            console.error('Lỗi query chapters trong search:', chapErr);
+            break;
+          }
+          if (!batch || batch.length === 0) {
+            hasMore = false;
+          } else {
+            chapters = chapters.concat(batch);
+            if (batch.length < limit) {
+              hasMore = false;
+            } else {
+              page++;
+            }
+          }
         }
+        chapters.forEach(c => {
+          viewCounts[c.story_id] = (viewCounts[c.story_id] || 0) + (c.views || 0);
+        });
       } else {
         let viewQuery = supabase.from('story_views').select('story_id');
         if (viewSort === 'daily') {
