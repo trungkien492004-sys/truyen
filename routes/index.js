@@ -460,7 +460,7 @@ router.get('/', async (req, res) => {
       searchQuery: null,
       currentPage: page,
       totalPages,
-      filters: { status }
+      filters: { genre: '', status: status || '', minChapters: '', year: '', sort: 'newest', view_sort: '' }
     });
   } catch (err) {
     console.error('Lỗi trang chủ:', err);
@@ -518,7 +518,7 @@ router.get('/search', async (req, res) => {
           topDaily: [], topWeekly: [], topMonthly: [], topYearly: [], topBookmarks: [],
           activeGenre,
           searchQuery: query,
-          filters: { genre: genreSlug, status, minChapters: req.query.min_chapters || '', year: req.query.year || '', sort }
+          filters: { genre: genreSlug, status, minChapters: req.query.min_chapters || '', year: req.query.year || '', sort, view_sort: viewSort }
         });
       }
       q = q.in('id', genreStoryIds);
@@ -666,7 +666,8 @@ router.get('/genre/:slug', async (req, res) => {
       genres,
       topDaily: [], topWeekly: [], topMonthly: [], topYearly: [], // ẩn bảng xếp hạng khi lọc
       activeGenre,
-      searchQuery: null
+      searchQuery: null,
+      filters: { genre: slug, status: '', minChapters: '', year: '', sort: 'newest', view_sort: '' }
     });
   } catch (err) {
     console.error('Lỗi lọc thể loại:', err);
