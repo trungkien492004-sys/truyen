@@ -687,6 +687,10 @@ router.get('/story/:id', async (req, res) => {
 
 // TRANG ĐỌC CHƯƠNG TRUYỆN
 router.get('/story/:story_id/chapter/:chapter_number', async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+
   const storyId = parseInt(req.params.story_id);
   const chapterNumber = parseInt(req.params.chapter_number);
   
@@ -835,6 +839,11 @@ router.post('/chapter/read-confirm', async (req, res) => {
 
   const reading = req.session.reading;
   if (!reading || reading.storyId !== storyId || reading.chapterNumber !== chapterNumber) {
+    console.error('[Read-Confirm Mismatch]:', {
+      sessionReading: reading,
+      requestedStoryId: storyId,
+      requestedChapterNumber: chapterNumber
+    });
     return res.status(400).json({ success: false, error: 'Yêu cầu không hợp lệ hoặc lượt đọc chưa được bắt đầu.' });
   }
 
