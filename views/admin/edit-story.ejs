@@ -623,30 +623,72 @@
     }
 
     async function uploadInBatches(storyId, processedFiles, submitBtn) {
-        const BATCH_SIZE = 50;
         let successCount = 0;
-        for (let i = 0; i < processedFiles.length; i += BATCH_SIZE) {
-            const batch = processedFiles.slice(i, i + BATCH_SIZE);
-            submitBtn.textContent = `⏳ Đang lưu database (${i + 1} - ${i + batch.length} / ${processedFiles.length})...`;
+        const MAX_RETRIES = 3;
+        const MAX_PAYLOAD_SIZE = 2 * 1024 * 1024; // Giới hạn an toàn 2MB tránh lỗi 413 Payload Too Large của Vercel (4.5MB)
+        
+        let i = 0;
+        while (i < processedFiles.length) {
+            let batch = [];
+            let currentSize = 0;
             
-            const response = await fetch('/admin/chapter/add-json', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ story_id: storyId, files: batch })
-            });
+            // Gom nhóm động dựa trên kích thước chuỗi JSON thực tế của từng chương
+            while (i < processedFiles.length && batch.length < 15) {
+                const f = processedFiles[i];
+                const cleanedContent = typeof f.content === 'string' ? stripLoneSurrogates(f.content) : f.content;
+                const fileItem = { ...f, content: cleanedContent };
+                const itemSize = JSON.stringify(fileItem).length;
+                
+                // Nếu thêm chương này vào làm lô vượt quá 2MB, dừng gom và gửi lô hiện tại trước
+                if (batch.length > 0 && currentSize + itemSize > MAX_PAYLOAD_SIZE) {
+                    break;
+                }
+                
+                batch.push(fileItem);
+                currentSize += itemSize;
+                i++;
+            }
+            
+            let lastError = null;
+            let ok = false;
 
-            let data;
-            if (response.headers.get('content-type')?.includes('application/json')) {
-                data = await response.json();
-            } else {
-                const txt = await response.text();
-                throw new Error('Lỗi máy chủ (' + response.status + '): ' + txt.substring(0, 200));
+            for (let attempt = 1; attempt <= MAX_RETRIES && !ok; attempt++) {
+                const retryLabel = attempt > 1 ? ` (thử lại lần ${attempt}/${MAX_RETRIES})` : '';
+                submitBtn.textContent = `⏳ Đang lưu database (${successCount + 1} - ${successCount + batch.length} / ${processedFiles.length})${retryLabel}...`;
+
+                try {
+                    const response = await fetch('/admin/chapter/add-json', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ story_id: storyId, files: batch })
+                    });
+
+                    let data;
+                    if (response.headers.get('content-type')?.includes('application/json')) {
+                        data = await response.json();
+                    } else {
+                        const txt = await response.text();
+                        throw new Error('Lỗi máy chủ (' + response.status + '): ' + txt.substring(0, 200));
+                    }
+
+                    if (!data.success) throw new Error(data.error);
+
+                    ok = true;
+                    successCount += batch.length;
+                } catch (err) {
+                    lastError = err;
+                    if (attempt < MAX_RETRIES) {
+                        await new Promise(r => setTimeout(r, 1500)); // Chờ 1.5s trước khi thử lại
+                    }
+                }
             }
 
-            if (!data.success) {
-                throw new Error(data.error);
+            if (!ok) {
+                throw new Error(
+                    `Đã thử ${MAX_RETRIES} lần vẫn lỗi ở lô chương từ thứ ${successCount + 1}: ${lastError ? lastError.message : 'Không rõ nguyên nhân'}. ` +
+                    `${successCount} chương trước đó đã lưu thành công - có thể bật "Đăng tiếp thông minh" và đăng lại tệp tin để tiếp tục.`
+                );
             }
-            successCount += batch.length;
         }
         return successCount;
     }

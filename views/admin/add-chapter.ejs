@@ -687,27 +687,38 @@
     }
 
     async function uploadInBatches(storyId, processedFiles, submitBtn) {
-        // Giảm từ 50 xuống 15 chương/lần - Vercel Hobby (miễn phí) giới hạn mỗi request tối đa
-        // 10 giây xử lý. Với PDF nhiều chương nội dung dài (ví dụ tiểu thuyết ~300 chương), batch
-        // 50 chương có thể mất >10s để insert vào Supabase, gây lỗi 504 Gateway Timeout khi đăng.
-        const BATCH_SIZE = 15;
         let successCount = 0;
-        const MAX_RETRIES = 3; // Tự động thử lại nếu 1 lô bị lỗi tạm thời (timeout, mạng chập chờn...)
-
-        for (let i = 0; i < processedFiles.length; i += BATCH_SIZE) {
-            // Lớp bảo vệ cuối: lọc lone surrogate khỏi content trước khi gửi lên server, phòng
-            // trường hợp ký tự lỗi lọt qua bước trích xuất PDF/EPUB ban đầu (ví dụ do parser Word
-            // hoặc nguồn khác không đi qua extractPageTextByLines/extractEpubFullText).
-            const batch = processedFiles.slice(i, i + BATCH_SIZE).map(f => ({
-                ...f,
-                content: typeof f.content === 'string' ? stripLoneSurrogates(f.content) : f.content
-            }));
+        const MAX_RETRIES = 3;
+        const MAX_PAYLOAD_SIZE = 2 * 1024 * 1024; // Giới hạn an toàn 2MB tránh lỗi 413 Payload Too Large của Vercel (4.5MB)
+        
+        let i = 0;
+        while (i < processedFiles.length) {
+            let batch = [];
+            let currentSize = 0;
+            
+            // Gom nhóm động dựa trên kích thước chuỗi JSON thực tế của từng chương
+            while (i < processedFiles.length && batch.length < 15) {
+                const f = processedFiles[i];
+                const cleanedContent = typeof f.content === 'string' ? stripLoneSurrogates(f.content) : f.content;
+                const fileItem = { ...f, content: cleanedContent };
+                const itemSize = JSON.stringify(fileItem).length;
+                
+                // Nếu thêm chương này vào làm lô vượt quá 2MB, dừng gom và gửi lô hiện tại trước
+                if (batch.length > 0 && currentSize + itemSize > MAX_PAYLOAD_SIZE) {
+                    break;
+                }
+                
+                batch.push(fileItem);
+                currentSize += itemSize;
+                i++;
+            }
+            
             let lastError = null;
             let ok = false;
 
             for (let attempt = 1; attempt <= MAX_RETRIES && !ok; attempt++) {
                 const retryLabel = attempt > 1 ? ` (thử lại lần ${attempt}/${MAX_RETRIES})` : '';
-                submitBtn.textContent = `⏳ Đang lưu database (${i + 1} - ${i + batch.length} / ${processedFiles.length})${retryLabel}...`;
+                submitBtn.textContent = `⏳ Đang lưu database (${successCount + 1} - ${successCount + batch.length} / ${processedFiles.length})${retryLabel}...`;
 
                 try {
                     const response = await fetch('/admin/chapter/add-json', {
@@ -738,7 +749,7 @@
 
             if (!ok) {
                 throw new Error(
-                    `Đã thử ${MAX_RETRIES} lần vẫn lỗi ở lô chương ${i + 1}-${i + batch.length}: ${lastError ? lastError.message : 'Không rõ nguyên nhân'}. ` +
+                    `Đã thử ${MAX_RETRIES} lần vẫn lỗi ở lô chương từ thứ ${successCount + 1}: ${lastError ? lastError.message : 'Không rõ nguyên nhân'}. ` +
                     `${successCount} chương trước đó đã lưu thành công - có thể bật "Đăng tiếp thông minh" và đăng lại file này để tiếp tục từ chương còn thiếu.`
                 );
             }
