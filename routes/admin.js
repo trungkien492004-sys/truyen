@@ -383,8 +383,8 @@ router.get('/', async (req, res) => {
     const { count: viewsCount } = await supabase.from('story_views').select('*', { count: 'exact', head: true });
     const { count: requestsCount } = await supabase.from('contact_requests').select('*', { count: 'exact', head: true });
 
-    // Lấy danh sách truyện hiện có
-    const { data: stories } = await supabase.from('stories').select('*').order('created_at', { ascending: false });
+    // Lấy danh sách truyện hiện có theo chương cập nhật gần nhất
+    const { data: stories } = await supabase.from('stories_with_last_update').select('*').order('last_update_at', { ascending: false });
 
     res.render('admin/dashboard', {
       title: 'Trang quản trị (Admin Panel)',

@@ -32,6 +32,22 @@
             </div>
         </div>
 
+        <!-- Tiện ích nạp nhanh từ File -->
+        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.2rem; margin-bottom: 1.5rem;">
+            <label style="font-weight: 600; font-size: 0.9rem; margin-bottom: 0.5rem; display: block; color: var(--accent-color);">📂 Nạp nhanh nội dung từ File (Đè lên nội dung hiện tại)</label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; flex-wrap: wrap;">
+                <div>
+                    <label style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 0.2rem;">File PDF:</label>
+                    <input type="file" id="pdffile" accept=".pdf" style="width: 100%; font-size: 0.85rem; padding: 0.35rem 0.5rem; background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 6px; box-sizing: border-box;">
+                </div>
+                <div>
+                    <label style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 0.2rem;">File EPUB:</label>
+                    <input type="file" id="epubfile" accept=".epub" style="width: 100%; font-size: 0.85rem; padding: 0.35rem 0.5rem; background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 6px; box-sizing: border-box;">
+                </div>
+            </div>
+            <p id="file-load-status" style="font-size: 0.8rem; color: var(--accent-color); margin: 0.5rem 0 0 0; font-weight: 500; display: none;"></p>
+        </div>
+
         <div class="form-group">
             <label for="content">Nội Dung Chương *</label>
             <textarea id="content" name="content" rows="20" required><%= chapter.content %></textarea>
@@ -57,6 +73,12 @@
     </form>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+</script>
+
 <script>
     const btnDelete = document.getElementById('btn-delete-chapter');
     if (btnDelete) {
@@ -66,6 +88,228 @@
             }
         });
     }
+
+    // Logic nạp file PDF/EPUB trong trang sửa chương
+    const pdffileInput = document.getElementById('pdffile');
+    const epubfileInput = document.getElementById('epubfile');
+    const contentTextarea = document.getElementById('content');
+    const statusText = document.getElementById('file-load-status');
+    const submitBtn = document.querySelector('button[type="submit"]');
+
+    function updateStatus(msg, isError = false) {
+        statusText.style.display = 'block';
+        statusText.style.color = isError ? '#ef4444' : 'var(--accent-color)';
+        statusText.textContent = msg;
+    }
+
+    function stripLoneSurrogates(str) {
+        if (!str) return str;
+        return str
+            .replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]/g, '')
+            .replace(/\u0000/g, '')
+            .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '');
+    }
+
+    function extractPageTextByLines(textContent) {
+        const items = textContent.items;
+        if (items.length === 0) return '';
+        const lineMap = new Map();
+        for (const item of items) {
+            const y = Math.round(item.transform[5]);
+            if (!lineMap.has(y)) lineMap.set(y, []);
+            lineMap.get(y).push(item);
+        }
+        const sortedYs = Array.from(lineMap.keys()).sort((a, b) => b - a);
+        const lines = sortedYs.map(y => {
+            const lineItems = lineMap.get(y).sort((a, b) => a.transform[4] - b.transform[4]);
+            return lineItems.map(it => it.str).join('').trim();
+        });
+        return stripLoneSurrogates(lines.filter(l => l.length > 0).join('\n'));
+    }
+
+    function resolveRelativePath(basePath, relativePath) {
+        const parts = basePath.split('/');
+        parts.pop();
+        const relParts = relativePath.split('/');
+        for (const part of relParts) {
+            if (part === '.') continue;
+            if (part === '..') {
+                parts.pop();
+            } else {
+                parts.push(part);
+            }
+        }
+        return parts.join('/');
+    }
+
+    async function uploadBlobToSupabase(blob, mimeType) {
+        const fileExt = mimeType === 'image/jpeg' ? '.jpg' : '.png';
+        const fileName = `word-img-${Date.now()}-${Math.round(Math.random() * 1E9)}${fileExt}`;
+        const supabaseUrl = 'https://xlaqupbqiwpoprywnkgi.supabase.co';
+        const anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhsYXF1cGJxaXdwb3ByeXdua2dpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1ODkxNDcsImV4cCI6MjA5OTE2NTE0N30.v0NZKDhVb4ysx03cmx_aQn6aGBMCO6lWzBUN6--JKB0';
+
+        const response = await fetch(`${supabaseUrl}/storage/v1/object/uploads/${fileName}`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${anonKey}`,
+                'apikey': anonKey,
+                'Content-Type': mimeType
+            },
+            body: blob
+        });
+        if (!response.ok) {
+            const errText = await response.text();
+            throw new Error(`Upload ảnh thất bại: ${errText}`);
+        }
+        return `${supabaseUrl}/storage/v1/object/public/uploads/${fileName}`;
+    }
+
+    async function extractTextAndImages(doc, zip, xhtmlPath) {
+        let result = '';
+        async function traverse(node) {
+            if (node.nodeType === 3) {
+                result += node.nodeValue;
+            } else if (node.nodeType === 1) {
+                const tagName = node.tagName.toLowerCase();
+                if (tagName === 'style' || tagName === 'script') return;
+                
+                if (tagName === 'img') {
+                    const src = node.getAttribute('src');
+                    if (src) {
+                        try {
+                            const resolvedPath = resolveRelativePath(xhtmlPath, src);
+                            const imgFile = zip.file(resolvedPath) || zip.file(decodeURIComponent(resolvedPath));
+                            if (imgFile) {
+                                const ext = resolvedPath.split('.').pop().toLowerCase();
+                                const mimeType = ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg' : ext === 'gif' ? 'image/gif' : 'image/png';
+                                updateStatus(`⏳ Đang tải ảnh ${resolvedPath} lên Supabase...`);
+                                const blob = await imgFile.async('blob');
+                                const publicUrl = await uploadBlobToSupabase(blob, mimeType);
+                                result += `\n<img src="${publicUrl}" alt="Ảnh minh họa" style="max-width:100%; display:block; margin:1rem auto; border-radius:8px;">\n`;
+                            }
+                        } catch (err) {
+                            console.error('Lỗi xử lý ảnh trong EPUB:', err);
+                        }
+                    }
+                    return;
+                }
+                if (tagName === 'image' && node.getAttribute('xlink:href')) {
+                    const href = node.getAttribute('xlink:href');
+                    try {
+                        const resolvedPath = resolveRelativePath(xhtmlPath, href);
+                        const imgFile = zip.file(resolvedPath) || zip.file(decodeURIComponent(resolvedPath));
+                        if (imgFile) {
+                            const ext = resolvedPath.split('.').pop().toLowerCase();
+                            const mimeType = ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg' : ext === 'gif' ? 'image/gif' : 'image/png';
+                            updateStatus(`⏳ Đang tải ảnh ${resolvedPath} lên Supabase...`);
+                            const blob = await imgFile.async('blob');
+                            const publicUrl = await uploadBlobToSupabase(blob, mimeType);
+                            result += `\n<img src="${publicUrl}" alt="Ảnh minh họa" style="max-width:100%; display:block; margin:1rem auto; border-radius:8px;">\n`;
+                        }
+                    } catch (err) {
+                        console.error('Lỗi xử lý ảnh SVG trong EPUB:', err);
+                    }
+                    return;
+                }
+                for (const child of node.childNodes) {
+                    await traverse(child);
+                }
+                if (['p', 'div', 'br', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'tr'].includes(tagName)) {
+                    result += '\n';
+                }
+            }
+        }
+        await traverse(doc.body || doc.documentElement);
+        return result;
+    }
+
+    pdffileInput.addEventListener('change', async () => {
+        const file = pdffileInput.files[0];
+        if (!file) return;
+        submitBtn.disabled = true;
+        updateStatus('⏳ Đang phân tích PDF...');
+        try {
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            let fullText = '';
+            for (let i = 1; i <= pdf.numPages; i++) {
+                updateStatus(`⏳ Đang đọc trang ${i}/${pdf.numPages}...`);
+                const page = await pdf.getPage(i);
+                const textContent = await page.getTextContent();
+                fullText += extractPageTextByLines(textContent) + '\n';
+            }
+            contentTextarea.value = fullText.trim();
+            updateStatus('✅ Đã nạp thành công nội dung từ file PDF!');
+            epubfileInput.value = '';
+        } catch (err) {
+            updateStatus('❌ Lỗi: ' + err.message, true);
+        } finally {
+            submitBtn.disabled = false;
+        }
+    });
+
+    epubfileInput.addEventListener('change', async () => {
+        const file = epubfileInput.files[0];
+        if (!file) return;
+        submitBtn.disabled = true;
+        updateStatus('⏳ Đang phân tích file EPUB...');
+        try {
+            const arrayBuffer = await file.arrayBuffer();
+            const zip = await JSZip.loadAsync(arrayBuffer);
+            const containerXmlFile = zip.file('META-INF/container.xml');
+            if (!containerXmlFile) throw new Error('File EPUB thiếu container.xml');
+            const containerXml = await containerXmlFile.async('string');
+            const opfPathMatch = containerXml.match(/full-path="([^"]+)"/);
+            if (!opfPathMatch) throw new Error('Không tìm thấy content.opf');
+            const opfPath = opfPathMatch[1];
+            const opfDir = opfPath.includes('/') ? opfPath.substring(0, opfPath.lastIndexOf('/') + 1) : '';
+
+            const opfFile = zip.file(opfPath);
+            if (!opfFile) throw new Error('Không đọc được content.opf');
+            const opfXml = await opfFile.async('string');
+            const manifest = {};
+            const manifestRegex = /<item\s+[^>]*id="([^"]+)"[^>]*href="([^"]+)"[^>]*\/?>/g;
+            let mm;
+            while ((mm = manifestRegex.exec(opfXml)) !== null) {
+                manifest[mm[1]] = mm[2];
+            }
+            const manifestRegex2 = /<item\s+[^>]*href="([^"]+)"[^>]*id="([^"]+)"[^>]*\/?>/g;
+            while ((mm = manifestRegex2.exec(opfXml)) !== null) {
+                manifest[mm[2]] = mm[1];
+            }
+
+            const spineIds = [];
+            const spineRegex = /<itemref\s+[^>]*idref="([^"]+)"/g;
+            let sm;
+            while ((sm = spineRegex.exec(opfXml)) !== null) {
+                spineIds.push(sm[1]);
+            }
+            const orderedHrefs = spineIds.map(id => manifest[id]).filter(Boolean);
+            if (orderedHrefs.length === 0) throw new Error('Không đọc được spine trong EPUB.');
+
+            let fullText = '';
+            for (let i = 0; i < orderedHrefs.length; i++) {
+                updateStatus(`⏳ Đang trích xuất nội dung phần ${i + 1}/${orderedHrefs.length}...`);
+                const href = orderedHrefs[i];
+                const fullHref = (opfDir + href).replace(/\\/g, '/');
+                const zipFile = zip.file(fullHref) || zip.file(decodeURIComponent(fullHref));
+                if (!zipFile) continue;
+
+                const xhtml = await zipFile.async('string');
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(xhtml, 'text/html');
+                const bodyText = await extractTextAndImages(doc, zip, fullHref);
+                fullText += bodyText.replace(/\n{2,}/g, '\n').trim() + '\n';
+            }
+            contentTextarea.value = fullText.trim();
+            updateStatus('✅ Đã nạp thành công nội dung từ file EPUB (đã kèm ảnh)!');
+            pdffileInput.value = '';
+        } catch (err) {
+            updateStatus('❌ Lỗi: ' + err.message, true);
+        } finally {
+            submitBtn.disabled = false;
+        }
+    });
 </script>
 
 <%- include('../partials/footer') %>
