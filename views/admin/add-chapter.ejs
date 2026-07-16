@@ -526,7 +526,8 @@
     // Đọc file EPUB (thực chất là 1 file ZIP) bằng JSZip, lấy đúng thứ tự chương qua "spine" trong content.opf,
     // tách thẻ HTML lấy text và ảnh, rồi tài sử dụng splitTextIntoChapters giống hệt PDF.
     async function extractEpubFullText(file, submitBtn) {
-        const zip = await JSZip.loadAsync(file);
+        const arrayBuffer = await file.arrayBuffer();
+        const zip = await JSZip.loadAsync(arrayBuffer);
  
         // 1. Đọc META-INF/container.xml để tìm đường dẫn tới file content.opf
         const containerXmlFile = zip.file('META-INF/container.xml');
