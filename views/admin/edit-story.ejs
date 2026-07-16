@@ -458,7 +458,7 @@
         return result;
     }
 
-    async function extractEpubFullText(file, submitBtn) {
+    async function extractEpubChapters(file, submitBtn) {
         const arrayBuffer = cachedEpubArrayBuffer || await readFileAsArrayBuffer(file);
         const zip = await JSZip.loadAsync(arrayBuffer);
         const containerXmlFile = zip.file('META-INF/container.xml');
@@ -492,7 +492,8 @@
         const orderedHrefs = spineIds.map(id => manifest[id]).filter(Boolean);
         if (orderedHrefs.length === 0) throw new Error('Không đọc được spine trong EPUB.');
 
-        let fullText = '';
+        let chapters = [];
+        let chapCount = 1;
         for (let i = 0; i < orderedHrefs.length; i++) {
             submitBtn.textContent = `⏳ Đang đọc phần ${i + 1}/${orderedHrefs.length} của EPUB...`;
             const href = orderedHrefs[i];
@@ -503,10 +504,44 @@
             const xhtml = await zipFile.async('string');
             const parser = new DOMParser();
             const doc = parser.parseFromString(xhtml, 'text/html');
-            const bodyText = await extractTextAndImages(doc, zip, fullHref, submitBtn);
-            fullText += bodyText.replace(/\n{2,}/g, '\n').trim() + '\n';
+            
+            // Lấy tiêu đề của chương từ h1, h2, h3 hoặc title
+            let title = '';
+            const heading = doc.querySelector('h1, h2, h3, title');
+            if (heading) {
+                title = heading.textContent.trim();
+            }
+            
+            // Làm sạch tiêu đề
+            if (!title || title.toLowerCase() === 'untitled' || title.toLowerCase().includes('thông tin chung')) {
+                // Bỏ qua các trang metadata hoặc thông tin chung nếu nội dung quá ngắn
+                const bodyTextLength = doc.body.textContent.trim().length;
+                if (bodyTextLength < 200 && (title.toLowerCase().includes('thông tin chung') || title.toLowerCase().includes('giới thiệu') || title.toLowerCase().includes('mục lục') || title.toLowerCase().includes('tác giả'))) {
+                    console.log(`Bỏ qua trang metadata: ${href}`);
+                    continue;
+                }
+                title = `Chương ${chapCount}`;
+            }
+            
+            // Trích xuất nội dung HTML (đã giải quyết hình ảnh)
+            const bodyHtml = await extractTextAndImages(doc, zip, fullHref, submitBtn);
+            
+            // Format nội dung thành HTML sạch
+            const formattedContent = bodyHtml.split('\n')
+                .filter(line => line.trim().length > 0)
+                .map(line => line.trim().startsWith('<img') ? line : `<p>${line}</p>`)
+                .join('');
+            
+            if (formattedContent.trim().length > 0) {
+                chapters.push({
+                    name: `${title}.txt`,
+                    type: 'txt',
+                    content: formattedContent
+                });
+                chapCount++;
+            }
         }
-        return fullText;
+        return chapters;
     }
 
     // Helper to strip lone surrogates
@@ -702,8 +737,7 @@
                             submitBtn.textContent = originalBtnText;
                             return;
                         }
-                        const fullText = await extractEpubFullText(file, submitBtn);
-                        processedFiles = splitTextIntoChapters(fullText, file.name.replace(/\.epub$/i, '.pdf'));
+                        processedFiles = await extractEpubChapters(file, submitBtn);
                     }
  
                     await uploadInBatches(storyId, processedFiles, submitBtn);

@@ -396,8 +396,7 @@
 
             try {
                 const fakeBtn = { textContent: '' };
-                const fullText = await extractEpubFullText(file, fakeBtn);
-                const previewChapters = splitTextIntoChapters(fullText, file.name.replace(/\.epub$/i, '.pdf'));
+                const previewChapters = await extractEpubChapters(file, fakeBtn);
 
                 if (previewChapters.length === 1) {
                     epubChaptersList.innerHTML = '<p style="color: var(--text-secondary); font-size: 0.9rem;">⚠️ Không phát hiện tiêu đề chương nào trong EPUB này - toàn bộ nội dung sẽ được đăng thành <b>1 chương duy nhất</b>.</p>';
@@ -601,22 +600,19 @@
 
     // Đọc file EPUB (thực chất là 1 file ZIP) bằng JSZip, lấy đúng thứ tự chương qua "spine" trong content.opf,
     // tách thẻ HTML lấy text và ảnh, rồi tài sử dụng splitTextIntoChapters giống hệt PDF.
-    async function extractEpubFullText(file, submitBtn) {
+    async function extractEpubChapters(file, submitBtn) {
         const arrayBuffer = cachedEpubArrayBuffer || await readFileAsArrayBuffer(file);
         const zip = await JSZip.loadAsync(arrayBuffer);
- 
-        // 1. Đọc META-INF/container.xml để tìm đường dẫn tới file content.opf
         const containerXmlFile = zip.file('META-INF/container.xml');
-        if (!containerXmlFile) throw new Error('File EPUB không hợp lệ: thiếu META-INF/container.xml.');
+        if (!containerXmlFile) throw new Error('File EPUB thiếu container.xml');
         const containerXml = await containerXmlFile.async('string');
         const opfPathMatch = containerXml.match(/full-path="([^"]+)"/);
-        if (!opfPathMatch) throw new Error('Không tìm thấy file content.opf trong EPUB (file có thể bị lỗi cấu trúc).');
+        if (!opfPathMatch) throw new Error('Không tìm thấy content.opf');
         const opfPath = opfPathMatch[1];
         const opfDir = opfPath.includes('/') ? opfPath.substring(0, opfPath.lastIndexOf('/') + 1) : '';
- 
-        // 2. Đọc content.opf để lấy danh sách manifest (id -> href) và spine (thứ tự đọc thật)
+
         const opfFile = zip.file(opfPath);
-        if (!opfFile) throw new Error(`Không đọc được file ${opfPath} trong EPUB.`);
+        if (!opfFile) throw new Error('Không đọc được content.opf');
         const opfXml = await opfFile.async('string');
         const manifest = {};
         const manifestRegex = /<item\s+[^>]*id="([^"]+)"[^>]*href="([^"]+)"[^>]*\/?>/g;
@@ -628,35 +624,66 @@
         while ((mm = manifestRegex2.exec(opfXml)) !== null) {
             manifest[mm[2]] = mm[1];
         }
- 
+
         const spineIds = [];
         const spineRegex = /<itemref\s+[^>]*idref="([^"]+)"/g;
         let sm;
         while ((sm = spineRegex.exec(opfXml)) !== null) {
             spineIds.push(sm[1]);
         }
- 
         const orderedHrefs = spineIds.map(id => manifest[id]).filter(Boolean);
-        if (orderedHrefs.length === 0) throw new Error('Không đọc được thứ tự nội dung sách (spine) trong EPUB.');
- 
-        // 3. Đọc từng file XHTML theo đúng thứ tự, trích xuất text kèm ảnh
-        let fullText = '';
+        if (orderedHrefs.length === 0) throw new Error('Không đọc được spine trong EPUB.');
+
+        let chapters = [];
+        let chapCount = 1;
         for (let i = 0; i < orderedHrefs.length; i++) {
             submitBtn.textContent = `⏳ Đang đọc phần ${i + 1}/${orderedHrefs.length} của EPUB...`;
             const href = orderedHrefs[i];
             const fullHref = (opfDir + href).replace(/\\/g, '/');
             const zipFile = zip.file(fullHref) || zip.file(decodeURIComponent(fullHref));
             if (!zipFile) continue;
- 
+
             const xhtml = await zipFile.async('string');
             const parser = new DOMParser();
             const doc = parser.parseFromString(xhtml, 'text/html');
- 
-            const bodyText = await extractTextAndImages(doc, zip, fullHref, submitBtn);
-            fullText += bodyText.replace(/\n{2,}/g, '\n').trim() + '\n';
+            
+            // Lấy tiêu đề của chương từ h1, h2, h3 hoặc title
+            let title = '';
+            const heading = doc.querySelector('h1, h2, h3, title');
+            if (heading) {
+                title = heading.textContent.trim();
+            }
+            
+            // Làm sạch tiêu đề
+            if (!title || title.toLowerCase() === 'untitled' || title.toLowerCase().includes('thông tin chung')) {
+                // Bỏ qua các trang metadata hoặc thông tin chung nếu nội dung quá ngắn
+                const bodyTextLength = doc.body.textContent.trim().length;
+                if (bodyTextLength < 200 && (title.toLowerCase().includes('thông tin chung') || title.toLowerCase().includes('giới thiệu') || title.toLowerCase().includes('mục lục') || title.toLowerCase().includes('tác giả'))) {
+                    console.log(`Bỏ qua trang metadata: ${href}`);
+                    continue;
+                }
+                title = `Chương ${chapCount}`;
+            }
+            
+            // Trích xuất nội dung HTML (đã giải quyết hình ảnh)
+            const bodyHtml = await extractTextAndImages(doc, zip, fullHref, submitBtn);
+            
+            // Format nội dung thành HTML sạch
+            const formattedContent = bodyHtml.split('\n')
+                .filter(line => line.trim().length > 0)
+                .map(line => line.trim().startsWith('<img') ? line : `<p>${line}</p>`)
+                .join('');
+            
+            if (formattedContent.trim().length > 0) {
+                chapters.push({
+                    name: `${title}.txt`,
+                    type: 'txt',
+                    content: formattedContent
+                });
+                chapCount++;
+            }
         }
- 
-        return fullText;
+        return chapters;
     }
 
     async function uploadInBatches(storyId, processedFiles, submitBtn) {
@@ -782,10 +809,7 @@
                     return;
                 }
 
-                const fullText = await extractEpubFullText(file, submitBtn);
-
-                submitBtn.textContent = '⏳ Đang xử lý text...';
-                let processedFiles = splitTextIntoChapters(fullText, file.name.replace(/\.epub$/i, '.pdf'));
+                let processedFiles = await extractEpubChapters(file, submitBtn);
                 processedFiles = await applySmartContinue(processedFiles, storyId);
 
                 await uploadInBatches(storyId, processedFiles, submitBtn);
