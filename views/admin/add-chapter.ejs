@@ -125,6 +125,7 @@
                     <label for="pdffile">Chọn file PDF *</label>
                     <input type="file" id="pdffile" name="pdffile" accept=".pdf">
                     <span style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.3rem; display: block;">Hệ thống sẽ tự phân tích cấu trúc và tách chương theo tiêu đề trong PDF.</span>
+                    <div id="pdf-status-msg" style="font-size: 0.85rem; margin-top: 0.5rem; font-weight: 500; display: none;"></div>
                 </div>
                 <div id="pdf-preview" style="display:none; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; margin-top: 1rem;">
                     <strong>📋 Xem trước các chương sẽ được tách:</strong>
@@ -144,6 +145,7 @@
                     <label for="epubfile">Chọn file EPUB *</label>
                     <input type="file" id="epubfile" name="epubfile" accept=".epub">
                     <span style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.3rem; display: block;">Hệ thống sẽ tự phân tích cấu trúc sách và tách chương theo tiêu đề.</span>
+                    <div id="epub-status-msg" style="font-size: 0.85rem; margin-top: 0.5rem; font-weight: 500; display: none;"></div>
                 </div>
                 <div id="epub-preview" style="display:none; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; margin-top: 1rem;">
                     <strong>📋 Xem trước các chương sẽ được tách:</strong>
@@ -223,15 +225,30 @@
     if (epubFileInput) {
         epubFileInput.addEventListener('change', async () => {
             const file = epubFileInput.files[0];
+            const msgEl = document.getElementById('epub-status-msg');
+            if (msgEl) {
+                msgEl.style.display = 'block';
+                msgEl.style.color = 'var(--text-secondary)';
+                msgEl.textContent = '⏳ Đang nạp tệp vào bộ nhớ RAM...';
+            }
             if (file) {
                 try {
                     cachedEpubArrayBuffer = await readFileAsArrayBuffer(file);
+                    if (msgEl) {
+                        msgEl.style.color = '#10b981';
+                        msgEl.innerHTML = `✅ Tệp đã nạp vào bộ nhớ RAM thành công (${(file.size / (1024 * 1024)).toFixed(2)} MB). Sẵn sàng đăng!`;
+                    }
                     console.log('EPUB pre-loaded successfully.');
                 } catch (err) {
                     console.error('Failed to pre-load EPUB:', err);
+                    if (msgEl) {
+                        msgEl.style.color = '#ef4444';
+                        msgEl.innerHTML = `❌ Lỗi đọc tệp: ${err.message}. Vui lòng thử lại hoặc dùng trình duyệt khác.`;
+                    }
                 }
             } else {
                 cachedEpubArrayBuffer = null;
+                if (msgEl) msgEl.style.display = 'none';
             }
         });
     }
@@ -239,15 +256,30 @@
     if (pdfFileInput) {
         pdfFileInput.addEventListener('change', async () => {
             const file = pdfFileInput.files[0];
+            const msgEl = document.getElementById('pdf-status-msg');
+            if (msgEl) {
+                msgEl.style.display = 'block';
+                msgEl.style.color = 'var(--text-secondary)';
+                msgEl.textContent = '⏳ Đang nạp tệp vào bộ nhớ RAM...';
+            }
             if (file) {
                 try {
                     cachedPdfArrayBuffer = await readFileAsArrayBuffer(file);
+                    if (msgEl) {
+                        msgEl.style.color = '#10b981';
+                        msgEl.innerHTML = `✅ Tệp đã nạp vào bộ nhớ RAM thành công (${(file.size / (1024 * 1024)).toFixed(2)} MB). Sẵn sàng đăng!`;
+                    }
                     console.log('PDF pre-loaded successfully.');
                 } catch (err) {
                     console.error('Failed to pre-load PDF:', err);
+                    if (msgEl) {
+                        msgEl.style.color = '#ef4444';
+                        msgEl.innerHTML = `❌ Lỗi đọc tệp: ${err.message}. Vui lòng thử lại hoặc dùng trình duyệt khác.`;
+                    }
                 }
             } else {
                 cachedPdfArrayBuffer = null;
+                if (msgEl) msgEl.style.display = 'none';
             }
         });
     }
