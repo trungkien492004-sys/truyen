@@ -208,6 +208,41 @@
     const smartContinueBox = document.getElementById('smart-continue-box');
     const smartContinueInfo = document.getElementById('smart-continue-info');
 
+    let cachedEpubArrayBuffer = null;
+    let cachedPdfArrayBuffer = null;
+
+    if (epubFileInput) {
+        epubFileInput.addEventListener('change', async () => {
+            const file = epubFileInput.files[0];
+            if (file) {
+                try {
+                    cachedEpubArrayBuffer = await file.arrayBuffer();
+                    console.log('EPUB pre-loaded successfully.');
+                } catch (err) {
+                    console.error('Failed to pre-load EPUB:', err);
+                }
+            } else {
+                cachedEpubArrayBuffer = null;
+            }
+        });
+    }
+
+    if (pdfFileInput) {
+        pdfFileInput.addEventListener('change', async () => {
+            const file = pdfFileInput.files[0];
+            if (file) {
+                try {
+                    cachedPdfArrayBuffer = await file.arrayBuffer();
+                    console.log('PDF pre-loaded successfully.');
+                } catch (err) {
+                    console.error('Failed to pre-load PDF:', err);
+                }
+            } else {
+                cachedPdfArrayBuffer = null;
+            }
+        });
+    }
+
     function toggleForms() {
         const m = document.querySelector('input[name="publish_method"]:checked').value;
         formManual.style.display = m === 'manual' ? 'block' : 'none';
@@ -526,7 +561,7 @@
     // Đọc file EPUB (thực chất là 1 file ZIP) bằng JSZip, lấy đúng thứ tự chương qua "spine" trong content.opf,
     // tách thẻ HTML lấy text và ảnh, rồi tài sử dụng splitTextIntoChapters giống hệt PDF.
     async function extractEpubFullText(file, submitBtn) {
-        const arrayBuffer = await file.arrayBuffer();
+        const arrayBuffer = cachedEpubArrayBuffer || await file.arrayBuffer();
         const zip = await JSZip.loadAsync(arrayBuffer);
  
         // 1. Đọc META-INF/container.xml để tìm đường dẫn tới file content.opf
@@ -664,7 +699,7 @@
                     return;
                 }
 
-                const arrayBuffer = await file.arrayBuffer();
+                const arrayBuffer = cachedPdfArrayBuffer || await file.arrayBuffer();
                 const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
                 let fullText = '';
                 
