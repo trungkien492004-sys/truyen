@@ -87,7 +87,7 @@
         <!-- CHỌN PHƯƠNG THỨC ĐĂNG -->
         <div class="form-group" style="margin-bottom: 2rem;">
             <label>Phương thức đăng chương *</label>
-            <div style="display: flex; gap: 2rem; margin-top: 0.5rem; background: var(--bg-primary); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color);">
+            <div style="display: flex; gap: 1.5rem; flex-wrap: wrap; margin-top: 0.5rem; background: var(--bg-primary); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color);">
                 <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 500;">
                     <input type="radio" name="publish_method" value="manual" checked>
                     Đăng thủ công (Nhập tay / Chèn HTML)
@@ -95,6 +95,14 @@
                 <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 500;">
                     <input type="radio" name="publish_method" value="bulk">
                     Tải tệp tin tự động (.txt, .docx)
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 500;">
+                    <input type="radio" name="publish_method" value="pdf">
+                    📕 Tải PDF (tách chương)
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 500;">
+                    <input type="radio" name="publish_method" value="epub">
+                    📗 Tải EPUB (tách chương)
                 </label>
             </div>
         </div>
@@ -142,6 +150,32 @@
                 <label for="include_images_edit" style="margin: 0; font-size: 0.9rem; font-weight: normal; cursor: pointer; color: var(--text-primary);">
                     Tải ảnh nhúng trong file Word lên hệ thống (Bỏ tích nếu chỉ muốn lấy chữ)
                 </label>
+            </div>
+        </div>
+
+        <!-- KHỐI FORM 3: UPLOAD PDF TỰ ĐỘNG TÁCH CHƯƠNG -->
+        <div id="form-pdf" style="display: none;">
+            <div style="background: rgba(239, 68, 68, 0.07); border-left: 4px solid #ef4444; padding: 1rem; border-radius: 0 8px 8px 0; margin-bottom: 1.5rem; font-size: 0.9rem; line-height: 1.8;">
+                <strong>📕 Hướng dẫn upload PDF tự động tách chương:</strong><br>
+                • Hệ thống sẽ đọc nội dung PDF và <b>tự động tách thành nhiều chương riêng biệt</b>.<br>
+                • Nhận diện đầu chương qua các từ khóa đầu dòng: <code>Chương 1</code>, <code>Chapter 5</code>...
+            </div>
+            <div class="form-group">
+                <label for="pdffile">Chọn file PDF *</label>
+                <input type="file" id="pdffile" name="pdffile" accept=".pdf">
+            </div>
+        </div>
+
+        <!-- KHỐI FORM 4: UPLOAD EPUB TỰ ĐỘNG TÁCH CHƯƠNG -->
+        <div id="form-epub" style="display: none;">
+            <div style="background: rgba(16, 185, 129, 0.07); border-left: 4px solid #10b981; padding: 1rem; border-radius: 0 8px 8px 0; margin-bottom: 1.5rem; font-size: 0.9rem; line-height: 1.8;">
+                <strong>📗 Hướng dẫn upload EPUB tự động tách chương:</strong><br>
+                • Hệ thống sẽ đọc toàn bộ nội dung sách EPUB và <b>tự động tách thành nhiều chương riêng biệt</b>.<br>
+                • Tải hình ảnh tự động lên Supabase.
+            </div>
+            <div class="form-group">
+                <label for="epubfile">Chọn file EPUB *</label>
+                <input type="file" id="epubfile" name="epubfile" accept=".epub">
             </div>
         </div>
 
@@ -214,6 +248,11 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+</script>
 
 <script>
     // Hiển thị tên tệp ảnh khi được chọn mới
@@ -233,32 +272,31 @@
     const methodRadios = document.querySelectorAll('input[name="publish_method"]');
     const formManual = document.getElementById('form-manual');
     const formBulk = document.getElementById('form-bulk');
+    const formPdf = document.getElementById('form-pdf');
+    const formEpub = document.getElementById('form-epub');
     
-    // Các trường bắt buộc cho manual
+    // Các trường bắt buộc
     const chapNumInput = document.getElementById('chapter_number');
     const chapTitleInput = document.getElementById('title');
     const chapContentInput = document.getElementById('content');
     const bulkFileInput = document.getElementById('txtfile');
+    const pdfFileInput = document.getElementById('pdffile');
+    const epubFileInput = document.getElementById('epubfile');
 
     function toggleForms() {
         const selectedMethod = document.querySelector('input[name="publish_method"]:checked').value;
-        if (selectedMethod === 'manual') {
-            formManual.style.display = 'block';
-            formBulk.style.display = 'none';
-            // Cập nhật thuộc tính required
-            if (chapNumInput) chapNumInput.required = true;
-            if (chapTitleInput) chapTitleInput.required = true;
-            if (chapContentInput) chapContentInput.required = true;
-            if (bulkFileInput) bulkFileInput.required = false;
-        } else {
-            formManual.style.display = 'none';
-            formBulk.style.display = 'block';
-            // Cập nhật thuộc tính required
-            if (chapNumInput) chapNumInput.required = false;
-            if (chapTitleInput) chapTitleInput.required = false;
-            if (chapContentInput) chapContentInput.required = false;
-            if (bulkFileInput) bulkFileInput.required = true;
-        }
+        
+        formManual.style.display = selectedMethod === 'manual' ? 'block' : 'none';
+        formBulk.style.display   = selectedMethod === 'bulk'   ? 'block' : 'none';
+        formPdf.style.display    = selectedMethod === 'pdf'    ? 'block' : 'none';
+        formEpub.style.display   = selectedMethod === 'epub'   ? 'block' : 'none';
+
+        if (chapNumInput) chapNumInput.required = selectedMethod === 'manual';
+        if (chapTitleInput) chapTitleInput.required = selectedMethod === 'manual';
+        if (chapContentInput) chapContentInput.required = selectedMethod === 'manual';
+        if (bulkFileInput) bulkFileInput.required = selectedMethod === 'bulk';
+        if (pdfFileInput) pdfFileInput.required = selectedMethod === 'pdf';
+        if (epubFileInput) epubFileInput.required = selectedMethod === 'epub';
     }
 
     methodRadios.forEach(radio => {
@@ -267,6 +305,203 @@
 
     // Chạy khi khởi động trang
     toggleForms();
+
+    // Caching variables and FileReader helper
+    function readFileAsArrayBuffer(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = () => reject(reader.error || new Error('Không thể đọc tệp tin.'));
+            reader.readAsArrayBuffer(file);
+        });
+    }
+
+    let cachedEpubArrayBuffer = null;
+    let cachedPdfArrayBuffer = null;
+
+    if (epubFileInput) {
+        epubFileInput.addEventListener('change', async () => {
+            const file = epubFileInput.files[0];
+            if (file) {
+                try {
+                    cachedEpubArrayBuffer = await readFileAsArrayBuffer(file);
+                    console.log('EPUB pre-loaded successfully.');
+                } catch (err) {
+                    console.error('Failed to pre-load EPUB:', err);
+                }
+            } else {
+                cachedEpubArrayBuffer = null;
+            }
+        });
+    }
+
+    if (pdfFileInput) {
+        pdfFileInput.addEventListener('change', async () => {
+            const file = pdfFileInput.files[0];
+            if (file) {
+                try {
+                    cachedPdfArrayBuffer = await readFileAsArrayBuffer(file);
+                    console.log('PDF pre-loaded successfully.');
+                } catch (err) {
+                    console.error('Failed to pre-load PDF:', err);
+                }
+            } else {
+                cachedPdfArrayBuffer = null;
+            }
+        });
+    }
+
+    // EPUB helper functions
+    function resolveRelativePath(basePath, relativePath) {
+        const parts = basePath.split('/');
+        parts.pop();
+        const relParts = relativePath.split('/');
+        for (const part of relParts) {
+            if (part === '.') continue;
+            if (part === '..') {
+                parts.pop();
+            } else {
+                parts.push(part);
+            }
+        }
+        return parts.join('/');
+    }
+
+    async function extractTextAndImages(doc, zip, xhtmlPath, submitBtn) {
+        let result = '';
+        async function traverse(node) {
+            if (node.nodeType === 3) {
+                result += node.nodeValue;
+            } else if (node.nodeType === 1) {
+                const tagName = node.tagName.toLowerCase();
+                if (tagName === 'style' || tagName === 'script') return;
+                
+                if (tagName === 'img') {
+                    const src = node.getAttribute('src');
+                    if (src) {
+                        try {
+                            const resolvedPath = resolveRelativePath(xhtmlPath, src);
+                            const imgFile = zip.file(resolvedPath) || zip.file(decodeURIComponent(resolvedPath));
+                            if (imgFile) {
+                                const ext = resolvedPath.split('.').pop().toLowerCase();
+                                const mimeType = ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg' : ext === 'gif' ? 'image/gif' : 'image/png';
+                                submitBtn.textContent = `⏳ Đang tải ảnh ${resolvedPath} lên Supabase...`;
+                                const blob = await imgFile.async('blob');
+                                const publicUrl = await uploadBlobToSupabase(blob, mimeType);
+                                result += `\n<img src="${publicUrl}" alt="Ảnh minh họa" style="max-width:100%; display:block; margin:1rem auto; border-radius:8px;">\n`;
+                            }
+                        } catch (err) {
+                            console.error('Lỗi xử lý ảnh trong EPUB:', err);
+                        }
+                    }
+                    return;
+                }
+                if (tagName === 'image' && node.getAttribute('xlink:href')) {
+                    const href = node.getAttribute('xlink:href');
+                    try {
+                        const resolvedPath = resolveRelativePath(xhtmlPath, href);
+                        const imgFile = zip.file(resolvedPath) || zip.file(decodeURIComponent(resolvedPath));
+                        if (imgFile) {
+                            const ext = resolvedPath.split('.').pop().toLowerCase();
+                            const mimeType = ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg' : ext === 'gif' ? 'image/gif' : 'image/png';
+                            submitBtn.textContent = `⏳ Đang tải ảnh ${resolvedPath} lên Supabase...`;
+                            const blob = await imgFile.async('blob');
+                            const publicUrl = await uploadBlobToSupabase(blob, mimeType);
+                            result += `\n<img src="${publicUrl}" alt="Ảnh minh họa" style="max-width:100%; display:block; margin:1rem auto; border-radius:8px;">\n`;
+                        }
+                    } catch (err) {
+                        console.error('Lỗi xử lý ảnh SVG trong EPUB:', err);
+                    }
+                    return;
+                }
+                for (const child of node.childNodes) {
+                    await traverse(child);
+                }
+                if (['p', 'div', 'br', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'tr'].includes(tagName)) {
+                    result += '\n';
+                }
+            }
+        }
+        await traverse(doc.body || doc.documentElement);
+        return result;
+    }
+
+    async function extractEpubFullText(file, submitBtn) {
+        const arrayBuffer = cachedEpubArrayBuffer || await readFileAsArrayBuffer(file);
+        const zip = await JSZip.loadAsync(arrayBuffer);
+        const containerXmlFile = zip.file('META-INF/container.xml');
+        if (!containerXmlFile) throw new Error('File EPUB thiếu container.xml');
+        const containerXml = await containerXmlFile.async('string');
+        const opfPathMatch = containerXml.match(/full-path="([^"]+)"/);
+        if (!opfPathMatch) throw new Error('Không tìm thấy content.opf');
+        const opfPath = opfPathMatch[1];
+        const opfDir = opfPath.includes('/') ? opfPath.substring(0, opfPath.lastIndexOf('/') + 1) : '';
+
+        const opfFile = zip.file(opfPath);
+        if (!opfFile) throw new Error('Không đọc được content.opf');
+        const opfXml = await opfFile.async('string');
+        const manifest = {};
+        const manifestRegex = /<item\s+[^>]*id="([^"]+)"[^>]*href="([^"]+)"[^>]*\/?>/g;
+        let mm;
+        while ((mm = manifestRegex.exec(opfXml)) !== null) {
+            manifest[mm[1]] = mm[2];
+        }
+        const manifestRegex2 = /<item\s+[^>]*href="([^"]+)"[^>]*id="([^"]+)"[^>]*\/?>/g;
+        while ((mm = manifestRegex2.exec(opfXml)) !== null) {
+            manifest[mm[2]] = mm[1];
+        }
+
+        const spineIds = [];
+        const spineRegex = /<itemref\s+[^>]*idref="([^"]+)"/g;
+        let sm;
+        while ((sm = spineRegex.exec(opfXml)) !== null) {
+            spineIds.push(sm[1]);
+        }
+        const orderedHrefs = spineIds.map(id => manifest[id]).filter(Boolean);
+        if (orderedHrefs.length === 0) throw new Error('Không đọc được spine trong EPUB.');
+
+        let fullText = '';
+        for (let i = 0; i < orderedHrefs.length; i++) {
+            submitBtn.textContent = `⏳ Đang đọc phần ${i + 1}/${orderedHrefs.length} của EPUB...`;
+            const href = orderedHrefs[i];
+            const fullHref = (opfDir + href).replace(/\\/g, '/');
+            const zipFile = zip.file(fullHref) || zip.file(decodeURIComponent(fullHref));
+            if (!zipFile) continue;
+
+            const xhtml = await zipFile.async('string');
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(xhtml, 'text/html');
+            const bodyText = await extractTextAndImages(doc, zip, fullHref, submitBtn);
+            fullText += bodyText.replace(/\n{2,}/g, '\n').trim() + '\n';
+        }
+        return fullText;
+    }
+
+    // Helper to strip lone surrogates
+    function stripLoneSurrogates(str) {
+        if (!str) return str;
+        return str
+            .replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]/g, '')
+            .replace(/\u0000/g, '')
+            .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '');
+    }
+
+    function extractPageTextByLines(textContent) {
+        const items = textContent.items;
+        if (items.length === 0) return '';
+        const lineMap = new Map();
+        for (const item of items) {
+            const y = Math.round(item.transform[5]);
+            if (!lineMap.has(y)) lineMap.set(y, []);
+            lineMap.get(y).push(item);
+        }
+        const sortedYs = Array.from(lineMap.keys()).sort((a, b) => b - a);
+        const lines = sortedYs.map(y => {
+            const lineItems = lineMap.get(y).sort((a, b) => a.transform[4] - b.transform[4]);
+            return lineItems.map(it => it.str).join('').trim();
+        });
+        return stripLoneSurrogates(lines.filter(l => l.length > 0).join('\n'));
+    }
 
     // INTERCEPT FORM SUBMIT ĐĂNG CHƯƠNG ĐỂ XỬ LÝ PHÍA TRÌNH DUYỆT (TRÁNH LỖI VERCEL 4.5MB PAYLOAD)
     const chapterForm = document.querySelector('form[action="/admin/chapter/add"]');
@@ -352,68 +587,93 @@
     if (chapterForm) {
         chapterForm.addEventListener('submit', async (e) => {
             const selectedMethod = document.querySelector('input[name="publish_method"]:checked').value;
-            if (selectedMethod === 'bulk') {
+            if (selectedMethod === 'bulk' || selectedMethod === 'pdf' || selectedMethod === 'epub') {
                 e.preventDefault();
-
+ 
                 const submitBtn = chapterForm.querySelector('button[type="submit"]');
                 const originalBtnText = submitBtn.textContent;
                 submitBtn.disabled = true;
-                submitBtn.textContent = '⏳ Đang xử lý file và tải ảnh lên...';
-
+ 
                 try {
                     const storyId = chapterForm.querySelector('input[name="story_id"]').value;
                     const redirectTo = chapterForm.querySelector('input[name="redirect_to"]').value;
-                    const files = bulkFileInput.files;
-                    if (!files || files.length === 0) {
-                        alert('Vui lòng chọn tệp tin truyện.');
-                        submitBtn.disabled = false;
-                        submitBtn.textContent = originalBtnText;
-                        return;
-                    }
-
-                    const processedFiles = [];
-
-                    for (let file of files) {
-                        const isDocx = file.name.endsWith('.docx');
-                        if (isDocx) {
-                            const arrayBuffer = await file.arrayBuffer();
-                            const result = await mammoth.convertToHtml({ arrayBuffer: arrayBuffer });
-                            let html = result.value;
-
-                            const parser = new DOMParser();
-                            const doc = parser.parseFromString(html, 'text/html');
-                            const imgs = doc.querySelectorAll('img');
-                            const includeImages = document.getElementById('include_images_edit').checked;
-
-                            if (includeImages) {
-                                if (imgs.length > 0) {
-                                    submitBtn.textContent = `⏳ Đang tải ${imgs.length} ảnh trong file lên Supabase...`;
-                                }
-                                for (let img of imgs) {
-                                    const src = img.getAttribute('src');
-                                    if (src && src.startsWith('data:')) {
-                                        const blob = dataURLtoBlob(src);
-                                        const publicUrl = await uploadBlobToSupabase(blob, blob.type);
-                                        img.setAttribute('src', publicUrl);
-                                    }
-                                }
-                            } else {
-                                imgs.forEach(img => img.remove());
-                            }
-
-                            html = doc.body.innerHTML;
-                            processedFiles.push({
-                                name: file.name,
-                                type: 'docx',
-                                content: html
-                            });
-                        } else {
-                            const text = await file.text();
-                            const splitted = splitTextIntoChapters(text, file.name);
-                            processedFiles.push(...splitted);
+                    let processedFiles = [];
+ 
+                    if (selectedMethod === 'bulk') {
+                        submitBtn.textContent = '⏳ Đang xử lý file và tải ảnh lên...';
+                        const files = bulkFileInput.files;
+                        if (!files || files.length === 0) {
+                            alert('Vui lòng chọn tệp tin truyện.');
+                            submitBtn.disabled = false;
+                            submitBtn.textContent = originalBtnText;
+                            return;
                         }
+                        for (let file of files) {
+                            const isDocx = file.name.endsWith('.docx');
+                            if (isDocx) {
+                                const arrayBuffer = await readFileAsArrayBuffer(file);
+                                const result = await mammoth.convertToHtml({ arrayBuffer: arrayBuffer });
+                                let html = result.value;
+                                const parser = new DOMParser();
+                                const doc = parser.parseFromString(html, 'text/html');
+                                const imgs = doc.querySelectorAll('img');
+                                const includeImages = document.getElementById('include_images_edit').checked;
+ 
+                                if (includeImages) {
+                                    if (imgs.length > 0) {
+                                        submitBtn.textContent = `⏳ Đang tải ${imgs.length} ảnh trong file lên Supabase...`;
+                                    }
+                                    for (let img of imgs) {
+                                        const src = img.getAttribute('src');
+                                        if (src && src.startsWith('data:')) {
+                                            const blob = dataURLtoBlob(src);
+                                            const publicUrl = await uploadBlobToSupabase(blob, blob.type);
+                                            img.setAttribute('src', publicUrl);
+                                        }
+                                    }
+                                } else {
+                                    imgs.forEach(img => img.remove());
+                                }
+                                html = doc.body.innerHTML;
+                                processedFiles.push({ name: file.name, type: 'docx', content: html });
+                            } else {
+                                const text = await file.text();
+                                const splitted = splitTextIntoChapters(text, file.name);
+                                processedFiles.push(...splitted);
+                            }
+                        }
+                    } else if (selectedMethod === 'pdf') {
+                        submitBtn.textContent = '⏳ Đang đọc PDF trên trình duyệt...';
+                        const file = pdfFileInput.files[0];
+                        if (!file) {
+                            alert('Vui lòng chọn file PDF.');
+                            submitBtn.disabled = false;
+                            submitBtn.textContent = originalBtnText;
+                            return;
+                        }
+                        const arrayBuffer = cachedPdfArrayBuffer || await readFileAsArrayBuffer(file);
+                        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                        let fullText = '';
+                        for (let i = 1; i <= pdf.numPages; i++) {
+                            submitBtn.textContent = `⏳ Đang đọc trang ${i}/${pdf.numPages}...`;
+                            const page = await pdf.getPage(i);
+                            const textContent = await page.getTextContent();
+                            fullText += extractPageTextByLines(textContent) + '\n';
+                        }
+                        processedFiles = splitTextIntoChapters(fullText, file.name);
+                    } else if (selectedMethod === 'epub') {
+                        submitBtn.textContent = '⏳ Đang đọc EPUB trên trình duyệt...';
+                        const file = epubFileInput.files[0];
+                        if (!file) {
+                            alert('Vui lòng chọn file EPUB.');
+                            submitBtn.disabled = false;
+                            submitBtn.textContent = originalBtnText;
+                            return;
+                        }
+                        const fullText = await extractEpubFullText(file, submitBtn);
+                        processedFiles = splitTextIntoChapters(fullText, file.name.replace(/\.epub$/i, '.pdf'));
                     }
-
+ 
                     await uploadInBatches(storyId, processedFiles, submitBtn);
                     window.location.href = redirectTo + '?success=' + encodeURIComponent(`Đã tải lên ${processedFiles.length} chương thành công`);
 
