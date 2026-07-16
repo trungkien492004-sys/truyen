@@ -223,6 +223,82 @@ async function uploadToSupabase(file, bucketName = 'uploads') {
   return publicUrl;
 }
 
+// Hàm lấy danh sách BXH tác giả theo tổng lượt xem
+async function fetchTopAuthors(limitCount = 20) {
+  try {
+    const { data: stories, error: storyErr } = await supabase
+      .from('stories')
+      .select('id, title, author');
+        
+    if (storyErr) {
+      console.error('Lỗi lấy danh sách truyện cho BXH tác giả:', storyErr);
+      return [];
+    }
+    
+    const { data: views, error: viewErr } = await supabase
+      .from('story_views')
+      .select('story_id');
+        
+    if (viewErr) {
+      console.error('Lỗi lấy lượt xem cho BXH tác giả:', viewErr);
+      return [];
+    }
+    
+    const storyViews = {};
+    views.forEach(v => {
+      storyViews[v.story_id] = (storyViews[v.story_id] || 0) + 1;
+    });
+    
+    const authorMap = {};
+    stories.forEach(s => {
+      const author = s.author ? s.author.trim() : '';
+      if (!author || 
+          author === 'Ẩn danh' || 
+          author.toLowerCase() === 'an danh' || 
+          author === 'Đang cập nhật' || 
+          author.toLowerCase() === 'dang cap nhat') {
+        return;
+      }
+      
+      const viewsCount = storyViews[s.id] || 0;
+      
+      if (!authorMap[author]) {
+        authorMap[author] = {
+          author: author,
+          totalViews: 0,
+          stories: []
+        };
+      }
+      
+      authorMap[author].totalViews += viewsCount;
+      authorMap[author].stories.push({
+        title: s.title,
+        views: viewsCount
+      });
+    });
+    
+    const leaderboard = Object.values(authorMap).map(a => {
+      let hottestStory = null;
+      if (a.stories.length > 0) {
+        a.stories.sort((x, y) => y.views - x.views);
+        hottestStory = a.stories[0];
+      }
+      return {
+        author: a.author,
+        totalViews: a.totalViews,
+        story_count: a.stories.length,
+        hottestStoryName: hottestStory ? hottestStory.title : 'N/A',
+        hottestStoryViews: hottestStory ? hottestStory.views : 0
+      };
+    }).sort((x, y) => y.totalViews - x.totalViews);
+    
+    return leaderboard.slice(0, limitCount);
+  } catch (e) {
+    console.error('Lỗi trong fetchTopAuthors:', e);
+    return [];
+  }
+}
+
 // TRANG CHỦ & BẢNG XẾP HẠNG
 router.get('/', async (req, res) => {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
@@ -320,13 +396,7 @@ router.get('/', async (req, res) => {
     }
 
     // 3g. Lấy top tác giả
-    let topAuthors = [];
-    try {
-      const { data: authorsData } = await supabase.from('top_authors').select('*');
-      if (authorsData) topAuthors = authorsData;
-    } catch (e) {
-      console.error('Lỗi lấy top tác giả:', e);
-    }
+    const topAuthors = await fetchTopAuthors(5);
 
     // 3h. Lấy các sự kiện "Đột Phá Cảnh Giới" xảy ra trong hôm nay, để hiện banner công khai trên trang chủ
     let rankUpEventsToday = [];
@@ -477,6 +547,27 @@ router.get('/search', async (req, res) => {
 
     if (sort === 'most_chapters') {
       stories = stories.sort((a, b) => b.chapter_count - a.chapter_count);
+    } else if (sort === 'view_daily' || sort === 'view_monthly' || sort === 'view_all') {
+      let viewQuery = supabase.from('story_views').select('story_id');
+      if (sort === 'view_daily') {
+        const dailyStart = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+        viewQuery = viewQuery.gte('created_at', dailyStart);
+      } else if (sort === 'view_monthly') {
+        const monthlyStart = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+        viewQuery = viewQuery.gte('created_at', monthlyStart);
+      }
+      const { data: viewsData } = await viewQuery;
+      const viewCounts = {};
+      if (viewsData) {
+        viewsData.forEach(v => {
+          viewCounts[v.story_id] = (viewCounts[v.story_id] || 0) + 1;
+        });
+      }
+      stories = stories.sort((a, b) => {
+        const vA = viewCounts[a.id] || 0;
+        const vB = viewCounts[b.id] || 0;
+        return vB - vA;
+      });
     }
 
     res.render('home', {
@@ -1480,9 +1571,7 @@ router.get('/leaderboard', async (req, res) => {
     const { data: readers } = await supabase.from('leaderboard_by_exp').select('*').order('chapters_read', { ascending: false }).order('exp', { ascending: false }).limit(20);
     const leaderboard = readers || [];
     
-    let topAuthors = [];
-    const { data: authorsData } = await supabase.from('top_authors').select('*').limit(20);
-    if (authorsData) topAuthors = authorsData;
+    const topAuthors = await fetchTopAuthors(20);
 
     res.render('leaderboard', {
       title: 'Bảng xếp hạng',

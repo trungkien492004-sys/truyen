@@ -840,6 +840,9 @@
             <option value="oldest" <%= (typeof filters !== 'undefined' && filters.sort === 'oldest') ? 'selected' : '' %>>Cũ nhất</option>
             <option value="most_chapters" <%= (typeof filters !== 'undefined' && filters.sort === 'most_chapters') ? 'selected' : '' %>>Nhiều chương nhất</option>
             <option value="title_az" <%= (typeof filters !== 'undefined' && filters.sort === 'title_az') ? 'selected' : '' %>>Tên A-Z</option>
+            <option value="view_daily" <%= (typeof filters !== 'undefined' && filters.sort === 'view_daily') ? 'selected' : '' %>>Lượt xem: Hôm nay</option>
+            <option value="view_monthly" <%= (typeof filters !== 'undefined' && filters.sort === 'view_monthly') ? 'selected' : '' %>>Lượt xem: Tháng này</option>
+            <option value="view_all" <%= (typeof filters !== 'undefined' && filters.sort === 'view_all') ? 'selected' : '' %>>Lượt xem: Mọi thời điểm</option>
         </select>
 
         <button type="submit" class="btn btn-secondary" style="font-size: 0.85rem;">Lọc nâng cao</button>

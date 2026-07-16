@@ -97,13 +97,14 @@
                 <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-secondary); font-weight: bold;">
                     <th style="padding: 1rem 0.8rem; text-align: center; width: 80px;">Hạng</th>
                     <th style="padding: 1rem 0.8rem;">Tác giả</th>
-                    <th style="padding: 1rem 0.8rem; text-align: right;">Số lượng truyện</th>
+                    <th style="padding: 1rem 0.8rem; text-align: center;">Truyện hot nhất</th>
+                    <th style="padding: 1rem 0.8rem; text-align: right;">Tổng lượt xem</th>
                 </tr>
             </thead>
             <tbody>
                 <% if (typeof topAuthors === 'undefined' || topAuthors.length === 0) { %>
                     <tr>
-                        <td colspan="3" style="padding: 2rem; text-align: center; color: var(--text-secondary);">Chưa có dữ liệu tác giả nào.</td>
+                        <td colspan="4" style="padding: 2rem; text-align: center; color: var(--text-secondary);">Chưa có dữ liệu tác giả nào.</td>
                     </tr>
                 <% } else { %>
                     <% topAuthors.forEach((author, index) => { %>
@@ -122,8 +123,12 @@
                             <td style="padding: 1rem 0.8rem; font-weight: 600; color: var(--text-primary);">
                                 <%= author.author %>
                             </td>
+                            <td style="padding: 1rem 0.8rem; text-align: center; color: var(--text-secondary); font-size: 0.88rem;">
+                                <strong><%= author.hottestStoryName %></strong>
+                                <span style="font-size: 0.75rem; color: var(--accent-color); margin-left: 0.3rem;">(<%= author.hottestStoryViews %> view)</span>
+                            </td>
                             <td style="padding: 1rem 0.8rem; text-align: right; font-weight: bold; color: var(--accent-color);">
-                                <%= author.story_count %>
+                                <%= author.totalViews.toLocaleString('vi-VN') %>
                             </td>
                         </tr>
                     <% }) %>
