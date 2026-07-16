@@ -80,7 +80,7 @@
                             <div style="display: flex; gap: 0.5rem; align-items: center;">
                                 <a href="/story/<%= story.id %>" class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" target="_blank">Xem</a>
                                 <a href="/admin/story/edit/<%= story.id %>" class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.2); color: var(--accent-color);">Sửa</a>
-                                <% if (user && user.role === 'admin') { %>
+                                <% if (user && (user.role === 'admin' || user.role === 'sp_admin')) { %>
                                 <form action="/admin/story/delete/<%= story.id %>" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn xóa bộ truyện này không? Tất cả các chương truyện, lượt đọc và thể loại liên kết của bộ truyện này sẽ bị xóa vĩnh viễn!');" style="display: inline; margin: 0;">
                                     <button type="submit" class="btn btn-danger" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; border-radius: 4px;">Xóa</button>
                                 </form>

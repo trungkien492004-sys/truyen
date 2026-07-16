@@ -1098,8 +1098,8 @@ router.post('/story/edit/:id', upload.single('cover'), async (req, res) => {
   }
 });
 
-// THỰC HIỆN XÓA TRUYỆN (VÀ CÁC THÔNG TIN LIÊN QUAN CASCADE) - Chỉ admin thực sự mới được xóa
-router.post('/story/delete/:id', isFullAdmin, async (req, res) => {
+// THỰC HIỆN XÓA TRUYỆN (VÀ CÁC THÔNG TIN LIÊN QUAN CASCADE) - Cho phép Admin và SP Admin xóa
+router.post('/story/delete/:id', isAdmin, async (req, res) => {
   const storyId = parseInt(req.params.id);
   try {
     const { error } = await supabase
