@@ -1258,7 +1258,7 @@ router.post('/comment/:id/delete', async (req, res) => {
     }
     
     const isOwner = comment.user_id === req.user.id;
-    const isAdmin = req.user.role === 'admin';
+    const isAdmin = req.user.role === 'admin' || req.user.role === 'sp_admin';
     
     if (!isOwner && !isAdmin) {
       return res.status(403).json({ success: false, error: 'Bạn không có quyền xóa bình luận này.' });

@@ -283,7 +283,7 @@
                                     💬 Trả lời
                                 </button>
                             <% } %>
-                            <% if (typeof user !== 'undefined' && user && (user.id === comment.user_id || user.role === 'admin')) { %>
+                            <% if (typeof user !== 'undefined' && user && (user.id === comment.user_id || user.role === 'admin' || user.role === 'sp_admin')) { %>
                                 <button onclick="deleteComment(<%= comment.id %>)" style="background: none; border: none; color: #ef4444; cursor: pointer; padding: 0; font-size: 0.8rem; display: flex; align-items: center; gap: 0.2rem;">
                                     🗑️ Xóa
                                 </button>
@@ -330,7 +330,7 @@
                                                 <button onclick="likeComment(<%= reply.id %>)" class="like-btn" style="background: none; border: none; color: <%= reply.user_liked ? 'var(--accent-color)' : 'var(--text-secondary)' %>; cursor: pointer; display: flex; align-items: center; gap: 0.2rem; font-size: 0.75rem; padding: 0;">
                                                     ❤️ <span class="likes-count"><%= reply.likes_count %></span> Thích
                                                 </button>
-                                                <% if (typeof user !== 'undefined' && user && (user.id === reply.user_id || user.role === 'admin')) { %>
+                                                <% if (typeof user !== 'undefined' && user && (user.id === reply.user_id || user.role === 'admin' || user.role === 'sp_admin')) { %>
                                                     <button onclick="deleteComment(<%= reply.id %>)" style="background: none; border: none; color: #ef4444; cursor: pointer; padding: 0; font-size: 0.75rem; display: flex; align-items: center; gap: 0.2rem;">
                                                         🗑️ Xóa
                                                     </button>

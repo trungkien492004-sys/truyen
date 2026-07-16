@@ -35,6 +35,8 @@
                     <span style="font-size: 0.85rem; background: rgba(99, 102, 241, 0.15); color: var(--accent-color); padding: 0.3rem 0.8rem; border-radius: 12px; font-weight: 600; border: 1px solid rgba(99, 102, 241, 0.3);"><%= stats.badge %></span>
                     <% if (targetUser.role === 'admin') { %>
                         <span style="font-size: 0.85rem; background: rgba(245, 158, 11, 0.15); color: #f59e0b; padding: 0.3rem 0.8rem; border-radius: 12px; font-weight: 600; border: 1px solid rgba(245, 158, 11, 0.3);">👑 Quản trị viên</span>
+                    <% } else if (targetUser.role === 'sp_admin') { %>
+                        <span style="font-size: 0.85rem; background: rgba(245, 158, 11, 0.15); color: #f59e0b; padding: 0.3rem 0.8rem; border-radius: 12px; font-weight: 600; border: 1px solid rgba(245, 158, 11, 0.3);">👑 Sp Admin</span>
                     <% } %>
                     <span style="font-size: 0.85rem; background: rgba(239, 68, 68, 0.1); color: #ef4444; padding: 0.3rem 0.8rem; border-radius: 12px; font-weight: 600; border: 1px solid rgba(239, 68, 68, 0.2);" title="Streak đọc sách">🔥 <%= stats.streak %> Ngày Streak</span>
                 </div>
@@ -105,8 +107,8 @@
                 <div style="display: flex; flex-direction: column; gap: 0.8rem; font-size: 0.92rem;">
                     <div>
                         <span style="color: var(--text-secondary);">Vai trò:</span>
-                        <strong style="margin-left: 0.4rem; color: <%= targetUser.role === 'admin' ? '#f59e0b' : 'var(--text-primary)' %>">
-                            <%= targetUser.role === 'admin' ? 'Quản trị viên' : 'Độc giả' %>
+                        <strong style="margin-left: 0.4rem; color: <%= (targetUser.role === 'admin' || targetUser.role === 'sp_admin') ? '#f59e0b' : 'var(--text-primary)' %>">
+                            <%= targetUser.role === 'admin' ? 'Quản trị viên' : targetUser.role === 'sp_admin' ? 'Sp Admin' : 'Độc giả' %>
                         </strong>
                     </div>
                     <div>
