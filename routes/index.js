@@ -707,16 +707,33 @@ router.get('/story/:story_id/chapter/:chapter_number', async (req, res) => {
       return res.status(404).send('Không tìm thấy chương truyện.');
     }
 
-    // 3. Ghi nhận lượt xem (Views) vào bảng story_views và chương truyện
-    // Bấm xem chương nào thì chèn 1 bản ghi với story_id của truyện đó (không đồng bộ, không block trang)
-    supabase.from('story_views').insert([{ story_id: storyId }]).then(({ error }) => {
-      if (error) console.error('Lỗi khi ghi nhận views truyện:', error);
-    });
+    // 3. Ghi nhận lượt xem (Views) có chống buff ảo
+    const ipAddress = req.headers['x-forwarded-for'] || req.ip || 'unknown';
+    const cooldownTime = new Date(Date.now() - 15 * 60 * 1000).toISOString();
 
-    // Tăng lượt xem cho chương truyện cụ thể
-    supabase.rpc('increment_chapter_views', { chap_id: chapter.id }).then(({ error }) => {
-      if (error) console.error('Lỗi khi ghi nhận views chương:', error);
-    });
+    supabase
+      .from('story_views')
+      .select('id')
+      .eq('story_id', storyId)
+      .eq('ip_address', ipAddress)
+      .gt('created_at', cooldownTime)
+      .limit(1)
+      .then(({ data: existingViews, error: checkError }) => {
+        if (checkError) {
+          console.error('Lỗi kiểm tra cooldown views:', checkError);
+          return;
+        }
+
+        if (!existingViews || existingViews.length === 0) {
+          supabase.from('story_views').insert([{ story_id: storyId, ip_address: ipAddress }]).then(({ error }) => {
+            if (error) console.error('Lỗi khi ghi nhận views truyện:', error);
+          });
+
+          supabase.rpc('increment_chapter_views', { chap_id: chapter.id }).then(({ error }) => {
+            if (error) console.error('Lỗi khi ghi nhận views chương:', error);
+          });
+        }
+      });
 
     // 3b. Lưu lịch sử đọc (tiến độ đọc gần nhất) nếu người dùng đã đăng nhập
     if (req.user && req.user.id) {
