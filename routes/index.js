@@ -599,20 +599,43 @@ router.get('/search', async (req, res) => {
           viewCounts[c.story_id] = (viewCounts[c.story_id] || 0) + (c.views || 0);
         });
       } else {
-        let viewQuery = supabase.from('story_views').select('story_id');
-        if (viewSort === 'daily') {
-          const dailyStart = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-          viewQuery = viewQuery.gte('created_at', dailyStart);
-        } else if (viewSort === 'monthly') {
-          const monthlyStart = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-          viewQuery = viewQuery.gte('created_at', monthlyStart);
+        let viewsData = [];
+        let page = 0;
+        const limit = 1000;
+        let hasMore = true;
+        while (hasMore) {
+          let viewQuery = supabase
+            .from('story_views')
+            .select('story_id')
+            .range(page * limit, (page + 1) * limit - 1);
+            
+          if (viewSort === 'daily') {
+            const dailyStart = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+            viewQuery = viewQuery.gte('created_at', dailyStart);
+          } else if (viewSort === 'monthly') {
+            const monthlyStart = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+            viewQuery = viewQuery.gte('created_at', monthlyStart);
+          }
+          
+          const { data: batch, error: viewErr } = await viewQuery;
+          if (viewErr) {
+            console.error('Lỗi query story_views trong search:', viewErr);
+            break;
+          }
+          if (!batch || batch.length === 0) {
+            hasMore = false;
+          } else {
+            viewsData = viewsData.concat(batch);
+            if (batch.length < limit) {
+              hasMore = false;
+            } else {
+              page++;
+            }
+          }
         }
-        const { data: viewsData } = await viewQuery;
-        if (viewsData) {
-          viewsData.forEach(v => {
-            viewCounts[v.story_id] = (viewCounts[v.story_id] || 0) + 1;
-          });
-        }
+        viewsData.forEach(v => {
+          viewCounts[v.story_id] = (viewCounts[v.story_id] || 0) + 1;
+        });
       }
 
       stories = stories.sort((a, b) => {
