@@ -269,13 +269,13 @@ async function parseSingleFileToChapter(file, storyId) {
   let plainText = '';
 
   if (isEpub) {
-    // Đọc EPUB (zip) từ buffer trong bộ nhớ, ghép toàn bộ nội dung spine thành plainText
+    // EPUB: mỗi spine item = 1 chương, trả về mảng chương luôn (không cần ghép rồi split)
     try {
       const AdmZip = require('adm-zip');
       const cheerio = require('cheerio');
       const zip = new AdmZip(file.buffer);
 
-      // Đọc container.xml để tìm đường dẫn tới content.opf
+      // Đọc container.xml → tìm content.opf
       const containerEntry = zip.getEntry('META-INF/container.xml');
       if (!containerEntry) throw new Error('EPUB thiếu META-INF/container.xml');
       const containerXml = containerEntry.getData().toString('utf8');
@@ -284,43 +284,87 @@ async function parseSingleFileToChapter(file, storyId) {
       const opfPath = opfPathMatch[1];
       const opfDir = opfPath.includes('/') ? opfPath.substring(0, opfPath.lastIndexOf('/') + 1) : '';
 
-      // Đọc và phân tích content.opf để lấy danh sách spine
+      // Đọc content.opf → lấy manifest + spine
       const opfEntry = zip.getEntry(opfPath);
       if (!opfEntry) throw new Error('Không đọc được content.opf');
       const opfXml = opfEntry.getData().toString('utf8');
       const $opf = cheerio.load(opfXml, { xmlMode: true });
       const manifest = {};
-      $opf('manifest > item, manifest item').each((i, el) => {
+      $opf('manifest item').each((i, el) => {
         const id = $opf(el).attr('id');
         const href = $opf(el).attr('href');
         if (id && href) manifest[id] = href;
       });
       const spineHrefs = [];
-      $opf('spine > itemref, spine itemref').each((i, el) => {
+      $opf('spine itemref').each((i, el) => {
         const idref = $opf(el).attr('idref');
         if (manifest[idref]) spineHrefs.push(manifest[idref]);
       });
 
-      // Ghép nội dung tính văn bản thô từ từng chapter trong spine
-      const textParts = [];
+      // Tạo 1 chương per spine item
+      const epubChapters = [];
       for (const href of spineHrefs) {
         const fullHref = (opfDir + href).replace(/\\/g, '/');
         const entry = zip.getEntry(fullHref) || zip.getEntry(decodeURIComponent(fullHref));
         if (!entry) continue;
         const xhtml = entry.getData().toString('utf8');
         const $ch = cheerio.load(xhtml);
-        // Loại bỏ thẻ script/style trước khi lấy text
         $ch('script, style, nav').remove();
-        const text = $ch('body').text().replace(/\r?\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
-        if (text.length > 10) textParts.push(text);
+
+        // Lấy text thô để kiểm tra có nội dung không
+        const bodyText = $ch('body').text().replace(/\s+/g, ' ').trim();
+        if (bodyText.length < 20) continue; // bỏ qua trang cover/toc/rỗng
+
+        // Trích tiêu đề từ <title>, h1 hoặc h2
+        let chTitle = $ch('title').text().trim()
+          || $ch('h1').first().text().trim()
+          || $ch('h2').first().text().trim()
+          || '';
+        // Loại bỏ tiêu đề trùng với tên truyện (thường là trang bìa/mục lục)
+        if (chTitle) {
+          // Tách số chương khỏi tiêu đề nếu có pattern "Chương X" hoặc "Chapter X"
+          const chapNumMatch = chTitle.match(/(?:Chương|Chapter|Phần|Part)\s*(\d+(?:\.\d+)?)/i);
+          if (chapNumMatch) {
+            const num = parseFloat(chapNumMatch[1]);
+            const subtitle = chTitle.replace(/(?:Chương|Chapter|Phần|Part)\s*\d+(?:\.\d+)?[:\s-]*/i, '').trim();
+            epubChapters.push({
+              story_id: parseInt(storyId),
+              chapter_number: num,
+              title: subtitle || null,
+              content: $ch('body').html() || `<p>${bodyText}</p>`
+            });
+          } else {
+            epubChapters.push({
+              story_id: parseInt(storyId),
+              chapter_number: null, // sẽ được gán tự động sau
+              title: chTitle || null,
+              content: $ch('body').html() || `<p>${bodyText}</p>`
+            });
+          }
+        } else {
+          epubChapters.push({
+            story_id: parseInt(storyId),
+            chapter_number: null,
+            title: null,
+            content: $ch('body').html() || `<p>${bodyText}</p>`
+          });
+        }
       }
-      plainText = textParts.join('\n\n');
+
+      if (epubChapters.length > 0) return epubChapters;
+      // Nếu không tách được chương nào → fallback xuống bên dưới xử lý như txt
+      plainText = '';
+      html = '';
     } catch (epubErr) {
       console.error('Lỗi parse EPUB:', epubErr.message);
-      // Nếu lỗi, fallback về chuỗi rỗng (sẽ được xử lý như 1 chương rỗng)
       plainText = '';
+      html = '';
     }
-    html = plainText.split('\n').map(l => l.trim()).filter(l => l.length > 0).map(l => `<p>${l}</p>`).join('');
+    // Nếu fallback (không có chương nào)
+    if (!plainText && !html) {
+      return [{ story_id: parseInt(storyId), chapter_number: null, title: file.originalname, content: '<p>Không thể đọc nội dung EPUB.</p>' }];
+    }
+
   } else if (isDocx) {
     const options = {
       convertImage: mammoth.images.inline(function(element) {

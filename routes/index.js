@@ -1579,11 +1579,10 @@ router.get('/profile', async (req, res) => {
     const ownedItems = (inventory || []).map(i => i.shop_items).filter(Boolean);
 
     // Tính toán Rank (Hạng trên BXH Độc Giả)
-    // Đếm song song: (1) người có chapters_read nhiều hơn, +
-    //                  (2) người có chapters_read bằng nhưng exp cao hơn
+    // View leaderboard_by_exp dùng cột 'id' (không phải 'user_id')
     const [rankAbove, rankTied] = await Promise.all([
-      supabase.from('leaderboard_by_exp').select('user_id', { count: 'exact', head: true }).gt('chapters_read', chaptersCount),
-      supabase.from('leaderboard_by_exp').select('user_id', { count: 'exact', head: true }).eq('chapters_read', chaptersCount).gt('exp', exp)
+      supabase.from('leaderboard_by_exp').select('id', { count: 'exact', head: true }).gt('chapters_read', chaptersCount),
+      supabase.from('leaderboard_by_exp').select('id', { count: 'exact', head: true }).eq('chapters_read', chaptersCount).gt('exp', exp)
     ]);
     const userRank = (rankAbove.count !== null && rankTied.count !== null)
       ? rankAbove.count + rankTied.count + 1
@@ -1914,11 +1913,10 @@ router.get('/user/:id', async (req, res) => {
     const chaptersRead = statsData ? (statsData.chapters_read || 0) : 0;
 
     // Tính toán Rank (Hạng trên BXH Độc Giả)
-    // Đếm song song: (1) người có chapters_read nhiều hơn, +
-    //                  (2) người có chapters_read bằng nhưng exp cao hơn
+    // View leaderboard_by_exp dùng cột 'id' (không phải 'user_id')
     const [rankAbove2, rankTied2] = await Promise.all([
-      supabase.from('leaderboard_by_exp').select('user_id', { count: 'exact', head: true }).gt('chapters_read', chaptersRead),
-      supabase.from('leaderboard_by_exp').select('user_id', { count: 'exact', head: true }).eq('chapters_read', chaptersRead).gt('exp', exp)
+      supabase.from('leaderboard_by_exp').select('id', { count: 'exact', head: true }).gt('chapters_read', chaptersRead),
+      supabase.from('leaderboard_by_exp').select('id', { count: 'exact', head: true }).eq('chapters_read', chaptersRead).gt('exp', exp)
     ]);
     const userRank = (rankAbove2.count !== null && rankTied2.count !== null)
       ? rankAbove2.count + rankTied2.count + 1
