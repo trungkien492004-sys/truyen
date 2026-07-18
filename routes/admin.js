@@ -651,6 +651,11 @@ router.post('/story/add', upload.single('cover'), async (req, res) => {
 // 3. TRANG ĐĂNG CHƯƠNG TRUYỆN MỚI (TÍCH HỢP)
 router.get('/chapter/add', async (req, res) => {
   try {
+    // Ngăn chặn trình duyệt lưu cache trang này
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+
     const { data: stories } = await supabase.from('stories').select('id, title').order('title');
     res.render('admin/add-chapter', {
       title: 'Đăng chương truyện mới',
