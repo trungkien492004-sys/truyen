@@ -27,6 +27,20 @@ function formatContentToHtml(content) {
 // Lấy TOÀN BỘ chapter_number hiện có của 1 truyện, phân trang lấy nhiều lần để không bị giới hạn
 // mặc định 1000 dòng/query của Supabase/PostgREST (bug đã gặp: truyện >1000 chương bị đối chiếu
 // trùng sai vì chỉ lấy được 1000 chương đầu, có nguy cơ upsert đè nhầm dữ liệu chương cũ).
+async function getUserRank(chaptersCount, exp) {
+    // Tính toán Rank (Hạng trên BXH Độc Giả)
+    // Đếm song song: (1) người có chapters_read nhiều hơn, +
+    //                  (2) người có chapters_read bằng nhưng exp cao hơn
+    const [rankAbove, rankTied] = await Promise.all([
+      supabase.from('leaderboard_by_exp').select('user_id', { count: 'exact', head: true }).gt('chapters_read', chaptersCount),
+      supabase.from('leaderboard_by_exp').select('user_id', { count: 'exact', head: true }).eq('chapters_read', chaptersCount).gt('exp', exp)
+    ]);
+    const userRank = (rankAbove.count !== null && rankTied.count !== null)
+      ? rankAbove.count + rankTied.count + 1
+      : '-';
+    return userRank;
+}
+
 async function getAllExistingChapterNumbers(storyId) {
   let all = [];
   const PAGE_SIZE = 1000;
@@ -250,10 +264,64 @@ function splitPlainTextIntoChapters(plainText, storyId) {
 // nhưng nếu bên trong file có TỪ 2 tiêu đề "Chương X" trở lên thì tự động tách thành nhiều chương riêng biệt.
 async function parseSingleFileToChapter(file, storyId) {
   const isDocx = file.originalname.endsWith('.docx') || file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+  const isEpub = file.originalname.toLowerCase().endsWith('.epub') || file.mimetype === 'application/epub+zip';
   let html = '';
   let plainText = '';
 
-  if (isDocx) {
+  if (isEpub) {
+    // Đọc EPUB (zip) từ buffer trong bộ nhớ, ghép toàn bộ nội dung spine thành plainText
+    try {
+      const AdmZip = require('adm-zip');
+      const cheerio = require('cheerio');
+      const zip = new AdmZip(file.buffer);
+
+      // Đọc container.xml để tìm đường dẫn tới content.opf
+      const containerEntry = zip.getEntry('META-INF/container.xml');
+      if (!containerEntry) throw new Error('EPUB thiếu META-INF/container.xml');
+      const containerXml = containerEntry.getData().toString('utf8');
+      const opfPathMatch = containerXml.match(/full-path="([^"]+)"/);
+      if (!opfPathMatch) throw new Error('Không tìm thấy content.opf');
+      const opfPath = opfPathMatch[1];
+      const opfDir = opfPath.includes('/') ? opfPath.substring(0, opfPath.lastIndexOf('/') + 1) : '';
+
+      // Đọc và phân tích content.opf để lấy danh sách spine
+      const opfEntry = zip.getEntry(opfPath);
+      if (!opfEntry) throw new Error('Không đọc được content.opf');
+      const opfXml = opfEntry.getData().toString('utf8');
+      const $opf = cheerio.load(opfXml, { xmlMode: true });
+      const manifest = {};
+      $opf('manifest > item, manifest item').each((i, el) => {
+        const id = $opf(el).attr('id');
+        const href = $opf(el).attr('href');
+        if (id && href) manifest[id] = href;
+      });
+      const spineHrefs = [];
+      $opf('spine > itemref, spine itemref').each((i, el) => {
+        const idref = $opf(el).attr('idref');
+        if (manifest[idref]) spineHrefs.push(manifest[idref]);
+      });
+
+      // Ghép nội dung tính văn bản thô từ từng chapter trong spine
+      const textParts = [];
+      for (const href of spineHrefs) {
+        const fullHref = (opfDir + href).replace(/\\/g, '/');
+        const entry = zip.getEntry(fullHref) || zip.getEntry(decodeURIComponent(fullHref));
+        if (!entry) continue;
+        const xhtml = entry.getData().toString('utf8');
+        const $ch = cheerio.load(xhtml);
+        // Loại bỏ thẻ script/style trước khi lấy text
+        $ch('script, style, nav').remove();
+        const text = $ch('body').text().replace(/\r?\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+        if (text.length > 10) textParts.push(text);
+      }
+      plainText = textParts.join('\n\n');
+    } catch (epubErr) {
+      console.error('Lỗi parse EPUB:', epubErr.message);
+      // Nếu lỗi, fallback về chuỗi rỗng (sẽ được xử lý như 1 chương rỗng)
+      plainText = '';
+    }
+    html = plainText.split('\n').map(l => l.trim()).filter(l => l.length > 0).map(l => `<p>${l}</p>`).join('');
+  } else if (isDocx) {
     const options = {
       convertImage: mammoth.images.inline(function(element) {
         return element.read("base64").then(async function(imageBuffer) {

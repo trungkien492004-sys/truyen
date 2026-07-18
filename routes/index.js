@@ -1579,14 +1579,15 @@ router.get('/profile', async (req, res) => {
     const ownedItems = (inventory || []).map(i => i.shop_items).filter(Boolean);
 
     // Tính toán Rank (Hạng trên BXH Độc Giả)
-    // - Phải đếm số người có thứ hạng cao hơn theo cùng tiêu chí BXH hiển thị:
-    //   1) chapters_read nhiều hơn, HOẶC
-    //   2) chapters_read bằng nhau nhưng exp cao hơn
-    const { count: higherRankCount } = await supabase
-      .from('leaderboard_by_exp')
-      .select('user_id', { count: 'exact', head: true })
-      .or(`chapters_read.gt.${chaptersCount},and(chapters_read.eq.${chaptersCount},exp.gt.${exp})`);
-    const userRank = higherRankCount !== null ? higherRankCount + 1 : '-';
+    // Đếm song song: (1) người có chapters_read nhiều hơn, +
+    //                  (2) người có chapters_read bằng nhưng exp cao hơn
+    const [rankAbove, rankTied] = await Promise.all([
+      supabase.from('leaderboard_by_exp').select('user_id', { count: 'exact', head: true }).gt('chapters_read', chaptersCount),
+      supabase.from('leaderboard_by_exp').select('user_id', { count: 'exact', head: true }).eq('chapters_read', chaptersCount).gt('exp', exp)
+    ]);
+    const userRank = (rankAbove.count !== null && rankTied.count !== null)
+      ? rankAbove.count + rankTied.count + 1
+      : '-';
 
     res.render('profile', {
       title: 'Trang cá nhân của tôi',
@@ -1913,14 +1914,15 @@ router.get('/user/:id', async (req, res) => {
     const chaptersRead = statsData ? (statsData.chapters_read || 0) : 0;
 
     // Tính toán Rank (Hạng trên BXH Độc Giả)
-    // - Phải đếm số người có thứ hạng cao hơn theo cùng tiêu chí BXH hiển thị:
-    //   1) chapters_read nhiều hơn, HOẶC
-    //   2) chapters_read bằng nhau nhưng exp cao hơn
-    const { count: higherRankCount } = await supabase
-      .from('leaderboard_by_exp')
-      .select('user_id', { count: 'exact', head: true })
-      .or(`chapters_read.gt.${chaptersRead},and(chapters_read.eq.${chaptersRead},exp.gt.${exp})`);
-    const userRank = higherRankCount !== null ? higherRankCount + 1 : '-';
+    // Đếm song song: (1) người có chapters_read nhiều hơn, +
+    //                  (2) người có chapters_read bằng nhưng exp cao hơn
+    const [rankAbove2, rankTied2] = await Promise.all([
+      supabase.from('leaderboard_by_exp').select('user_id', { count: 'exact', head: true }).gt('chapters_read', chaptersRead),
+      supabase.from('leaderboard_by_exp').select('user_id', { count: 'exact', head: true }).eq('chapters_read', chaptersRead).gt('exp', exp)
+    ]);
+    const userRank = (rankAbove2.count !== null && rankTied2.count !== null)
+      ? rankAbove2.count + rankTied2.count + 1
+      : '-';
 
     // Tính badge (Cảnh giới / Tu vi) dựa trên chaptersRead
     const { data: rankSettings } = await supabase.from('rank_settings').select('*').order('count', { ascending: false });
