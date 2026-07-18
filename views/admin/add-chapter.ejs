@@ -417,12 +417,11 @@
     }
 
     // Regex tách chương KHÔNG yêu cầu tiêu đề đứng trọn 1 dòng riêng - nhận diện tại bất kỳ vị trí nào trong văn bản.
-    // (Đồng bộ với backend routes/admin.js: nhiều PDF khi trích xuất text bị dính dòng, tiêu đề "Chương X" nằm
-    // liền sát đoạn văn trước/sau, khiến regex kiểu ^...$ cũ chỉ bắt được số ít chương "may mắn" đứng riêng dòng.)
-    const CHAPTER_SPLIT_PATTERN = '(?:^|[\\n\\r]|(?<=[.!?…”"）)\\]]\\s))\\s*(Chương|CHƯƠNG|Chap|CHAP|Chapter|CHAPTER|Phần|PHẦN|Part|PART)\\s*\\.?\\s*(\\d+(?:\\.\\d+)?)\\s*(?:[:.\\-–,]\\s*)?([^\\n\\r]{0,80})?';
+    // (Đồng bộ với backend routes/admin.js)
+    const CHAPTER_SPLIT_PATTERN = /(?:^|[\n\r]|(?<=[.!?…”"）)\]]\s))\s*(Chương|CHƯƠNG|Chap|CHAP|Chapter|CHAPTER|Phần|PHẦN|Part|PART)\s*\.?\s*(\d+(?:\.\d+)?)\s*(?:[:.\-–,]\s*)?([^\n\r]{0,80})?/gi;
 
     function splitTextIntoChapters(rawText, fileName) {
-        const regex = new RegExp(CHAPTER_SPLIT_PATTERN, 'g');
+        const regex = new RegExp(CHAPTER_SPLIT_PATTERN, 'gi');
         const matches = [];
         let m;
         while ((m = regex.exec(rawText)) !== null) {
@@ -697,9 +696,9 @@
 
             // Cách 2: Nếu không dùng headings, nhưng text thô có từ 2 tiêu đề chương trở lên (như Khủng Bố Sống Lại)
             const plainTextForCheck = doc.body ? doc.body.textContent : '';
-            const splitPatternRegex = new RegExp(CHAPTER_SPLIT_PATTERN, 'gi');
+            CHAPTER_SPLIT_PATTERN.lastIndex = 0; // Reset index trước khi dùng
             let matchCount = 0;
-            while (splitPatternRegex.exec(plainTextForCheck) !== null) {
+            while (CHAPTER_SPLIT_PATTERN.exec(plainTextForCheck) !== null) {
                 matchCount++;
             }
             if (matchCount >= 2) {
