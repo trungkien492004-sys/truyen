@@ -1042,7 +1042,28 @@ router.post('/chapter/read-confirm', async (req, res) => {
   }
 
   const elapsedMs = Date.now() - reading.startTime;
-  const requiredMs = 90 * 1000; // 1.5 phút (90 giây)
+  
+  // Truy vấn database để đếm số chữ của chương này
+  let requiredMs = 90 * 1000; // Mặc định 1.5 phút
+  try {
+    const { data: chapterData } = await supabase
+      .from('chapters')
+      .select('content')
+      .eq('story_id', storyId)
+      .eq('chapter_number', chapterNumber)
+      .single();
+
+    if (chapterData && chapterData.content) {
+      // Loại bỏ thẻ HTML trước khi đếm từ
+      const cleanText = chapterData.content.replace(/<[^>]*>/g, ' ').trim();
+      const wordsCount = cleanText.split(/\s+/).filter(w => w.length > 0).length;
+      if (wordsCount < 1500) {
+        requiredMs = 60 * 1000; // Dưới 1500 từ yêu cầu 60 giây
+      }
+    }
+  } catch (err) {
+    console.error('Lỗi khi tính số từ của chương:', err);
+  }
 
   if (elapsedMs < requiredMs) {
     const remainingSeconds = Math.ceil((requiredMs - elapsedMs) / 1000);
