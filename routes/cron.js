@@ -13,10 +13,13 @@ router.get('/daily-reward', async (req, res) => {
             return res.status(401).json({ error: 'Unauthorized' });
         }
 
-        // Lấy Top 100 người dùng theo EXP
+        // Lấy Top 100 người dùng theo thứ tự BXH hiển thị (chapters_read desc, exp desc)
+        // - Phải dùng cùng view và sort order với trang /leaderboard để phần thưởng
+        //   khớp chính xác với thứ hạng người dùng nhìn thấy trên màn hình.
         const { data: topUsers, error: fetchErr } = await supabase
-            .from('user_stats')
+            .from('leaderboard_by_exp')
             .select('user_id, exp')
+            .order('chapters_read', { ascending: false })
             .order('exp', { ascending: false })
             .limit(100);
 
@@ -24,6 +27,7 @@ router.get('/daily-reward', async (req, res) => {
         if (!topUsers || topUsers.length === 0) {
             return res.status(200).json({ message: 'No users found.' });
         }
+
 
         // Cơ cấu giải thưởng
         const getReward = (rank) => {
