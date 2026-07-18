@@ -421,12 +421,12 @@
     const CHAPTER_SPLIT_PATTERN = /(?:^|[\n\r]|(?<=[.!?…”"）)\]]\s))\s*(Chương|CHƯƠNG|Chap|CHAP|Chapter|CHAPTER|Phần|PHẦN|Part|PART)\s*\.?\s*(\d+(?:\.\d+)?)\s*(?:[:.\-–,]\s*)?([^\n\r]{0,80})?/gi;
 
     function splitTextIntoChapters(rawText, fileName) {
-        const regex = new RegExp(CHAPTER_SPLIT_PATTERN, 'gi');
+        CHAPTER_SPLIT_PATTERN.lastIndex = 0; // Reset index
         const matches = [];
         let m;
-        while ((m = regex.exec(rawText)) !== null) {
+        while ((m = CHAPTER_SPLIT_PATTERN.exec(rawText)) !== null) {
             matches.push({ index: m.index, matchedText: m[0], num: parseFloat(m[2]), titleTail: (m[3] || '').trim() });
-            if (m.index === regex.lastIndex) regex.lastIndex++;
+            if (m.index === CHAPTER_SPLIT_PATTERN.lastIndex) CHAPTER_SPLIT_PATTERN.lastIndex++;
         }
 
         if (matches.length === 0) {
