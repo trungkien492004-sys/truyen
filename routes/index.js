@@ -1579,11 +1579,14 @@ router.get('/profile', async (req, res) => {
     const ownedItems = (inventory || []).map(i => i.shop_items).filter(Boolean);
 
     // Tính toán Rank (Hạng trên BXH Độc Giả)
-    const { count: higherExpCount } = await supabase
-      .from('user_stats')
+    // - Phải đếm số người có thứ hạng cao hơn theo cùng tiêu chí BXH hiển thị:
+    //   1) chapters_read nhiều hơn, HOẶC
+    //   2) chapters_read bằng nhau nhưng exp cao hơn
+    const { count: higherRankCount } = await supabase
+      .from('leaderboard_by_exp')
       .select('user_id', { count: 'exact', head: true })
-      .gt('exp', exp);
-    const userRank = higherExpCount !== null ? higherExpCount + 1 : '-';
+      .or(`chapters_read.gt.${chaptersCount},and(chapters_read.eq.${chaptersCount},exp.gt.${exp})`);
+    const userRank = higherRankCount !== null ? higherRankCount + 1 : '-';
 
     res.render('profile', {
       title: 'Trang cá nhân của tôi',
@@ -1910,11 +1913,14 @@ router.get('/user/:id', async (req, res) => {
     const chaptersRead = statsData ? (statsData.chapters_read || 0) : 0;
 
     // Tính toán Rank (Hạng trên BXH Độc Giả)
-    const { count: higherExpCount } = await supabase
-      .from('user_stats')
+    // - Phải đếm số người có thứ hạng cao hơn theo cùng tiêu chí BXH hiển thị:
+    //   1) chapters_read nhiều hơn, HOẶC
+    //   2) chapters_read bằng nhau nhưng exp cao hơn
+    const { count: higherRankCount } = await supabase
+      .from('leaderboard_by_exp')
       .select('user_id', { count: 'exact', head: true })
-      .gt('exp', exp);
-    const userRank = higherExpCount !== null ? higherExpCount + 1 : '-';
+      .or(`chapters_read.gt.${chaptersRead},and(chapters_read.eq.${chaptersRead},exp.gt.${exp})`);
+    const userRank = higherRankCount !== null ? higherRankCount + 1 : '-';
 
     // Tính badge (Cảnh giới / Tu vi) dựa trên chaptersRead
     const { data: rankSettings } = await supabase.from('rank_settings').select('*').order('count', { ascending: false });
