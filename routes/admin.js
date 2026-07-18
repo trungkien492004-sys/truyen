@@ -269,7 +269,6 @@ async function parseSingleFileToChapter(file, storyId) {
   let plainText = '';
 
   if (isEpub) {
-    // EPUB: mỗi spine item = 1 chương, trả về mảng chương luôn (không cần ghép rồi split)
     try {
       const AdmZip = require('adm-zip');
       const cheerio = require('cheerio');
@@ -349,13 +348,27 @@ async function parseSingleFileToChapter(file, storyId) {
         const entry = zip.getEntry(fullHref) || zip.getEntry(decodeURIComponent(fullHref));
         if (!entry) continue;
         const xhtml = entry.getData().toString('utf8');
-          epubChapters.push({
-            story_id: parseInt(storyId),
-            chapter_number: null,
-            title: null,
-            content: $ch('body').html() || `<p>${bodyText}</p>`
-          });
+
+        // Thử tách theo heading "Chương X" trong nội dung
+        const splitResult = splitXhtmlByHeadings(xhtml, storyId);
+        if (splitResult.length >= 2) {
+          epubChapters.push(...splitResult);
+          continue;
         }
+
+        // Fallback: cả spine item = 1 chương
+        const $fb = cheerio.load(xhtml);
+        $fb('script, style, nav').remove();
+        const bodyTextFb = $fb('body').text().replace(/\s+/g, ' ').trim();
+        if (bodyTextFb.length < 20) continue;
+        const chTitleFb = $fb('h1').first().text().trim() || $fb('h2').first().text().trim() || $fb('h3').first().text().trim() || '';
+        const chapNumFb = chTitleFb.match(/chương\s*(\d+(?:\.\d+)?)/i);
+        epubChapters.push({
+          story_id: parseInt(storyId),
+          chapter_number: chapNumFb ? parseFloat(chapNumFb[1]) : null,
+          title: chTitleFb.replace(/chương\s*\d+(?:\.\d+)?[:\s\-–]*/i, '').trim() || null,
+          content: $fb('body').html() || `<p>${bodyTextFb}</p>`
+        });
       }
 
       if (epubChapters.length > 0) return epubChapters;
