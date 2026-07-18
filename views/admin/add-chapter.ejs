@@ -703,10 +703,31 @@
                 title = heading.textContent.trim();
             }
             
+            // Nếu heading rỗng, thử quét trong 300 ký tự đầu tiên của body để tìm số chương
+            const bodyText = doc.body ? doc.body.textContent.trim() : '';
+            let detectedChapterNum = null;
+            if (!title) {
+                const chapNumMatch = bodyText.substring(0, 300).match(/(?:Chương|CHƯƠNG|Chap|CHAP|Chapter|CHAPTER)\s*(\d+(?:\.\d+)?)/i);
+                if (chapNumMatch) {
+                    detectedChapterNum = parseFloat(chapNumMatch[1]);
+                    // Lấy dòng đầu tiên chứa Chương làm tiêu đề nháp
+                    const lines = bodyText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+                    const matchLine = lines.find(l => /(?:Chương|CHƯƠNG|Chap|CHAP|Chapter|CHAPTER)\s*\d+/i.test(l));
+                    if (matchLine) {
+                        title = matchLine;
+                    }
+                }
+            } else {
+                const titleMatch = title.match(/(?:Chương|CHƯƠNG|Chap|CHAP|Chapter|CHAPTER)\s*(\d+(?:\.\d+)?)/i);
+                if (titleMatch) {
+                    detectedChapterNum = parseFloat(titleMatch[1]);
+                }
+            }
+
             // Làm sạch tiêu đề
             if (!title || title.toLowerCase() === 'untitled' || title.toLowerCase().includes('thông tin chung')) {
                 // Bỏ qua các trang metadata hoặc thông tin chung nếu nội dung quá ngắn
-                const bodyTextLength = doc.body.textContent.trim().length;
+                const bodyTextLength = bodyText.length;
                 if (bodyTextLength < 200 && (title.toLowerCase().includes('thông tin chung') || title.toLowerCase().includes('giới thiệu') || title.toLowerCase().includes('mục lục') || title.toLowerCase().includes('tác giả'))) {
                     console.log(`Bỏ qua trang metadata: ${href}`);
                     continue;
@@ -715,8 +736,13 @@
             }
             
             // Trích xuất nội dung HTML (đã giải quyết hình ảnh)
-            const bodyHtml = await extractTextAndImages(doc, zip, fullHref, submitBtn);
+            let bodyHtml = await extractTextAndImages(doc, zip, fullHref, submitBtn);
             
+            // Lọc quảng cáo thichcode
+            bodyHtml = bodyHtml.replace(/<h4[^>]*>\s*Chỉnh sửa\s*:\s*<a[^>]*>.*?<\/a>\s*<\/h4>/gi, '')
+                               .replace(/<h4[^>]*>\s*Chỉnh sửa\s*:\s*truyen\.thichcode\.net\s*<\/h4>/gi, '')
+                               .replace(/<h4[^>]*>\s*Chỉnh sửa\s*:.*?<\/h4>/gi, '');
+
             // Format nội dung thành HTML sạch
             const formattedContent = bodyHtml.split('\n')
                 .filter(line => line.trim().length > 0)
