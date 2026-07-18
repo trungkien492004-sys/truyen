@@ -669,10 +669,16 @@
                         const isNextHeading = ['H1','H2','H3','H4'].includes(next.nodeName.toUpperCase())
                             && /chương\s*\d+/i.test(next.textContent.trim());
                         if (isNextHeading) break;
+                        
                         if (next.nodeType === 1) { // Element node
-                            contentNodes.push(next.outerHTML);
-                        } else if (next.nodeType === 3 && next.textContent.trim()) { // Text node
-                            contentNodes.push(`<p>${next.textContent.trim()}</p>`);
+                            if (next.nodeName.toUpperCase() !== 'BR') {
+                                contentNodes.push(next.outerHTML);
+                            }
+                        } else if (next.nodeType === 3) { // Text node
+                            const txtVal = next.textContent.trim();
+                            if (txtVal) {
+                                contentNodes.push(`<p>${txtVal}</p>`);
+                            }
                         }
                         next = next.nextSibling;
                     }

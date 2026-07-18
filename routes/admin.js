@@ -309,7 +309,7 @@ async function parseSingleFileToChapter(file, storyId) {
 
         // Tìm tất cả heading chứa "Chương X" (h1~h4)
         const chapterHeadings = $('h1, h2, h3, h4').filter((i, el) => {
-          return /chương\s*\d+/i.test($(el).text());
+          return /chương\s*\d+/i.test($(el).text().trim());
         });
 
         if (chapterHeadings.length < 2) return []; // không đủ chương → dùng fallback
@@ -321,15 +321,26 @@ async function parseSingleFileToChapter(file, storyId) {
           const num = chapNumMatch ? parseFloat(chapNumMatch[1]) : null;
           const subtitle = headingText.replace(/chương\s*\d+(?:\.\d+)?[:\s\-–]*/i, '').trim();
 
-          // Lấy tất cả sibling elements SAU heading này cho đến heading tiếp theo
+          // Lấy tất cả sibling elements/text nodes SAU heading này cho đến heading tiếp theo
           const contentNodes = [];
-          let next = headingEl.next;
+          let next = headingEl.nextSibling;
           while (next) {
-            const isNextHeading = ['h1','h2','h3','h4'].includes(next.name)
-              && /chương\s*\d+/i.test($(next).text());
+            const isNextHeading = next.type === 'tag'
+              && ['h1','h2','h3','h4'].includes(next.name)
+              && /chương\s*\d+/i.test($(next).text().trim());
             if (isNextHeading) break;
-            if (next.type === 'tag') contentNodes.push($.html(next));
-            next = next.next;
+
+            if (next.type === 'text') {
+              const txtVal = next.data.trim();
+              if (txtVal) {
+                contentNodes.push(`<p>${txtVal}</p>`);
+              }
+            } else if (next.type === 'tag') {
+              if (next.name !== 'br') {
+                contentNodes.push($.html(next));
+              }
+            }
+            next = next.nextSibling;
           }
 
           const content = contentNodes.join('') || `<p>(Nội dung chương ${num})</p>`;
