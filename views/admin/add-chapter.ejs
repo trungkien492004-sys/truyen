@@ -653,7 +653,7 @@
 
             // Kiểm tra xem file XHTML này có chứa nhiều chương con không (hỗ trợ file EPUB gộp như Hồng Hoang)
             const headings = Array.from(doc.querySelectorAll('h1, h2, h3, h4')).filter(el => {
-                return /chương\s*\d+/i.test(el.textContent);
+                return /chương\s*\d+/i.test(el.textContent.trim());
             });
 
             if (headings.length >= 2) {
@@ -666,8 +666,8 @@
                     const contentNodes = [];
                     let next = headingEl.nextSibling;
                     while (next) {
-                        const isNextHeading = ['H1','H2','H3','H4'].includes(next.nodeName)
-                            && /chương\s*\d+/i.test(next.textContent);
+                        const isNextHeading = ['H1','H2','H3','H4'].includes(next.nodeName.toUpperCase())
+                            && /chương\s*\d+/i.test(next.textContent.trim());
                         if (isNextHeading) break;
                         if (next.nodeType === 1) { // Element node
                             contentNodes.push(next.outerHTML);
