@@ -657,12 +657,11 @@
             });
 
             if (headings.length >= 2) {
-                // Tách nhiều chương từ file đơn lẻ này
+                // Tách nhiều chương từ file đơn lẻ này (dùng headings)
                 for (let hIdx = 0; hIdx < headings.length; hIdx++) {
                     const headingEl = headings[hIdx];
                     const headingText = headingEl.textContent.trim();
                     
-                    // Lấy tất cả sibling elements sau heading này cho đến heading tiếp theo
                     const contentNodes = [];
                     let next = headingEl.nextSibling;
                     while (next) {
@@ -670,11 +669,11 @@
                             && /chương\s*\d+/i.test(next.textContent.trim());
                         if (isNextHeading) break;
                         
-                        if (next.nodeType === 1) { // Element node
+                        if (next.nodeType === 1) {
                             if (next.nodeName.toUpperCase() !== 'BR') {
                                 contentNodes.push(next.outerHTML);
                             }
-                        } else if (next.nodeType === 3) { // Text node
+                        } else if (next.nodeType === 3) {
                             const txtVal = next.textContent.trim();
                             if (txtVal) {
                                 contentNodes.push(`<p>${txtVal}</p>`);
@@ -694,6 +693,28 @@
                     }
                 }
                 continue;
+            }
+
+            // Cách 2: Nếu không dùng headings, nhưng text thô có từ 2 tiêu đề chương trở lên (như Khủng Bố Sống Lại)
+            const plainTextForCheck = doc.body ? doc.body.textContent : '';
+            const splitPatternRegex = new RegExp(CHAPTER_SPLIT_PATTERN, 'gi');
+            let matchCount = 0;
+            while (splitPatternRegex.exec(plainTextForCheck) !== null) {
+                matchCount++;
+            }
+            if (matchCount >= 2) {
+                const subChapters = splitTextIntoChapters(plainTextForCheck, file.name);
+                if (subChapters.length >= 2) {
+                    subChapters.forEach(sc => {
+                        chapters.push({
+                            name: sc.name,
+                            type: 'txt',
+                            content: sc.content
+                        });
+                        chapCount++;
+                    });
+                    continue;
+                }
             }
 
             // Lấy tiêu đề của chương từ h1, h2, h3 hoặc title

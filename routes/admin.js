@@ -307,7 +307,6 @@ async function parseSingleFileToChapter(file, storyId) {
         const $ = cheerio.load(xhtml);
         $('script, style, nav').remove();
 
-        // Tìm tất cả heading chứa "Chương X" (h1~h4)
         const chapterHeadings = $('h1, h2, h3, h4').filter((i, el) => {
           return /chương\s*\d+/i.test($(el).text().trim());
         });
@@ -321,7 +320,6 @@ async function parseSingleFileToChapter(file, storyId) {
           const num = chapNumMatch ? parseFloat(chapNumMatch[1]) : null;
           const subtitle = headingText.replace(/chương\s*\d+(?:\.\d+)?[:\s\-–]*/i, '').trim();
 
-          // Lấy tất cả sibling elements/text nodes SAU heading này cho đến heading tiếp theo
           const contentNodes = [];
           let next = headingEl.nextSibling;
           while (next) {
@@ -360,12 +358,25 @@ async function parseSingleFileToChapter(file, storyId) {
         if (!entry) continue;
         const xhtml = entry.getData().toString('utf8');
 
-        // Thử tách theo heading "Chương X" trong nội dung
-        const splitResult = splitXhtmlByHeadings(xhtml, storyId);
-        if (splitResult.length >= 2) {
-          epubChapters.push(...splitResult);
+        // Thử cách 1: Tách theo các thẻ headings h1-h4
+        const splitHeadingResult = splitXhtmlByHeadings(xhtml, storyId);
+        if (splitHeadingResult.length >= 2) {
+          epubChapters.push(...splitHeadingResult);
           continue;
         }
+
+        // Thử cách 2: Nếu trong text thô có từ 2 từ khóa "Chương X" trở lên (EPUB gộp không dùng heading)
+        const $ch = cheerio.load(xhtml);
+        $ch('script, style, nav').remove();
+        const plainText = $ch('body').text().replace(/\r?\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+        if (countChapterHeaders(plainText) >= 2) {
+          const splitTextResult = splitPlainTextIntoChapters(plainText, storyId);
+          if (splitTextResult.length >= 2) {
+            epubChapters.push(...splitTextResult);
+            continue;
+          }
+        }
+
 
         // Fallback: cả spine item = 1 chương
         const $fb = cheerio.load(xhtml);
