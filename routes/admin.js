@@ -301,47 +301,54 @@ async function parseSingleFileToChapter(file, storyId) {
         if (manifest[idref]) spineHrefs.push(manifest[idref]);
       });
 
-      // Tạo 1 chương per spine item
       const epubChapters = [];
+
+      // Hàm tách 1 xhtml thành nhiều chương theo heading h1-h4 chứa "Chương X"
+      function splitXhtmlByHeadings(xhtml, storyId) {
+        const $ = cheerio.load(xhtml);
+        $('script, style, nav').remove();
+
+        // Tìm tất cả heading chứa "Chương X" (h1~h4)
+        const chapterHeadings = $('h1, h2, h3, h4').filter((i, el) => {
+          return /chương\s*\d+/i.test($(el).text());
+        });
+
+        if (chapterHeadings.length < 2) return []; // không đủ chương → dùng fallback
+
+        const results = [];
+        chapterHeadings.each((i, headingEl) => {
+          const headingText = $(headingEl).text().trim();
+          const chapNumMatch = headingText.match(/chương\s*(\d+(?:\.\d+)?)/i);
+          const num = chapNumMatch ? parseFloat(chapNumMatch[1]) : null;
+          const subtitle = headingText.replace(/chương\s*\d+(?:\.\d+)?[:\s\-–]*/i, '').trim();
+
+          // Lấy tất cả sibling elements SAU heading này cho đến heading tiếp theo
+          const contentNodes = [];
+          let next = headingEl.next;
+          while (next) {
+            const isNextHeading = ['h1','h2','h3','h4'].includes(next.name)
+              && /chương\s*\d+/i.test($(next).text());
+            if (isNextHeading) break;
+            if (next.type === 'tag') contentNodes.push($.html(next));
+            next = next.next;
+          }
+
+          const content = contentNodes.join('') || `<p>(Nội dung chương ${num})</p>`;
+          results.push({
+            story_id: parseInt(storyId),
+            chapter_number: num,
+            title: subtitle || null,
+            content
+          });
+        });
+        return results;
+      }
+
       for (const href of spineHrefs) {
         const fullHref = (opfDir + href).replace(/\\/g, '/');
         const entry = zip.getEntry(fullHref) || zip.getEntry(decodeURIComponent(fullHref));
         if (!entry) continue;
         const xhtml = entry.getData().toString('utf8');
-        const $ch = cheerio.load(xhtml);
-        $ch('script, style, nav').remove();
-
-        // Lấy text thô để kiểm tra có nội dung không
-        const bodyText = $ch('body').text().replace(/\s+/g, ' ').trim();
-        if (bodyText.length < 20) continue; // bỏ qua trang cover/toc/rỗng
-
-        // Trích tiêu đề từ <title>, h1 hoặc h2
-        let chTitle = $ch('title').text().trim()
-          || $ch('h1').first().text().trim()
-          || $ch('h2').first().text().trim()
-          || '';
-        // Loại bỏ tiêu đề trùng với tên truyện (thường là trang bìa/mục lục)
-        if (chTitle) {
-          // Tách số chương khỏi tiêu đề nếu có pattern "Chương X" hoặc "Chapter X"
-          const chapNumMatch = chTitle.match(/(?:Chương|Chapter|Phần|Part)\s*(\d+(?:\.\d+)?)/i);
-          if (chapNumMatch) {
-            const num = parseFloat(chapNumMatch[1]);
-            const subtitle = chTitle.replace(/(?:Chương|Chapter|Phần|Part)\s*\d+(?:\.\d+)?[:\s-]*/i, '').trim();
-            epubChapters.push({
-              story_id: parseInt(storyId),
-              chapter_number: num,
-              title: subtitle || null,
-              content: $ch('body').html() || `<p>${bodyText}</p>`
-            });
-          } else {
-            epubChapters.push({
-              story_id: parseInt(storyId),
-              chapter_number: null, // sẽ được gán tự động sau
-              title: chTitle || null,
-              content: $ch('body').html() || `<p>${bodyText}</p>`
-            });
-          }
-        } else {
           epubChapters.push({
             story_id: parseInt(storyId),
             chapter_number: null,
