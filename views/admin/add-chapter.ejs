@@ -647,6 +647,49 @@
             const parser = new DOMParser();
             const doc = parser.parseFromString(xhtml, 'text/html');
             
+            // Xóa các thẻ không cần thiết
+            const scripts = doc.querySelectorAll('script, style, nav');
+            scripts.forEach(s => s.remove());
+
+            // Kiểm tra xem file XHTML này có chứa nhiều chương con không (hỗ trợ file EPUB gộp như Hồng Hoang)
+            const headings = Array.from(doc.querySelectorAll('h1, h2, h3, h4')).filter(el => {
+                return /chương\s*\d+/i.test(el.textContent);
+            });
+
+            if (headings.length >= 2) {
+                // Tách nhiều chương từ file đơn lẻ này
+                for (let hIdx = 0; hIdx < headings.length; hIdx++) {
+                    const headingEl = headings[hIdx];
+                    const headingText = headingEl.textContent.trim();
+                    
+                    // Lấy tất cả sibling elements sau heading này cho đến heading tiếp theo
+                    const contentNodes = [];
+                    let next = headingEl.nextSibling;
+                    while (next) {
+                        const isNextHeading = ['H1','H2','H3','H4'].includes(next.nodeName)
+                            && /chương\s*\d+/i.test(next.textContent);
+                        if (isNextHeading) break;
+                        if (next.nodeType === 1) { // Element node
+                            contentNodes.push(next.outerHTML);
+                        } else if (next.nodeType === 3 && next.textContent.trim()) { // Text node
+                            contentNodes.push(`<p>${next.textContent.trim()}</p>`);
+                        }
+                        next = next.nextSibling;
+                    }
+
+                    const formattedContent = contentNodes.join('');
+                    if (formattedContent.trim().length > 0) {
+                        chapters.push({
+                            name: `${headingText}.txt`,
+                            type: 'txt',
+                            content: formattedContent
+                        });
+                        chapCount++;
+                    }
+                }
+                continue;
+            }
+
             // Lấy tiêu đề của chương từ h1, h2, h3 hoặc title
             let title = '';
             const heading = doc.querySelector('h1, h2, h3, title');
