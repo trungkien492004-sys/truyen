@@ -7,7 +7,7 @@
 
     <div class="read-header" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 2rem;">
         <div>
-            <h1 class="read-title" style="margin: 0 0 0.5rem 0;">Chương <%= chapter.chapter_number %>: <%= chapter.title %></h1>
+            <h1 class="read-title" style="margin: 0 0 0.5rem 0;">Chương <%= chapter.chapter_number %><% if (chapter.title) { %>: <%= chapter.title %><% } %></h1>
             <p style="color: var(--text-secondary); font-size: 1rem; margin: 0;">Truyện: <strong><%= story.title %></strong></p>
         </div>
         <% if (user && (user.role === 'admin' || user.role === 'sp_admin')) { %>
@@ -40,7 +40,7 @@
                             <% chaptersList.forEach(c => { %>
                                 <% const isActive = c.chapter_number === chapter.chapter_number; %>
                                 <a href="/story/<%= story.id %>/chapter/<%= c.chapter_number %>" data-search="<%= c.chapter_number %> <%= (c.title || '').toLowerCase() %>" style="display: block; padding: 0.5rem 1.2rem; color: <%= isActive ? 'var(--accent-color)' : 'var(--text-primary)' %>; font-size: 0.88rem; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.02); font-weight: <%= isActive ? 'bold' : 'normal' %>; transition: background 0.2s;" class="toc-item <%= isActive ? 'toc-item-active' : '' %>">
-                                    Chương <%= c.chapter_number %>: <%= c.title %>
+                                    Chương <%= c.chapter_number %><% if (c.title) { %>: <%= c.title %><% } %>
                                 </a>
                             <% }) %>
                         </div>
@@ -61,7 +61,7 @@
                                     <% chunk.forEach(c => { %>
                                         <% const isActive = c.chapter_number === chapter.chapter_number; %>
                                         <a href="/story/<%= story.id %>/chapter/<%= c.chapter_number %>" data-search="<%= c.chapter_number %> <%= (c.title || '').toLowerCase() %>" style="display: block; padding: 0.5rem 1.2rem; color: <%= isActive ? 'var(--accent-color)' : 'var(--text-primary)' %>; font-size: 0.88rem; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.02); font-weight: <%= isActive ? 'bold' : 'normal' %>; transition: background 0.2s;" class="toc-item <%= isActive ? 'toc-item-active' : '' %>">
-                                            Chương <%= c.chapter_number %>: <%= c.title %>
+                                            Chương <%= c.chapter_number %><% if (c.title) { %>: <%= c.title %><% } %>
                                         </a>
                                     <% }) %>
                                 </div>
@@ -110,7 +110,7 @@
                     <% chaptersList.forEach(c => { %>
                         <% const isActive = c.chapter_number === chapter.chapter_number; %>
                         <a href="/story/<%= story.id %>/chapter/<%= c.chapter_number %>" data-search="<%= c.chapter_number %> <%= (c.title || '').toLowerCase() %>" style="display: block; padding: 0.65rem 1.2rem; color: <%= isActive ? 'var(--accent-color)' : 'var(--text-primary)' %>; font-size: 0.88rem; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.02); font-weight: <%= isActive ? 'bold' : 'normal' %>; transition: background 0.2s;" class="toc-item <%= isActive ? 'toc-item-active' : '' %>">
-                            Chương <%= c.chapter_number %>: <%= c.title %>
+                            Chương <%= c.chapter_number %><% if (c.title) { %>: <%= c.title %><% } %>
                         </a>
                     <% }) %>
                 </div>
