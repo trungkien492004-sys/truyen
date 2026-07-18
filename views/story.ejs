@@ -163,7 +163,7 @@
                 <% if (chapters.length < 50) { %>
                     <ul class="chapters-list" style="margin-top: 0; padding-top: 0.5rem;">
                         <% chapters.forEach(chapter => { %>
-                            <li class="chapter-item-container" data-search="<%= chapter.chapter_number %> <%= chapter.title.toLowerCase() %>" style="display: flex; align-items: center; gap: 0.5rem; width: 100%;">
+                            <li class="chapter-item-container" data-search="<%= chapter.chapter_number %> <%= (chapter.title || '').toLowerCase() %>" style="display: flex; align-items: center; gap: 0.5rem; width: 100%;">
                                 <a href="/story/<%= story.id %>/chapter/<%= chapter.chapter_number %>" class="chapter-item" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex: 1; min-width: 0;">
                                     <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">
                                         <strong>Chương <%= chapter.chapter_number %></strong><% if (chapter.title) { %>: <%= chapter.title %><% } %>
@@ -195,7 +195,7 @@
                             </summary>
                             <ul class="chapters-list" style="margin-top: 0; padding-top: 0.5rem;">
                                 <% chunk.forEach(chapter => { %>
-                                    <li class="chapter-item-container" data-search="<%= chapter.chapter_number %> <%= chapter.title.toLowerCase() %>" style="display: flex; align-items: center; gap: 0.5rem; width: 100%;">
+                                    <li class="chapter-item-container" data-search="<%= chapter.chapter_number %> <%= (chapter.title || '').toLowerCase() %>" style="display: flex; align-items: center; gap: 0.5rem; width: 100%;">
                                         <a href="/story/<%= story.id %>/chapter/<%= chapter.chapter_number %>" class="chapter-item" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex: 1; min-width: 0;">
                                             <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">
                                                 <strong>Chương <%= chapter.chapter_number %></strong><% if (chapter.title) { %>: <%= chapter.title %><% } %>
@@ -246,30 +246,35 @@
 </style>
 <script>
     function searchChapters(query) {
-        query = query.toLowerCase();
+        query = query.toLowerCase().trim();
         const items = document.querySelectorAll('.chapter-item-container');
         const chunks = document.querySelectorAll('.chapter-chunk');
         
-        // If searching, open all chunks, otherwise just leave them
+        // Mở các phân đoạn nếu đang tìm kiếm
         if (query.length > 0) {
             chunks.forEach(chunk => chunk.setAttribute('open', 'true'));
         }
         
         items.forEach(item => {
-            const text = item.getAttribute('data-search');
+            const text = item.getAttribute('data-search') || '';
             if (text.includes(query)) {
-                item.style.display = 'block';
+                item.style.setProperty('display', 'flex', 'important');
             } else {
-                item.style.display = 'none';
+                item.style.setProperty('display', 'none', 'important');
             }
         });
         
-        // Hide empty chunks
+        // Ẩn phân đoạn rỗng
         chunks.forEach(chunk => {
-            const visibleItems = chunk.querySelectorAll('.chapter-item-container[style="display: block;"]');
             const allItems = chunk.querySelectorAll('.chapter-item-container');
-            // If we are filtering, and no items are visible, hide the chunk
-            if (query.length > 0 && visibleItems.length === 0) {
+            let hasVisible = false;
+            allItems.forEach(item => {
+                if (item.style.display !== 'none') {
+                    hasVisible = true;
+                }
+            });
+            
+            if (query.length > 0 && !hasVisible) {
                 chunk.style.display = 'none';
             } else {
                 chunk.style.display = 'block';
