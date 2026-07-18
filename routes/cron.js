@@ -16,9 +16,10 @@ router.get('/daily-reward', async (req, res) => {
         // Lấy Top 100 người dùng theo thứ tự BXH hiển thị (chapters_read desc, exp desc)
         // - Phải dùng cùng view và sort order với trang /leaderboard để phần thưởng
         //   khớp chính xác với thứ hạng người dùng nhìn thấy trên màn hình.
+        // - View leaderboard_by_exp expose 'id' (= user id), không phải 'user_id'
         const { data: topUsers, error: fetchErr } = await supabase
             .from('leaderboard_by_exp')
-            .select('user_id, exp')
+            .select('id, exp')
             .order('chapters_read', { ascending: false })
             .order('exp', { ascending: false })
             .limit(100);
@@ -27,7 +28,6 @@ router.get('/daily-reward', async (req, res) => {
         if (!topUsers || topUsers.length === 0) {
             return res.status(200).json({ message: 'No users found.' });
         }
-
 
         // Cơ cấu giải thưởng
         const getReward = (rank) => {
@@ -54,7 +54,7 @@ router.get('/daily-reward', async (req, res) => {
             if (rewardExp > 0) {
                 // Chuẩn bị payload thông báo
                 notifications.push({
-                    user_id: user.user_id,
+                    user_id: user.id,
                     message: `Chúc mừng bạn đạt Top ${rank} BXH Độc giả ngày hôm nay! Bạn nhận được ${rewardExp} EXP phần thưởng.`,
                     link: '/leaderboard',
                     is_read: false
@@ -62,12 +62,13 @@ router.get('/daily-reward', async (req, res) => {
 
                 // Chuẩn bị thông tin cập nhật EXP
                 expUpdates.push({
-                    user_id: user.user_id,
+                    user_id: user.id,
                     exp: user.exp + rewardExp,
                     updated_at: new Date().toISOString()
                 });
             }
         }
+
 
         // 1. Lưu tất cả thông báo
         if (notifications.length > 0) {
