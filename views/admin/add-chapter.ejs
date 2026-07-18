@@ -694,15 +694,17 @@
                 continue;
             }
 
+            // Trích xuất nội dung HTML/Text thô chuẩn mực (giữ ký tự xuống dòng \n và giải quyết hình ảnh)
+            let bodyHtml = await extractTextAndImages(doc, zip, fullHref, submitBtn);
+
             // Cách 2: Nếu không dùng headings, nhưng text thô có từ 2 tiêu đề chương trở lên (như Khủng Bố Sống Lại)
-            const plainTextForCheck = doc.body ? doc.body.textContent : '';
             CHAPTER_SPLIT_PATTERN.lastIndex = 0; // Reset index trước khi dùng
             let matchCount = 0;
-            while (CHAPTER_SPLIT_PATTERN.exec(plainTextForCheck) !== null) {
+            while (CHAPTER_SPLIT_PATTERN.exec(bodyHtml) !== null) {
                 matchCount++;
             }
             if (matchCount >= 2) {
-                const subChapters = splitTextIntoChapters(plainTextForCheck, file.name);
+                const subChapters = splitTextIntoChapters(bodyHtml, file.name);
                 if (subChapters.length >= 2) {
                     subChapters.forEach(sc => {
                         chapters.push({
@@ -724,14 +726,13 @@
             }
             
             // Nếu heading rỗng, thử quét trong 300 ký tự đầu tiên của body để tìm số chương
-            const bodyText = doc.body ? doc.body.textContent.trim() : '';
             let detectedChapterNum = null;
             if (!title) {
-                const chapNumMatch = bodyText.substring(0, 300).match(/(?:Chương|CHƯƠNG|Chap|CHAP|Chapter|CHAPTER)\s*(\d+(?:\.\d+)?)/i);
+                const chapNumMatch = bodyHtml.substring(0, 300).match(/(?:Chương|CHƯƠNG|Chap|CHAP|Chapter|CHAPTER)\s*(\d+(?:\.\d+)?)/i);
                 if (chapNumMatch) {
                     detectedChapterNum = parseFloat(chapNumMatch[1]);
                     // Lấy dòng đầu tiên chứa Chương làm tiêu đề nháp
-                    const lines = bodyText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+                    const lines = bodyHtml.split('\n').map(l => l.trim()).filter(l => l.length > 0);
                     const matchLine = lines.find(l => /(?:Chương|CHƯƠNG|Chap|CHAP|Chapter|CHAPTER)\s*\d+/i.test(l));
                     if (matchLine) {
                         title = matchLine;
@@ -747,16 +748,13 @@
             // Làm sạch tiêu đề
             if (!title || title.toLowerCase() === 'untitled' || title.toLowerCase().includes('thông tin chung')) {
                 // Bỏ qua các trang metadata hoặc thông tin chung nếu nội dung quá ngắn
-                const bodyTextLength = bodyText.length;
+                const bodyTextLength = bodyHtml.length;
                 if (bodyTextLength < 200 && (title.toLowerCase().includes('thông tin chung') || title.toLowerCase().includes('giới thiệu') || title.toLowerCase().includes('mục lục') || title.toLowerCase().includes('tác giả'))) {
                     console.log(`Bỏ qua trang metadata: ${href}`);
                     continue;
                 }
                 title = `Chương ${chapCount}`;
             }
-            
-            // Trích xuất nội dung HTML (đã giải quyết hình ảnh)
-            let bodyHtml = await extractTextAndImages(doc, zip, fullHref, submitBtn);
             
             // Lọc quảng cáo thichcode
             bodyHtml = bodyHtml.replace(/<h4[^>]*>\s*Chỉnh sửa\s*:\s*<a[^>]*>.*?<\/a>\s*<\/h4>/gi, '')
