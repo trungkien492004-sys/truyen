@@ -7,7 +7,13 @@
 
     <div class="read-header" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 2rem;">
         <div>
-            <h1 class="read-title" style="margin: 0 0 0.5rem 0;">Chương <%= chapter.chapter_number %><% if (chapter.title) { %>: <%= chapter.title %><% } %></h1>
+            <h1 class="read-title" style="margin: 0 0 0.5rem 0;">
+                <% if (chapter.title && chapter.title.toLowerCase().startsWith('chương')) { %>
+                    <%= chapter.title %>
+                <% } else { %>
+                    Chương <%= chapter.chapter_number %><% if (chapter.title) { %>: <%= chapter.title %><% } %>
+                <% } %>
+            </h1>
             <p style="color: var(--text-secondary); font-size: 1rem; margin: 0;">Truyện: <strong><%= story.title %></strong></p>
         </div>
         <% if (user && (user.role === 'admin' || user.role === 'sp_admin')) { %>
@@ -40,7 +46,11 @@
                             <% chaptersList.forEach(c => { %>
                                 <% const isActive = c.chapter_number === chapter.chapter_number; %>
                                 <a href="/story/<%= story.id %>/chapter/<%= c.chapter_number %>" data-search="<%= c.chapter_number %> <%= (c.title || '').toLowerCase() %>" style="display: block; padding: 0.5rem 1.2rem; color: <%= isActive ? 'var(--accent-color)' : 'var(--text-primary)' %>; font-size: 0.88rem; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.02); font-weight: <%= isActive ? 'bold' : 'normal' %>; transition: background 0.2s;" class="toc-item <%= isActive ? 'toc-item-active' : '' %>">
-                                    Chương <%= c.chapter_number %><% if (c.title) { %>: <%= c.title %><% } %>
+                                    <% if (c.title && c.title.toLowerCase().startsWith('chương')) { %>
+                                        <%= c.title %>
+                                    <% } else { %>
+                                        Chương <%= c.chapter_number %><% if (c.title) { %>: <%= c.title %><% } %>
+                                    <% } %>
                                 </a>
                             <% }) %>
                         </div>
@@ -61,7 +71,11 @@
                                     <% chunk.forEach(c => { %>
                                         <% const isActive = c.chapter_number === chapter.chapter_number; %>
                                         <a href="/story/<%= story.id %>/chapter/<%= c.chapter_number %>" data-search="<%= c.chapter_number %> <%= (c.title || '').toLowerCase() %>" style="display: block; padding: 0.5rem 1.2rem; color: <%= isActive ? 'var(--accent-color)' : 'var(--text-primary)' %>; font-size: 0.88rem; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.02); font-weight: <%= isActive ? 'bold' : 'normal' %>; transition: background 0.2s;" class="toc-item <%= isActive ? 'toc-item-active' : '' %>">
-                                            Chương <%= c.chapter_number %><% if (c.title) { %>: <%= c.title %><% } %>
+                                            <% if (c.title && c.title.toLowerCase().startsWith('chương')) { %>
+                                                <%= c.title %>
+                                            <% } else { %>
+                                                Chương <%= c.chapter_number %><% if (c.title) { %>: <%= c.title %><% } %>
+                                            <% } %>
                                         </a>
                                     <% }) %>
                                 </div>
@@ -254,9 +268,9 @@
                             </div>
                         </a>
                         <% if (comment.users && comment.users.equipped_badge) { %>
-                            <div style="display: flex; flex-direction: column; align-items: center; margin-top: -6px; z-index: 2; line-height: 1.1;">
-                                <span class="game-title <%= getTitleRarityClass(comment.users.equipped_badge) %>" style="font-size: 0.5rem; padding: 2px 12px; transform: scale(0.65); white-space: nowrap;"><%= comment.users.equipped_badge %></span>
-                                <span style="font-size: 0.45rem; letter-spacing: 1px; text-shadow: 0 0 2px rgba(255,255,255,0.3); transform: scale(0.65); margin-top: -6px;"><%= getStarsByChapters(comment.users.user_stats ? comment.users.user_stats.chapters_read : 0) %></span>
+                            <div style="display: flex; flex-direction: column; align-items: center; margin-top: 4px; z-index: 2; line-height: 1.1;">
+                                <span class="game-title <%= getTitleRarityClass(comment.users.equipped_badge) %>" style="white-space: nowrap; font-size: 0.55rem !important; padding: 2px 8px !important; animation: none !important; transform: none !important; height: auto !important; width: max-content !important;"><%= comment.users.equipped_badge %></span>
+                                <span style="font-size: 0.45rem; color: #ffd700; letter-spacing: 1px; text-shadow: 0 0 2px rgba(255,255,255,0.3); margin-top: 2px;"><%= getStarsByChapters(comment.users.user_stats ? comment.users.user_stats.chapters_read : 0) %></span>
                             </div>
                         <% } %>
                     </div>
@@ -309,9 +323,9 @@
                                                 </div>
                                             </a>
                                             <% if (reply.users && reply.users.equipped_badge) { %>
-                                                <div style="display: flex; flex-direction: column; align-items: center; margin-top: -6px; z-index: 2; line-height: 1.1;">
-                                                    <span class="game-title <%= getTitleRarityClass(reply.users.equipped_badge) %>" style="font-size: 0.4rem; padding: 2px 10px; transform: scale(0.6); white-space: nowrap;"><%= reply.users.equipped_badge %></span>
-                                                    <span style="font-size: 0.4rem; letter-spacing: 1px; text-shadow: 0 0 2px rgba(255,255,255,0.3); transform: scale(0.6); margin-top: -6px;"><%= getStarsByChapters(reply.users.user_stats ? reply.users.user_stats.chapters_read : 0) %></span>
+                                                <div style="display: flex; flex-direction: column; align-items: center; margin-top: 4px; z-index: 2; line-height: 1.1;">
+                                                    <span class="game-title <%= getTitleRarityClass(reply.users.equipped_badge) %>" style="white-space: nowrap; font-size: 0.45rem !important; padding: 1px 6px !important; animation: none !important; transform: none !important; height: auto !important; width: max-content !important;"><%= reply.users.equipped_badge %></span>
+                                                    <span style="font-size: 0.4rem; color: #ffd700; letter-spacing: 1px; text-shadow: 0 0 2px rgba(255,255,255,0.3); margin-top: 2px;"><%= getStarsByChapters(reply.users.user_stats ? reply.users.user_stats.chapters_read : 0) %></span>
                                                 </div>
                                             <% } %>
                                         </div>
