@@ -997,6 +997,16 @@ router.get('/story/:story_id/chapter/:chapter_number', async (req, res) => {
       console.error('Lỗi lấy bình luận chương:', e);
     }
 
+    // Tính toán thời gian đọc tối thiểu (seconds) để đồng bộ với backend
+    let requiredSeconds = 90;
+    if (chapter && chapter.content) {
+      const cleanText = chapter.content.replace(/<[^>]*>/g, ' ').trim();
+      const wordsCount = cleanText.split(/\s+/).filter(w => w.length > 0).length;
+      if (wordsCount < 1500) {
+        requiredSeconds = 60;
+      }
+    }
+
     res.render('read', {
       title: `Đọc truyện ${story.title} - Chương ${chapter.chapter_number}: ${chapter.title}`,
       user: req.user,
@@ -1005,7 +1015,8 @@ router.get('/story/:story_id/chapter/:chapter_number', async (req, res) => {
       hasPrev: !!prevChapter,
       hasNext: !!nextChapter,
       chaptersList: chaptersList || [],
-      comments
+      comments,
+      requiredSeconds
     });
   } catch (err) {
     console.error('Lỗi đọc chương:', err);

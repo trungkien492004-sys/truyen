@@ -524,12 +524,8 @@
     <% if (typeof user !== 'undefined' && user) { %>
     // Xử lý countdown tính EXP đọc truyện
     (function() {
-        // Đếm số từ trong chương truyện (bỏ thẻ html)
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = `<%- chapter.content.replace(/`/g, '\\`') %>`;
-        const wordsCount = tempDiv.textContent.trim().split(/\s+/).filter(w => w.length > 0).length;
-        
-        let secondsLeft = wordsCount < 1500 ? 60 : 90; // Chương < 1500 từ -> 1 phút, >= 1500 từ -> 1.5 phút
+        // Sử dụng thời gian yêu cầu được cấu hình và tính toán từ backend để tránh lệch giây
+        let secondsLeft = <%= typeof requiredSeconds !== 'undefined' ? requiredSeconds : 90 %>;
         
         const timerSpan = document.getElementById('progress-timer');
         const textSpan = document.getElementById('progress-text');
