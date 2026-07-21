@@ -748,6 +748,42 @@ router.get('/genre/:slug', async (req, res) => {
   }
 });
 
+// LỌC THEO TÁC GIẢ
+router.get('/author/:name', async (req, res) => {
+  const authorName = req.params.name ? req.params.name.trim() : '';
+  try {
+    const { data: genres } = await supabase.from('genres').select('*');
+    
+    // Lấy tất cả truyện của tác giả này (kèm số lượng chương)
+    const { data: rawStories, error } = await supabase
+      .from('stories')
+      .select('*, chapters(count)')
+      .ilike('author', authorName)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    const stories = (rawStories || []).map(s => ({
+      ...s,
+      chapter_count: (s.chapters && s.chapters[0] && s.chapters[0].count) || 0
+    }));
+
+    res.render('home', {
+      title: `Tác giả: ${authorName}`,
+      user: req.user,
+      stories,
+      genres,
+      topDaily: [], topWeekly: [], topMonthly: [], topYearly: [], topBookmarks: [],
+      activeGenre: null,
+      searchQuery: null,
+      filters: { genre: '', status: '', minChapters: '', year: '', sort: 'newest', view_sort: '' }
+    });
+  } catch (err) {
+    console.error('Lỗi lọc theo tác giả:', err);
+    res.status(500).send('Lỗi hệ thống.');
+  }
+});
+
 // RANDOM TRUYỆN ("HÔM NAY ĐỌC GÌ?")
 router.get('/random', async (req, res) => {
   try {

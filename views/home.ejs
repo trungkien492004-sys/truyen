@@ -958,7 +958,7 @@
                             <a href="/story/<%= story.id %>" class="story-title" title="<%= story.title %>">
                                 <%= story.title %>
                             </a>
-                            <span class="story-author">Tác giả: <%= story.author %></span>
+                            <span class="story-author">Tác giả: <a href="/author/<%= encodeURIComponent(story.author || '') %>" style="color: var(--accent-color); text-decoration: none;"><%= story.author %></a></span>
                             <div style="font-size: 0.78rem; color: var(--text-secondary); margin: 0.25rem 0;">
                                 <% if (story.last_chapter_number) { %>
                                     <span style="color: var(--accent-color); font-weight: 600;">Mới: Chương <%= story.last_chapter_number %></span>
@@ -1237,7 +1237,7 @@
                             
                             <div class="ranking-info" style="flex: 1; margin-left: 0.8rem;">
                                 <div class="ranking-title" style="font-weight: 600; font-size: 0.95rem;">
-                                    <%= author.author %>
+                                    <a href="/author/<%= encodeURIComponent(author.author || '') %>" style="color: var(--text-primary); text-decoration: none; transition: color 0.2s;"><%= author.author %></a>
                                 </div>
                                 <div class="ranking-views" style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.2rem;">
                                     📚 <%= author.story_count %> truyện

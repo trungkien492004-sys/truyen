@@ -16,7 +16,7 @@
                 </a>
             <% } %>
         </div>
-        <div class="story-detail-author">Tác giả: <strong><%= story.author %></strong></div>
+        <div class="story-detail-author">Tác giả: <a href="/author/<%= encodeURIComponent(story.author || '') %>" style="color: var(--accent-color); text-decoration: none; font-weight: bold;"><%= story.author %></a></div>
         
         <div class="story-detail-meta" style="margin-bottom: 1.2rem;">
             <!-- Hiển thị thể loại dạng Flexwrap tránh đè chữ -->

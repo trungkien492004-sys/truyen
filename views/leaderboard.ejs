@@ -121,7 +121,7 @@
                                 <% } %>
                             </td>
                             <td style="padding: 1rem 0.8rem; font-weight: 600; color: var(--text-primary);">
-                                <%= author.author %>
+                                <a href="/author/<%= encodeURIComponent(author.author || '') %>" style="color: var(--text-primary); text-decoration: none; hover: underline;"><%= author.author %></a>
                             </td>
                             <td style="padding: 1rem 0.8rem; text-align: center; color: var(--text-secondary); font-size: 0.88rem;">
                                 <strong><%= author.hottestStoryName %></strong>
