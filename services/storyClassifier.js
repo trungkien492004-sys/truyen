@@ -13,12 +13,10 @@ const CACHE_TTL = 15 * 60 * 1000; // 15 phút
  *   - NOVEL: ngược lại (nhiều chữ so với số ảnh)
  */
 function classifyContent(imgCount, textLen) {
-  // Ảnh nhiều, chữ ít so với ảnh -> truyện tranh
-  if (imgCount >= 5 && textLen / Math.max(imgCount, 1) < 800) return 'comic';
-  // Rất ít chữ, dù có hay không có ảnh -> truyện tranh
-  if (textLen < 200) return 'comic';
-  // Còn lại (chủ yếu chữ) -> truyện chữ
-  return 'novel';
+  // Nếu có chữ (cho dù chỉ 1 chữ) -> truyện chữ
+  if (textLen > 0) return 'novel';
+  // Không có chữ nào -> truyện tranh
+  return 'comic';
 }
 
 /**
@@ -144,4 +142,43 @@ async function classifyAndSaveAll() {
   return { success: true, comicCount, novelCount, errorCount, total: stories.length };
 }
 
-module.exports = { getStoryTypesMap, classifyAndSaveAll };
+/**
+ * Lấy danh sách BXH phân loại theo Truyện Tranh hoặc Truyện Chữ
+ */
+async function getTypeRankings(type = 'comic', rankingType = 'daily', limit = 5) {
+  try {
+    const { comicIds, novelIds } = await getStoryTypesMap();
+    const matchedIds = (type === 'comic') ? comicIds : novelIds;
+
+    if (!matchedIds || matchedIds.size === 0) return [];
+
+    let rankData = [];
+    if (rankingType === 'daily') {
+      const { data } = await supabase.from('views_ranking_daily').select('*').order('view_count', { ascending: false });
+      rankData = data || [];
+    } else if (rankingType === 'weekly') {
+      const { data } = await supabase.from('views_ranking_weekly').select('*').order('view_count', { ascending: false });
+      rankData = data || [];
+    } else if (rankingType === 'monthly') {
+      const { data } = await supabase.from('views_ranking_monthly').select('*').order('view_count', { ascending: false });
+      rankData = data || [];
+    } else if (rankingType === 'rated') {
+      const { data } = await supabase.from('views_ranking_rated').select('*');
+      rankData = data || [];
+    } else if (rankingType === 'bookmarks') {
+      const { data } = await supabase.from('stories_bookmarks_count').select('*').order('bookmark_count', { ascending: false });
+      rankData = data || [];
+    } else if (rankingType === 'alltime') {
+      const { data } = await supabase.from('views_ranking_yearly').select('*').order('view_count', { ascending: false });
+      rankData = data || [];
+    }
+
+    const filtered = rankData.filter(item => matchedIds.has(item.id)).slice(0, limit);
+    return filtered;
+  } catch (err) {
+    console.error('Lỗi getTypeRankings:', err);
+    return [];
+  }
+}
+
+module.exports = { getStoryTypesMap, classifyAndSaveAll, getTypeRankings };
