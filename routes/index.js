@@ -358,11 +358,11 @@ router.get('/', async (req, res) => {
     ] = await Promise.all([
       query.order('last_update_at', { ascending: false }).range(fromRange, toRange),
       supabase.from('genres').select('*'),
-      supabase.from('views_ranking_daily').select('*').order('view_count', { ascending: false }).limit(5),
-      supabase.from('views_ranking_weekly').select('*').order('view_count', { ascending: false }).limit(5),
-      supabase.from('views_ranking_monthly').select('*').order('view_count', { ascending: false }).limit(5),
-      supabase.from('views_ranking_yearly').select('*').order('view_count', { ascending: false }).limit(5),
-      supabase.from('views_ranking_rated').select('*').limit(5)
+      supabase.from('views_ranking_daily').select('*').order('view_count', { ascending: false }).limit(100),
+      supabase.from('views_ranking_weekly').select('*').order('view_count', { ascending: false }).limit(100),
+      supabase.from('views_ranking_monthly').select('*').order('view_count', { ascending: false }).limit(100),
+      supabase.from('views_ranking_yearly').select('*').order('view_count', { ascending: false }).limit(100),
+      supabase.from('views_ranking_rated').select('*').limit(100)
     ]);
 
     if (storiesError) throw storiesError;
@@ -378,7 +378,7 @@ router.get('/', async (req, res) => {
     ] = await Promise.allSettled([
       supabase.from('rank_settings').select('*').order('count', { ascending: false }),
       supabase.from('leaderboard_by_exp').select('*').order('chapters_read', { ascending: false }).order('exp', { ascending: false }).limit(10),
-      supabase.from('stories_bookmarks_count').select('*').order('bookmark_count', { ascending: false }).limit(5),
+      supabase.from('stories_bookmarks_count').select('*').order('bookmark_count', { ascending: false }).limit(100),
       supabase.from('banners').select('*').order('created_at', { ascending: false }),
       req.user && req.user.id ? supabase.from('reading_history').select('chapter_number, story_id, stories(title)').eq('user_id', req.user.id).order('updated_at', { ascending: false }).limit(1) : Promise.resolve({ data: null })
     ]);
