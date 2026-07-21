@@ -620,6 +620,44 @@ router.get('/story/add', async (req, res) => {
   }
 });
 
+// API Cào truyện DongHentai thủ công theo slug/url từ Dashboard Admin
+router.post('/story/crawl-manual', async (req, res) => {
+  const { slug } = req.body;
+  if (!slug) {
+    return res.status(400).json({ success: false, error: 'Thiếu slug truyện.' });
+  }
+
+  try {
+    const { crawlSingleDongHentaiManga } = require('../services/donghentaiCrawler');
+    const { resetStoryTypesCache } = require('../services/storyClassifier');
+    
+    // Gọi hàm cào đơn bộ từ crawler
+    await crawlSingleDongHentaiManga(slug.trim());
+    
+    // Reset cache BXH Tranh/Chữ
+    try {
+      resetStoryTypesCache();
+    } catch(e) {}
+
+    // Kiểm tra xem truyện đã cào thành công chưa (lấy tên truyện hoặc check trong DB)
+    const { data: dbStory } = await supabase
+      .from('stories')
+      .select('id, title')
+      .eq('author', 'DongHentai') // hoặc lấy theo title sau khi cào, để đơn giản lấy ID mới nhất
+      .order('id', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    return res.status(200).json({
+      success: true,
+      message: `Đã hoàn tất tiến trình cào truyện "${dbStory ? dbStory.title : slug}" từ DongHentai.`
+    });
+  } catch (err) {
+    console.error('Lỗi cào truyện thủ công:', err);
+    return res.status(500).json({ success: false, error: err.message || 'Lỗi hệ thống.' });
+  }
+});
+
 // THỰC HIỆN ĐĂNG TRUYỆN MỚI
 router.post('/story/add', upload.single('cover'), async (req, res) => {
   const { title, author, description, commissioned_by, genres, status, story_type } = req.body;
