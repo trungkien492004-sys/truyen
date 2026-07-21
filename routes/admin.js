@@ -822,12 +822,16 @@ router.post('/chapter/add', upload.array('txtfile', 100), async (req, res) => {
       successMessage = `Đã tải lên thành công và nhập ${chaptersToInsert.length} chương mới vào hệ thống!`;
     }
 
-    // Ghi vào Supabase (upsert)
-    const { error: upsertErr } = await supabase
-      .from('chapters')
-      .upsert(chaptersToInsert, { onConflict: 'story_id,chapter_number' });
+    // Ghi vào Supabase theo từng lô batch (100 chương/lần) để tránh vượt quá giới hạn payload của Supabase/Vercel
+    const BATCH_SIZE = 100;
+    for (let i = 0; i < chaptersToInsert.length; i += BATCH_SIZE) {
+      const batch = chaptersToInsert.slice(i, i + BATCH_SIZE);
+      const { error: upsertErr } = await supabase
+        .from('chapters')
+        .upsert(batch, { onConflict: 'story_id,chapter_number' });
 
-    if (upsertErr) throw upsertErr;
+      if (upsertErr) throw upsertErr;
+    }
 
     if (req.body.redirect_to) {
       return res.redirect(`${req.body.redirect_to}?success=${encodeURIComponent(successMessage)}`);
