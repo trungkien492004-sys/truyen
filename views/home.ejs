@@ -1024,7 +1024,16 @@
     <% if (!searchQuery && !activeGenre) { %>
         <div style="position: sticky; top: 100px; display: flex; flex-direction: column; gap: 1.5rem;">
             <div class="rankings-container" style="position: relative !important; top: auto !important;">
-                <h3 class="section-title" style="font-size: 1.3rem; margin-bottom: 1rem;">🏆 Bảng Xếp Hạng</h3>
+                
+                <!-- TIÊU ĐỀ + CHUYỂN LOẠI THÔNG MINH -->
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.8rem; flex-wrap: wrap; gap: 0.5rem;">
+                    <h3 class="section-title" style="font-size: 1.25rem; margin: 0; border: none; padding: 0;">🏆 Bảng Xếp Hạng</h3>
+                    <div style="display: flex; gap: 0.2rem; background: rgba(0,0,0,0.3); padding: 0.2rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                        <button class="bxh-type-btn active" onclick="filterBxhType('all')" style="padding: 0.25rem 0.6rem; font-size: 0.72rem; font-weight: 700; border-radius: 5px; border: none; cursor: pointer; background: var(--accent-color); color: white; transition: all 0.2s;">✨ Tất cả</button>
+                        <button class="bxh-type-btn" onclick="filterBxhType('comic')" style="padding: 0.25rem 0.6rem; font-size: 0.72rem; font-weight: 700; border-radius: 5px; border: none; cursor: pointer; background: transparent; color: var(--text-secondary); transition: all 0.2s;">🖼️ Tranh</button>
+                        <button class="bxh-type-btn" onclick="filterBxhType('novel')" style="padding: 0.25rem 0.6rem; font-size: 0.72rem; font-weight: 700; border-radius: 5px; border: none; cursor: pointer; background: transparent; color: var(--text-secondary); transition: all 0.2s;">📄 Chữ</button>
+                    </div>
+                </div>
                 
                 <div class="ranking-tabs">
                     <div class="ranking-tab active" data-tab="daily">Ngày</div>
@@ -1037,110 +1046,155 @@
 
                 <!-- Bảng xếp hạng Ngày -->
                 <div class="ranking-list active" id="top-daily">
-                    <% if (topDaily.length === 0) { %>
-                        <p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; padding: 1rem 0;">Chưa có dữ liệu đọc hôm nay.</p>
-                    <% } else { %>
-                        <% topDaily.slice(0, 5).forEach((item, index) => { %>
-                            <a href="/story/<%= item.id %>" class="ranking-item">
-                                <div class="rank-number"><%= index + 1 %></div>
-                                <img src="<%= item.cover_url %>" alt="<%= item.title %>" class="ranking-cover">
-                                <div class="ranking-info">
-                                    <div class="ranking-title"><%= item.title %></div>
-                                    <div class="ranking-views">👁️ <%= item.view_count %> lượt đọc</div>
-                                </div>
-                            </a>
-                        <% }) %>
-                    <% } %>
+                    <!-- ALL -->
+                    <div class="bxh-subset" data-type="all">
+                        <% if (topDaily.length === 0) { %><p style="font-size: 0.82rem; color: var(--text-secondary); text-align: center; padding: 0.8rem 0;">Chưa có dữ liệu.</p><% } else { %>
+                            <% topDaily.slice(0, 5).forEach((item, index) => { %>
+                                <a href="/story/<%= item.id %>" class="ranking-item"><div class="rank-number"><%= index + 1 %></div><img src="<%= item.cover_url %>" alt="" class="ranking-cover"><div class="ranking-info"><div class="ranking-title"><%= item.title %></div><div class="ranking-views">👁️ <%= item.view_count %></div></div></a>
+                            <% }) %>
+                        <% } %>
+                    </div>
+                    <!-- COMIC -->
+                    <div class="bxh-subset" data-type="comic" style="display:none">
+                        <% if (topComicDaily.length === 0) { %><p style="font-size: 0.82rem; color: var(--text-secondary); text-align: center; padding: 0.8rem 0;">Chưa có dữ liệu truyện tranh.</p><% } else { %>
+                            <% topComicDaily.slice(0, 5).forEach((item, index) => { %>
+                                <a href="/story/<%= item.id %>" class="ranking-item"><div class="rank-number"><%= index + 1 %></div><img src="<%= item.cover_url %>" alt="" class="ranking-cover"><div class="ranking-info"><div class="ranking-title"><%= item.title %></div><div class="ranking-views">👁️ <%= item.view_count %></div></div></a>
+                            <% }) %>
+                        <% } %>
+                    </div>
+                    <!-- NOVEL -->
+                    <div class="bxh-subset" data-type="novel" style="display:none">
+                        <% if (topNovelDaily.length === 0) { %><p style="font-size: 0.82rem; color: var(--text-secondary); text-align: center; padding: 0.8rem 0;">Chưa có dữ liệu truyện chữ.</p><% } else { %>
+                            <% topNovelDaily.slice(0, 5).forEach((item, index) => { %>
+                                <a href="/story/<%= item.id %>" class="ranking-item"><div class="rank-number"><%= index + 1 %></div><img src="<%= item.cover_url %>" alt="" class="ranking-cover"><div class="ranking-info"><div class="ranking-title"><%= item.title %></div><div class="ranking-views">👁️ <%= item.view_count %></div></div></a>
+                            <% }) %>
+                        <% } %>
+                    </div>
                 </div>
 
                 <!-- Bảng xếp hạng Tuần -->
                 <div class="ranking-list" id="top-weekly">
-                    <% if (topWeekly.length === 0) { %>
-                        <p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; padding: 1rem 0;">Chưa có dữ liệu đọc tuần này.</p>
-                    <% } else { %>
-                        <% topWeekly.slice(0, 5).forEach((item, index) => { %>
-                            <a href="/story/<%= item.id %>" class="ranking-item">
-                                <div class="rank-number"><%= index + 1 %></div>
-                                <img src="<%= item.cover_url %>" alt="<%= item.title %>" class="ranking-cover">
-                                <div class="ranking-info">
-                                    <div class="ranking-title"><%= item.title %></div>
-                                    <div class="ranking-views">👁️ <%= item.view_count %> lượt đọc</div>
-                                </div>
-                            </a>
-                        <% }) %>
-                    <% } %>
+                    <div class="bxh-subset" data-type="all">
+                        <% if (topWeekly.length === 0) { %><p style="font-size: 0.82rem; color: var(--text-secondary); text-align: center; padding: 0.8rem 0;">Chưa có dữ liệu.</p><% } else { %>
+                            <% topWeekly.slice(0, 5).forEach((item, index) => { %>
+                                <a href="/story/<%= item.id %>" class="ranking-item"><div class="rank-number"><%= index + 1 %></div><img src="<%= item.cover_url %>" alt="" class="ranking-cover"><div class="ranking-info"><div class="ranking-title"><%= item.title %></div><div class="ranking-views">👁️ <%= item.view_count %></div></div></a>
+                            <% }) %>
+                        <% } %>
+                    </div>
+                    <div class="bxh-subset" data-type="comic" style="display:none">
+                        <% if (topComicWeekly.length === 0) { %><p style="font-size: 0.82rem; color: var(--text-secondary); text-align: center; padding: 0.8rem 0;">Chưa có dữ liệu.</p><% } else { %>
+                            <% topComicWeekly.slice(0, 5).forEach((item, index) => { %>
+                                <a href="/story/<%= item.id %>" class="ranking-item"><div class="rank-number"><%= index + 1 %></div><img src="<%= item.cover_url %>" alt="" class="ranking-cover"><div class="ranking-info"><div class="ranking-title"><%= item.title %></div><div class="ranking-views">👁️ <%= item.view_count %></div></div></a>
+                            <% }) %>
+                        <% } %>
+                    </div>
+                    <div class="bxh-subset" data-type="novel" style="display:none">
+                        <% if (topNovelWeekly.length === 0) { %><p style="font-size: 0.82rem; color: var(--text-secondary); text-align: center; padding: 0.8rem 0;">Chưa có dữ liệu.</p><% } else { %>
+                            <% topNovelWeekly.slice(0, 5).forEach((item, index) => { %>
+                                <a href="/story/<%= item.id %>" class="ranking-item"><div class="rank-number"><%= index + 1 %></div><img src="<%= item.cover_url %>" alt="" class="ranking-cover"><div class="ranking-info"><div class="ranking-title"><%= item.title %></div><div class="ranking-views">👁️ <%= item.view_count %></div></div></a>
+                            <% }) %>
+                        <% } %>
+                    </div>
                 </div>
 
                 <!-- Bảng xếp hạng Tháng -->
                 <div class="ranking-list" id="top-monthly">
-                    <% if (topMonthly.length === 0) { %>
-                        <p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; padding: 1rem 0;">Chưa có dữ liệu đọc tháng này.</p>
-                    <% } else { %>
-                        <% topMonthly.slice(0, 5).forEach((item, index) => { %>
-                            <a href="/story/<%= item.id %>" class="ranking-item">
-                                <div class="rank-number"><%= index + 1 %></div>
-                                <img src="<%= item.cover_url %>" alt="<%= item.title %>" class="ranking-cover">
-                                <div class="ranking-info">
-                                    <div class="ranking-title"><%= item.title %></div>
-                                    <div class="ranking-views">👁️ <%= item.view_count %> lượt đọc</div>
-                                </div>
-                            </a>
-                        <% }) %>
-                    <% } %>
+                    <div class="bxh-subset" data-type="all">
+                        <% if (topMonthly.length === 0) { %><p style="font-size: 0.82rem; color: var(--text-secondary); text-align: center; padding: 0.8rem 0;">Chưa có dữ liệu.</p><% } else { %>
+                            <% topMonthly.slice(0, 5).forEach((item, index) => { %>
+                                <a href="/story/<%= item.id %>" class="ranking-item"><div class="rank-number"><%= index + 1 %></div><img src="<%= item.cover_url %>" alt="" class="ranking-cover"><div class="ranking-info"><div class="ranking-title"><%= item.title %></div><div class="ranking-views">👁️ <%= item.view_count %></div></div></a>
+                            <% }) %>
+                        <% } %>
+                    </div>
+                    <div class="bxh-subset" data-type="comic" style="display:none">
+                        <% if (topComicMonthly.length === 0) { %><p style="font-size: 0.82rem; color: var(--text-secondary); text-align: center; padding: 0.8rem 0;">Chưa có dữ liệu.</p><% } else { %>
+                            <% topComicMonthly.slice(0, 5).forEach((item, index) => { %>
+                                <a href="/story/<%= item.id %>" class="ranking-item"><div class="rank-number"><%= index + 1 %></div><img src="<%= item.cover_url %>" alt="" class="ranking-cover"><div class="ranking-info"><div class="ranking-title"><%= item.title %></div><div class="ranking-views">👁️ <%= item.view_count %></div></div></a>
+                            <% }) %>
+                        <% } %>
+                    </div>
+                    <div class="bxh-subset" data-type="novel" style="display:none">
+                        <% if (topNovelMonthly.length === 0) { %><p style="font-size: 0.82rem; color: var(--text-secondary); text-align: center; padding: 0.8rem 0;">Chưa có dữ liệu.</p><% } else { %>
+                            <% topNovelMonthly.slice(0, 5).forEach((item, index) => { %>
+                                <a href="/story/<%= item.id %>" class="ranking-item"><div class="rank-number"><%= index + 1 %></div><img src="<%= item.cover_url %>" alt="" class="ranking-cover"><div class="ranking-info"><div class="ranking-title"><%= item.title %></div><div class="ranking-views">👁️ <%= item.view_count %></div></div></a>
+                            <% }) %>
+                        <% } %>
+                    </div>
                 </div>
 
                 <!-- Bảng xếp hạng Đánh Giá -->
                 <div class="ranking-list" id="top-rated">
-                    <% if (typeof topRated === 'undefined' || topRated.length === 0) { %>
-                        <p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; padding: 1rem 0;">Chưa có dữ liệu đánh giá.</p>
-                    <% } else { %>
-                        <% topRated.slice(0, 5).forEach((item, index) => { %>
-                            <a href="/story/<%= item.id %>" class="ranking-item">
-                                <div class="rank-number"><%= index + 1 %></div>
-                                <img src="<%= item.cover_url %>" alt="<%= item.title %>" class="ranking-cover">
-                                <div class="ranking-info">
-                                    <div class="ranking-title"><%= item.title %></div>
-                                    <div class="ranking-views" style="color: #fbbf24;">⭐ <%= parseFloat(item.avg_score || 5).toFixed(1) %></div>
-                                </div>
-                            </a>
-                        <% }) %>
-                    <% } %>
+                    <div class="bxh-subset" data-type="all">
+                        <% if (typeof topRated === 'undefined' || topRated.length === 0) { %><p style="font-size: 0.82rem; color: var(--text-secondary); text-align: center; padding: 0.8rem 0;">Chưa có dữ liệu.</p><% } else { %>
+                            <% topRated.slice(0, 5).forEach((item, index) => { %>
+                                <a href="/story/<%= item.id %>" class="ranking-item"><div class="rank-number"><%= index + 1 %></div><img src="<%= item.cover_url %>" alt="" class="ranking-cover"><div class="ranking-info"><div class="ranking-title"><%= item.title %></div><div class="ranking-views" style="color: #fbbf24;">⭐ <%= parseFloat(item.avg_score || 5).toFixed(1) %></div></div></a>
+                            <% }) %>
+                        <% } %>
+                    </div>
+                    <div class="bxh-subset" data-type="comic" style="display:none">
+                        <% if (topComicRated.length === 0) { %><p style="font-size: 0.82rem; color: var(--text-secondary); text-align: center; padding: 0.8rem 0;">Chưa có dữ liệu.</p><% } else { %>
+                            <% topComicRated.slice(0, 5).forEach((item, index) => { %>
+                                <a href="/story/<%= item.id %>" class="ranking-item"><div class="rank-number"><%= index + 1 %></div><img src="<%= item.cover_url %>" alt="" class="ranking-cover"><div class="ranking-info"><div class="ranking-title"><%= item.title %></div><div class="ranking-views" style="color: #fbbf24;">⭐ <%= parseFloat(item.avg_score || 5).toFixed(1) %></div></div></a>
+                            <% }) %>
+                        <% } %>
+                    </div>
+                    <div class="bxh-subset" data-type="novel" style="display:none">
+                        <% if (topNovelRated.length === 0) { %><p style="font-size: 0.82rem; color: var(--text-secondary); text-align: center; padding: 0.8rem 0;">Chưa có dữ liệu.</p><% } else { %>
+                            <% topNovelRated.slice(0, 5).forEach((item, index) => { %>
+                                <a href="/story/<%= item.id %>" class="ranking-item"><div class="rank-number"><%= index + 1 %></div><img src="<%= item.cover_url %>" alt="" class="ranking-cover"><div class="ranking-info"><div class="ranking-title"><%= item.title %></div><div class="ranking-views" style="color: #fbbf24;">⭐ <%= parseFloat(item.avg_score || 5).toFixed(1) %></div></div></a>
+                            <% }) %>
+                        <% } %>
+                    </div>
                 </div>
 
-                <!-- Bảng xếp hạng Theo Dõi (Bookmarks) -->
+                <!-- Bảng xếp hạng Theo Dõi -->
                 <div class="ranking-list" id="top-bookmarks">
-                    <% if (topBookmarks.length === 0) { %>
-                        <p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; padding: 1rem 0;">Chưa có truyện được theo dõi.</p>
-                    <% } else { %>
-                        <% topBookmarks.slice(0, 5).forEach((item, index) => { %>
-                            <a href="/story/<%= item.id %>" class="ranking-item">
-                                <div class="rank-number"><%= index + 1 %></div>
-                                <img src="<%= item.cover_url %>" alt="<%= item.title %>" class="ranking-cover">
-                                <div class="ranking-info">
-                                    <div class="ranking-title"><%= item.title %></div>
-                                    <div class="ranking-views">❤️ <%= item.bookmark_count %> theo dõi</div>
-                                </div>
-                            </a>
-                        <% }) %>
-                    <% } %>
+                    <div class="bxh-subset" data-type="all">
+                        <% if (topBookmarks.length === 0) { %><p style="font-size: 0.82rem; color: var(--text-secondary); text-align: center; padding: 0.8rem 0;">Chưa có dữ liệu.</p><% } else { %>
+                            <% topBookmarks.slice(0, 5).forEach((item, index) => { %>
+                                <a href="/story/<%= item.id %>" class="ranking-item"><div class="rank-number"><%= index + 1 %></div><img src="<%= item.cover_url %>" alt="" class="ranking-cover"><div class="ranking-info"><div class="ranking-title"><%= item.title %></div><div class="ranking-views">❤️ <%= item.bookmark_count %></div></div></a>
+                            <% }) %>
+                        <% } %>
+                    </div>
+                    <div class="bxh-subset" data-type="comic" style="display:none">
+                        <% if (topComicBookmarks.length === 0) { %><p style="font-size: 0.82rem; color: var(--text-secondary); text-align: center; padding: 0.8rem 0;">Chưa có dữ liệu.</p><% } else { %>
+                            <% topComicBookmarks.slice(0, 5).forEach((item, index) => { %>
+                                <a href="/story/<%= item.id %>" class="ranking-item"><div class="rank-number"><%= index + 1 %></div><img src="<%= item.cover_url %>" alt="" class="ranking-cover"><div class="ranking-info"><div class="ranking-title"><%= item.title %></div><div class="ranking-views">❤️ <%= item.bookmark_count %></div></div></a>
+                            <% }) %>
+                        <% } %>
+                    </div>
+                    <div class="bxh-subset" data-type="novel" style="display:none">
+                        <% if (topNovelBookmarks.length === 0) { %><p style="font-size: 0.82rem; color: var(--text-secondary); text-align: center; padding: 0.8rem 0;">Chưa có dữ liệu.</p><% } else { %>
+                            <% topNovelBookmarks.slice(0, 5).forEach((item, index) => { %>
+                                <a href="/story/<%= item.id %>" class="ranking-item"><div class="rank-number"><%= index + 1 %></div><img src="<%= item.cover_url %>" alt="" class="ranking-cover"><div class="ranking-info"><div class="ranking-title"><%= item.title %></div><div class="ranking-views">❤️ <%= item.bookmark_count %></div></div></a>
+                            <% }) %>
+                        <% } %>
+                    </div>
                 </div>
 
                 <!-- Bảng xếp hạng All-Time -->
                 <div class="ranking-list" id="top-alltime">
-                    <% if (topYearly.length === 0) { %>
-                        <p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; padding: 1rem 0;">Chưa có dữ liệu đọc All-Time.</p>
-                    <% } else { %>
-                        <% topYearly.slice(0, 5).forEach((item, index) => { %>
-                            <a href="/story/<%= item.id %>" class="ranking-item">
-                                <div class="rank-number"><%= index + 1 %></div>
-                                <img src="<%= item.cover_url %>" alt="<%= item.title %>" class="ranking-cover">
-                                <div class="ranking-info">
-                                    <div class="ranking-title"><%= item.title %></div>
-                                    <div class="ranking-views">👁️ <%= item.view_count %> lượt đọc</div>
-                                </div>
-                            </a>
-                        <% }) %>
-                    <% } %>
+                    <div class="bxh-subset" data-type="all">
+                        <% if (topYearly.length === 0) { %><p style="font-size: 0.82rem; color: var(--text-secondary); text-align: center; padding: 0.8rem 0;">Chưa có dữ liệu All-Time.</p><% } else { %>
+                            <% topYearly.slice(0, 5).forEach((item, index) => { %>
+                                <a href="/story/<%= item.id %>" class="ranking-item"><div class="rank-number"><%= index + 1 %></div><img src="<%= item.cover_url %>" alt="" class="ranking-cover"><div class="ranking-info"><div class="ranking-title"><%= item.title %></div><div class="ranking-views">👁️ <%= item.view_count %></div></div></a>
+                            <% }) %>
+                        <% } %>
+                    </div>
+                    <div class="bxh-subset" data-type="comic" style="display:none">
+                        <% if (topComicAlltime.length === 0) { %><p style="font-size: 0.82rem; color: var(--text-secondary); text-align: center; padding: 0.8rem 0;">Chưa có dữ liệu.</p><% } else { %>
+                            <% topComicAlltime.slice(0, 5).forEach((item, index) => { %>
+                                <a href="/story/<%= item.id %>" class="ranking-item"><div class="rank-number"><%= index + 1 %></div><img src="<%= item.cover_url %>" alt="" class="ranking-cover"><div class="ranking-info"><div class="ranking-title"><%= item.title %></div><div class="ranking-views">👁️ <%= item.view_count %></div></div></a>
+                            <% }) %>
+                        <% } %>
+                    </div>
+                    <div class="bxh-subset" data-type="novel" style="display:none">
+                        <% if (topNovelAlltime.length === 0) { %><p style="font-size: 0.82rem; color: var(--text-secondary); text-align: center; padding: 0.8rem 0;">Chưa có dữ liệu.</p><% } else { %>
+                            <% topNovelAlltime.slice(0, 5).forEach((item, index) => { %>
+                                <a href="/story/<%= item.id %>" class="ranking-item"><div class="rank-number"><%= index + 1 %></div><img src="<%= item.cover_url %>" alt="" class="ranking-cover"><div class="ranking-info"><div class="ranking-title"><%= item.title %></div><div class="ranking-views">👁️ <%= item.view_count %></div></div></a>
+                            <% }) %>
+                        <% } %>
+                    </div>
                 </div>
             </div>
 
@@ -1184,6 +1238,33 @@
 </div>
 
 
+
+<script>
+    function filterBxhType(type) {
+        // Cập nhật trạng thái active cho nút bấm
+        document.querySelectorAll('.bxh-type-btn').forEach(btn => {
+            btn.classList.remove('active');
+            btn.style.background = 'transparent';
+            btn.style.color = 'var(--text-secondary)';
+        });
+
+        const activeBtn = event.currentTarget || document.querySelector(`.bxh-type-btn[onclick*="${type}"]`);
+        if (activeBtn) {
+            activeBtn.classList.add('active');
+            activeBtn.style.background = 'var(--accent-color)';
+            activeBtn.style.color = 'white';
+        }
+
+        // Ẩn/Hiện các subset tương ứng trong mỗi list bxh
+        document.querySelectorAll('.bxh-subset').forEach(sub => {
+            if (sub.dataset.type === type) {
+                sub.style.display = 'block';
+            } else {
+                sub.style.display = 'none';
+            }
+        });
+    }
+</script>
 
 <%- include('partials/footer') %>
 

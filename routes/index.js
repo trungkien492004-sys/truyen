@@ -453,6 +453,26 @@ router.get('/', async (req, res) => {
       ];
     }
 
+    const { getStoryTypesMap } = require('../services/storyClassifier');
+    const { comicIds, novelIds } = await getStoryTypesMap().catch(() => ({ comicIds: new Set(), novelIds: new Set() }));
+
+    // Hàm tách dữ liệu bxh thành 2 nhóm: truyện tranh và truyện chữ
+    function splitRanking(data) {
+      const comic = [], novel = [];
+      for (const item of (data || [])) {
+        if (comicIds.has(item.id) && comic.length < 5) comic.push(item);
+        else if (!comicIds.has(item.id) && novel.length < 5) novel.push(item);
+      }
+      return { comic, novel };
+    }
+
+    const dailySplit    = splitRanking(topDaily);
+    const weeklySplit   = splitRanking(topWeekly);
+    const monthlySplit  = splitRanking(topMonthly);
+    const alltimeSplit  = splitRanking(topYearly);
+    const ratedSplit    = splitRanking(topRatedData);
+    const bookmarksSplit = splitRanking(topBookmarks);
+
     const totalPages = Math.ceil((totalCount || 0) / limit);
 
     res.render('home', {
@@ -460,12 +480,27 @@ router.get('/', async (req, res) => {
       user: req.user,
       stories: stories || [],
       genres,
+      // BXH gốc (tất cả)
       topDaily: topDaily || [],
       topWeekly: topWeekly || [],
       topMonthly: topMonthly || [],
       topYearly: topYearly || [],
       topRated: topRatedData || [],
       topBookmarks,
+      // BXH Truyện tranh
+      topComicDaily: dailySplit.comic,
+      topComicWeekly: weeklySplit.comic,
+      topComicMonthly: monthlySplit.comic,
+      topComicAlltime: alltimeSplit.comic,
+      topComicRated: ratedSplit.comic,
+      topComicBookmarks: bookmarksSplit.comic,
+      // BXH Truyện chữ
+      topNovelDaily: dailySplit.novel,
+      topNovelWeekly: weeklySplit.novel,
+      topNovelMonthly: monthlySplit.novel,
+      topNovelAlltime: alltimeSplit.novel,
+      topNovelRated: ratedSplit.novel,
+      topNovelBookmarks: bookmarksSplit.novel,
       topReaders,
       topAuthors,
       banners,

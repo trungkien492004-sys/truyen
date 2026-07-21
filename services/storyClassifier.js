@@ -31,7 +31,11 @@ async function getStoryTypesMap() {
       .from('stories')
       .select('id, story_type');
 
-    if (!error && stories && stories[0] && 'story_type' in stories[0]) {
+    if (error) {
+      throw new Error(error.message || 'Cột story_type chưa tồn tại');
+    }
+
+    if (stories && stories.length > 0 && 'story_type' in stories[0]) {
       // Cột tồn tại -> dùng dữ liệu từ DB (siêu nhanh)
       const comicIds = new Set();
       const novelIds = new Set();
@@ -42,7 +46,7 @@ async function getStoryTypesMap() {
       return { comicIds, novelIds };
     }
   } catch (e) {
-    // Cột chưa có, dùng fallback
+    // Cột chưa có hoặc lỗi cache, dùng fallback bên dưới
   }
 
   // 2. Fallback: dùng cache bộ nhớ nếu còn hiệu lực

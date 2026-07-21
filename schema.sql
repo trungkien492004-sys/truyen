@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS stories (
     author TEXT,
     cover_url TEXT DEFAULT '/css/default-cover.jpg', -- Có ảnh bìa mặc định
     commissioned_by TEXT, -- Tên người đặt viết truyện (nếu có)
+    story_type TEXT DEFAULT 'novel', -- Phân loại truyện: 'novel' (chữ) hoặc 'comic' (tranh)
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
