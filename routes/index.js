@@ -346,67 +346,39 @@ router.get('/', async (req, res) => {
       query = query.eq('status', status);
     }
     
-    const { getStoryTypesMap } = require('../services/storyClassifier');
-    const RANK_LIMIT = 40; // Lấy nhiều để đủ lọc top 20 cho mỗi loại
-    const TOP_N = 20;      // Top 20 cho mỗi tab
-
-    // Gộp tất cả truy vấn song song (bao gồm cả phân loại truyện)
+    // Gộp tất cả truy vấn song song
     const [
-      storiesResult,
-      genresResult,
-      storyTypesResult,
-      dailyResult,
-      weeklyResult,
-      monthlyResult,
-      yearlyResult,
-      ratedResult
+      { data: stories, count: totalCount, error: storiesError },
+      { data: genres, error: genresError },
+      { data: topDaily },
+      { data: topWeekly },
+      { data: topMonthly },
+      { data: topYearly },
+      { data: topRatedData }
     ] = await Promise.all([
       query.order('last_update_at', { ascending: false }).range(fromRange, toRange),
       supabase.from('genres').select('*'),
-      getStoryTypesMap().catch(() => ({ comicIds: new Set(), novelIds: new Set() })),
-      supabase.from('views_ranking_daily').select('*').order('view_count', { ascending: false }).limit(RANK_LIMIT),
-      supabase.from('views_ranking_weekly').select('*').order('view_count', { ascending: false }).limit(RANK_LIMIT),
-      supabase.from('views_ranking_monthly').select('*').order('view_count', { ascending: false }).limit(RANK_LIMIT),
-      supabase.from('views_ranking_yearly').select('*').order('view_count', { ascending: false }).limit(RANK_LIMIT),
-      supabase.from('views_ranking_rated').select('*').limit(RANK_LIMIT)
+      supabase.from('views_ranking_daily').select('*').order('view_count', { ascending: false }).limit(5),
+      supabase.from('views_ranking_weekly').select('*').order('view_count', { ascending: false }).limit(5),
+      supabase.from('views_ranking_monthly').select('*').order('view_count', { ascending: false }).limit(5),
+      supabase.from('views_ranking_yearly').select('*').order('view_count', { ascending: false }).limit(5),
+      supabase.from('views_ranking_rated').select('*').limit(5)
     ]);
 
-    const { data: stories, count: totalCount, error: storiesError } = storiesResult;
-    const { data: genres, error: genresError } = genresResult;
     if (storiesError) throw storiesError;
     if (genresError) throw genresError;
 
-    const { comicIds, novelIds } = storyTypesResult;
-
-    // Hàm tách dữ liệu bxh thành 2 nhóm: truyện tranh và truyện chữ (top N mỗi nhóm)
-    function splitRanking(data) {
-      const comic = [], novel = [], all = [];
-      for (const item of (data || [])) {
-        if (all.length < TOP_N) all.push(item);
-        if (comicIds.has(item.id) && comic.length < TOP_N) comic.push(item);
-        else if (!comicIds.has(item.id) && novel.length < TOP_N) novel.push(item);
-        if (all.length >= TOP_N && comic.length >= TOP_N && novel.length >= TOP_N) break;
-      }
-      return { all, comic, novel };
-    }
-
-    const dailySplit    = splitRanking(dailyResult.data);
-    const weeklySplit   = splitRanking(weeklyResult.data);
-    const monthlySplit  = splitRanking(monthlyResult.data);
-    const alltimeSplit  = splitRanking(yearlyResult.data);
-    const ratedSplit    = splitRanking(ratedResult.data);
-
-    // Tối ưu: Lấy song song dữ liệu phụ bằng Promise.allSettled
+    // Lấy song song dữ liệu phụ
     const [
       rankSettingsRes,
       readersRes,
-      bookmarksRankRes,
+      bookmarksRes,
       bannersRes,
       historyRes
     ] = await Promise.allSettled([
       supabase.from('rank_settings').select('*').order('count', { ascending: false }),
       supabase.from('leaderboard_by_exp').select('*').order('chapters_read', { ascending: false }).order('exp', { ascending: false }).limit(10),
-      supabase.from('stories_bookmarks_count').select('*').order('bookmark_count', { ascending: false }).limit(RANK_LIMIT),
+      supabase.from('stories_bookmarks_count').select('*').order('bookmark_count', { ascending: false }).limit(5),
       supabase.from('banners').select('*').order('created_at', { ascending: false }),
       req.user && req.user.id ? supabase.from('reading_history').select('chapter_number, story_id, stories(title)').eq('user_id', req.user.id).order('updated_at', { ascending: false }).limit(1) : Promise.resolve({ data: null })
     ]);
@@ -418,9 +390,8 @@ router.get('/', async (req, res) => {
       topReaders = readersRes.value.data.map(r => ({ ...r, badge: getBadgeForCount(r.chapters_read || 0, rankSettings) }));
     }
 
-    // BXH Bookmarks (split)
-    const rawBookmarks = (bookmarksRankRes.status === 'fulfilled' && bookmarksRankRes.value.data) ? bookmarksRankRes.value.data : [];
-    const bookmarksSplit = splitRanking(rawBookmarks);
+    // BXH Bookmarks
+    let topBookmarks = (bookmarksRes.status === 'fulfilled' && bookmarksRes.value.data) ? bookmarksRes.value.data : [];
 
     // Danh sách banner
     let banners = (bannersRes.status === 'fulfilled' && bannersRes.value.data) ? bannersRes.value.data : [];
@@ -489,27 +460,12 @@ router.get('/', async (req, res) => {
       user: req.user,
       stories: stories || [],
       genres,
-      // BXH tổng hợp (all) và phân loại (comic/novel) cho mỗi tab
-      topDaily:   dailySplit.all,
-      topWeekly:  weeklySplit.all,
-      topMonthly: monthlySplit.all,
-      topYearly:  alltimeSplit.all,
-      topRated:   ratedSplit.all,
-      topBookmarks: bookmarksSplit.all,
-      // Truyện tranh
-      topComicDaily:   dailySplit.comic,
-      topComicWeekly:  weeklySplit.comic,
-      topComicMonthly: monthlySplit.comic,
-      topComicAlltime: alltimeSplit.comic,
-      topComicRated:   ratedSplit.comic,
-      topComicBookmarks: bookmarksSplit.comic,
-      // Truyện chữ
-      topNovelDaily:   dailySplit.novel,
-      topNovelWeekly:  weeklySplit.novel,
-      topNovelMonthly: monthlySplit.novel,
-      topNovelAlltime: alltimeSplit.novel,
-      topNovelRated:   ratedSplit.novel,
-      topNovelBookmarks: bookmarksSplit.novel,
+      topDaily: topDaily || [],
+      topWeekly: topWeekly || [],
+      topMonthly: topMonthly || [],
+      topYearly: topYearly || [],
+      topRated: topRatedData || [],
+      topBookmarks,
       topReaders,
       topAuthors,
       banners,
@@ -522,6 +478,7 @@ router.get('/', async (req, res) => {
       totalPages,
       filters: { genre: '', status: status || '', minChapters: '', year: '', sort: 'newest', view_sort: '' }
     });
+
   } catch (err) {
     console.error('Lỗi trang chủ:', err);
     res.status(500).send('Đã xảy ra lỗi hệ thống.');

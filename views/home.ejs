@@ -1022,111 +1022,25 @@
 
     <!-- Cột phải: Bảng xếp hạng (Chỉ hiển thị ở trang chủ mặc định) -->
     <% if (!searchQuery && !activeGenre) { %>
-        <div style="position: sticky; top: 100px; display: flex; flex-direction: column; gap: 1.2rem;">
+        <div style="position: sticky; top: 100px; display: flex; flex-direction: column; gap: 1.5rem;">
             <div class="rankings-container" style="position: relative !important; top: auto !important;">
-                <!-- Tiêu đề + nút loại truyện -->
-                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.8rem;">
-                    <h3 class="section-title" style="font-size:1.15rem; margin:0; border:none; padding:0;">🏆 Bảng Xếp Hạng</h3>
-                    <div style="display:flex; gap:0.2rem; background:rgba(0,0,0,0.3); padding:0.18rem; border-radius:8px; border:1px solid var(--border-color);">
-                        <button id="bxh-type-comic" onclick="switchBxhType('comic')" style="padding:0.22rem 0.5rem; font-size:0.7rem; font-weight:700; border-radius:5px; border:none; cursor:pointer; background:var(--accent-color); color:white; transition:all 0.2s;">🖼️ Tranh</button>
-                        <button id="bxh-type-novel" onclick="switchBxhType('novel')" style="padding:0.22rem 0.5rem; font-size:0.7rem; font-weight:700; border-radius:5px; border:none; cursor:pointer; background:transparent; color:var(--text-secondary); transition:all 0.2s;">📄 Chữ</button>
-                    </div>
-                </div>
-                <!-- Sub-tabs -->
-                <div class="ranking-tabs" id="bxh-subtabs">
-                    <div class="ranking-tab active" data-bxh="daily">Ngày</div>
-                    <div class="ranking-tab" data-bxh="weekly">Tuần</div>
-                    <div class="ranking-tab" data-bxh="monthly">Tháng</div>
-                    <div class="ranking-tab" data-bxh="rated">Đánh Giá</div>
-                    <div class="ranking-tab" data-bxh="bookmarks">Theo Dõi</div>
+                <h3 class="section-title" style="font-size: 1.3rem; margin-bottom: 1rem;">🏆 Bảng Xếp Hạng</h3>
+                
+                <div class="ranking-tabs">
+                    <div class="ranking-tab active" data-tab="daily">Ngày</div>
+                    <div class="ranking-tab" data-tab="weekly">Tuần</div>
+                    <div class="ranking-tab" data-tab="monthly">Tháng</div>
+                    <div class="ranking-tab" data-tab="rated">Đánh Giá</div>
+                    <div class="ranking-tab" data-tab="bookmarks">Theo Dõi</div>
+                    <div class="ranking-tab" data-tab="alltime">All-Time</div>
                 </div>
 
-                <!-- === COMIC PANELS === -->
-                <div class="bxh-panel bxh-active" id="bxh-comic-daily">
-                    <% (topComicDaily||[]).forEach((item,i)=>{ %><a href="/story/<%= item.id %>" class="ranking-item"><div class="rank-number"><%= i+1 %></div><img src="<%= item.cover_url %>" alt="<%= item.title %>" class="ranking-cover"><div class="ranking-info"><div class="ranking-title"><%= item.title %></div><div class="ranking-views">👁️ <%= item.view_count %></div></div></a><% }) %>
-                    <% if(!(topComicDaily||[]).length){%><p style="font-size:.82rem;color:var(--text-secondary);text-align:center;padding:.8rem">Chưa có dữ liệu.</p><%}%>
-                </div>
-                <div class="bxh-panel" id="bxh-comic-weekly" style="display:none">
-                    <% (topComicWeekly||[]).forEach((item,i)=>{ %><a href="/story/<%= item.id %>" class="ranking-item"><div class="rank-number"><%= i+1 %></div><img src="<%= item.cover_url %>" alt="<%= item.title %>" class="ranking-cover"><div class="ranking-info"><div class="ranking-title"><%= item.title %></div><div class="ranking-views">👁️ <%= item.view_count %></div></div></a><% }) %>
-                    <% if(!(topComicWeekly||[]).length){%><p style="font-size:.82rem;color:var(--text-secondary);text-align:center;padding:.8rem">Chưa có dữ liệu.</p><%}%>
-                </div>
-                <div class="bxh-panel" id="bxh-comic-monthly" style="display:none">
-                    <% (topComicMonthly||[]).forEach((item,i)=>{ %><a href="/story/<%= item.id %>" class="ranking-item"><div class="rank-number"><%= i+1 %></div><img src="<%= item.cover_url %>" alt="<%= item.title %>" class="ranking-cover"><div class="ranking-info"><div class="ranking-title"><%= item.title %></div><div class="ranking-views">👁️ <%= item.view_count %></div></div></a><% }) %>
-                    <% if(!(topComicMonthly||[]).length){%><p style="font-size:.82rem;color:var(--text-secondary);text-align:center;padding:.8rem">Chưa có dữ liệu.</p><%}%>
-                </div>
-                <div class="bxh-panel" id="bxh-comic-rated" style="display:none">
-                    <% (topComicRated||[]).forEach((item,i)=>{ %><a href="/story/<%= item.id %>" class="ranking-item"><div class="rank-number"><%= i+1 %></div><img src="<%= item.cover_url %>" alt="<%= item.title %>" class="ranking-cover"><div class="ranking-info"><div class="ranking-title"><%= item.title %></div><div class="ranking-views" style="color:#fbbf24">⭐ <%= parseFloat(item.avg_score||5).toFixed(1) %></div></div></a><% }) %>
-                    <% if(!(topComicRated||[]).length){%><p style="font-size:.82rem;color:var(--text-secondary);text-align:center;padding:.8rem">Chưa có dữ liệu.</p><%}%>
-                </div>
-                <div class="bxh-panel" id="bxh-comic-bookmarks" style="display:none">
-                    <% (topComicBookmarks||[]).forEach((item,i)=>{ %><a href="/story/<%= item.id %>" class="ranking-item"><div class="rank-number"><%= i+1 %></div><img src="<%= item.cover_url %>" alt="<%= item.title %>" class="ranking-cover"><div class="ranking-info"><div class="ranking-title"><%= item.title %></div><div class="ranking-views">❤️ <%= item.bookmark_count %></div></div></a><% }) %>
-                    <% if(!(topComicBookmarks||[]).length){%><p style="font-size:.82rem;color:var(--text-secondary);text-align:center;padding:.8rem">Chưa có dữ liệu.</p><%}%>
-                </div>
-                <!-- === NOVEL PANELS === -->
-                <div class="bxh-panel" id="bxh-novel-daily" style="display:none">
-                    <% (topNovelDaily||[]).forEach((item,i)=>{ %><a href="/story/<%= item.id %>" class="ranking-item"><div class="rank-number"><%= i+1 %></div><img src="<%= item.cover_url %>" alt="<%= item.title %>" class="ranking-cover"><div class="ranking-info"><div class="ranking-title"><%= item.title %></div><div class="ranking-views">👁️ <%= item.view_count %></div></div></a><% }) %>
-                    <% if(!(topNovelDaily||[]).length){%><p style="font-size:.82rem;color:var(--text-secondary);text-align:center;padding:.8rem">Chưa có dữ liệu.</p><%}%>
-                </div>
-                <div class="bxh-panel" id="bxh-novel-weekly" style="display:none">
-                    <% (topNovelWeekly||[]).forEach((item,i)=>{ %><a href="/story/<%= item.id %>" class="ranking-item"><div class="rank-number"><%= i+1 %></div><img src="<%= item.cover_url %>" alt="<%= item.title %>" class="ranking-cover"><div class="ranking-info"><div class="ranking-title"><%= item.title %></div><div class="ranking-views">👁️ <%= item.view_count %></div></div></a><% }) %>
-                    <% if(!(topNovelWeekly||[]).length){%><p style="font-size:.82rem;color:var(--text-secondary);text-align:center;padding:.8rem">Chưa có dữ liệu.</p><%}%>
-                </div>
-                <div class="bxh-panel" id="bxh-novel-monthly" style="display:none">
-                    <% (topNovelMonthly||[]).forEach((item,i)=>{ %><a href="/story/<%= item.id %>" class="ranking-item"><div class="rank-number"><%= i+1 %></div><img src="<%= item.cover_url %>" alt="<%= item.title %>" class="ranking-cover"><div class="ranking-info"><div class="ranking-title"><%= item.title %></div><div class="ranking-views">👁️ <%= item.view_count %></div></div></a><% }) %>
-                    <% if(!(topNovelMonthly||[]).length){%><p style="font-size:.82rem;color:var(--text-secondary);text-align:center;padding:.8rem">Chưa có dữ liệu.</p><%}%>
-                </div>
-                <div class="bxh-panel" id="bxh-novel-rated" style="display:none">
-                    <% (topNovelRated||[]).forEach((item,i)=>{ %><a href="/story/<%= item.id %>" class="ranking-item"><div class="rank-number"><%= i+1 %></div><img src="<%= item.cover_url %>" alt="<%= item.title %>" class="ranking-cover"><div class="ranking-info"><div class="ranking-title"><%= item.title %></div><div class="ranking-views" style="color:#fbbf24">⭐ <%= parseFloat(item.avg_score||5).toFixed(1) %></div></div></a><% }) %>
-                    <% if(!(topNovelRated||[]).length){%><p style="font-size:.82rem;color:var(--text-secondary);text-align:center;padding:.8rem">Chưa có dữ liệu.</p><%}%>
-                </div>
-                <div class="bxh-panel" id="bxh-novel-bookmarks" style="display:none">
-                    <% (topNovelBookmarks||[]).forEach((item,i)=>{ %><a href="/story/<%= item.id %>" class="ranking-item"><div class="rank-number"><%= i+1 %></div><img src="<%= item.cover_url %>" alt="<%= item.title %>" class="ranking-cover"><div class="ranking-info"><div class="ranking-title"><%= item.title %></div><div class="ranking-views">❤️ <%= item.bookmark_count %></div></div></a><% }) %>
-                    <% if(!(topNovelBookmarks||[]).length){%><p style="font-size:.82rem;color:var(--text-secondary);text-align:center;padding:.8rem">Chưa có dữ liệu.</p><%}%>
-                </div>
-                <a href="/leaderboard" style="display:block;text-align:center;margin-top:.7rem;font-size:.78rem;color:var(--accent-color);opacity:.8;text-decoration:none" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.8">Xem BXH đầy đủ →</a>
-            </div>
-
-            <!-- === ĐỘC GIẢ + TÁC GIẢ cùng hàng compact === -->
-            <% if((typeof topReaders!=='undefined'&&topReaders.length>0)||(typeof topAuthors!=='undefined'&&topAuthors.length>0)){%>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.7rem;">
-                <% if(typeof topReaders!=='undefined'&&topReaders.length>0){%>
-                <div class="rankings-container" style="position:relative!important;top:auto!important;padding:0.7rem;">
-                    <h4 style="font-size:.82rem;font-weight:700;margin:0 0 .5rem;display:flex;align-items:center;">🥇 Độc Giả <a href="/leaderboard" style="font-size:.62rem;color:var(--accent-color);margin-left:auto;text-decoration:none;font-weight:400">Thêm</a></h4>
-                    <% topReaders.slice(0,5).forEach((r,i)=>{%>
-                    <a href="/user/<%= r.id %>" style="display:flex;align-items:center;gap:.35rem;padding:.25rem 0;border-bottom:1px solid rgba(255,255,255,.04);text-decoration:none;color:inherit;">
-                        <span style="font-size:.72rem;font-weight:700;color:var(--accent-color);width:13px;text-align:center;flex-shrink:0"><%= i+1 %></span>
-                        <img src="<%= r.avatar||'/css/silly_duck.png' %>" alt="" style="width:20px;height:20px;border-radius:50%;object-fit:cover;flex-shrink:0;">
-                        <div style="flex:1;min-width:0">
-                            <div style="font-size:.72rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><%= r.display_name %></div>
-                            <div style="font-size:.62rem;color:var(--text-secondary)">⭐ <%= r.exp %> EXP</div>
-                        </div>
-                    </a>
-                    <%})%>
-                </div>
-                <%}%>
-                <% if(typeof topAuthors!=='undefined'&&topAuthors.length>0){%>
-                <div class="rankings-container" style="position:relative!important;top:auto!important;padding:0.7rem;">
-                    <h4 style="font-size:.82rem;font-weight:700;margin:0 0 .5rem;">✍️ Tác Giả</h4>
-                    <% topAuthors.slice(0,5).forEach((a,i)=>{%>
-                    <a href="/author/<%= encodeURIComponent(a.author||'') %>" style="display:flex;align-items:center;gap:.35rem;padding:.25rem 0;border-bottom:1px solid rgba(255,255,255,.04);text-decoration:none;color:inherit;">
-                        <span style="font-size:.72rem;font-weight:700;color:var(--accent-color);width:13px;text-align:center;flex-shrink:0"><%= i+1 %></span>
-                        <div style="flex:1;min-width:0">
-                            <div style="font-size:.72rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><%= a.author %></div>
-                            <div style="font-size:.62rem;color:var(--text-secondary)">📚 <%= a.story_count %> truyện</div>
-                        </div>
-                    </a>
-                    <%})%>
-                </div>
-                <%}%>
-            </div>
-            <%}%>
-
-                <!-- Bảng xếp hạng Ngày (HIDDEN - kept for backward compat) -->
-                <div class="ranking-list active" id="top-daily" style="display:none">
+                <!-- Bảng xếp hạng Ngày -->
+                <div class="ranking-list active" id="top-daily">
                     <% if (topDaily.length === 0) { %>
                         <p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; padding: 1rem 0;">Chưa có dữ liệu đọc hôm nay.</p>
                     <% } else { %>
-                        <% topDaily.forEach((item, index) => { %>
+                        <% topDaily.slice(0, 5).forEach((item, index) => { %>
                             <a href="/story/<%= item.id %>" class="ranking-item">
                                 <div class="rank-number"><%= index + 1 %></div>
                                 <img src="<%= item.cover_url %>" alt="<%= item.title %>" class="ranking-cover">
@@ -1144,7 +1058,7 @@
                     <% if (topWeekly.length === 0) { %>
                         <p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; padding: 1rem 0;">Chưa có dữ liệu đọc tuần này.</p>
                     <% } else { %>
-                        <% topWeekly.forEach((item, index) => { %>
+                        <% topWeekly.slice(0, 5).forEach((item, index) => { %>
                             <a href="/story/<%= item.id %>" class="ranking-item">
                                 <div class="rank-number"><%= index + 1 %></div>
                                 <img src="<%= item.cover_url %>" alt="<%= item.title %>" class="ranking-cover">
@@ -1162,7 +1076,7 @@
                     <% if (topMonthly.length === 0) { %>
                         <p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; padding: 1rem 0;">Chưa có dữ liệu đọc tháng này.</p>
                     <% } else { %>
-                        <% topMonthly.forEach((item, index) => { %>
+                        <% topMonthly.slice(0, 5).forEach((item, index) => { %>
                             <a href="/story/<%= item.id %>" class="ranking-item">
                                 <div class="rank-number"><%= index + 1 %></div>
                                 <img src="<%= item.cover_url %>" alt="<%= item.title %>" class="ranking-cover">
@@ -1180,7 +1094,7 @@
                     <% if (typeof topRated === 'undefined' || topRated.length === 0) { %>
                         <p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; padding: 1rem 0;">Chưa có dữ liệu đánh giá.</p>
                     <% } else { %>
-                        <% topRated.forEach((item, index) => { %>
+                        <% topRated.slice(0, 5).forEach((item, index) => { %>
                             <a href="/story/<%= item.id %>" class="ranking-item">
                                 <div class="rank-number"><%= index + 1 %></div>
                                 <img src="<%= item.cover_url %>" alt="<%= item.title %>" class="ranking-cover">
@@ -1198,7 +1112,7 @@
                     <% if (topBookmarks.length === 0) { %>
                         <p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; padding: 1rem 0;">Chưa có truyện được theo dõi.</p>
                     <% } else { %>
-                        <% topBookmarks.forEach((item, index) => { %>
+                        <% topBookmarks.slice(0, 5).forEach((item, index) => { %>
                             <a href="/story/<%= item.id %>" class="ranking-item">
                                 <div class="rank-number"><%= index + 1 %></div>
                                 <img src="<%= item.cover_url %>" alt="<%= item.title %>" class="ranking-cover">
@@ -1216,7 +1130,7 @@
                     <% if (topYearly.length === 0) { %>
                         <p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; padding: 1rem 0;">Chưa có dữ liệu đọc All-Time.</p>
                     <% } else { %>
-                        <% topYearly.forEach((item, index) => { %>
+                        <% topYearly.slice(0, 5).forEach((item, index) => { %>
                             <a href="/story/<%= item.id %>" class="ranking-item">
                                 <div class="rank-number"><%= index + 1 %></div>
                                 <img src="<%= item.cover_url %>" alt="<%= item.title %>" class="ranking-cover">
@@ -1229,55 +1143,6 @@
                     <% } %>
                 </div>
             </div>
-            </div>
-
-            <!-- BXH Độc Giả + Tác Giả đã render ở trên, bỏ qua khối cũ -->
-            <!-- KHỐI BÌNH LUẬN MỚI NHẤT (giữ nguyên) -->
-            <% if (typeof topReaders !== 'undefined' && topReaders.length > 0) { %>
-                <div class="rankings-container" style="position: relative !important; top: auto !important;">
-                    <h3 class="section-title" style="font-size: 1.3rem; margin-bottom: 1rem;">🥇 BXH Độc Giả</h3>
-                    <% topReaders.forEach((reader, index) => { %>
-                        <a href="/user/<%= reader.id %>" class="ranking-item" style="text-decoration: none; color: inherit; display: flex; align-items: center; transition: transform 0.2s; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1.6rem; margin-bottom: 0.8rem; min-height: 78px;">
-                            <div class="rank-number" style="width: 25px; text-align: center; font-weight: bold; font-size: 1.2rem; color: var(--accent-color); flex-shrink: 0;"><%= index + 1 %></div>
-
-                            <div style="position: relative; display: flex; flex-direction: column; align-items: center; margin: 0 0.8rem; flex-shrink: 0; width: 65px;">
-                                <% const rFrameClass = reader.equipped_frame || 'default-frame'; %>
-                                <div class="avatar-frame <%= rFrameClass %>" style="width: 46px; height: 46px; padding: 2px;">
-                                    <div class="avatar-glow"></div>
-                                    <img src="<%= reader.avatar || '/css/silly_duck.png' %>" alt="avatar" class="avatar-img" style="border-width: 1px;">
-                                    <% if (reader.equipped_badge) { %>
-                                        <div class="avatar-corner" style="position: absolute; top: -4px; right: -4px; font-size: 0.8rem; background: rgba(0,0,0,0.6); border-radius: 50%; padding: 2px; z-index: 10; border: 1px solid gold; display: flex; justify-content: center; align-items: center; width: 18px; height: 18px;">
-                                            <%= getBadgeIcon(reader.equipped_badge) %>
-                                        </div>
-                                    <% } %>
-                                </div>
-                                <% if (reader.equipped_badge) { %>
-                                    <!-- position: absolute để badge được phép RỘNG HƠN cột avatar (65px) mà không đẩy layout
-                                         xung quanh - chỉ "nổi" đè lên khoảng trống, dừng lại sát nhưng KHÔNG chạm cột STT bên trái
-                                         (giới hạn maxWidth trong JS autofit tính theo khoảng cách thật tới rank-number). -->
-                                    <div class="game-title-fit-wrap" style="position: absolute; top: 40px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; z-index: 2; line-height: 1.1; width: max-content; max-width: 110px;">
-                                        <span class="game-title <%= getTitleRarityClass(reader.equipped_badge) %> game-title-sidebar-scale game-title-autofit" style="white-space: nowrap; display: inline-flex;"><%= reader.equipped_badge %></span>
-                                        <span style="font-size: 0.6rem; letter-spacing: 1px; text-shadow: 0 0 2px rgba(255,255,255,0.3); margin-top: 2px;"><%= getStarsByChapters(reader.chapters_read) %></span>
-                                    </div>
-                                <% } %>
-                            </div>
-                            
-                            <div class="ranking-info" style="flex: 1;">
-                                <div class="ranking-title" style="font-weight: 600; font-size: 0.95rem; display: flex; align-items: center; gap: 0.3rem; flex-wrap: wrap;">
-                                    <%= reader.display_name %>
-                                    <span style="font-size: 0.65rem; background: rgba(99, 102, 241, 0.1); color: var(--accent-color); padding: 0.1rem 0.4rem; border-radius: 8px; border: 1px solid rgba(99, 102, 241, 0.2); white-space: nowrap;">
-                                        <%= reader.badge ? reader.badge.label : 'Người mới' %>
-                                    </span>
-                                </div>
-                                <div class="ranking-views" style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.2rem;">
-                                    ⭐ <%= reader.exp %> EXP · 📖 <%= reader.chapters_read %> chương
-                                    <% if (reader.streak_days > 0) { %> · 🔥 <%= reader.streak_days %> ngày<% } %>
-                                </div>
-                            </div>
-                        </a>
-                    <% }) %>
-                </div>
-            <% } %>
 
             <!-- KHỐI BÌNH LUẬN MỚI NHẤT -->
             <% if (typeof recentComments !== 'undefined' && recentComments.length > 0) { %>
@@ -1314,58 +1179,28 @@
                     <% }) %>
                 </div>
             <% } %>
-
-            <!-- KHỐI TOP TÁC GIẢ -->
-            <% if (typeof topAuthors !== 'undefined' && topAuthors.length > 0) { %>
-                <div class="rankings-container" style="position: relative !important; top: auto !important; margin-top: 2rem;">
-                    <h3 class="section-title" style="font-size: 1.3rem; margin-bottom: 1rem;">✍️ Top Tác Giả</h3>
-                    <% topAuthors.forEach((author, index) => { %>
-                        <div class="ranking-item" style="display: flex; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.8rem; margin-bottom: 0.8rem;">
-                            <div class="rank-number" style="width: 25px; text-align: center; font-weight: bold; font-size: 1.2rem; color: var(--accent-color); flex-shrink: 0;"><%= index + 1 %></div>
-                            
-                            <div class="ranking-info" style="flex: 1; margin-left: 0.8rem;">
-                                <div class="ranking-title" style="font-weight: 600; font-size: 0.95rem;">
-                                    <a href="/author/<%= encodeURIComponent(author.author || '') %>" style="color: var(--text-primary); text-decoration: none; transition: color 0.2s;"><%= author.author %></a>
-                                </div>
-                                <div class="ranking-views" style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.2rem;">
-                                    📚 <%= author.story_count %> truyện
-                                </div>
-                            </div>
-                        </div>
-                    <% }) %>
-                </div>
-            <% } %>
         </div>
     <% } %>
 </div>
 
 <script>
-    let _bxhType = 'comic', _bxhPeriod = 'daily';
-    function switchBxhType(t) {
-        _bxhType = t;
-        document.getElementById('bxh-type-comic').style.background = t==='comic'?'var(--accent-color)':'transparent';
-        document.getElementById('bxh-type-comic').style.color = t==='comic'?'white':'var(--text-secondary)';
-        document.getElementById('bxh-type-novel').style.background = t==='novel'?'var(--accent-color)':'transparent';
-        document.getElementById('bxh-type-novel').style.color = t==='novel'?'white':'var(--text-secondary)';
-        _showBxhPanel();
-    }
-    function _showBxhPanel() {
-        document.querySelectorAll('.bxh-panel').forEach(p=>{p.style.display='none';p.classList.remove('bxh-active');});
-        const el=document.getElementById('bxh-'+_bxhType+'-'+_bxhPeriod);
-        if(el){el.style.display='block';el.classList.add('bxh-active');}
-    }
-    document.addEventListener('DOMContentLoaded',()=>{
-        document.querySelectorAll('#bxh-subtabs .ranking-tab').forEach(tab=>{
-            tab.addEventListener('click',function(){
-                document.querySelectorAll('#bxh-subtabs .ranking-tab').forEach(t=>t.classList.remove('active'));
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.ranking-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                const targetId = 'top-' + this.dataset.tab;
+                const parentContainer = this.closest('.rankings-container');
+                if (!parentContainer) return;
+
+                parentContainer.querySelectorAll('.ranking-tab').forEach(t => t.classList.remove('active'));
                 this.classList.add('active');
-                _bxhPeriod=this.dataset.bxh;
-                _showBxhPanel();
+
+                parentContainer.querySelectorAll('.ranking-list').forEach(l => l.classList.remove('active'));
+                const targetList = document.getElementById(targetId);
+                if (targetList) targetList.classList.add('active');
             });
         });
-        // Hide all non-active panels on load
-        document.querySelectorAll('.bxh-panel').forEach(p=>{ if(!p.classList.contains('bxh-active')) p.style.display='none'; });
     });
 </script>
 
 <%- include('partials/footer') %>
+
