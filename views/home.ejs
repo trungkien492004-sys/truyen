@@ -1055,7 +1055,7 @@
                 <div class="ranking-group comic-group" style="display: block;">
                     <!-- Comic Ngày -->
                     <div class="ranking-list active" id="top-comic-daily">
-                        <% if (topComicDaily.length === 0) { %><p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; padding: 1rem 0;">Chưa có dữ liệu.</p><% } else { %>
+                        <% if (typeof topComicDaily === 'undefined' || !topComicDaily || topComicDaily.length === 0) { %><p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; padding: 1rem 0;">Chưa có dữ liệu.</p><% } else { %>
                             <% topComicDaily.forEach((item, index) => { %>
                                 <a href="/story/<%= item.id %>" class="ranking-item">
                                     <div class="rank-number"><%= index + 1 %></div>
@@ -1070,7 +1070,7 @@
                     </div>
                     <!-- Comic Tuần -->
                     <div class="ranking-list" id="top-comic-weekly">
-                        <% if (topComicWeekly.length === 0) { %><p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; padding: 1rem 0;">Chưa có dữ liệu.</p><% } else { %>
+                        <% if (typeof topComicWeekly === 'undefined' || !topComicWeekly || topComicWeekly.length === 0) { %><p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; padding: 1rem 0;">Chưa có dữ liệu.</p><% } else { %>
                             <% topComicWeekly.forEach((item, index) => { %>
                                 <a href="/story/<%= item.id %>" class="ranking-item">
                                     <div class="rank-number"><%= index + 1 %></div>
@@ -1085,7 +1085,7 @@
                     </div>
                     <!-- Comic Tháng -->
                     <div class="ranking-list" id="top-comic-monthly">
-                        <% if (topComicMonthly.length === 0) { %><p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; padding: 1rem 0;">Chưa có dữ liệu.</p><% } else { %>
+                        <% if (typeof topComicMonthly === 'undefined' || !topComicMonthly || topComicMonthly.length === 0) { %><p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; padding: 1rem 0;">Chưa có dữ liệu.</p><% } else { %>
                             <% topComicMonthly.forEach((item, index) => { %>
                                 <a href="/story/<%= item.id %>" class="ranking-item">
                                     <div class="rank-number"><%= index + 1 %></div>
@@ -1100,7 +1100,7 @@
                     </div>
                     <!-- Comic Đánh Giá -->
                     <div class="ranking-list" id="top-comic-rated">
-                        <% if (topComicRated.length === 0) { %><p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; padding: 1rem 0;">Chưa có dữ liệu.</p><% } else { %>
+                        <% if (typeof topComicRated === 'undefined' || !topComicRated || topComicRated.length === 0) { %><p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; padding: 1rem 0;">Chưa có dữ liệu.</p><% } else { %>
                             <% topComicRated.forEach((item, index) => { %>
                                 <a href="/story/<%= item.id %>" class="ranking-item">
                                     <div class="rank-number"><%= index + 1 %></div>
@@ -1115,7 +1115,7 @@
                     </div>
                     <!-- Comic Theo Dõi -->
                     <div class="ranking-list" id="top-comic-bookmarks">
-                        <% if (topComicBookmarks.length === 0) { %><p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; padding: 1rem 0;">Chưa có dữ liệu.</p><% } else { %>
+                        <% if (typeof topComicBookmarks === 'undefined' || !topComicBookmarks || topComicBookmarks.length === 0) { %><p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; padding: 1rem 0;">Chưa có dữ liệu.</p><% } else { %>
                             <% topComicBookmarks.forEach((item, index) => { %>
                                 <a href="/story/<%= item.id %>" class="ranking-item">
                                     <div class="rank-number"><%= index + 1 %></div>
@@ -1134,7 +1134,7 @@
                 <div class="ranking-group novel-group" style="display: none;">
                     <!-- Novel Ngày -->
                     <div class="ranking-list active" id="top-novel-daily">
-                        <% if (topNovelDaily.length === 0) { %><p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; padding: 1rem 0;">Chưa có dữ liệu.</p><% } else { %>
+                        <% if (typeof topNovelDaily === 'undefined' || !topNovelDaily || topNovelDaily.length === 0) { %><p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; padding: 1rem 0;">Chưa có dữ liệu.</p><% } else { %>
                             <% topNovelDaily.forEach((item, index) => { %>
                                 <a href="/story/<%= item.id %>" class="ranking-item">
                                     <div class="rank-number"><%= index + 1 %></div>
@@ -1149,7 +1149,7 @@
                     </div>
                     <!-- Novel Tuần -->
                     <div class="ranking-list" id="top-novel-weekly">
-                        <% if (topNovelWeekly.length === 0) { %><p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; padding: 1rem 0;">Chưa có dữ liệu.</p><% } else { %>
+                        <% if (typeof topNovelWeekly === 'undefined' || !topNovelWeekly || topNovelWeekly.length === 0) { %><p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; padding: 1rem 0;">Chưa có dữ liệu.</p><% } else { %>
                             <% topNovelWeekly.forEach((item, index) => { %>
                                 <a href="/story/<%= item.id %>" class="ranking-item">
                                     <div class="rank-number"><%= index + 1 %></div>
@@ -1164,7 +1164,7 @@
                     </div>
                     <!-- Novel Tháng -->
                     <div class="ranking-list" id="top-novel-monthly">
-                        <% if (topNovelMonthly.length === 0) { %><p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; padding: 1rem 0;">Chưa có dữ liệu.</p><% } else { %>
+                        <% if (typeof topNovelMonthly === 'undefined' || !topNovelMonthly || topNovelMonthly.length === 0) { %><p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; padding: 1rem 0;">Chưa có dữ liệu.</p><% } else { %>
                             <% topNovelMonthly.forEach((item, index) => { %>
                                 <a href="/story/<%= item.id %>" class="ranking-item">
                                     <div class="rank-number"><%= index + 1 %></div>
@@ -1179,7 +1179,7 @@
                     </div>
                     <!-- Novel Đánh Giá -->
                     <div class="ranking-list" id="top-novel-rated">
-                        <% if (topNovelRated.length === 0) { %><p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; padding: 1rem 0;">Chưa có dữ liệu.</p><% } else { %>
+                        <% if (typeof topNovelRated === 'undefined' || !topNovelRated || topNovelRated.length === 0) { %><p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; padding: 1rem 0;">Chưa có dữ liệu.</p><% } else { %>
                             <% topNovelRated.forEach((item, index) => { %>
                                 <a href="/story/<%= item.id %>" class="ranking-item">
                                     <div class="rank-number"><%= index + 1 %></div>
@@ -1194,7 +1194,7 @@
                     </div>
                     <!-- Novel Theo Dõi -->
                     <div class="ranking-list" id="top-novel-bookmarks">
-                        <% if (topNovelBookmarks.length === 0) { %><p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; padding: 1rem 0;">Chưa có dữ liệu.</p><% } else { %>
+                        <% if (typeof topNovelBookmarks === 'undefined' || !topNovelBookmarks || topNovelBookmarks.length === 0) { %><p style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; padding: 1rem 0;">Chưa có dữ liệu.</p><% } else { %>
                             <% topNovelBookmarks.forEach((item, index) => { %>
                                 <a href="/story/<%= item.id %>" class="ranking-item">
                                     <div class="rank-number"><%= index + 1 %></div>

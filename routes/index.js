@@ -561,7 +561,8 @@ router.get('/search', async (req, res) => {
           user: req.user,
           stories: [],
           genres,
-          topDaily: [], topWeekly: [], topMonthly: [], topYearly: [], topBookmarks: [],
+          topComicDaily: [], topComicWeekly: [], topComicMonthly: [], topComicRated: [], topComicBookmarks: [],
+          topNovelDaily: [], topNovelWeekly: [], topNovelMonthly: [], topNovelRated: [], topNovelBookmarks: [],
           activeGenre,
           searchQuery: query,
           filters: { genre: genreSlug, status, minChapters: req.query.min_chapters || '', year: req.query.year || '', sort, view_sort: viewSort }
@@ -678,7 +679,8 @@ router.get('/search', async (req, res) => {
       user: req.user,
       stories,
       genres,
-      topDaily: [], topWeekly: [], topMonthly: [], topYearly: [], topBookmarks: [], // ẩn bảng xếp hạng khi tìm kiếm
+      topComicDaily: [], topComicWeekly: [], topComicMonthly: [], topComicRated: [], topComicBookmarks: [],
+      topNovelDaily: [], topNovelWeekly: [], topNovelMonthly: [], topNovelRated: [], topNovelBookmarks: [],
       activeGenre,
       searchQuery: query,
       filters: { genre: genreSlug, status, minChapters: req.query.min_chapters || '', year: req.query.year || '', sort, view_sort: viewSort }
@@ -754,7 +756,8 @@ router.get('/genre/:slug', async (req, res) => {
       user: req.user,
       stories,
       genres,
-      topDaily: [], topWeekly: [], topMonthly: [], topYearly: [], // ẩn bảng xếp hạng khi lọc
+      topComicDaily: [], topComicWeekly: [], topComicMonthly: [], topComicRated: [], topComicBookmarks: [],
+      topNovelDaily: [], topNovelWeekly: [], topNovelMonthly: [], topNovelRated: [], topNovelBookmarks: [],
       activeGenre,
       searchQuery: null,
       filters: { genre: slug, status: '', minChapters: '', year: '', sort: 'newest', view_sort: '' }
@@ -790,7 +793,8 @@ router.get('/author/:name', async (req, res) => {
       user: req.user,
       stories,
       genres,
-      topDaily: [], topWeekly: [], topMonthly: [], topYearly: [], topBookmarks: [],
+      topComicDaily: [], topComicWeekly: [], topComicMonthly: [], topComicRated: [], topComicBookmarks: [],
+      topNovelDaily: [], topNovelWeekly: [], topNovelMonthly: [], topNovelRated: [], topNovelBookmarks: [],
       activeGenre: null,
       searchQuery: null,
       filters: { genre: '', status: '', minChapters: '', year: '', sort: 'newest', view_sort: '' }
