@@ -1029,9 +1029,9 @@
                 <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.8rem; flex-wrap: wrap; gap: 0.5rem;">
                     <h3 class="section-title" style="font-size: 1.25rem; margin: 0; border: none; padding: 0;">🏆 Bảng Xếp Hạng</h3>
                     <div style="display: flex; gap: 0.2rem; background: rgba(0,0,0,0.3); padding: 0.2rem; border-radius: 8px; border: 1px solid var(--border-color);">
-                        <button class="bxh-type-btn active" onclick="filterBxhType('all')" style="padding: 0.25rem 0.6rem; font-size: 0.72rem; font-weight: 700; border-radius: 5px; border: none; cursor: pointer; background: var(--accent-color); color: white; transition: all 0.2s;">✨ Tất cả</button>
-                        <button class="bxh-type-btn" onclick="filterBxhType('comic')" style="padding: 0.25rem 0.6rem; font-size: 0.72rem; font-weight: 700; border-radius: 5px; border: none; cursor: pointer; background: transparent; color: var(--text-secondary); transition: all 0.2s;">🖼️ Tranh</button>
-                        <button class="bxh-type-btn" onclick="filterBxhType('novel')" style="padding: 0.25rem 0.6rem; font-size: 0.72rem; font-weight: 700; border-radius: 5px; border: none; cursor: pointer; background: transparent; color: var(--text-secondary); transition: all 0.2s;">📄 Chữ</button>
+                        <button class="bxh-type-btn active" onclick="filterBxhType('all', event)" style="padding: 0.25rem 0.6rem; font-size: 0.72rem; font-weight: 700; border-radius: 5px; border: none; cursor: pointer; background: var(--accent-color); color: white; transition: all 0.2s;">✨ Tất cả</button>
+                        <button class="bxh-type-btn" onclick="filterBxhType('comic', event)" style="padding: 0.25rem 0.6rem; font-size: 0.72rem; font-weight: 700; border-radius: 5px; border: none; cursor: pointer; background: transparent; color: var(--text-secondary); transition: all 0.2s;">🖼️ Tranh</button>
+                        <button class="bxh-type-btn" onclick="filterBxhType('novel', event)" style="padding: 0.25rem 0.6rem; font-size: 0.72rem; font-weight: 700; border-radius: 5px; border: none; cursor: pointer; background: transparent; color: var(--text-secondary); transition: all 0.2s;">📄 Chữ</button>
                     </div>
                 </div>
                 
@@ -1240,7 +1240,7 @@
 
 
 <script>
-    function filterBxhType(type) {
+    function filterBxhType(type, evt) {
         // Cập nhật trạng thái active cho nút bấm
         document.querySelectorAll('.bxh-type-btn').forEach(btn => {
             btn.classList.remove('active');
@@ -1248,7 +1248,7 @@
             btn.style.color = 'var(--text-secondary)';
         });
 
-        const activeBtn = event.currentTarget || document.querySelector(`.bxh-type-btn[onclick*="${type}"]`);
+        const activeBtn = (evt && evt.currentTarget) || (window.event && window.event.currentTarget) || document.querySelector(`.bxh-type-btn[onclick*="${type}"]`);
         if (activeBtn) {
             activeBtn.classList.add('active');
             activeBtn.style.background = 'var(--accent-color)';
