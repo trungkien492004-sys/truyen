@@ -43,6 +43,14 @@
         </div>
 
         <div class="form-group">
+            <label for="story_type">Loại Truyện</label>
+            <select id="story_type" name="story_type" style="width: 100%; padding: 0.8rem 1rem; background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 8px; font-size: 1rem; outline: none;">
+                <option value="novel" <%= (story.story_type || 'novel') === 'novel' ? 'selected' : '' %>>📄 Truyện chữ</option>
+                <option value="comic" <%= story.story_type === 'comic' ? 'selected' : '' %>>🖼️ Truyện tranh</option>
+            </select>
+        </div>
+
+        <div class="form-group">
             <label>Ảnh Bìa Hiện Tại</label>
             <div style="display: flex; align-items: center; gap: 1.5rem; background: var(--bg-primary); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color);">
                 <img src="<%= story.cover_url %>" alt="Cover" style="width: 80px; height: 110px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border-color);">

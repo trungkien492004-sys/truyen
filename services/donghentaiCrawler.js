@@ -78,7 +78,8 @@ async function syncLatestDongHentai(maxPages = 3) {
                 author: 'DongHentai',
                 description: description,
                 cover_url: coverUrl,
-                status: 'ongoing'
+                status: 'ongoing',
+                story_type: 'comic'
               }])
               .select('id')
               .single();
@@ -196,7 +197,8 @@ async function crawlSingleDongHentaiManga(storySlug) {
           author: 'DongHentai',
           description: description,
           cover_url: coverUrl,
-          status: 'ongoing'
+          status: 'ongoing',
+          story_type: 'comic'
         }])
         .select('id')
         .single();
