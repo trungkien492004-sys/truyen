@@ -4,6 +4,7 @@
     <h1 class="section-title" style="margin-bottom: 0;">🛠️ Bảng Điều Khiển Quản Trị</h1>
     <div style="display: flex; flex-wrap: wrap; gap: 0.8rem;">
         <a href="/admin/story/add" class="btn btn-primary">➕ Đăng bộ truyện mới</a>
+        <button id="btn-sync-donghentai" class="btn btn-secondary" style="background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.4); color: #10b981; font-weight: 600;">🔄 Quét Cập Nhật DongHentai</button>
         <a href="/admin/chapter/add" class="btn btn-secondary">⚡ Đăng chương truyện</a>
         <a href="/admin/genres" class="btn btn-secondary">🏷️ Thể loại</a>
         <a href="/admin/banners" class="btn btn-secondary">📺 Quản lý Banner</a>
@@ -117,6 +118,27 @@
                     row.style.display = 'none';
                 }
             });
+        });
+    }
+
+    const btnSync = document.getElementById('btn-sync-donghentai');
+    if (btnSync) {
+        btnSync.addEventListener('click', async function() {
+            if (!confirm('Bạn có muốn kích hoạt quét tự động các bộ truyện & chương vừa cập nhật mới nhất từ DongHentai không? (Truyện 0 chương sẽ bị loại bỏ hoàn toàn)')) {
+                return;
+            }
+            btnSync.disabled = true;
+            btnSync.textContent = '⏳ Đang quét & đồng bộ...';
+            try {
+                const res = await fetch('/api/cron/sync-donghentai?pages=3');
+                const data = await res.json();
+                alert('✅ ' + data.message + '\nTiến trình đang chạy ngầm trên server.');
+            } catch(e) {
+                alert('❌ Lỗi kích hoạt quét: ' + e.message);
+            } finally {
+                btnSync.disabled = false;
+                btnSync.textContent = '🔄 Quét Cập Nhật DongHentai';
+            }
         });
     }
 </script>

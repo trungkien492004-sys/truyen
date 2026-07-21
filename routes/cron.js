@@ -101,4 +101,23 @@ router.get('/daily-reward', async (req, res) => {
     }
 });
 
+// Vercel Cron / Local Endpoint: /api/cron/sync-donghentai
+router.get('/sync-donghentai', async (req, res) => {
+    try {
+        const { syncLatestDongHentai } = require('../services/donghentaiCrawler');
+        const pages = parseInt(req.query.pages) || 3;
+        
+        // Chạy bất đồng bộ để không timeout request
+        syncLatestDongHentai(pages).catch(err => console.error('Cron crawler err:', err));
+
+        return res.status(200).json({
+            success: true,
+            message: `Đã kích hoạt tiến trình tự động cào và cập nhật chương mới nhất (quét ${pages} trang gần đây).`
+        });
+    } catch (error) {
+        console.error('Error in sync-donghentai cron:', error);
+        return res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 module.exports = router;
