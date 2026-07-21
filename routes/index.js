@@ -381,7 +381,7 @@ router.get('/', async (req, res) => {
     if (genresError) throw genresError;
 
     // 3a. Lấy bảng xếp hạng đánh giá
-    const topRated = topRatedData || [];
+    const topRated = [];
 
     // Tối ưu hoá: Lấy song song các dữ liệu phụ (không quan trọng) bằng Promise.allSettled
     const [
