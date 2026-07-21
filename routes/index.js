@@ -348,33 +348,23 @@ router.get('/', async (req, res) => {
     
     const { getTypeRankings } = require('../services/storyClassifier');
 
-    // Gộp tất cả các truy vấn độc lập vào chung một Promise.all để lấy dữ liệu song song
+    // Gộp tất cả các truy vấn độc lập vào chung một Promise.all để lấy dữ liệu song song (tối đa tốc độ)
     const [
       { data: stories, count: totalCount, error: storiesError },
       { data: genres, error: genresError },
-      topComicDaily,
-      topComicWeekly,
-      topComicMonthly,
-      topComicRated,
-      topComicBookmarks,
-      topNovelDaily,
-      topNovelWeekly,
-      topNovelMonthly,
-      topNovelRated,
-      topNovelBookmarks
+      { data: topDaily },
+      { data: topWeekly },
+      { data: topMonthly },
+      { data: topYearly },
+      { data: topRatedData }
     ] = await Promise.all([
       query.order('last_update_at', { ascending: false }).range(fromRange, toRange),
       supabase.from('genres').select('*'),
-      getTypeRankings('comic', 'daily', 5),
-      getTypeRankings('comic', 'weekly', 5),
-      getTypeRankings('comic', 'monthly', 5),
-      getTypeRankings('comic', 'rated', 5),
-      getTypeRankings('comic', 'bookmarks', 5),
-      getTypeRankings('novel', 'daily', 5),
-      getTypeRankings('novel', 'weekly', 5),
-      getTypeRankings('novel', 'monthly', 5),
-      getTypeRankings('novel', 'rated', 5),
-      getTypeRankings('novel', 'bookmarks', 5)
+      supabase.from('views_ranking_daily').select('*').order('view_count', { ascending: false }).limit(5),
+      supabase.from('views_ranking_weekly').select('*').order('view_count', { ascending: false }).limit(5),
+      supabase.from('views_ranking_monthly').select('*').order('view_count', { ascending: false }).limit(5),
+      supabase.from('views_ranking_yearly').select('*').order('view_count', { ascending: false }).limit(5),
+      supabase.from('views_ranking_rated').select('*').limit(5)
     ]);
 
     if (storiesError) throw storiesError;
@@ -485,16 +475,11 @@ router.get('/', async (req, res) => {
       user: req.user,
       stories: stories || [],
       genres,
-      topComicDaily,
-      topComicWeekly,
-      topComicMonthly,
-      topComicRated,
-      topComicBookmarks,
-      topNovelDaily,
-      topNovelWeekly,
-      topNovelMonthly,
-      topNovelRated,
-      topNovelBookmarks,
+      topDaily: topDaily || [],
+      topWeekly: topWeekly || [],
+      topMonthly: topMonthly || [],
+      topYearly: topYearly || [],
+      topRated: topRatedData || [],
       topReaders,
       topBookmarks,
       topAuthors,
