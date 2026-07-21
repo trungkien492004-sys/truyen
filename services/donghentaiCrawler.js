@@ -46,7 +46,21 @@ async function syncLatestDongHentai(maxPages = 3) {
             continue;
           }
 
-          // 2. Kiểm tra/Tạo truyện trong DB nếu truyện có chứa chương
+          // 2. Kiểm tra danh sách đen (nếu Admin đã chủ động XÓA bộ truyện này -> BỎ QUA KHÔNG BAO GIỜ CÀO LẠI)
+          try {
+            const { data: blacklisted } = await supabase
+              .from('blacklisted_stories')
+              .select('id')
+              .ilike('title', storyName)
+              .maybeSingle();
+
+            if (blacklisted) {
+              console.log(`[CRON-CRAWLER] 🚫 Bỏ qua truyện "${storyName}" (Đã bị Admin xóa và đưa vào Blacklist).`);
+              continue;
+            }
+          } catch(bErr) {}
+
+          // 3. Kiểm tra/Tạo truyện trong DB nếu truyện có chứa chương
           const { data: existingStory } = await supabase
             .from('stories')
             .select('id')

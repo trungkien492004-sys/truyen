@@ -1311,12 +1311,26 @@ router.post('/story/edit/:id', upload.single('cover'), async (req, res) => {
 router.post('/story/delete/:id', isAdmin, async (req, res) => {
   const storyId = parseInt(req.params.id);
   try {
+    // 1. Lấy tên bộ truyện trước khi xóa
+    const { data: story } = await supabase.from('stories').select('title').eq('id', storyId).single();
+    
+    // 2. Thực hiện xóa bộ truyện
     const { error } = await supabase
       .from('stories')
       .delete()
       .eq('id', storyId);
 
     if (error) throw error;
+
+    // 3. Đưa tên bộ truyện vào danh sách đen (Blacklist) để trình tự động cào KHÔNG BAO GIỜ cào lại
+    if (story && story.title) {
+      try {
+        await supabase.from('blacklisted_stories').insert([{ title: story.title }]);
+      } catch (blErr) {
+        console.error('Lưu danh sách đen truyện đã xóa (bỏ qua nếu chưa tạo bảng):', blErr.message);
+      }
+    }
+
     res.redirect('/admin');
   } catch (err) {
     console.error('Lỗi xóa truyện:', err);
