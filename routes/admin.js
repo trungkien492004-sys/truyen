@@ -401,7 +401,7 @@ async function parseSingleFileToChapter(file, storyId) {
           }
         }
 
-        const parsedNum = chapNumFb ? parseFloat(chapNumFb[1]) : null;
+        let parsedNum = chapNumFb ? Math.floor(parseFloat(chapNumFb[1])) : null;
         let cleanTitle = chTitleFb.replace(/chương\s*\d+(?:\.\d+)?[:\s\-–]*/i, '').trim();
 
         // Xóa tiêu đề thừa trùng tên truyện ở các file mục lục/bìa nếu không có số chương
@@ -418,8 +418,17 @@ async function parseSingleFileToChapter(file, storyId) {
       }
 
       if (epubChapters.length > 0) {
-        // Lọc các chương hợp lệ có số chương và sắp xếp tăng dần theo số chương
-        const validChapters = epubChapters.filter(c => c.chapter_number !== null && c.chapter_number !== undefined);
+        // Lọc các chương hợp lệ có số chương, loại bỏ trùng lặp số chương (giữ chương xuất hiện đầu tiên)
+        const validChapters = [];
+        const seenNumbers = new Set();
+        for (const ch of epubChapters) {
+          if (ch.chapter_number !== null && ch.chapter_number !== undefined && !isNaN(ch.chapter_number)) {
+            if (!seenNumbers.has(ch.chapter_number)) {
+              seenNumbers.add(ch.chapter_number);
+              validChapters.push(ch);
+            }
+          }
+        }
         if (validChapters.length > 0) {
           validChapters.sort((a, b) => a.chapter_number - b.chapter_number);
           return validChapters;
