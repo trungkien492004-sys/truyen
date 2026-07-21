@@ -413,11 +413,16 @@ main {
 .ranking-list {
     display: none;
     flex-direction: column;
-    gap: 1rem;
 }
 
 .ranking-list.active {
+    display: block;
+}
+
+.bxh-subset {
     display: flex;
+    flex-direction: column;
+    gap: 1rem;
 }
 
 .ranking-item {
