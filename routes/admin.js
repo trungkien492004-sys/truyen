@@ -431,7 +431,12 @@ async function parseSingleFileToChapter(file, storyId) {
         }
         if (validChapters.length > 0) {
           validChapters.sort((a, b) => a.chapter_number - b.chapter_number);
-          return validChapters;
+          // Đánh lại số chương liên tục đẹp từ 1 đến N để sửa các khoảng trống bị tác giả gõ nhầm số
+          return validChapters.map((ch, idx) => ({
+            ...ch,
+            chapter_number: idx + 1,
+            title: ch.title || `Chương ${idx + 1}`
+          }));
         }
         return epubChapters;
       }
