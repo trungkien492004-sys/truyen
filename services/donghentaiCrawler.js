@@ -148,4 +148,96 @@ async function syncLatestDongHentai(maxPages = 3) {
   return { updatedStoriesCount, newChaptersCount };
 }
 
-module.exports = { syncLatestDongHentai };
+/**
+ * Hàm cào 1 truyện cụ thể theo Slug từ DongHentai
+ */
+async function crawlSingleDongHentaiManga(storySlug) {
+  try {
+    const mangaRes = await fetch(`${apiBase}/mangas/${storySlug}`, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      }
+    });
+    if (mangaRes.status !== 200) return;
+    const mangaJson = await mangaRes.json();
+    const item = mangaJson.data;
+    if (!item) return;
+
+    const storyName = item.name;
+    const coverUrl = item.cover_full_url || '';
+    const description = item.trim_pilot || `Truyện ${storyName}`;
+
+    // Lấy danh sách chương
+    const chapRes = await fetch(`${apiBase}/mangas/${storySlug}/chapters?page=1&per_page=100`, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      }
+    });
+    if (chapRes.status !== 200) return;
+    const chapJson = await chapRes.json();
+    const sourceChapters = chapJson.data || [];
+    if (sourceChapters.length === 0) return;
+
+    // Kiểm tra DB
+    const { data: existingStory } = await supabase
+      .from('stories')
+      .select('id')
+      .ilike('title', storyName)
+      .maybeSingle();
+
+    let storyId;
+    if (existingStory) {
+      storyId = existingStory.id;
+    } else {
+      const { data: newStory, error: storyErr } = await supabase
+        .from('stories')
+        .insert([{
+          title: storyName,
+          author: 'DongHentai',
+          description: description,
+          cover_url: coverUrl,
+          status: 'ongoing'
+        }])
+        .select('id')
+        .single();
+      if (storyErr) return;
+      storyId = newStory.id;
+      console.log(`➕ Thêm bộ truyện mới: "${storyName}" (ID: ${storyId})`);
+    }
+
+    const { data: dbChaps } = await supabase.from('chapters').select('chapter_number').eq('story_id', storyId);
+    const existingChapNums = new Set((dbChaps || []).map(c => c.chapter_number));
+
+    for (const sChap of sourceChapters) {
+      const chapNum = Math.floor(parseFloat(sChap.chapter_number || sChap.order || 1));
+      if (existingChapNums.has(chapNum)) continue;
+
+      const imgRes = await fetch(`${apiBase}/mangas/${storySlug}/chapters/${sChap.slug}/images`, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        }
+      });
+      if (imgRes.status !== 200) continue;
+      const imgJson = await imgRes.json();
+      const images = imgJson.data?.images || [];
+      if (images.length === 0) continue;
+
+      const contentHtml = images
+        .map(img => `<div style="text-align: center; margin-bottom: 10px;"><img src="${img}" style="max-width: 100%; height: auto; border-radius: 4px;" loading="lazy"></div>`)
+        .join('');
+
+      await supabase.from('chapters').upsert([{
+        story_id: storyId,
+        chapter_number: chapNum,
+        title: sChap.name || `Chương ${chapNum}`,
+        content: contentHtml
+      }], { onConflict: 'story_id,chapter_number' });
+
+      console.log(`   ➔ Đã thêm: ${storyName} - ${sChap.name} (${images.length} ảnh)`);
+    }
+  } catch (e) {
+    console.error(`Lỗi cào ${storySlug}:`, e.message);
+  }
+}
+
+module.exports = { syncLatestDongHentai, crawlSingleDongHentaiManga };

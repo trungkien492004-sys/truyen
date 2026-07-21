@@ -11,9 +11,11 @@
     </div>
 
     <!-- TABS -->
-    <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
-        <button class="tab-btn active" onclick="switchTab('readers')" style="background: none; border: none; color: var(--text-primary); font-size: 1.1rem; font-weight: bold; cursor: pointer; padding: 0.5rem 1rem; border-bottom: 3px solid var(--accent-color); transition: all 0.2s;">Độc Giả</button>
-        <button class="tab-btn" onclick="switchTab('authors')" style="background: none; border: none; color: var(--text-secondary); font-size: 1.1rem; font-weight: bold; cursor: pointer; padding: 0.5rem 1rem; border-bottom: 3px solid transparent; transition: all 0.2s;">Tác Giả</button>
+    <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; flex-wrap: wrap;">
+        <button class="tab-btn active" onclick="switchTab('readers')" style="background: none; border: none; color: var(--text-primary); font-size: 1.05rem; font-weight: bold; cursor: pointer; padding: 0.5rem 0.8rem; border-bottom: 3px solid var(--accent-color); transition: all 0.2s;">👑 Độc Giả</button>
+        <button class="tab-btn" onclick="switchTab('comics')" style="background: none; border: none; color: var(--text-secondary); font-size: 1.05rem; font-weight: bold; cursor: pointer; padding: 0.5rem 0.8rem; border-bottom: 3px solid transparent; transition: all 0.2s;">🖼️ Truyện Tranh Top</button>
+        <button class="tab-btn" onclick="switchTab('novels')" style="background: none; border: none; color: var(--text-secondary); font-size: 1.05rem; font-weight: bold; cursor: pointer; padding: 0.5rem 0.8rem; border-bottom: 3px solid transparent; transition: all 0.2s;">📄 Truyện Chữ Top</button>
+        <button class="tab-btn" onclick="switchTab('authors')" style="background: none; border: none; color: var(--text-secondary); font-size: 1.05rem; font-weight: bold; cursor: pointer; padding: 0.5rem 0.8rem; border-bottom: 3px solid transparent; transition: all 0.2s;">✍️ Tác Giả</button>
     </div>
 
     <!-- TAB ĐỘC GIẢ -->
@@ -88,6 +90,76 @@
         </table>
     </div>
 </div>
+
+    <!-- TAB TRUYỆN TRANH TOP -->
+    <div id="tab-comics" class="tab-content" style="display: none;">
+        <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.15); overflow-x: auto;">
+            <table class="leaderboard-table" style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.95rem;">
+                <thead>
+                    <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-secondary); font-weight: bold;">
+                        <th style="padding: 1rem 0.8rem; text-align: center; width: 80px;">Hạng</th>
+                        <th style="padding: 1rem 0.8rem;">Bộ Truyện Tranh</th>
+                        <th style="padding: 1rem 0.8rem;">Tác giả</th>
+                        <th style="padding: 1rem 0.8rem; text-align: right;">Lượt xem</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (typeof topComicDaily === 'undefined' || topComicDaily.length === 0) { %>
+                        <tr><td colspan="4" style="padding: 2rem; text-align: center; color: var(--text-secondary);">Chưa có dữ liệu.</td></tr>
+                    <% } else { %>
+                        <% topComicDaily.forEach((story, index) => { %>
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.03);" class="leaderboard-row">
+                                <td style="padding: 1rem 0.8rem; text-align: center;">
+                                    <% if (index === 0) { %>🥇<% } else if (index === 1) { %>🥈<% } else if (index === 2) { %>🥉<% } else { %><%= index + 1 %><% } %>
+                                </td>
+                                <td style="padding: 0.8rem; display: flex; align-items: center; gap: 0.8rem;">
+                                    <img src="<%= story.cover_url %>" style="width: 38px; height: 50px; object-fit: cover; border-radius: 4px;">
+                                    <a href="/story/<%= story.id %>" style="font-weight: 600; color: var(--text-primary); text-decoration: none;"><%= story.title %></a>
+                                </td>
+                                <td style="padding: 0.8rem; color: var(--text-secondary);"><%= story.author || 'Chưa rõ' %></td>
+                                <td style="padding: 0.8rem; text-align: right; font-weight: bold; color: var(--accent-color);">👁️ <%= story.view_count %></td>
+                            </tr>
+                        <% }) %>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TAB TRUYỆN CHỮ TOP -->
+    <div id="tab-novels" class="tab-content" style="display: none;">
+        <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.15); overflow-x: auto;">
+            <table class="leaderboard-table" style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.95rem;">
+                <thead>
+                    <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-secondary); font-weight: bold;">
+                        <th style="padding: 1rem 0.8rem; text-align: center; width: 80px;">Hạng</th>
+                        <th style="padding: 1rem 0.8rem;">Bộ Truyện Chữ</th>
+                        <th style="padding: 1rem 0.8rem;">Tác giả</th>
+                        <th style="padding: 1rem 0.8rem; text-align: right;">Lượt xem</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (typeof topNovelDaily === 'undefined' || topNovelDaily.length === 0) { %>
+                        <tr><td colspan="4" style="padding: 2rem; text-align: center; color: var(--text-secondary);">Chưa có dữ liệu.</td></tr>
+                    <% } else { %>
+                        <% topNovelDaily.forEach((story, index) => { %>
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.03);" class="leaderboard-row">
+                                <td style="padding: 1rem 0.8rem; text-align: center;">
+                                    <% if (index === 0) { %>🥇<% } else if (index === 1) { %>🥈<% } else if (index === 2) { %>🥉<% } else { %><%= index + 1 %><% } %>
+                                </td>
+                                <td style="padding: 0.8rem; display: flex; align-items: center; gap: 0.8rem;">
+                                    <img src="<%= story.cover_url %>" style="width: 38px; height: 50px; object-fit: cover; border-radius: 4px;">
+                                    <a href="/story/<%= story.id %>" style="font-weight: 600; color: var(--text-primary); text-decoration: none;"><%= story.title %></a>
+                                </td>
+                                <td style="padding: 0.8rem; color: var(--text-secondary);"><%= story.author || 'Chưa rõ' %></td>
+                                <td style="padding: 0.8rem; text-align: right; font-weight: bold; color: var(--accent-color);">👁️ <%= story.view_count %></td>
+                            </tr>
+                        <% }) %>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
 
 <!-- TAB TÁC GIẢ -->
 <div id="tab-authors" class="tab-content" style="display: none;">

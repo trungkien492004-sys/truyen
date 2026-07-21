@@ -1,0 +1,230 @@
+[
+  {
+    "num": 4,
+    "isBuggy": true,
+    "reason": "'t' suffix obfuscation (22 indicator words found)",
+    "sample": "“Ahhhh…….ưhhhh……bẹp…….sâut quá…….nhẹt thôit anh……ưhhhhh…..bẹp……bẹp……….chậm…..chậmt lại…….chếtt emt mất……ahhhh…..bẹp……bẹp…….ahhhh……”t Lyt rênt rỉt cầut xint Thiênt khit cont c*ct củat gãt khôngt ngừngt"
+  },
+  {
+    "num": 6,
+    "isBuggy": true,
+    "reason": "'t' suffix obfuscation (17 indicator words found)",
+    "sample": "“Cảm…..cảmt ơnt cháu”t Hoat saut mộtt trậnt khóct đãt đờit giờt đãt lấyt lạit bìnht tĩnh,t baot nhiêut đắngt cayt tủit hờnt cuốit cùngt côt mớit đượct phátt tiếtt thoảit máit nhưt thết trênt mộtt bờt "
+  },
+  {
+    "num": 7,
+    "isBuggy": true,
+    "reason": "'t' suffix obfuscation (13 indicator words found)",
+    "sample": "Buổit tối,t Quỳnht Anht chuẩnt bịt đit họct thêm.t “Quỳnht Anh………nhớt bấmt chốtt cửat nhé….”t Hoat đangt rửat chént kêut vọngt ra,t tốit nayt Longt màt quat nhấtt địnht côt sẽt khôngt mởt cửa,t buổit "
+  },
+  {
+    "num": 9,
+    "isBuggy": true,
+    "reason": "'t' suffix obfuscation (20 indicator words found)",
+    "sample": "Hoat trởt vềt nhàt lúct chiềut tối,t hômt nayt côt đãt nghĩt thậtt kỹt rồi,t côt quyếtt tâmt sẽt nóit rõt ràngt chấmt dứtt vớit Long,t khôngt thểt tiếpt tụct nhưt vậyt được.t Bấmt thangt máy,t Hoat hí"
+  },
+  {
+    "num": 10,
+    "isBuggy": true,
+    "reason": "'t' suffix obfuscation (6 indicator words found)",
+    "sample": "Buổit tốit củat nhàt Hoat hômt nayt lạit thêmt mộtt người,t đót làt Long,t cót cậut sangt ănt làmt Quỳnht Anht rấtt vuit vẻ,t côt bét rấtt thícht bữat ănt cót nhiềut người.t “Ngont không?”t Hoat hỏit "
+  },
+  {
+    "num": 11,
+    "isBuggy": true,
+    "reason": "'t' suffix obfuscation (18 indicator words found)",
+    "sample": "Sángt sớm,t Longt thứct dậyt đit đổt ráct nhưt mọit hôm,t đêmt quat cậut dẫnt hait côt bét vềt trongt ánht mắtt ngỡt ngàngt củat Thiên,t buổit chiềut mớit chỉt chot màt buổit tốit đãt đit kiếmt về,t g"
+  },
+  {
+    "num": 12,
+    "isBuggy": true,
+    "reason": "'t' suffix obfuscation (16 indicator words found)",
+    "sample": "Mộtt thángt saut khit luyệnt tậpt theot thờit giant biểut củat Thiên,t ngàyt nàot Longt cũngt bịt hànht chếtt đit sốngt lạit mấyt lầnt vìt mấyt ngườit thầyt củat mình,t khôngt phảit làt tậpt luyệnt bì"
+  },
+  {
+    "num": 13,
+    "isBuggy": true,
+    "reason": "'t' suffix obfuscation (18 indicator words found)",
+    "sample": "Trongt phòngt Quỳnht Anh,t cănt phòngt màut hồngt xinht xắnt củat côt bét làmt Longt ngạct nhiênt vìt lầnt đầut cậut bướct vàot đây.t Nhìnt lạit Quỳnht Anh,t côt bét tóct đent dàit tớit lưng,t khuônt "
+  },
+  {
+    "num": 15,
+    "isBuggy": true,
+    "reason": "'t' suffix obfuscation (20 indicator words found)",
+    "sample": "Longt cởit lấyt hàngt cúct áot củat cáit áot bệnht nhân,t cặpt vút trắngt tot trònt củat Hoat nhanht chóngt đượct giảit thoátt rat khỏit cáit áot chậtt hẹpt kia,t mặct dùt sờt bópt baot nhiêut lầnt rồ"
+  },
+  {
+    "num": 16,
+    "isBuggy": true,
+    "reason": "'t' suffix obfuscation (17 indicator words found)",
+    "sample": "Đãt mộtt thángt kểt từt ngàyt Thiênt rờit đi,t Longt rấtt lot lắngt chot gãt nhưngt màt khôngt biếtt cácht liênt lạct vớit gã,t lúct nàot cậut cũngt đểt điệnt thoạit trongt túit quầnt phòngt Thiênt gọ"
+  },
+  {
+    "num": 17,
+    "isBuggy": true,
+    "reason": "'t' suffix obfuscation (11 indicator words found)",
+    "sample": "Longt giậtt mìnht vìt tiếngt nóit cườit củat mộtt nhómt ngườit gầnt đó,t nhìnt vềt phíat xa,t nơit cuốit cont hẻmt mộtt bọnt thanht niênt bặmt trợnt đangt vâyt quanht mộtt tênt mậpt mạpt tot cao,t bọn"
+  },
+  {
+    "num": 19,
+    "isBuggy": true,
+    "reason": "'t' suffix obfuscation (26 indicator words found)",
+    "sample": "Gầnt 6t tuầnt kểt từt ngàyt Longt nằmt trênt giườngt bệnh,t cuốit cùngt cáct vếtt thươngt đãt lànht trừt nhữngt vếtt cắnt sâut tậnt xươngt vẫnt cònt đaut êt ẩm,t Hảit vàt cụt giàt lúct cậut tỉnht lạit"
+  },
+  {
+    "num": 20,
+    "isBuggy": true,
+    "reason": "'t' suffix obfuscation (19 indicator words found)",
+    "sample": "6t giờt tối,t trongt cănt nhàt Hoa,t Longt lúct nàyt đãt ănt mặct chỉnht tềt ngồit ởt ghết salongt phòngt khách,t trướct mặtt cậut làt Hoa.t “Anh…………….saot anht cót thểt nhưt vậy……….cont bét làt cháut"
+  },
+  {
+    "num": 21,
+    "isBuggy": true,
+    "reason": "'t' suffix obfuscation (26 indicator words found)",
+    "sample": "Cót thểt cót ngườit chot rằngt giảit thícht chuyệnt củat Thảot quát đơnt giảnt nhưngt màt mìnht lướtt quat nhanht vìt quát nhiềut thứt cầnt giảit thícht làmt truyệnt đọct nót nhàm,t mìnht viếtt cũngt "
+  },
+  {
+    "num": 22,
+    "isBuggy": true,
+    "reason": "'t' suffix obfuscation (14 indicator words found)",
+    "sample": "Trongt quánt cafe,t thằngt mậpt vàt đámt đànt emt củat Hưngt đangt quant sátt cuộct chiếnt giữat 1t vớit 10,t nhìnt Longt tảt xungt hữut độtt khôngt sợt chếtt màt dat đầut chúngt runt lên,t thằngt này"
+  },
+  {
+    "num": 23,
+    "isBuggy": true,
+    "reason": "'t' suffix obfuscation (10 indicator words found)",
+    "sample": "Longt bướct vàot nhìnt quanht cănt phòng,t trongt góct làt mộtt đámt đànt bàt đangt runt rẩyt nhìnt thằngt mậpt sợt hãi,t trênt ghết chínht giữat làt mộtt gãt đànt ôngt ngãt gụct mặtt bấtt tỉnh,t nhìn"
+  },
+  {
+    "num": 24,
+    "isBuggy": true,
+    "reason": "'t' suffix obfuscation (10 indicator words found)",
+    "sample": "Ngồit trênt ghết sat lôngt xemt tint tứct thờit sự,t Longt giangt rộngt hait chânt đểt cont c*ct vươnt cao,t nót đangt đượct chămt sóct bởit hait cáit miệngt nhỏt nhắnt củat Quỳnht Anht vàt Thảo,t hai"
+  },
+  {
+    "num": 25,
+    "isBuggy": true,
+    "reason": "'t' suffix obfuscation (29 indicator words found)",
+    "sample": "“Đừng………..đừngt mà………..không…………”t Trangt cốt gắngt dãyt dụat khỏit bànt tayt khỏet khoắnt đangt cốt gắngt mòt saut lưngt mìnht tìmt cáit khóat váyt củat mình.t “Anh…….emt tìmt hoàit màt khôngt cởit đ"
+  },
+  {
+    "num": 30,
+    "isBuggy": true,
+    "reason": "'t' suffix obfuscation (14 indicator words found)",
+    "sample": "Giangt ngàt ngàt sayt bướct rat xet tiếnt vềt phíat cănt hột củat mình,t phíat saut làt hait gãt đànt emt theot sát,t trongt áot chúngt làt nhữngt khẩut súngt ngắnt đãt lênt đạnt sẵnt sàngt bắnt bấtt "
+  },
+  {
+    "num": 31,
+    "isBuggy": true,
+    "reason": "'t' suffix obfuscation (13 indicator words found)",
+    "sample": "Bênt trongt cănt nhàt xậpt xệ,t Hoàngt vàt Longt ngồit trênt ghết nhựat cònt thằngt mậpt đứngt cạnht mộtt bênt vìt khôngt cót cáit ghết nàot vừat cáit môngt tot kinht khủngt củat hắnt cả.t “Thậtt làt "
+  },
+  {
+    "num": 32,
+    "isBuggy": true,
+    "reason": "'t' suffix obfuscation (16 indicator words found)",
+    "sample": "“Bẹp…….bẹp……..ưhhhhhh……..ưhhhhhhhh………bẹp………bẹp…….”t Ngồit trênt đùit Longt làt Thảot đangt liênt tụct lắct hôngt trênt cont c*ct tot dàit củat hắn,t nhìnt nót lútt cánt bênt trongt khet lo^`nt hồngt h"
+  },
+  {
+    "num": 33,
+    "isBuggy": true,
+    "reason": "'t' suffix obfuscation (16 indicator words found)",
+    "sample": "“Ưhhhhhh…..emt chếtt mất………..chơit emt mạnht nữat đit anh………….ưhhhhhhh…….”t Hoat rênt to,t cảmt giáct vừat đaut vừat sướngt làmt ngườit côt rủnt rẩy.t “ưhhhhhhh……”t Quỳnht Anht cũngt hát hốct mồm,t ng"
+  },
+  {
+    "num": 45,
+    "isBuggy": true,
+    "reason": "'t' suffix obfuscation (62 indicator words found)",
+    "sample": "Tângt caot nhấtt củat tòat chungt cưt Hưngt Thịnht –t đạit bảnt doanht củat mộtt trongt nhữngt trùmt cờt bạct đấtt Sàit Gònt –t Phượngt đỏt đen,t khácht đếnt đánht bạct ởt đâyt đềut làt nhữngt ngườit "
+  },
+  {
+    "num": 50,
+    "isBuggy": true,
+    "reason": "'t' suffix obfuscation (14 indicator words found)",
+    "sample": "“Cộp……..cộp…………cộp………..”t Trongt cănt phòngt củat lãot Kimt chỉt cònt nhữngt tiếngt gõt ngónt tayt nhèt nhẹt củat lãot lênt mặtt bànt đểt giảmt căngt thẳngt thầnt kinh,t lãot khôngt biếtt chuyệnt đãt "
+  },
+  {
+    "num": 53,
+    "isBuggy": true,
+    "reason": "'t' suffix obfuscation (16 indicator words found)",
+    "sample": "…….“Mộtt chútt nhớt anht đấy…………….mộtt chútt mơt chưat đầy……………..mộtt chútt thươngt anh…………”t Chỉt ítt phútt saut Ánht Ngat phiêut vớit bàit hátt trênt sânt khấu,t cũngt làt lúct mẹt cont Thanht Tuyết"
+  },
+  {
+    "num": 57,
+    "isBuggy": true,
+    "reason": "'t' suffix obfuscation (13 indicator words found)",
+    "sample": "“Haha………….thậtt sao……………”t Phòngt bếpt cănt nhàt củat Hoat trànt ngậpt tiếngt cườit vangt củat Long.t “Ừm……….emt phảit làmt saot đây…………”t Hoat đangt nấut ănt đỏt mặtt xấut hổ,t côt vừat chot hắnt biế"
+  },
+  {
+    "num": 60,
+    "isBuggy": true,
+    "reason": "'t' suffix obfuscation (12 indicator words found)",
+    "sample": "“Đẹpt đấy………..hắct hắc………….”t Longt nhìnt vàot cặpt vút căngt đầyt đangt đượct cáit áot ngựct màut trắngt nịtt chặtt màt khôngt kìmt đượct khent ngợi,t hắnt cònt thòt tayt vàot kéot cáit áot ngựct của"
+  },
+  {
+    "num": 61,
+    "isBuggy": true,
+    "reason": "'t' suffix obfuscation (9 indicator words found)",
+    "sample": "“Ặc………….”t Hiềnt khôngt chịut thấu,t quát kícht thícht rồi,t côt tựat đầut rat saut dựat vàot ngựct Long,t hait mắtt lờt đờt vìt phê,t thânt dướit cot giậtt mạnh,t côt lạit lênt đỉnht nữat rồi.“Chụt……"
+  },
+  {
+    "num": 65,
+    "isBuggy": true,
+    "reason": "'t' suffix obfuscation (11 indicator words found)",
+    "sample": "Vàit ngàyt saut thắngt lợi,t ngàyt chủt nhật,t tòat nhàt Bitexcot caot nhấtt Sàit Gònt hômt nayt từt tầngt 50t trởt lênt đềut đượct thôngt báot nghĩ,t ngườit tat chỉt cót thểt đit thangt máyt đếnt tần"
+  },
+  {
+    "num": 66,
+    "isBuggy": true,
+    "reason": "'t' suffix obfuscation (10 indicator words found)",
+    "sample": "“Ừm…..”t Uyênt Nhit khẽt gậtt đầu,t côt biếtt thằngt mậpt ngoàit kiat rấtt thèmt thuồngt cơt thểt mình,t côt thàt chếtt chứt khôngt đểt nhưt chịt Mit khit nãy.“Anh…….emt đến…..”t Kéot tayt Uyênt Nhit "
+  },
+  {
+    "num": 70,
+    "isBuggy": true,
+    "reason": "'t' suffix obfuscation (21 indicator words found)",
+    "sample": "Đổit lạit khôngt biếtt baot nhiêut tiềnt bạct chot tổt chứct nênt lãot Khảit nhậnt đượct mộtt đặct quyềnt đót làt dòngt dõit trựct hệt mỗit đờit đềut cót mộtt ngườit đượct tổt chứct cảit tạot cơt thể,"
+  },
+  {
+    "num": 76,
+    "isBuggy": true,
+    "reason": "'t' suffix obfuscation (15 indicator words found)",
+    "sample": "Vớit mộtt vởt kịcht dot Thiênt dànt dựng,t Longt trởt vềt cănt biệtt thựt saut 5t nămt rờit đi.“Cốc…….cốc……”t Bênt ngoàit cót tiếngt gõt cửat làmt Longt tỉnht lạit trongt hồit ức,t hắnt bướct rat mở,t"
+  },
+  {
+    "num": 79,
+    "isBuggy": true,
+    "reason": "'t' suffix obfuscation (9 indicator words found)",
+    "sample": "“Mẹt xấut không?”t Xuânt hỏit cont trai.“Không,t mẹt lúct nàot cũngt đẹpt nhất”t Longt yêut thươngt nói,t gươngt mặtt xinht đẹpt khôngt tìt vếtt kiat làmt saot cót thểt xấut đit được……chiếct mũit cao,"
+  },
+  {
+    "num": 80,
+    "isBuggy": true,
+    "reason": "'t' suffix obfuscation (7 indicator words found)",
+    "sample": "Xuânt xấut hổt vôt cùngt vìt cơt thểt côt phảnt ứngt nhưngt Longt khôngt chot côt nói,t mộtt lầnt nứat hắnt lạit thamt lamt xâmt chiếmt đôit môit cô,t cùngt lúct đót hait ngónt tayt hắnt cũngt nắmt lấ"
+  },
+  {
+    "num": 81,
+    "isBuggy": true,
+    "reason": "'t' suffix obfuscation (23 indicator words found)",
+    "sample": "“Khôngt đượct đâu,t chưat tớit lúct đâut con”t Xuânt lít nhít trảt lời.“Mẹ!t Cảmt nhậnt nót đi,t c*ct cont cứngt thết nàyt rồi,t chẳngt lẽt mẹt khôngt muốnt bênt trongt mìnht đượct nót lấpt đầyt sao?”"
+  },
+  {
+    "num": 83,
+    "isBuggy": true,
+    "reason": "'t' suffix obfuscation (7 indicator words found)",
+    "sample": "….“Này,t cònt đừt ngườit rat thết hả,t maut làmt gàt đi!”t Xuânt thấyt Longt bấtt độngt nênt lênt tiếng.“Mẹ,t bàt ấyt cònt lợit hạit hơnt xưat nhỉ”t Longt mỉmt cười,t ởt nhàt nàyt từt nhỏt saot hắnt k"
+  },
+  {
+    "num": 84,
+    "isBuggy": true,
+    "reason": "'t' suffix obfuscation (12 indicator words found)",
+    "sample": "Nhưngt côt khôngt kịpt nghĩt ngợit nhiềut vìt bênt dướit Longt đãt độngt trước,t hắnt saot cót thểt chịut đựngt đượct khut vựct mêt ngườit kiat chứ,t miệngt hắnt hát rộngt mútt mạnht cửat lo^`nt củat "
+  },
+  {
+    "num": 85,
+    "isBuggy": true,
+    "reason": "'t' suffix obfuscation (12 indicator words found)",
+    "sample": "“Bẹp……….bẹp……..cont chịut hếtt nổit rồi………….”t Saut tiếngt hétt to,t Longt nhấpt mộtt cút lútt cánt rồit rùngt mìnht bắnt tinht vàot tửt cungt mẹ,t Xuânt cũngt lênt đỉnh,t côt nhắmt mắtt đểt cơt thểt "
+  }
+]

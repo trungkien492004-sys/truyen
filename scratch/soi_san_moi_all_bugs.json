@@ -1,0 +1,556 @@
+{
+  "totalChecked": 662,
+  "buggyCount": 78,
+  "missingCount": 0,
+  "errorsCount": 0,
+  "buggyChapters": [
+    {
+      "num": 4,
+      "title": "Chương 4: Trở thành đàn ông (3)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (22 indicator words)",
+      "sample": "“Ahhhh…….ưhhhh……bẹp…….sâut quá…….nhẹt thôit anh……ưhhhhh…..bẹp……bẹp……….chậm…..chậmt lại…….chếtt emt mất……ahhhh…..bẹp……bẹp"
+    },
+    {
+      "num": 6,
+      "title": "Chương 6: Chinh phục mỹ nhân (2)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (17 indicator words)",
+      "sample": "“Cảm…..cảmt ơnt cháu”t Hoat saut mộtt trậnt khóct đãt đờit giờt đãt lấyt lạit bìnht tĩnh,t baot nhiêut đắngt cayt tủit h"
+    },
+    {
+      "num": 7,
+      "title": "Chương 7: Chinh phục mỹ nhân (3)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (13 indicator words)",
+      "sample": "Buổit tối,t Quỳnht Anht chuẩnt bịt đit họct thêm.t “Quỳnht Anh………nhớt bấmt chốtt cửat nhé….”t Hoat đangt rửat chént kêut"
+    },
+    {
+      "num": 9,
+      "title": "Chương 9: Người yêu 14 tuổi                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (20 indicator words)",
+      "sample": "Hoat trởt vềt nhàt lúct chiềut tối,t hômt nayt côt đãt nghĩt thậtt kỹt rồi,t côt quyếtt tâmt sẽt nóit rõt ràngt chấmt dứ"
+    },
+    {
+      "num": 10,
+      "title": "Chương 10: Lựa chọn đầu tiên                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (6 indicator words)",
+      "sample": "Buổit tốit củat nhàt Hoat hômt nayt lạit thêmt mộtt người,t đót làt Long,t cót cậut sangt ănt làmt Quỳnht Anht rấtt vuit"
+    },
+    {
+      "num": 11,
+      "title": "Chương 11: Thời gian biểu                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (18 indicator words)",
+      "sample": "Sángt sớm,t Longt thứct dậyt đit đổt ráct nhưt mọit hôm,t đêmt quat cậut dẫnt hait côt bét vềt trongt ánht mắtt ngỡt ngà"
+    },
+    {
+      "num": 12,
+      "title": "Chương 12: Bị cưỡиɠ ɖâʍ (1)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (16 indicator words)",
+      "sample": "Mộtt thángt saut khit luyệnt tậpt theot thờit giant biểut củat Thiên,t ngàyt nàot Longt cũngt bịt hànht chếtt đit sốngt "
+    },
+    {
+      "num": 13,
+      "title": "Chương 13: Bị cưỡиɠ ɖâʍ (2)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (18 indicator words)",
+      "sample": "Trongt phòngt Quỳnht Anh,t cănt phòngt màut hồngt xinht xắnt củat côt bét làmt Longt ngạct nhiênt vìt lầnt đầut cậut bướ"
+    },
+    {
+      "num": 15,
+      "title": "Chương 15: Cuồng loạn                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (20 indicator words)",
+      "sample": "Longt cởit lấyt hàngt cúct áot củat cáit áot bệnht nhân,t cặpt vút trắngt tot trònt củat Hoat nhanht chóngt đượct giảit "
+    },
+    {
+      "num": 16,
+      "title": "Chương 16: Thoát chết                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (17 indicator words)",
+      "sample": "Đãt mộtt thángt kểt từt ngàyt Thiênt rờit đi,t Longt rấtt lot lắngt chot gãt nhưngt màt khôngt biếtt cácht liênt lạct vớ"
+    },
+    {
+      "num": 17,
+      "title": "Chương 17: Đàn em đầu tiên                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (11 indicator words)",
+      "sample": "Longt giậtt mìnht vìt tiếngt nóit cườit củat mộtt nhómt ngườit gầnt đó,t nhìnt vềt phíat xa,t nơit cuốit cont hẻmt mộtt "
+    },
+    {
+      "num": 19,
+      "title": "Chương 19: Trở về                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (26 indicator words)",
+      "sample": "Gầnt 6t tuầnt kểt từt ngàyt Longt nằmt trênt giườngt bệnh,t cuốit cùngt cáct vếtt thươngt đãt lànht trừt nhữngt vếtt cắn"
+    },
+    {
+      "num": 20,
+      "title": "Chương 20: Mắc nợ kiếp trước                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (19 indicator words)",
+      "sample": "6t giờt tối,t trongt cănt nhàt Hoa,t Longt lúct nàyt đãt ănt mặct chỉnht tềt ngồit ởt ghết salongt phòngt khách,t trướct"
+    },
+    {
+      "num": 21,
+      "title": "Chương 21: Trở thành đại ca (1)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (26 indicator words)",
+      "sample": "Cót thểt cót ngườit chot rằngt giảit thícht chuyệnt củat Thảot quát đơnt giảnt nhưngt màt mìnht lướtt quat nhanht vìt qu"
+    },
+    {
+      "num": 22,
+      "title": "Chương 22: Trở thành đại ca (2)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (14 indicator words)",
+      "sample": "Trongt quánt cafe,t thằngt mậpt vàt đámt đànt emt củat Hưngt đangt quant sátt cuộct chiếnt giữat 1t vớit 10,t nhìnt Long"
+    },
+    {
+      "num": 23,
+      "title": "Chương 23: Trờ thành đại ca (3)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (10 indicator words)",
+      "sample": "Longt bướct vàot nhìnt quanht cănt phòng,t trongt góct làt mộtt đámt đànt bàt đangt runt rẩyt nhìnt thằngt mậpt sợt hãi,"
+    },
+    {
+      "num": 24,
+      "title": "Chương 24: Trở mặt (1)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (10 indicator words)",
+      "sample": "Ngồit trênt ghết sat lôngt xemt tint tứct thờit sự,t Longt giangt rộngt hait chânt đểt cont c*ct vươnt cao,t nót đangt đ"
+    },
+    {
+      "num": 25,
+      "title": "Chương 25: Trở mặt (2)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (29 indicator words)",
+      "sample": "“Đừng………..đừngt mà………..không…………”t Trangt cốt gắngt dãyt dụat khỏit bànt tayt khỏet khoắnt đangt cốt gắngt mòt saut lưng"
+    },
+    {
+      "num": 30,
+      "title": "Chương 30: Kết cục của kẻ phản bội                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (14 indicator words)",
+      "sample": "Giangt ngàt ngàt sayt bướct rat xet tiếnt vềt phíat cănt hột củat mình,t phíat saut làt hait gãt đànt emt theot sát,t tr"
+    },
+    {
+      "num": 31,
+      "title": "Chương 31: Gặp lại                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (13 indicator words)",
+      "sample": "Bênt trongt cănt nhàt xậpt xệ,t Hoàngt vàt Longt ngồit trênt ghết nhựat cònt thằngt mậpt đứngt cạnht mộtt bênt vìt không"
+    },
+    {
+      "num": 32,
+      "title": "Chương 32: Khoái lạc                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (16 indicator words)",
+      "sample": "“Bẹp…….bẹp……..ưhhhhhh……..ưhhhhhhhh………bẹp………bẹp…….”t Ngồit trênt đùit Longt làt Thảot đangt liênt tụct lắct hôngt trênt c"
+    },
+    {
+      "num": 33,
+      "title": "Chương 33: Sói săn mồi (1)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (16 indicator words)",
+      "sample": "“Ưhhhhhh…..emt chếtt mất………..chơit emt mạnht nữat đit anh………….ưhhhhhhh…….”t Hoat rênt to,t cảmt giáct vừat đaut vừat sướ"
+    },
+    {
+      "num": 45,
+      "title": "Chương 45: Thuần phục                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (62 indicator words)",
+      "sample": "Tângt caot nhấtt củat tòat chungt cưt Hưngt Thịnht –t đạit bảnt doanht củat mộtt trongt nhữngt trùmt cờt bạct đấtt Sàit "
+    },
+    {
+      "num": 50,
+      "title": "Chương 50: Kết cục của đại gia (1)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (14 indicator words)",
+      "sample": "“Cộp……..cộp…………cộp………..”t Trongt cănt phòngt củat lãot Kimt chỉt cònt nhữngt tiếngt gõt ngónt tayt nhèt nhẹt củat lãot l"
+    },
+    {
+      "num": 53,
+      "title": "Chương 53: Đêm trao giải (2)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (16 indicator words)",
+      "sample": "…….“Mộtt chútt nhớt anht đấy…………….mộtt chútt mơt chưat đầy……………..mộtt chútt thươngt anh…………”t Chỉt ítt phútt saut Ánht N"
+    },
+    {
+      "num": 57,
+      "title": "Chương 57: Tin vui                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (13 indicator words)",
+      "sample": "“Haha………….thậtt sao……………”t Phòngt bếpt cănt nhàt củat Hoat trànt ngậpt tiếngt cườit vangt củat Long.t “Ừm……….emt phảit l"
+    },
+    {
+      "num": 60,
+      "title": "Chương 60: Nữ trung tá (3)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (12 indicator words)",
+      "sample": "“Đẹpt đấy………..hắct hắc………….”t Longt nhìnt vàot cặpt vút căngt đầyt đangt đượct cáit áot ngựct màut trắngt nịtt chặtt màt"
+    },
+    {
+      "num": 61,
+      "title": "Chương 61: Nữ trung tá (4)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (9 indicator words)",
+      "sample": "“Ặc………….”t Hiềnt khôngt chịut thấu,t quát kícht thícht rồi,t côt tựat đầut rat saut dựat vàot ngựct Long,t hait mắtt lờt"
+    },
+    {
+      "num": 65,
+      "title": "Chương 65: Bữa tiệc hoang lạc (1)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (11 indicator words)",
+      "sample": "Vàit ngàyt saut thắngt lợi,t ngàyt chủt nhật,t tòat nhàt Bitexcot caot nhấtt Sàit Gònt hômt nayt từt tầngt 50t trởt lênt"
+    },
+    {
+      "num": 66,
+      "title": "Chương 66: Bữa tiệc hoang lạc (2)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (10 indicator words)",
+      "sample": "“Ừm…..”t Uyênt Nhit khẽt gậtt đầu,t côt biếtt thằngt mậpt ngoàit kiat rấtt thèmt thuồngt cơt thểt mình,t côt thàt chếtt "
+    },
+    {
+      "num": 70,
+      "title": "Chương 70: Phía sau một gia tộc (3)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (21 indicator words)",
+      "sample": "Đổit lạit khôngt biếtt baot nhiêut tiềnt bạct chot tổt chứct nênt lãot Khảit nhậnt đượct mộtt đặct quyềnt đót làt dòngt "
+    },
+    {
+      "num": 76,
+      "title": "Chương 76: Trở về (1)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (15 indicator words)",
+      "sample": "Vớit mộtt vởt kịcht dot Thiênt dànt dựng,t Longt trởt vềt cănt biệtt thựt saut 5t nămt rờit đi.“Cốc…….cốc……”t Bênt ngoài"
+    },
+    {
+      "num": 79,
+      "title": "Chương 79: Trở về (4)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (9 indicator words)",
+      "sample": "“Mẹt xấut không?”t Xuânt hỏit cont trai.“Không,t mẹt lúct nàot cũngt đẹpt nhất”t Longt yêut thươngt nói,t gươngt mặtt xi"
+    },
+    {
+      "num": 80,
+      "title": "Chương 80: Trở về (5)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (7 indicator words)",
+      "sample": "Xuânt xấut hổt vôt cùngt vìt cơt thểt côt phảnt ứngt nhưngt Longt khôngt chot côt nói,t mộtt lầnt nứat hắnt lạit thamt l"
+    },
+    {
+      "num": 81,
+      "title": "Chương 81: Trở về (6)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (23 indicator words)",
+      "sample": "“Khôngt đượct đâu,t chưat tớit lúct đâut con”t Xuânt lít nhít trảt lời.“Mẹ!t Cảmt nhậnt nót đi,t c*ct cont cứngt thết nà"
+    },
+    {
+      "num": 83,
+      "title": "Chương 83: Trở về (8)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (7 indicator words)",
+      "sample": "….“Này,t cònt đừt ngườit rat thết hả,t maut làmt gàt đi!”t Xuânt thấyt Longt bấtt độngt nênt lênt tiếng.“Mẹ,t bàt ấyt cò"
+    },
+    {
+      "num": 84,
+      "title": "Chương 84: Trở về (9)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (12 indicator words)",
+      "sample": "Nhưngt côt khôngt kịpt nghĩt ngợit nhiềut vìt bênt dướit Longt đãt độngt trước,t hắnt saot cót thểt chịut đựngt đượct kh"
+    },
+    {
+      "num": 85,
+      "title": "Chương 85: Trở về (10)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (12 indicator words)",
+      "sample": "“Bẹp……….bẹp……..cont chịut hếtt nổit rồi………….”t Saut tiếngt hétt to,t Longt nhấpt mộtt cút lútt cánt rồit rùngt mìnht bắn"
+    },
+    {
+      "num": 104,
+      "title": "Chương 104: Trước giông tố (1)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (18 indicator words)",
+      "sample": "Trongt cănt nhàt ấmt cúng,t Hoat vàt mẹt chồngt làt Xuânt đangt tấtt bậtt nấut ăn,t bụngt Hoat đãt tot rat đángt kểt vìt"
+    },
+    {
+      "num": 105,
+      "title": "Chương 105: Trước giông tố (2)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (19 indicator words)",
+      "sample": "“Hômt nayt dượngt bắnt vàot trongt nhé…..”t Longt thìt thầmt vàot tait côt bé,t dùt saot xàit thuốct ngừat thait nhiềut "
+    },
+    {
+      "num": 139,
+      "title": "Chương 139: Hợp Hoan Phái (3)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (9 indicator words)",
+      "sample": "Nữt chưởngt mônt nhânt ngãt xuốngt ghết da,t cảt ngườit hơit runt lênt mộtt chútt nhưngt nhanht chóngt lấyt lạit trấnt t"
+    },
+    {
+      "num": 147,
+      "title": "Chương 147: Hợp Hoan Phái (11)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (4 indicator words)",
+      "sample": "Thấyt sưt phụt dâmt dụct đếnt cựct độ,t Châut Tấnt cùngt Phạmt Băngt Băngt hait mắtt trợnt trừngt nhưt muốnt nổt tung……."
+    },
+    {
+      "num": 148,
+      "title": "Chương 148: Hợp Hoan Phái (12)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (20 indicator words)",
+      "sample": "“Thơmt lắm!”t Longt hửit hửit mùit hươngt từt ngườit Châut Tấn,t hắnt nhìnt chằmt chằmt vàot cặpt ngựct nont tơt trướct "
+    },
+    {
+      "num": 150,
+      "title": "Chương 150: Hợp Hoan Phái (14)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (8 indicator words)",
+      "sample": "Nóit đoạnt Longt bấmt mởt cuộct gọit video,t hắnt kêt điệnt thoạit chot camerat chỉat thằngt vàot chỗt mìnht cùngt Phạmt"
+    },
+    {
+      "num": 181,
+      "title": "Chương 181: Ma Tôn (31)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (11 indicator words)",
+      "sample": "“Hơ………hơ……”t Taylort thởt dốct từngt đợtt saut khit đượct buôngt that khỏit nụt hônt dâmt dụct nhấtt trongt cuộct đờit m"
+    },
+    {
+      "num": 182,
+      "title": "Chương 182: Ma Tôn (32)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (11 indicator words)",
+      "sample": "Longt hứngt khởit thămt dòt mọit nơit trênt cơt thểt khêut gợit này,t hắnt thưởngt thứct hait cặpt đùit căngt bóngt mịnt"
+    },
+    {
+      "num": 183,
+      "title": "Chương 183: Ma Tôn (33)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (13 indicator words)",
+      "sample": "Taylort Swiftt triệtt đểt đắmt chìmt vàot nhụct dụct rồi,t trongt đầut nàngt giờt chỉt cònt dụct cảm……….nàngt khôngt còn"
+    },
+    {
+      "num": 202,
+      "title": "Chương 202: Ma Tôn (52)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (27 indicator words)",
+      "sample": "“Hắct hắc!t Xemt rat Diệct Phit làt khôngt thểt nóit ngayt được,t vậyt thìt phiềnt Hạt Hầut giat chủt thut xếpt đểt chún"
+    },
+    {
+      "num": 203,
+      "title": "Chương 203: Ma Tôn (53)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (25 indicator words)",
+      "sample": "c*ct lútt cán,t Diệtt Phit congt ngườit khit cửat tửt cungt lầnt đầut đónt nhậnt đầut rùat chạmt vào……đầut nàngt ngửat h"
+    },
+    {
+      "num": 251,
+      "title": "Chương 251: Đồ nhân diệt Thần đấu Phật (48)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (15 indicator words)",
+      "sample": "……….biệtt viện………phòngt tắm…………..Trongt thùngt gỗt tot chứat nướct thảot mộct làt mộtt gãt namt nhânt đangt ngồit thảt l"
+    },
+    {
+      "num": 252,
+      "title": "Chương 252: Đồ nhân diệt Thần đấu Phật (49)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (17 indicator words)",
+      "sample": "“Hắct hắc……….đủt khít……….đủt sướng………”t Khait mởt cổt họngt mỹt nhânt lầnt đầut làmt Longt sướngt têt người……..hôngt hắn"
+    },
+    {
+      "num": 253,
+      "title": "Chương 253: Đồ nhân diệt Thần đấu Phật (50)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (14 indicator words)",
+      "sample": "“Ui……….chủ………chủt nhân………..”t Diệct Phit hait mắtt trừngt lớnt nhìnt đôit namt nữt đangt quấnt nhaut trênt chiếct ghết d"
+    },
+    {
+      "num": 271,
+      "title": "Chương 271: Đồ nhân diệt Thần đấu Phật (68)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (11 indicator words)",
+      "sample": "“Chụt………….chụt………….chụt………..”t Longt thìt lạit đéot quant tâm,t hắnt nhưt mộtt đứat bét đóit sữat điênt cuồngt bút mútt "
+    },
+    {
+      "num": 274,
+      "title": "Chương 274: Đồ nhân diệt Thần đấu Phật (71)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (4 indicator words)",
+      "sample": "“……..Xuy……….”t Khuyênt xỏt qua,t khuônt mặtt mỹt lệt củat Thừat Lâmt đỏt ửng……..hạtt let bịt xỏt khuyênt làmt ảt sướngt "
+    },
+    {
+      "num": 275,
+      "title": "Chương 275: Đồ nhân diệt Thần đấu Phật (72)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (18 indicator words)",
+      "sample": "“……….bâyt giờt mónt đồt chơit củat tat đãt đủt bột phận…………tat đangt rấtt mongt chờt nót hoànt thànht nha…….”t Longt cườ"
+    },
+    {
+      "num": 338,
+      "title": "Chương 338: Đồ nhân diệt Thần đấu Phật (135)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (15 indicator words)",
+      "sample": "….............…...............mànt đêmt buôngt xuống,t sựt nôt nứct củat yếnt hộit bant ngàyt nhườngt chỗt chot sựt tĩnh"
+    },
+    {
+      "num": 353,
+      "title": "Chương 353: Đồ nhân diệt Thần đấu Phật (150)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (15 indicator words)",
+      "sample": "Cơnt giót nhẹt nhàngt thổit quat máit tóct đent láyt Hứat Tìnht vàt lờit nóit nàngt cũngt nhẹt nhàngt nhưt gió,t nót tho"
+    },
+    {
+      "num": 354,
+      "title": "Chương 354: Đồ nhân diệt Thần đấu Phật (151)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (26 indicator words)",
+      "sample": "“Cậut emt \"bét bỏng\"t nàyt củat tat đãt khiếnt bấtt cứt ngườit đànt bàt nàot màt nót gặpt phảit đềut cót mộtt kếtt cụct "
+    },
+    {
+      "num": 366,
+      "title": "Chương 366: Đồ Nhân Diệt Thần Đấu Phật (163)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (8 indicator words)",
+      "sample": "Nửat đêm,t mặtt trăngt đãt leot caot đếnt đỉnht đầu.......t Hợpt Hoant pháit toànt bột đềut đãt rútt hếtt vàot trongt đì"
+    },
+    {
+      "num": 367,
+      "title": "Chương 367: Đồ Nhân Diệt Thần Đấu Phật (164)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (12 indicator words)",
+      "sample": "Dụct cảmt tăngt caot trướct ngườit đẹp,t Longt nângt luônt mộtt chânt Viênt Kimt lênt longt ngait đểt cửat lo^`nt nàngt "
+    },
+    {
+      "num": 368,
+      "title": "Chương 368: Đồ Nhân Diệt Thần Đấu Phật (165)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (18 indicator words)",
+      "sample": "Lạit lênt đỉnh,t Dươngt Mịcht thởt dốct layt độngt Viênt Kimt đangt nằmt sõngt xoàit bênt cạnht hô,t cảt hait nàngt mỗit"
+    },
+    {
+      "num": 379,
+      "title": "Chương 379: Đồ Nhân Diệt Thần Đấu Phật (176)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (12 indicator words)",
+      "sample": "Hait tênt khanht khácht củat Đoànt giat cũngt vừat \"xongt việc\"t xuấtt hiệnt saut lưngt Đoànt Dựt lĩnht mệnht vớit khuôn"
+    },
+    {
+      "num": 386,
+      "title": "Chương 386: Đồ Nhân Diệt Thần Đấu Phật (183)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (9 indicator words)",
+      "sample": "“Haha...t cáct vịt khácht giat caot quý,t cấpt đột SSSt hômt nayt củat Thiênt Thượngt Nhânt Giant xint đượct giớit thiệu"
+    },
+    {
+      "num": 387,
+      "title": "Chương 387: Đồ Nhân Diệt Thần Đấu Phật (184)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (5 indicator words)",
+      "sample": "“Hắct hắc...t kháct biệtt rấtt kháct biệt,t điệut nhảyt cuồngt nhiệtt củat hait côt emt nếut kếtt hợpt vớit nhịpt điệut "
+    },
+    {
+      "num": 388,
+      "title": "Chương 388: Đồ Nhân Diệt Thần Đấu Phật (185)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (14 indicator words)",
+      "sample": "Đangt thưởngt thứct nướct miếngt thơmt ngọtt cùngt cáit lưỡit mềmt mạit củat Yeont Woot nhưngt chỉt cầnt nghet âmt thanh"
+    },
+    {
+      "num": 391,
+      "title": "Chương 391: Đụng độ (2)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (11 indicator words)",
+      "sample": "“Không....t không...t Yeont Woot chỉt muốnt ởt đâyt đểt hầut hạt chủt nhân,t chẳngt phảit chủt nhânt thícht chơit khit e"
+    },
+    {
+      "num": 409,
+      "title": "Chương 409: Cực phẩm mẹ con (3)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (10 indicator words)",
+      "sample": "“Hắct hắc…t đoánt rat rồit sao?t Tròt chơit củat tat chínht làt kéot nhịt cáit cửat lo^`nt hưt hỏngt củat nàngt đểt hait"
+    },
+    {
+      "num": 410,
+      "title": "Chương 410: Cực phẩm mẹ con (4)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (12 indicator words)",
+      "sample": "Phát trinht thêmt mộtt vưut vậtt nhânt gian,t Longt đươngt nhiênt sẽt hưởngt thụt luônt tửt cungt củat mỹt nhânt bằngt t"
+    },
+    {
+      "num": 412,
+      "title": "Chương 412: Cực phẩm mẹ con (6)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (7 indicator words)",
+      "sample": "Lúct nàyt đâyt Longt đangt hôn,t hắnt hônt sayt mêt khuônt mặt,t saut gáyt cùngt chiếct cổt củat ngườit đẹpt trongt khit"
+    },
+    {
+      "num": 416,
+      "title": "Chương 416: Cực phẩm mẹ con (10)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (9 indicator words)",
+      "sample": "………..Chiềut tối,t Hứat Tìnht rốtt cuộct cũngt đãt đếnt biệtt việnt củat Long.“Ga-In,t hắnt rốtt cuộct vìt saot lạit gọit"
+    },
+    {
+      "num": 417,
+      "title": "Chương 417: Cực phẩm mẹ con (11)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (14 indicator words)",
+      "sample": "Hứat Tìnht hoảngt hốtt muốnt lấyt tayt đẩyt rat cont gáit nhưngt chưat kịpt thìt bịt Longt bắtt được,t hắnt nắct càngt n"
+    },
+    {
+      "num": 451,
+      "title": "Chương 451: Tái ngộ (8)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (13 indicator words)",
+      "sample": "Xuânt congt môit hờnt dỗit nhưngt vẫnt thànht thậtt quỳt dướit chânt cont trait màt liếmt lápt lấyt dấut vếtt hoant áit "
+    },
+    {
+      "num": 452,
+      "title": "Chương 452: Phi Long Các (1)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (7 indicator words)",
+      "sample": "………………..…….“Chút nóit sao?t Thậtt làt Huyếtt Sátt Đao?”Trênt bànt ăn,t Thiênt trợnt mắtt khit nghet Longt nóit vừat thut"
+    },
+    {
+      "num": 504,
+      "title": "Chương 504: Vô Cực Chân Khí (15)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (12 indicator words)",
+      "sample": "…..t Kimt Ngoạit sơnt trang…Sơnt trangt nhàt bếpt buổit chiềut muộnt bắtt đầut tỏat nhữngt mùit thơmt lừngt củat thứct ă"
+    },
+    {
+      "num": 506,
+      "title": "Chương 506: Vô Cực Chân Khí (17)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (18 indicator words)",
+      "sample": "………..…Đêmt đến,t trongt tòat biệtt việnt nằmt sâut trongt sơnt trangt làt khungt cảnht ướtt átt dâmt dụct cót thểt khiến"
+    },
+    {
+      "num": 577,
+      "title": "Chương 577: Thanh Liên Cung (21)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (6 indicator words)",
+      "sample": "“Phảit rồi,t emt màt đầut hàngt sớmt thìt tròt chơit cònt gìt thút vịt chứ…t tat thícht nhấtt chínht làt thuầnt dưỡngt n"
+    },
+    {
+      "num": 578,
+      "title": "Chương 578: Thanh Liên Cung (22)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (9 indicator words)",
+      "sample": "Phátt địtt đầut tiênt trongt đờit làmt Lýt Lant Địcht hát hốct mồm,t sướngt khoáit quát kinht khủngt làmt nàngt ngayt tứ"
+    },
+    {
+      "num": 581,
+      "title": "Chương 581: Thanh Liên Mật Phủ (3)                    \n                Có thể bạn cũng muốn đọc:",
+      "isBuggy": true,
+      "reason": "'t' suffix obfuscation (10 indicator words)",
+      "sample": "…t Buổit đêm,t trướct cuộct hẹnt ởt Thanht Liênt Mậtt Phủ…“Chủt nhân,t đúngt nhưt ngàit đãt suyt tínht khit cót mộtt bột"
+    }
+  ],
+  "missingChapters": [],
+  "errors": []
+}

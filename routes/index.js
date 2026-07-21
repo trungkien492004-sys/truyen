@@ -346,23 +346,35 @@ router.get('/', async (req, res) => {
       query = query.eq('status', status);
     }
     
-    // Gộp tất cả các truy vấn độc lập vào chung một Promise.all để lấy dữ liệu song song (tối đa tốc độ)
+    const { getTypeRankings } = require('../services/storyClassifier');
+
+    // Gộp tất cả các truy vấn độc lập vào chung một Promise.all để lấy dữ liệu song song
     const [
       { data: stories, count: totalCount, error: storiesError },
       { data: genres, error: genresError },
-      { data: topDaily },
-      { data: topWeekly },
-      { data: topMonthly },
-      { data: topYearly },
-      { data: topRatedData }
+      topComicDaily,
+      topComicWeekly,
+      topComicMonthly,
+      topComicRated,
+      topComicBookmarks,
+      topNovelDaily,
+      topNovelWeekly,
+      topNovelMonthly,
+      topNovelRated,
+      topNovelBookmarks
     ] = await Promise.all([
       query.order('last_update_at', { ascending: false }).range(fromRange, toRange),
       supabase.from('genres').select('*'),
-      supabase.from('views_ranking_daily').select('*').order('view_count', { ascending: false }).limit(5),
-      supabase.from('views_ranking_weekly').select('*').order('view_count', { ascending: false }).limit(5),
-      supabase.from('views_ranking_monthly').select('*').order('view_count', { ascending: false }).limit(5),
-      supabase.from('views_ranking_yearly').select('*').order('view_count', { ascending: false }).limit(5),
-      supabase.from('views_ranking_rated').select('*').limit(5)
+      getTypeRankings('comic', 'daily', 5),
+      getTypeRankings('comic', 'weekly', 5),
+      getTypeRankings('comic', 'monthly', 5),
+      getTypeRankings('comic', 'rated', 5),
+      getTypeRankings('comic', 'bookmarks', 5),
+      getTypeRankings('novel', 'daily', 5),
+      getTypeRankings('novel', 'weekly', 5),
+      getTypeRankings('novel', 'monthly', 5),
+      getTypeRankings('novel', 'rated', 5),
+      getTypeRankings('novel', 'bookmarks', 5)
     ]);
 
     if (storiesError) throw storiesError;
@@ -473,11 +485,16 @@ router.get('/', async (req, res) => {
       user: req.user,
       stories: stories || [],
       genres,
-      topDaily: topDaily || [],
-      topWeekly: topWeekly || [],
-      topMonthly: topMonthly || [],
-      topYearly: topYearly || [],
-      topRated,
+      topComicDaily,
+      topComicWeekly,
+      topComicMonthly,
+      topComicRated,
+      topComicBookmarks,
+      topNovelDaily,
+      topNovelWeekly,
+      topNovelMonthly,
+      topNovelRated,
+      topNovelBookmarks,
       topReaders,
       topBookmarks,
       topAuthors,
@@ -1746,16 +1763,29 @@ router.get('/leaderboard', async (req, res) => {
       .select('*')
       .order('count', { ascending: false });
 
-    const { data: readers } = await supabase.from('leaderboard_by_exp').select('*').order('chapters_read', { ascending: false }).order('exp', { ascending: false }).limit(20);
+    const { getTypeRankings } = require('../services/storyClassifier');
+
+    const [
+      { data: readers },
+      topAuthors,
+      topComicDaily,
+      topNovelDaily
+    ] = await Promise.all([
+      supabase.from('leaderboard_by_exp').select('*').order('chapters_read', { ascending: false }).order('exp', { ascending: false }).limit(20),
+      fetchTopAuthors(20),
+      getTypeRankings('comic', 'daily', 20),
+      getTypeRankings('novel', 'daily', 20)
+    ]);
+
     const leaderboard = readers || [];
-    
-    const topAuthors = await fetchTopAuthors(20);
 
     res.render('leaderboard', {
       title: 'Bảng xếp hạng',
       user: req.user,
       leaderboard,
       topAuthors,
+      topComicDaily,
+      topNovelDaily,
       rankSettings
     });
   } catch (err) {
