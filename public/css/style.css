@@ -417,6 +417,7 @@ main {
 
 .ranking-list.active {
     display: flex;
+    flex-direction: column;
 }
 
 .bxh-subset {
