@@ -139,6 +139,13 @@
     </div>
 </div>
 
+</style>
+
+<!-- Widget nút Thu Gọn / Mở Rộng Header & Thanh Điều Hướng Nổi Cố Định -->
+<div id="read-toggle-header-widget" onclick="toggleReadFocusMode()" title="Thu gọn / Mở rộng đầu trang" style="position: fixed; right: 20px; bottom: 85px; z-index: 9999; width: 44px; height: 44px; border-radius: 50%; background: rgba(15, 23, 42, 0.85); border: 1.5px solid var(--accent-color); color: var(--text-primary); display: flex; align-items: center; justify-content: center; font-size: 1.15rem; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.5); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); transition: all 0.3s ease; user-select: none;">
+    👓
+</div>
+
 <style>
     /* Styling cho dropdown mục lục nhanh */
     .toc-dropdown-content::-webkit-scrollbar {
@@ -160,6 +167,73 @@
     .toc-item-active {
         background: rgba(99, 102, 241, 0.15) !important;
         color: var(--accent-color) !important;
+    }
+
+    /* Các class CSS phục vụ chế độ tập trung đọc (Focus mode) */
+    body.focus-reading-mode #main-header {
+        transform: translateY(-100%);
+        opacity: 0;
+        pointer-events: none;
+        transition: transform 0.4s ease, opacity 0.4s ease;
+    }
+    #main-header {
+        transition: transform 0.4s ease, opacity 0.4s ease;
+    }
+    body.focus-reading-mode .read-container {
+        padding-top: 1rem !important;
+    }
+    body.focus-reading-mode .read-header,
+    body.focus-reading-mode .read-navigation:first-of-type,
+    body.focus-reading-mode .read-container > div:first-of-type {
+        display: none !important;
+    }
+    #read-toggle-header-widget:hover {
+        transform: scale(1.08);
+        box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+    }
+    body.focus-reading-mode #read-toggle-header-widget {
+        background: var(--accent-color) !important;
+        color: #fff !important;
+        border-color: transparent !important;
+    }
+
+    /* MOBILE RESPONSIVE OPTIMIZATION */
+    @media (max-width: 768px) {
+        .read-container {
+            padding: 1rem 0.8rem 4rem 0.8rem !important;
+        }
+        .read-title {
+            font-size: 1.5rem !important;
+            line-height: 1.3 !important;
+        }
+        .read-content {
+            font-size: 1.15rem !important; /* Tăng size chữ đọc truyện trên điện thoại */
+            line-height: 1.75 !important;
+        }
+        .read-content p {
+            margin-bottom: 1.25rem !important;
+        }
+        .read-navigation {
+            gap: 0.35rem !important;
+            justify-content: space-between !important;
+        }
+        .read-navigation a, .read-navigation button {
+            padding: 0.5rem 0.9rem !important;
+            font-size: 0.88rem !important;
+        }
+        .toc-toggle-btn {
+            font-size: 0.88rem !important;
+        }
+        .toc-dropdown-content {
+            min-width: 260px !important;
+        }
+        #read-toggle-header-widget {
+            right: 15px !important;
+            bottom: 75px !important;
+            width: 40px !important;
+            height: 40px !important;
+            font-size: 1.05rem !important;
+        }
     }
 </style>
 
@@ -187,6 +261,19 @@
     // Bấm ra ngoài thì đóng mục lục nhanh
     document.addEventListener('click', () => {
         document.querySelectorAll('.toc-dropdown-content').forEach(c => c.style.display = 'none');
+    });
+
+    // Ẩn/Hiện Header & Navigation (Focus reading mode)
+    function toggleReadFocusMode() {
+        const isFocus = document.body.classList.toggle('focus-reading-mode');
+        localStorage.setItem('focus_reading_mode', isFocus ? 'yes' : 'no');
+    }
+
+    // Tự động khôi phục chế độ Focus từ lần đọc trước
+    document.addEventListener('DOMContentLoaded', () => {
+        if (localStorage.getItem('focus_reading_mode') === 'yes') {
+            document.body.classList.add('focus-reading-mode');
+        }
     });
 
     // Gõ tìm kiếm chương ngay trong dropdown Mục lục
