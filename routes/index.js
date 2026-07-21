@@ -8,12 +8,22 @@ const fs = require('fs');
 // Sử dụng Memory Storage để chạy không đĩa (tương thích Vercel Serverless)
 const upload = multer({ storage: multer.memoryStorage() });
 
-// Middleware nạp thông tin người dùng và số thông báo chưa đọc vào res.locals cho mọi template EJS
+// Middleware nạp thông tin người dùng mới nhất từ DB và số thông báo chưa đọc vào res.locals cho mọi template EJS
 router.use(async (req, res, next) => {
-  res.locals.user = req.user;
   res.locals.unreadNotificationsCount = 0;
   if (req.user && req.user.id) {
     try {
+      // Đọc thông tin user mới nhất từ DB để không bị lệch avatar/badge/frame do cookie-session cũ trên mobile
+      const { data: dbUser } = await supabase
+        .from('users')
+        .select('display_name, avatar, bio, equipped_badge, equipped_avatar, equipped_frame, role')
+        .eq('id', req.user.id)
+        .single();
+
+      if (dbUser) {
+        Object.assign(req.user, dbUser);
+      }
+
       const { count } = await supabase
         .from('notifications')
         .select('*', { count: 'exact', head: true })
@@ -21,9 +31,10 @@ router.use(async (req, res, next) => {
         .eq('is_read', false);
       res.locals.unreadNotificationsCount = count || 0;
     } catch (e) {
-      console.error('Lỗi lấy số thông báo chưa đọc:', e);
+      console.error('Lỗi nạp thông tin user/thông báo:', e);
     }
   }
+  res.locals.user = req.user;
   next();
 });
 
