@@ -1183,24 +1183,7 @@
     <% } %>
 </div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        document.querySelectorAll('.ranking-tab').forEach(tab => {
-            tab.addEventListener('click', function() {
-                const targetId = 'top-' + this.dataset.tab;
-                const parentContainer = this.closest('.rankings-container');
-                if (!parentContainer) return;
 
-                parentContainer.querySelectorAll('.ranking-tab').forEach(t => t.classList.remove('active'));
-                this.classList.add('active');
-
-                parentContainer.querySelectorAll('.ranking-list').forEach(l => l.classList.remove('active'));
-                const targetList = document.getElementById(targetId);
-                if (targetList) targetList.classList.add('active');
-            });
-        });
-    });
-</script>
 
 <%- include('partials/footer') %>
 
