@@ -654,6 +654,12 @@ router.post('/story/add', upload.single('cover'), async (req, res) => {
 
     if (storyErr) throw storyErr;
 
+    // Reset cache BXH Tranh/Chữ
+    try {
+      const { resetStoryTypesCache } = require('../services/storyClassifier');
+      resetStoryTypesCache();
+    } catch(e) {}
+
     // 2. Thêm liên kết thể loại truyện vào bảng `story_genres` nếu được chọn
     if (genres && genres.length > 0) {
       const genreArray = Array.isArray(genres) ? genres : [genres];
@@ -1281,6 +1287,12 @@ router.post('/story/edit/:id', upload.single('cover'), async (req, res) => {
       .eq('id', storyId);
 
     if (updateStoryErr) throw updateStoryErr;
+
+    // Reset cache BXH Tranh/Chữ
+    try {
+      const { resetStoryTypesCache } = require('../services/storyClassifier');
+      resetStoryTypesCache();
+    } catch(e) {}
 
     // 3. Đồng bộ lại thể loại trong bảng `story_genres`
     // Xóa liên kết thể loại cũ

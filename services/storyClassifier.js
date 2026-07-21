@@ -185,4 +185,12 @@ async function getTypeRankings(type = 'comic', rankingType = 'daily', limit = 5)
   }
 }
 
-module.exports = { getStoryTypesMap, classifyAndSaveAll, getTypeRankings };
+/**
+ * Reset cache story_type để BXH cập nhật ngay khi admin thay đổi thông tin truyện
+ */
+function resetStoryTypesCache() {
+  memoryCache = null;
+  memoryCacheTime = 0;
+}
+
+module.exports = { getStoryTypesMap, classifyAndSaveAll, getTypeRankings, resetStoryTypesCache };
