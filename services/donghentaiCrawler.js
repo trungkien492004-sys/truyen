@@ -71,11 +71,14 @@ async function syncLatestDongHentai(maxPages = 3) {
           if (existingStory) {
             storyId = existingStory.id;
           } else {
+            // Lấy tên tác giả từ API hoặc đặt là Ẩn danh
+            const authorName = (item.artist && item.artist.name) ? item.artist.name : 'Ẩn danh';
+
             const { data: newStory, error: storyErr } = await supabase
               .from('stories')
               .insert([{
                 title: storyName,
-                author: 'DongHentai',
+                author: authorName,
                 description: description,
                 cover_url: coverUrl,
                 status: 'ongoing',
@@ -190,11 +193,14 @@ async function crawlSingleDongHentaiManga(storySlug) {
     if (existingStory) {
       storyId = existingStory.id;
     } else {
+      // Lấy tên tác giả từ API hoặc đặt là Ẩn danh
+      const authorName = (item.artist && item.artist.name) ? item.artist.name : 'Ẩn danh';
+
       const { data: newStory, error: storyErr } = await supabase
         .from('stories')
         .insert([{
           title: storyName,
-          author: 'DongHentai',
+          author: authorName,
           description: description,
           cover_url: coverUrl,
           status: 'ongoing',
