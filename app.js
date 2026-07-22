@@ -105,6 +105,52 @@ app.locals.getStarsByChapters = (chaptersRead) => {
     return '⭐';                        // Xuất sớm / Người mới
 };
 
+// ─── DEFAULT LOCALS ───────────────────────────────────────────────────────────
+// Đặt giá trị mặc định cho mọi biến dùng trong home.ejs / layout.
+// Mỗi route có thể ghi đè bằng cách truyền giá trị thật vào res.render().
+// Nếu thiếu middleware này, bất kỳ route nào quên khai báo biến sẽ khiến EJS
+// crash với lỗi "Cannot read property 'length' of undefined".
+app.use((req, res, next) => {
+  // BXH tổng hợp (tất cả loại)
+  res.locals.topDaily        = [];
+  res.locals.topWeekly       = [];
+  res.locals.topMonthly      = [];
+  res.locals.topYearly       = [];
+  res.locals.topRated        = [];
+  res.locals.topBookmarks    = [];
+  // BXH truyện tranh
+  res.locals.topComicDaily   = [];
+  res.locals.topComicWeekly  = [];
+  res.locals.topComicMonthly = [];
+  res.locals.topComicRated   = [];
+  res.locals.topComicBookmarks = [];
+  res.locals.topComicAlltime = [];
+  // BXH truyện chữ
+  res.locals.topNovelDaily   = [];
+  res.locals.topNovelWeekly  = [];
+  res.locals.topNovelMonthly = [];
+  res.locals.topNovelRated   = [];
+  res.locals.topNovelBookmarks = [];
+  res.locals.topNovelAlltime = [];
+  // Dữ liệu khác
+  res.locals.banners         = [];
+  res.locals.rankUpEventsToday = [];
+  res.locals.topReaders      = [];
+  res.locals.topAuthors      = [];
+  res.locals.recentComments  = [];
+  res.locals.lastRead        = null;
+  res.locals.activeGenre     = null;
+  res.locals.searchQuery     = null;
+  res.locals.isAuthorPage    = false;
+  res.locals.authorName      = '';
+  res.locals.filters         = { genre: '', status: '', minChapters: '', year: '', sort: 'newest', view_sort: '' };
+  res.locals.currentPage     = 1;
+  res.locals.totalPages      = 1;
+  res.locals.stories         = [];
+  res.locals.storyType       = 'novel';
+  next();
+});
+
 // ĐĂNG KÝ CÁC TUYẾN ĐƯỜNG DẪN (ROUTES)
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
