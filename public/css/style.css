@@ -2303,6 +2303,18 @@ footer {
   backdrop-filter: blur(10px);
 }
 
+/* Khi .badge-premium đi kèm .game-title (huy hiệu độc giả ở BXH/leaderboard, dùng chung
+   partials/avatar.ejs), .badge-premium (bo tròn viên thuốc, không nền) đang đè mất hình lục giác
+   + gradient theo tầng rarity của .game-title vì đứng sau trong file và cùng specificity.
+   Tăng specificity để .game-title luôn thắng, giữ đúng hình dạng/màu sắc theo rarity - không
+   đụng đến các nơi khác chỉ dùng .badge-premium một mình. */
+.game-title.badge-premium {
+  border-radius: 0;
+  clip-path: polygon(8% 0, 92% 0, 100% 50%, 92% 100%, 8% 100%, 0 50%);
+  backdrop-filter: none;
+  gap: 0;
+}
+
 .badge-premium .badge-premium-dot {
   width: 0.5rem;
   height: 0.5rem;
