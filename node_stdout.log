@@ -1,0 +1,8 @@
+◇ injected env (8) from .env // tip: ⌁ auth for agents [www.vestauth.com]
+◇ injected env (0) from .env // tip: ⌘ override existing { override: true }
+◇ injected env (0) from .env // tip: ⌘ enable debugging { debug: true }
+==================================================
+Ứng dụng đọc truyện đang chạy tại: http://localhost:3000
+Cổng cấu hình: 3000
+Hãy đảm bảo bạn đã chạy file schema.sql trên Supabase.
+==================================================

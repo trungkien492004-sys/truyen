@@ -367,18 +367,34 @@ router.get('/', async (req, res) => {
       query = query.eq('status', status);
     }
 
-    // Gộp tất cả truy vấn song song
+    // Chạy song song: stories + genres (critical) và BXH (non-critical, có thể timeout)
     const [
-      { data: rawStories, count: totalCount, error: storiesError },
-      { data: genres, error: genresError },
-      { data: topDaily },
-      { data: topWeekly },
-      { data: topMonthly },
-      { data: topYearly },
-      { data: topRatedData }
-    ] = await Promise.all([
+      storiesResult,
+      genresResult
+    ] = await Promise.allSettled([
       query.order('last_update_at', { ascending: false }).range(fromRange, toRange),
-      supabase.from('genres').select('*'),
+      supabase.from('genres').select('*')
+    ]);
+
+    if (storiesResult.status === 'rejected') {
+      console.warn('Stories query timeout/lỗi:', storiesResult.reason?.message);
+    }
+    if (genresResult.status === 'rejected') {
+      console.warn('Genres query timeout/lỗi:', genresResult.reason?.message);
+    }
+
+    const rawStories = (storiesResult.status === 'fulfilled') ? (storiesResult.value.data || []) : [];
+    const totalCount = (storiesResult.status === 'fulfilled') ? (storiesResult.value.count || 0) : 0;
+    const genres     = (genresResult.status  === 'fulfilled') ? (genresResult.value.data  || []) : [];
+
+    // BXH chạy allSettled: timeout/lỗi thì fallback [] — không crash trang chủ
+    const [
+      rankingDailyRes,
+      rankingWeeklyRes,
+      rankingMonthlyRes,
+      rankingYearlyRes,
+      rankingRatedRes
+    ] = await Promise.allSettled([
       supabase.from('views_ranking_daily').select('*').order('view_count', { ascending: false }).limit(100),
       supabase.from('views_ranking_weekly').select('*').order('view_count', { ascending: false }).limit(100),
       supabase.from('views_ranking_monthly').select('*').order('view_count', { ascending: false }).limit(100),
@@ -386,8 +402,17 @@ router.get('/', async (req, res) => {
       supabase.from('views_ranking_rated').select('*').limit(100)
     ]);
 
-    if (storiesError) throw storiesError;
-    if (genresError) throw genresError;
+    const topDaily      = (rankingDailyRes.status   === 'fulfilled' && rankingDailyRes.value.data)   ? rankingDailyRes.value.data   : [];
+    const topWeekly     = (rankingWeeklyRes.status  === 'fulfilled' && rankingWeeklyRes.value.data)  ? rankingWeeklyRes.value.data  : [];
+    const topMonthly    = (rankingMonthlyRes.status === 'fulfilled' && rankingMonthlyRes.value.data) ? rankingMonthlyRes.value.data : [];
+    const topYearly     = (rankingYearlyRes.status  === 'fulfilled' && rankingYearlyRes.value.data)  ? rankingYearlyRes.value.data  : [];
+    const topRatedData  = (rankingRatedRes.status   === 'fulfilled' && rankingRatedRes.value.data)   ? rankingRatedRes.value.data   : [];
+
+    if (rankingDailyRes.status === 'rejected')   console.warn('BXH Daily timeout/lỗi:', rankingDailyRes.reason?.message);
+    if (rankingWeeklyRes.status === 'rejected')  console.warn('BXH Weekly timeout/lỗi:', rankingWeeklyRes.reason?.message);
+    if (rankingMonthlyRes.status === 'rejected') console.warn('BXH Monthly timeout/lỗi:', rankingMonthlyRes.reason?.message);
+    if (rankingYearlyRes.status === 'rejected')  console.warn('BXH Yearly timeout/lỗi:', rankingYearlyRes.reason?.message);
+    if (rankingRatedRes.status === 'rejected')   console.warn('BXH Rated timeout/lỗi:', rankingRatedRes.reason?.message);
 
     // Lấy số chương thực tế + map last_chapter_number, avg_score, rating_count, bookmark_count
     const storyIdsOnPage = (rawStories || []).map(s => s.id);
@@ -587,7 +612,8 @@ router.get('/', async (req, res) => {
     });
 
   } catch (err) {
-    console.error('Lỗi trang chủ:', err);
+    console.error('Lỗi trang chủ chi tiết:', JSON.stringify({ code: err.code, message: err.message, detail: err.details }));
+    console.error('Stack:', err.stack);
     res.status(500).send('Đã xảy ra lỗi hệ thống.');
   }
 });
