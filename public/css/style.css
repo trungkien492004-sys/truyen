@@ -639,6 +639,20 @@ main {
     box-shadow: 0 4px 15px var(--shadow-color);
 }
 
+/* Truyện tranh (comic): nhiều ảnh liên tiếp được lưu dạng <p><img></p> giống đoạn văn thường,
+   khiến margin/border-radius/box-shadow phía trên tạo khoảng trắng + viền bo giữa các ảnh,
+   làm ảnh "tách rời" thay vì nối liền như cách đọc comic thông thường (cuộn dọc liên tục).
+   Khi 2 ảnh đứng sát nhau (ảnh này ngay sau ảnh kia, không có chữ xen giữa), loại bỏ khoảng
+   cách/viền bo giữa chúng - còn ảnh xen giữa đoạn văn (truyện chữ có minh họa) không bị ảnh hưởng
+   vì selector chỉ áp dụng khi liền kề trực tiếp 1 ảnh khác. */
+.read-content p:has(> img:only-child) + p:has(> img:only-child) img {
+    margin-top: 0;
+}
+.read-content p:has(> img:only-child):has(+ p > img:only-child) img {
+    margin-bottom: 0;
+    border-radius: 0;
+}
+
 /* FORM LIÊN HỆ / ĐẶT TRUYỆN */
 .form-container {
     max-width: 600px;
@@ -1132,14 +1146,24 @@ footer {
     }
 }
 
-@media (max-width: 500px) {
-    /* 8. Lưới truyện 2 cột siêu đẹp */
+@media (max-width: 768px) {
+    /* 8. Lưới truyện 2 cột siêu đẹp - mở rộng breakpoint từ 500px lên 768px để bao phủ toàn bộ
+       mobile/tablet nhỏ. Trước đây chỉ ép cột dưới 500px, khoảng 501-768px vẫn dùng
+       grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)) mặc định - trên màn hình hẹp
+       trong khoảng này, 2 cột 220px cộng gap có thể vượt quá chiều rộng màn hình, gây tràn ngang. */
     .stories-grid {
         grid-template-columns: repeat(2, 1fr) !important;
         gap: 0.6rem !important;
     }
     .story-card {
         border-radius: 8px;
+        /* min-width: 0 để item co đúng theo cột grid, không bị phình ra theo kích thước ảnh bìa
+           gốc bên trong (nguyên nhân chính gây tràn ngang ở các truyện tranh mới thêm). */
+        min-width: 0;
+    }
+    .story-cover {
+        width: 100%;
+        max-width: 100%;
     }
     .story-cover {
         height: 170px !important;

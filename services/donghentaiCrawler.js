@@ -171,16 +171,35 @@ async function crawlSingleDongHentaiManga(storySlug) {
     const coverUrl = item.cover_full_url || '';
     const description = item.trim_pilot || `Truyện ${storyName}`;
 
-    // Lấy danh sách chương
-    const chapRes = await fetch(`${apiBase}/mangas/${storySlug}/chapters?page=1&per_page=100`, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    // Lặp phân trang lấy TOÀN BỘ danh sách chương của truyện từ API nguồn (tránh giới hạn 100 chap/trang)
+    let sourceChapters = [];
+    let pageNum = 1;
+    let hasMoreChaps = true;
+    while (hasMoreChaps) {
+      const chapRes = await fetch(`${apiBase}/mangas/${storySlug}/chapters?page=${pageNum}&per_page=100`, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        }
+      });
+      if (chapRes.status !== 200) {
+        hasMoreChaps = false;
+        break;
       }
-    });
-    if (chapRes.status !== 200) return;
-    const chapJson = await chapRes.json();
-    const sourceChapters = chapJson.data || [];
-    if (sourceChapters.length === 0) return;
+      const chapJson = await chapRes.json();
+      const pageChapters = chapJson.data || [];
+      if (pageChapters.length === 0) {
+        hasMoreChaps = false;
+        break;
+      }
+      sourceChapters = sourceChapters.concat(pageChapters);
+      if (pageChapters.length < 100) {
+        hasMoreChaps = false;
+      } else {
+        pageNum++;
+      }
+    }
+
+    if (sourceChapters.length === 0) return { success: false, error: 'Truyện chưa có chương nào phía nguồn.' };
 
     // Kiểm tra DB
     const { data: existingStory } = await supabase
@@ -208,7 +227,7 @@ async function crawlSingleDongHentaiManga(storySlug) {
         }])
         .select('id')
         .single();
-      if (storyErr) return;
+      if (storyErr) return { success: false, error: storyErr.message };
       storyId = newStory.id;
       console.log(`➕ Thêm bộ truyện mới: "${storyName}" (ID: ${storyId})`);
     }
@@ -243,8 +262,10 @@ async function crawlSingleDongHentaiManga(storySlug) {
 
       console.log(`   ➔ Đã thêm: ${storyName} - ${sChap.name} (${images.length} ảnh)`);
     }
+    return { success: true, title: storyName };
   } catch (e) {
     console.error(`Lỗi cào ${storySlug}:`, e.message);
+    return { success: false, error: e.message };
   }
 }
 

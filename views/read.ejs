@@ -213,6 +213,12 @@
         .read-content p {
             margin-bottom: 1.25rem !important;
         }
+        /* Ảnh truyện tranh (comic) bị lưu dạng <p><img></p> giống đoạn văn thường, nên margin-bottom
+           ở trên vô tình tạo khoảng cách giữa các ảnh liên tiếp, làm ảnh "tách rời" thay vì nối liền
+           như cách đọc comic thông thường. Loại bỏ margin cho riêng <p> chỉ chứa ảnh. */
+        .read-content p:has(img) {
+            margin-bottom: 0 !important;
+        }
         .read-navigation {
             gap: 0.35rem !important;
             justify-content: space-between !important;

@@ -631,26 +631,21 @@ router.post('/story/crawl-manual', async (req, res) => {
     const { crawlSingleDongHentaiManga } = require('../services/donghentaiCrawler');
     const { resetStoryTypesCache } = require('../services/storyClassifier');
     
-    // Gọi hàm cào đơn bộ từ crawler
-    await crawlSingleDongHentaiManga(slug.trim());
+    // Gọi hàm cào đơn bộ từ crawler và nhận kết quả
+    const result = await crawlSingleDongHentaiManga(slug.trim());
     
+    if (result && result.success === false) {
+      return res.status(400).json({ success: false, error: result.error || 'Cào thất bại.' });
+    }
+
     // Reset cache BXH Tranh/Chữ
     try {
       resetStoryTypesCache();
     } catch(e) {}
 
-    // Kiểm tra xem truyện đã cào thành công chưa (lấy tên truyện hoặc check trong DB)
-    const { data: dbStory } = await supabase
-      .from('stories')
-      .select('id, title')
-      .eq('author', 'DongHentai') // hoặc lấy theo title sau khi cào, để đơn giản lấy ID mới nhất
-      .order('id', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
     return res.status(200).json({
       success: true,
-      message: `Đã hoàn tất tiến trình cào truyện "${dbStory ? dbStory.title : slug}" từ DongHentai.`
+      message: `Đã hoàn tất tiến trình cào truyện "${(result && result.title) ? result.title : slug}" từ DongHentai.`
     });
   } catch (err) {
     console.error('Lỗi cào truyện thủ công:', err);

@@ -4,7 +4,6 @@
     <h1 class="section-title" style="margin-bottom: 0;">🛠️ Bảng Điều Khiển Quản Trị</h1>
     <div style="display: flex; flex-wrap: wrap; gap: 0.8rem;">
         <a href="/admin/story/add" class="btn btn-primary">➕ Đăng bộ truyện mới</a>
-        <button id="btn-sync-donghentai" class="btn btn-secondary" style="background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.4); color: #10b981; font-weight: 600;">🔄 Quét Cập Nhật DongHentai</button>
         <a href="/admin/chapter/add" class="btn btn-secondary">⚡ Đăng chương truyện</a>
         <a href="/admin/genres" class="btn btn-secondary">🏷️ Thể loại</a>
         <a href="/admin/banners" class="btn btn-secondary">📺 Quản lý Banner</a>
@@ -12,16 +11,6 @@
         <a href="/admin/comments" class="btn btn-secondary" style="background: rgba(139, 92, 246, 0.1); border-color: rgba(139, 92, 246, 0.3); color: #a78bfa;">💬 Bình luận & User</a>
         <a href="/admin/ranks" class="btn btn-secondary" style="background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.3); color: #10b981;">🏆 Thiết lập Rank cấp bậc</a>
         <a href="/admin/shop" class="btn btn-secondary" style="background: rgba(236, 72, 153, 0.1); border-color: rgba(236, 72, 153, 0.3); color: #ec4899;">🛒 Quản lý Cửa hàng EXP</a>
-    </div>
-</div>
-
-<!-- KHỐI CÀO TRUYỆN DONGHENTAI THỦ CÔNG QUA URL/SLUG -->
-<div class="admin-box" style="margin-bottom: 2rem; border-left: 4px solid var(--accent-color); background: rgba(99, 102, 241, 0.05); padding: 1.5rem; border-radius: 0 16px 16px 0;">
-    <h3 style="margin-top: 0; margin-bottom: 0.8rem; font-size: 1.15rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem;">🕷️ Cào Truyện Tranh DongHentai Thủ Công</h3>
-    <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0 0 1.2rem 0;">Dán link truyện hoặc gõ slug (Ví dụ: <code>https://donghentai.xyz/manga/su-hoan-doi-bat-ngo</code> hoặc chỉ cần gõ <code>su-hoan-doi-bat-ngo</code>) để tự động tạo truyện và tải chương về DB.</p>
-    <div style="display: flex; gap: 0.8rem; max-width: 650px; flex-wrap: wrap;">
-        <input type="text" id="input-crawl-slug" placeholder="Dán link DongHentai hoặc nhập slug truyện..." style="flex: 1; min-width: 250px; padding: 0.7rem 1rem; background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 8px; font-size: 0.95rem; outline: none; box-sizing: border-box;">
-        <button id="btn-crawl-manual" class="btn btn-primary" style="padding: 0.7rem 1.5rem; font-size: 0.95rem; font-weight: bold; min-width: 140px;">🚀 Cào Ngay</button>
     </div>
 </div>
 
@@ -131,71 +120,6 @@
         });
     }
 
-    const btnSync = document.getElementById('btn-sync-donghentai');
-    if (btnSync) {
-        btnSync.addEventListener('click', async function() {
-            if (!confirm('Bạn có muốn kích hoạt quét tự động các bộ truyện & chương vừa cập nhật mới nhất từ DongHentai không? (Truyện 0 chương sẽ bị loại bỏ hoàn toàn)')) {
-                return;
-            }
-            btnSync.disabled = true;
-            btnSync.textContent = '⏳ Đang quét & đồng bộ...';
-            try {
-                const res = await fetch('/api/cron/sync-donghentai?pages=3');
-                const data = await res.json();
-                alert('✅ ' + data.message + '\nTiến trình đang chạy ngầm trên server.');
-            } catch(e) {
-                alert('❌ Lỗi kích hoạt quét: ' + e.message);
-            } finally {
-                btnSync.disabled = false;
-                btnSync.textContent = '🔄 Quét Cập Nhật DongHentai';
-            }
-        });
-    }
-    // Xử lý cào truyện tranh thủ công bằng Slug/Link
-    const btnCrawlManual = document.getElementById('btn-crawl-manual');
-    const inputCrawlSlug = document.getElementById('input-crawl-slug');
-    if (btnCrawlManual && inputCrawlSlug) {
-        btnCrawlManual.addEventListener('click', async function() {
-            let val = inputCrawlSlug.value.trim();
-            if (!val) {
-                alert('Vui lòng nhập slug hoặc dán link truyện DongHentai!');
-                return;
-            }
-            
-            // Nếu người dùng dán link đầy đủ (ví dụ: https://donghentai.xyz/manga/ten-truyen), trích xuất slug
-            if (val.includes('/manga/')) {
-                const parts = val.split('/manga/');
-                val = parts[parts.length - 1].replace(/\/$/, ''); // Lấy phần cuối và bỏ gạch chéo cuối nếu có
-            } else if (val.includes('donghentai.')) {
-                // Hỗ trợ link định dạng khác
-                const parts = val.split('/');
-                val = parts[parts.length - 1] || parts[parts.length - 2];
-            }
-
-            btnCrawlManual.disabled = true;
-            btnCrawlManual.textContent = '⏳ Đang cào...';
-
-            try {
-                const res = await fetch('/admin/story/crawl-manual', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ slug: val })
-                });
-                const data = await res.json();
-                if (data.success) {
-                    alert('✅ ' + data.message);
-                    location.reload();
-                } else {
-                    alert('❌ Lỗi cào truyện: ' + (data.error || 'Lỗi không xác định'));
-                }
-            } catch(e) {
-                alert('❌ Lỗi hệ thống: ' + e.message);
-            } finally {
-                btnCrawlManual.disabled = false;
-                btnCrawlManual.textContent = '🚀 Cào Ngay';
-            }
-        });
-    }
 </script>
 
 <%- include('../partials/footer') %>

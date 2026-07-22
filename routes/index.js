@@ -479,6 +479,9 @@ router.get('/', async (req, res) => {
       title: 'Trang chủ - Web Đọc Truyện',
       user: req.user,
       stories: stories || [],
+      // Danh sách id truyện tranh (dùng cho tab lọc "Truyện chữ / Truyện tranh" ở trang chủ) -
+      // truyền dạng mảng vì EJS/JSON không serialize được Set trực tiếp.
+      comicStoryIds: Array.from(comicIds || []),
       genres,
       // BXH gốc (tất cả)
       topDaily: topDaily || [],
@@ -566,6 +569,7 @@ router.get('/search', async (req, res) => {
           title: `Kết quả tìm kiếm`,
           user: req.user,
           stories: [],
+          comicStoryIds: [],
           genres,
           topComicDaily: [], topComicWeekly: [], topComicMonthly: [], topComicRated: [], topComicBookmarks: [],
           topNovelDaily: [], topNovelWeekly: [], topNovelMonthly: [], topNovelRated: [], topNovelBookmarks: [],
@@ -684,6 +688,7 @@ router.get('/search', async (req, res) => {
       title: query ? `Kết quả tìm kiếm cho: "${query}"` : 'Tìm kiếm nâng cao',
       user: req.user,
       stories,
+      comicStoryIds: [],
       genres,
       topComicDaily: [], topComicWeekly: [], topComicMonthly: [], topComicRated: [], topComicBookmarks: [],
       topNovelDaily: [], topNovelWeekly: [], topNovelMonthly: [], topNovelRated: [], topNovelBookmarks: [],
@@ -761,6 +766,7 @@ router.get('/genre/:slug', async (req, res) => {
       title: `Thể loại: ${activeGenre.name}`,
       user: req.user,
       stories,
+      comicStoryIds: [],
       genres,
       topComicDaily: [], topComicWeekly: [], topComicMonthly: [], topComicRated: [], topComicBookmarks: [],
       topNovelDaily: [], topNovelWeekly: [], topNovelMonthly: [], topNovelRated: [], topNovelBookmarks: [],
@@ -798,6 +804,7 @@ router.get('/author/:name', async (req, res) => {
       title: `Tác giả: ${authorName}`,
       user: req.user,
       stories,
+      comicStoryIds: [],
       genres,
       topComicDaily: [], topComicWeekly: [], topComicMonthly: [], topComicRated: [], topComicBookmarks: [],
       topNovelDaily: [], topNovelWeekly: [], topNovelMonthly: [], topNovelRated: [], topNovelBookmarks: [],
