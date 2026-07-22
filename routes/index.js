@@ -387,6 +387,29 @@ router.get('/', async (req, res) => {
     if (storiesError) throw storiesError;
     if (genresError) throw genresError;
 
+    // Lấy số chương mới nhất (last_chapter_number) của từng truyện trong trang hiện tại - dùng
+    // để hiển thị "Mới: Chương X" trên mỗi card. Trước đây field này chưa từng được set ở route,
+    // khiến mọi truyện hiển thị "Chưa có chương" trên trang chủ dù DB đã có đủ chương.
+    const storyIdsOnPage = (stories || []).map(s => s.id);
+    let lastChapterMap = {};
+    if (storyIdsOnPage.length > 0) {
+      const { data: chapterMaxData } = await supabase
+        .from('chapters')
+        .select('story_id, chapter_number')
+        .in('story_id', storyIdsOnPage)
+        .order('chapter_number', { ascending: false });
+      for (const ch of (chapterMaxData || [])) {
+        if (!(ch.story_id in lastChapterMap)) {
+          lastChapterMap[ch.story_id] = ch.chapter_number;
+        }
+      }
+    }
+    if (stories) {
+      stories.forEach(s => {
+        s.last_chapter_number = lastChapterMap[s.id] || null;
+      });
+    }
+
     // Lấy song song dữ liệu phụ
     const [
       rankSettingsRes,
@@ -578,6 +601,29 @@ router.get('/api/stories-partial', async (req, res) => {
 
     if (storiesError) throw storiesError;
 
+    // Lấy last_chapter_number cho từng truyện trong trang này - cùng logic với route "/" để
+    // hiển thị đúng "Mới: Chương X" khi chuyển tab bằng AJAX (partials/stories-grid.ejs dùng
+    // chung 1 template cho cả 2 route).
+    const storyIdsOnPage = (stories || []).map(s => s.id);
+    let lastChapterMap = {};
+    if (storyIdsOnPage.length > 0) {
+      const { data: chapterMaxData } = await supabase
+        .from('chapters')
+        .select('story_id, chapter_number')
+        .in('story_id', storyIdsOnPage)
+        .order('chapter_number', { ascending: false });
+      for (const ch of (chapterMaxData || [])) {
+        if (!(ch.story_id in lastChapterMap)) {
+          lastChapterMap[ch.story_id] = ch.chapter_number;
+        }
+      }
+    }
+    if (stories) {
+      stories.forEach(s => {
+        s.last_chapter_number = lastChapterMap[s.id] || null;
+      });
+    }
+
     const totalPages = Math.ceil((totalCount || 0) / limit);
 
     // Render partial thành chuỗi HTML (không res.render trực tiếp vì cần trả JSON kèm URL mới
@@ -651,8 +697,16 @@ router.get('/search', async (req, res) => {
           stories: [],
           storyType: 'novel',
           genres,
+          banners: [],
+          rankUpEventsToday: [],
           topComicDaily: [], topComicWeekly: [], topComicMonthly: [], topComicRated: [], topComicBookmarks: [],
           topNovelDaily: [], topNovelWeekly: [], topNovelMonthly: [], topNovelRated: [], topNovelBookmarks: [],
+          topReaders: [],
+          topAuthors: [],
+          lastRead: null,
+          recentComments: [],
+          currentPage: 1,
+          totalPages: 1,
           activeGenre,
           searchQuery: query,
           filters: { genre: genreSlug, status, minChapters: req.query.min_chapters || '', year: req.query.year || '', sort, view_sort: viewSort }
@@ -772,6 +826,14 @@ router.get('/search', async (req, res) => {
       genres,
       topComicDaily: [], topComicWeekly: [], topComicMonthly: [], topComicRated: [], topComicBookmarks: [],
       topNovelDaily: [], topNovelWeekly: [], topNovelMonthly: [], topNovelRated: [], topNovelBookmarks: [],
+      banners: [],
+      rankUpEventsToday: [],
+      topReaders: [],
+      topAuthors: [],
+      lastRead: null,
+      recentComments: [],
+      currentPage: 1,
+      totalPages: 1,
       activeGenre,
       searchQuery: query,
       filters: { genre: genreSlug, status, minChapters: req.query.min_chapters || '', year: req.query.year || '', sort, view_sort: viewSort }
@@ -842,6 +904,27 @@ router.get('/genre/:slug', async (req, res) => {
       stories = storiesData;
     }
 
+    // Lấy last_chapter_number cho từng truyện (đồng bộ với trang chủ / /api/stories-partial)
+    const storyIdsOnPage = (stories || []).map(s => s.id);
+    let lastChapterMap = {};
+    if (storyIdsOnPage.length > 0) {
+      const { data: chapterMaxData } = await supabase
+        .from('chapters')
+        .select('story_id, chapter_number')
+        .in('story_id', storyIdsOnPage)
+        .order('chapter_number', { ascending: false });
+      for (const ch of (chapterMaxData || [])) {
+        if (!(ch.story_id in lastChapterMap)) {
+          lastChapterMap[ch.story_id] = ch.chapter_number;
+        }
+      }
+    }
+    if (stories) {
+      stories.forEach(s => {
+        s.last_chapter_number = lastChapterMap[s.id] || null;
+      });
+    }
+
     res.render('home', {
       title: `Thể loại: ${activeGenre.name}`,
       user: req.user,
@@ -850,6 +933,14 @@ router.get('/genre/:slug', async (req, res) => {
       genres,
       topComicDaily: [], topComicWeekly: [], topComicMonthly: [], topComicRated: [], topComicBookmarks: [],
       topNovelDaily: [], topNovelWeekly: [], topNovelMonthly: [], topNovelRated: [], topNovelBookmarks: [],
+      banners: [],
+      rankUpEventsToday: [],
+      topReaders: [],
+      topAuthors: [],
+      lastRead: null,
+      recentComments: [],
+      currentPage: 1,
+      totalPages: 1,
       activeGenre,
       searchQuery: null,
       filters: { genre: slug, status: '', minChapters: '', year: '', sort: 'newest', view_sort: '' }
@@ -880,14 +971,44 @@ router.get('/author/:name', async (req, res) => {
       chapter_count: (s.chapters && s.chapters[0] && s.chapters[0].count) || 0
     }));
 
+    // Lấy last_chapter_number cho từng truyện (để hiển thị "Mới: Chương X" đúng như trang chủ,
+    // cùng logic đã sửa ở route "/" và "/api/stories-partial")
+    const storyIdsOnPage = stories.map(s => s.id);
+    let lastChapterMap = {};
+    if (storyIdsOnPage.length > 0) {
+      const { data: chapterMaxData } = await supabase
+        .from('chapters')
+        .select('story_id, chapter_number')
+        .in('story_id', storyIdsOnPage)
+        .order('chapter_number', { ascending: false });
+      for (const ch of (chapterMaxData || [])) {
+        if (!(ch.story_id in lastChapterMap)) {
+          lastChapterMap[ch.story_id] = ch.chapter_number;
+        }
+      }
+    }
+    stories.forEach(s => {
+      s.last_chapter_number = lastChapterMap[s.id] || null;
+    });
+
     res.render('home', {
       title: `Tác giả: ${authorName}`,
       user: req.user,
       stories,
       storyType: 'novel',
       genres,
+      // home.ejs cần các field này để render banner/BXH cột phải (dòng 9, 551, 555...) - thiếu
+      // sẽ làm trang crash 500 khi bấm vào link tác giả (banners/rankUpEventsToday undefined).
+      banners: [],
+      rankUpEventsToday: [],
       topComicDaily: [], topComicWeekly: [], topComicMonthly: [], topComicRated: [], topComicBookmarks: [],
       topNovelDaily: [], topNovelWeekly: [], topNovelMonthly: [], topNovelRated: [], topNovelBookmarks: [],
+      topReaders: [],
+      topAuthors: [],
+      lastRead: null,
+      recentComments: [],
+      currentPage: 1,
+      totalPages: 1,
       activeGenre: null,
       searchQuery: null,
       filters: { genre: '', status: '', minChapters: '', year: '', sort: 'newest', view_sort: '' }
