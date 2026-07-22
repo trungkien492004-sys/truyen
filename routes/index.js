@@ -359,7 +359,7 @@ router.get('/', async (req, res) => {
 
 
 
-    let query = supabase.from('stories_with_last_update').select('*, chapters(count)');
+    let query = supabase.from('stories_with_last_update').select('*, chapters(count)', { count: 'exact' });
     if (hasStoryTypeColumn) {
       query = query.eq('story_type', storyType);
     }
