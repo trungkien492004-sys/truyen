@@ -639,18 +639,23 @@ main {
     box-shadow: 0 4px 15px var(--shadow-color);
 }
 
-/* Truyện tranh (comic): nhiều ảnh liên tiếp được lưu dạng <p><img></p> giống đoạn văn thường,
-   khiến margin/border-radius/box-shadow phía trên tạo khoảng trắng + viền bo giữa các ảnh,
-   làm ảnh "tách rời" thay vì nối liền như cách đọc comic thông thường (cuộn dọc liên tục).
-   Khi 2 ảnh đứng sát nhau (ảnh này ngay sau ảnh kia, không có chữ xen giữa), loại bỏ khoảng
-   cách/viền bo giữa chúng - còn ảnh xen giữa đoạn văn (truyện chữ có minh họa) không bị ảnh hưởng
-   vì selector chỉ áp dụng khi liền kề trực tiếp 1 ảnh khác. */
-.read-content p:has(> img:only-child) + p:has(> img:only-child) img {
-    margin-top: 0;
+/* Truyện tranh (comic): mỗi ảnh được crawler lưu dạng
+     <div style="text-align: center; margin-bottom: 10px;"><img ...></div>
+   (KHÔNG phải <p><img></p> như đoạn văn thường). margin-bottom: 10px trên mỗi div cộng với
+   margin: 2rem auto trên chính img (rule .read-content img ở trên) tạo khoảng trắng lớn +
+   viền bo góc giữa các ảnh liên tiếp, làm ảnh "tách rời" thay vì nối liền như cách đọc comic
+   thông thường (cuộn dọc liên tục, ảnh sát nhau). Khi 2 div-ảnh đứng sát nhau (không có đoạn
+   văn/tiêu đề xen giữa), loại bỏ khoảng cách/viền bo giữa chúng. */
+.read-content div:has(> img:only-child) {
+    margin-bottom: 0 !important;
 }
-.read-content p:has(> img:only-child):has(+ p > img:only-child) img {
-    margin-bottom: 0;
+.read-content div:has(> img:only-child) img {
+    margin: 0 auto;
     border-radius: 0;
+}
+.read-content div:has(> img:only-child):first-child img,
+.read-content div:has(> img:only-child):last-child img {
+    border-radius: 8px;
 }
 
 /* FORM LIÊN HỆ / ĐẶT TRUYỆN */

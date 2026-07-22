@@ -335,13 +335,18 @@ router.get('/', async (req, res) => {
   res.setHeader('Expires', '0');
   try {
     const status = req.query.status || ''; // '', 'ongoing', 'completed'
+    // Tab lọc Truyện chữ / Truyện tranh - lọc THẬT ở tầng database (không phải ẩn/hiện client-side),
+    // để mỗi tab có phân trang riêng, tách biệt hoàn toàn. Trước đây lọc bằng JS chỉ ẩn/hiện card
+    // trong đúng 12 truyện của trang hiện tại, nên nếu 1 trang toàn truyện tranh thì tab "Truyện chữ"
+    // sẽ rỗng dù toàn bộ danh mục vẫn còn rất nhiều truyện chữ ở các trang khác.
+    const storyType = (req.query.type === 'comic') ? 'comic' : 'novel'; // mặc định 'novel'
     const page = parseInt(req.query.page) || 1;
     const limit = 12;
     const fromRange = (page - 1) * limit;
     const toRange = fromRange + limit - 1;
 
     // 1. Lấy danh sách truyện phân trang, sắp xếp theo truyện có chương MỚI CẬP NHẬT gần nhất lên đầu
-    let query = supabase.from('stories_with_last_update').select('*', { count: 'exact' });
+    let query = supabase.from('stories_with_last_update').select('*', { count: 'exact' }).eq('story_type', storyType);
     if (status === 'ongoing' || status === 'completed') {
       query = query.eq('status', status);
     }
@@ -479,9 +484,9 @@ router.get('/', async (req, res) => {
       title: 'Trang chủ - Web Đọc Truyện',
       user: req.user,
       stories: stories || [],
-      // Danh sách id truyện tranh (dùng cho tab lọc "Truyện chữ / Truyện tranh" ở trang chủ) -
-      // truyền dạng mảng vì EJS/JSON không serialize được Set trực tiếp.
-      comicStoryIds: Array.from(comicIds || []),
+      // Loại truyện đang lọc ở trang chủ ('novel' hoặc 'comic') - dùng để tab hiển thị đúng
+      // trạng thái active và giữ nguyên khi chuyển trang phân trang.
+      storyType,
       genres,
       // BXH gốc (tất cả)
       topDaily: topDaily || [],
@@ -569,7 +574,7 @@ router.get('/search', async (req, res) => {
           title: `Kết quả tìm kiếm`,
           user: req.user,
           stories: [],
-          comicStoryIds: [],
+          storyType: 'novel',
           genres,
           topComicDaily: [], topComicWeekly: [], topComicMonthly: [], topComicRated: [], topComicBookmarks: [],
           topNovelDaily: [], topNovelWeekly: [], topNovelMonthly: [], topNovelRated: [], topNovelBookmarks: [],
@@ -688,7 +693,7 @@ router.get('/search', async (req, res) => {
       title: query ? `Kết quả tìm kiếm cho: "${query}"` : 'Tìm kiếm nâng cao',
       user: req.user,
       stories,
-      comicStoryIds: [],
+      storyType: 'novel',
       genres,
       topComicDaily: [], topComicWeekly: [], topComicMonthly: [], topComicRated: [], topComicBookmarks: [],
       topNovelDaily: [], topNovelWeekly: [], topNovelMonthly: [], topNovelRated: [], topNovelBookmarks: [],
@@ -766,7 +771,7 @@ router.get('/genre/:slug', async (req, res) => {
       title: `Thể loại: ${activeGenre.name}`,
       user: req.user,
       stories,
-      comicStoryIds: [],
+      storyType: 'novel',
       genres,
       topComicDaily: [], topComicWeekly: [], topComicMonthly: [], topComicRated: [], topComicBookmarks: [],
       topNovelDaily: [], topNovelWeekly: [], topNovelMonthly: [], topNovelRated: [], topNovelBookmarks: [],
@@ -804,7 +809,7 @@ router.get('/author/:name', async (req, res) => {
       title: `Tác giả: ${authorName}`,
       user: req.user,
       stories,
-      comicStoryIds: [],
+      storyType: 'novel',
       genres,
       topComicDaily: [], topComicWeekly: [], topComicMonthly: [], topComicRated: [], topComicBookmarks: [],
       topNovelDaily: [], topNovelWeekly: [], topNovelMonthly: [], topNovelRated: [], topNovelBookmarks: [],

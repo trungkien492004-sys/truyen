@@ -945,22 +945,24 @@
             <% } %>
         </div>
 
-        <!-- Tab lọc Truyện chữ / Truyện tranh - lọc client-side, không cần tải lại trang.
-             Dựa vào comicStoryIds truyền từ route (services/storyClassifier.js), gắn data-type
-             lên mỗi story-card rồi ẩn/hiện bằng JS khi bấm tab. -->
+        <!-- Tab lọc Truyện chữ / Truyện tranh - lọc THẬT ở tầng database (routes/index.js dùng
+             cột story_type để .eq() ngay trong query), mỗi tab có phân trang riêng tách biệt
+             hoàn toàn, không phải ẩn/hiện client-side (cách cũ bị lỗi rỗng khi 1 trang toàn
+             1 loại truyện). -->
+        <% const activeType = (typeof storyType !== 'undefined' && storyType === 'comic') ? 'comic' : 'novel'; %>
+        <% if (!searchQuery && !activeGenre) { %>
         <div class="type-tabs" style="display: flex; gap: 0.5rem; margin-bottom: 1.2rem;">
-            <button type="button" class="type-tab-btn active" data-filter-type="novel">📖 Truyện chữ</button>
-            <button type="button" class="type-tab-btn" data-filter-type="comic">🖼️ Truyện tranh</button>
+            <a href="/?type=novel<%= (filters && filters.status) ? '&status=' + filters.status : '' %>" class="type-tab-btn <%= activeType === 'novel' ? 'active' : '' %>">📖 Truyện chữ</a>
+            <a href="/?type=comic<%= (filters && filters.status) ? '&status=' + filters.status : '' %>" class="type-tab-btn <%= activeType === 'comic' ? 'active' : '' %>">🖼️ Truyện tranh</a>
         </div>
+        <% } %>
 
         <% if (stories.length === 0) { %>
-            <p style="color: var(--text-secondary); text-align: center; margin-top: 3rem;">Chưa có truyện nào được đăng tải trong danh mục này.</p>
+            <p style="color: var(--text-secondary); text-align: center; margin-top: 3rem;">Chưa có truyện nào được đăng tải trong danh mục này<% if (!searchQuery && !activeGenre) { %> ở mục <%= activeType === 'comic' ? 'Truyện tranh' : 'Truyện chữ' %><% } %>.</p>
         <% } else { %>
             <div class="stories-grid" id="stories-grid">
-                <% const comicIdSet = new Set(comicStoryIds || []); %>
                 <% stories.forEach(story => { %>
-                    <% const storyType = comicIdSet.has(story.id) ? 'comic' : 'novel'; %>
-                    <div class="story-card" data-story-type="<%= storyType %>">
+                    <div class="story-card">
                         <a href="/story/<%= story.id %>">
                             <img src="<%= story.cover_url %>" alt="<%= story.title %>" class="story-cover">
                         </a>
@@ -1004,10 +1006,13 @@
             <!-- Phân trang trang chủ -->
             <% if (typeof totalPages !== 'undefined' && totalPages > 1) { %>
                 <div class="pagination" style="display: flex; justify-content: center; align-items: center; gap: 0.5rem; margin-top: 2rem;">
-                    <% 
+                    <%
                       let urlParams = '';
                       if (filters && filters.status) {
                           urlParams += `status=${filters.status}&`;
+                      }
+                      if (typeof storyType !== 'undefined' && storyType) {
+                          urlParams += `type=${storyType}&`;
                       }
                     %>
                     <% if (currentPage > 1) { %>
@@ -1271,34 +1276,6 @@
         border-color: var(--accent-color);
     }
 </style>
-<script>
-    // Lọc truyện chữ / truyện tranh client-side, không cần tải lại trang.
-    // Mỗi .story-card đã được gắn sẵn data-story-type="novel"|"comic" từ server (dựa trên
-    // services/storyClassifier.js) khi render trang chủ.
-    document.addEventListener('DOMContentLoaded', () => {
-        const tabButtons = document.querySelectorAll('.type-tab-btn');
-        const grid = document.getElementById('stories-grid');
-        if (!grid || tabButtons.length === 0) return;
-
-        function applyFilter(type) {
-            grid.querySelectorAll('.story-card').forEach(card => {
-                card.style.display = (card.dataset.storyType === type) ? '' : 'none';
-            });
-        }
-
-        tabButtons.forEach(btn => {
-            btn.addEventListener('click', () => {
-                tabButtons.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                applyFilter(btn.dataset.filterType);
-            });
-        });
-
-        // Áp dụng bộ lọc mặc định (tab "Truyện chữ" active sẵn) ngay khi tải trang
-        const defaultBtn = document.querySelector('.type-tab-btn.active') || tabButtons[0];
-        applyFilter(defaultBtn.dataset.filterType);
-    });
-</script>
 <script>
     function filterBxhType(type, evt) {
         // Cập nhật trạng thái active cho nút bấm

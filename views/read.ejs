@@ -213,11 +213,16 @@
         .read-content p {
             margin-bottom: 1.25rem !important;
         }
-        /* Ảnh truyện tranh (comic) bị lưu dạng <p><img></p> giống đoạn văn thường, nên margin-bottom
-           ở trên vô tình tạo khoảng cách giữa các ảnh liên tiếp, làm ảnh "tách rời" thay vì nối liền
-           như cách đọc comic thông thường. Loại bỏ margin cho riêng <p> chỉ chứa ảnh. */
-        .read-content p:has(img) {
+        /* Ảnh truyện tranh (comic) được crawler lưu dạng
+             <div style="text-align: center; margin-bottom: 10px;"><img ...></div>
+           (không phải <p><img></p>). Rule .read-content p ở trên không áp dụng cho div này,
+           nhưng margin-bottom: 10px inline style + margin: 2rem auto trên img (style.css) vẫn
+           tạo khoảng cách lớn giữa các ảnh liên tiếp trên mobile. Loại bỏ để ảnh nối liền. */
+        .read-content div:has(> img:only-child) {
             margin-bottom: 0 !important;
+        }
+        .read-content div:has(> img:only-child) img {
+            margin: 0 auto !important;
         }
         .read-navigation {
             gap: 0.35rem !important;
