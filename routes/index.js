@@ -346,11 +346,25 @@ router.get('/', async (req, res) => {
     const toRange = fromRange + limit - 1;
 
     // 1. Lấy danh sách truyện phân trang, sắp xếp theo truyện có chương MỚI CẬP NHẬT gần nhất lên đầu
-    let query = supabase.from('stories_with_last_update').select('*', { count: 'exact' }).eq('story_type', storyType);
+    // An toàn: nếu cột story_type CHƯA được tạo trên Supabase (thiếu chạy schema/ALTER TABLE),
+    // .eq('story_type', ...) sẽ khiến toàn bộ query lỗi -> sập cả trang chủ. Test thử trước,
+    // nếu lỗi thì fallback về không lọc theo type, tránh sập toàn web vì thiếu 1 cột.
+    let hasStoryTypeColumn = true;
+    try {
+      const { error: testErr } = await supabase.from('stories').select('story_type').limit(1);
+      if (testErr) hasStoryTypeColumn = false;
+    } catch (e) {
+      hasStoryTypeColumn = false;
+    }
+
+    let query = supabase.from('stories_with_last_update').select('*', { count: 'exact' });
+    if (hasStoryTypeColumn) {
+      query = query.eq('story_type', storyType);
+    }
     if (status === 'ongoing' || status === 'completed') {
       query = query.eq('status', status);
     }
-    
+
     // Gộp tất cả truy vấn song song
     const [
       { data: stories, count: totalCount, error: storiesError },
