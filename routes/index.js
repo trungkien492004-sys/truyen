@@ -418,12 +418,19 @@ router.get('/', async (req, res) => {
     let bookmarksMap = {};
 
     if (storyIdsOnPage.length > 0) {
+      // QUAN TRỌNG: KHÔNG order('chapter_number', {ascending:false}) trên toàn bộ chapters của
+      // nhiều truyện cùng lúc rồi lấy "bản ghi đầu tiên gặp mỗi story_id" - Supabase giới hạn
+      // mặc định 1000 dòng/query, nên nếu có truyện với chapter_number rất lớn (vd 3752, 4375)
+      // trong danh sách, các dòng đó chiếm hết top 1000 theo thứ tự global DESC, đẩy chapters
+      // của truyện ít chương hơn (vd chỉ tới chương 48) ra khỏi 1000 dòng đầu và bị cắt mất
+      // => lastChapterMap không có story đó => hiển thị sai "Chưa có chương". Sửa bằng cách
+      // tính max chapter_number cho TỪNG story_id bằng vòng lặp JS trên toàn bộ dữ liệu lấy về.
       const [chapterMaxData, ratingsData, bookmarksData] = await Promise.all([
         supabase
           .from('chapters')
           .select('story_id, chapter_number')
           .in('story_id', storyIdsOnPage)
-          .order('chapter_number', { ascending: false }),
+          .limit(20000),
         supabase
           .from('story_ratings_summary')
           .select('*')
@@ -435,7 +442,8 @@ router.get('/', async (req, res) => {
       ]);
 
       for (const ch of (chapterMaxData.data || [])) {
-        if (!(ch.story_id in lastChapterMap)) {
+        const current = lastChapterMap[ch.story_id];
+        if (current === undefined || (ch.chapter_number != null && ch.chapter_number > current)) {
           lastChapterMap[ch.story_id] = ch.chapter_number;
         }
       }
@@ -691,12 +699,19 @@ router.get('/api/stories-partial', async (req, res) => {
     let bookmarksMap = {};
 
     if (storyIdsOnPage.length > 0) {
+      // QUAN TRỌNG: KHÔNG order('chapter_number', {ascending:false}) trên toàn bộ chapters của
+      // nhiều truyện cùng lúc rồi lấy "bản ghi đầu tiên gặp mỗi story_id" - Supabase giới hạn
+      // mặc định 1000 dòng/query, nên nếu có truyện với chapter_number rất lớn (vd 3752, 4375)
+      // trong danh sách, các dòng đó chiếm hết top 1000 theo thứ tự global DESC, đẩy chapters
+      // của truyện ít chương hơn (vd chỉ tới chương 48) ra khỏi 1000 dòng đầu và bị cắt mất
+      // => lastChapterMap không có story đó => hiển thị sai "Chưa có chương". Sửa bằng cách
+      // tính max chapter_number cho TỪNG story_id bằng vòng lặp JS trên toàn bộ dữ liệu lấy về.
       const [chapterMaxData, ratingsData, bookmarksData] = await Promise.all([
         supabase
           .from('chapters')
           .select('story_id, chapter_number')
           .in('story_id', storyIdsOnPage)
-          .order('chapter_number', { ascending: false }),
+          .limit(20000),
         supabase
           .from('story_ratings_summary')
           .select('*')
@@ -708,7 +723,8 @@ router.get('/api/stories-partial', async (req, res) => {
       ]);
 
       for (const ch of (chapterMaxData.data || [])) {
-        if (!(ch.story_id in lastChapterMap)) {
+        const current = lastChapterMap[ch.story_id];
+        if (current === undefined || (ch.chapter_number != null && ch.chapter_number > current)) {
           lastChapterMap[ch.story_id] = ch.chapter_number;
         }
       }
@@ -843,12 +859,19 @@ router.get('/search', async (req, res) => {
     let bookmarksMap = {};
 
     if (storyIdsOnPage.length > 0) {
+      // QUAN TRỌNG: KHÔNG order('chapter_number', {ascending:false}) trên toàn bộ chapters của
+      // nhiều truyện cùng lúc rồi lấy "bản ghi đầu tiên gặp mỗi story_id" - Supabase giới hạn
+      // mặc định 1000 dòng/query, nên nếu có truyện với chapter_number rất lớn (vd 3752, 4375)
+      // trong danh sách, các dòng đó chiếm hết top 1000 theo thứ tự global DESC, đẩy chapters
+      // của truyện ít chương hơn (vd chỉ tới chương 48) ra khỏi 1000 dòng đầu và bị cắt mất
+      // => lastChapterMap không có story đó => hiển thị sai "Chưa có chương". Sửa bằng cách
+      // tính max chapter_number cho TỪNG story_id bằng vòng lặp JS trên toàn bộ dữ liệu lấy về.
       const [chapterMaxData, ratingsData, bookmarksData] = await Promise.all([
         supabase
           .from('chapters')
           .select('story_id, chapter_number')
           .in('story_id', storyIdsOnPage)
-          .order('chapter_number', { ascending: false }),
+          .limit(20000),
         supabase
           .from('story_ratings_summary')
           .select('*')
@@ -860,7 +883,8 @@ router.get('/search', async (req, res) => {
       ]);
 
       for (const ch of (chapterMaxData.data || [])) {
-        if (!(ch.story_id in lastChapterMap)) {
+        const current = lastChapterMap[ch.story_id];
+        if (current === undefined || (ch.chapter_number != null && ch.chapter_number > current)) {
           lastChapterMap[ch.story_id] = ch.chapter_number;
         }
       }
@@ -1063,12 +1087,19 @@ router.get('/genre/:slug', async (req, res) => {
     let bookmarksMap = {};
 
     if (storyIdsOnPage.length > 0) {
+      // QUAN TRỌNG: KHÔNG order('chapter_number', {ascending:false}) trên toàn bộ chapters của
+      // nhiều truyện cùng lúc rồi lấy "bản ghi đầu tiên gặp mỗi story_id" - Supabase giới hạn
+      // mặc định 1000 dòng/query, nên nếu có truyện với chapter_number rất lớn (vd 3752, 4375)
+      // trong danh sách, các dòng đó chiếm hết top 1000 theo thứ tự global DESC, đẩy chapters
+      // của truyện ít chương hơn (vd chỉ tới chương 48) ra khỏi 1000 dòng đầu và bị cắt mất
+      // => lastChapterMap không có story đó => hiển thị sai "Chưa có chương". Sửa bằng cách
+      // tính max chapter_number cho TỪNG story_id bằng vòng lặp JS trên toàn bộ dữ liệu lấy về.
       const [chapterMaxData, ratingsData, bookmarksData] = await Promise.all([
         supabase
           .from('chapters')
           .select('story_id, chapter_number')
           .in('story_id', storyIdsOnPage)
-          .order('chapter_number', { ascending: false }),
+          .limit(20000),
         supabase
           .from('story_ratings_summary')
           .select('*')
@@ -1080,7 +1111,8 @@ router.get('/genre/:slug', async (req, res) => {
       ]);
 
       for (const ch of (chapterMaxData.data || [])) {
-        if (!(ch.story_id in lastChapterMap)) {
+        const current = lastChapterMap[ch.story_id];
+        if (current === undefined || (ch.chapter_number != null && ch.chapter_number > current)) {
           lastChapterMap[ch.story_id] = ch.chapter_number;
         }
       }
@@ -1153,12 +1185,19 @@ router.get('/author/:name', async (req, res) => {
     let bookmarksMap = {};
 
     if (storyIdsOnPage.length > 0) {
+      // QUAN TRỌNG: KHÔNG order('chapter_number', {ascending:false}) trên toàn bộ chapters của
+      // nhiều truyện cùng lúc rồi lấy "bản ghi đầu tiên gặp mỗi story_id" - Supabase giới hạn
+      // mặc định 1000 dòng/query, nên nếu có truyện với chapter_number rất lớn (vd 3752, 4375)
+      // trong danh sách, các dòng đó chiếm hết top 1000 theo thứ tự global DESC, đẩy chapters
+      // của truyện ít chương hơn (vd chỉ tới chương 48) ra khỏi 1000 dòng đầu và bị cắt mất
+      // => lastChapterMap không có story đó => hiển thị sai "Chưa có chương". Sửa bằng cách
+      // tính max chapter_number cho TỪNG story_id bằng vòng lặp JS trên toàn bộ dữ liệu lấy về.
       const [chapterMaxData, ratingsData, bookmarksData] = await Promise.all([
         supabase
           .from('chapters')
           .select('story_id, chapter_number')
           .in('story_id', storyIdsOnPage)
-          .order('chapter_number', { ascending: false }),
+          .limit(20000),
         supabase
           .from('story_ratings_summary')
           .select('*')
@@ -1170,7 +1209,8 @@ router.get('/author/:name', async (req, res) => {
       ]);
 
       for (const ch of (chapterMaxData.data || [])) {
-        if (!(ch.story_id in lastChapterMap)) {
+        const current = lastChapterMap[ch.story_id];
+        if (current === undefined || (ch.chapter_number != null && ch.chapter_number > current)) {
           lastChapterMap[ch.story_id] = ch.chapter_number;
         }
       }
