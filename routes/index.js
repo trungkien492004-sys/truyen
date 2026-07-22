@@ -329,6 +329,7 @@ async function fetchTopAuthors(limitCount = 20) {
 }
 
 // TRANG CHỦ & BẢNG XẾP HẠNG
+// build-tag: force-redeploy-2026-07-22b (đổi comment này để chắc chắn Vercel không dùng cache build cũ)
 router.get('/', async (req, res) => {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.setHeader('Pragma', 'no-cache');
@@ -345,23 +346,13 @@ router.get('/', async (req, res) => {
     const fromRange = (page - 1) * limit;
     const toRange = fromRange + limit - 1;
 
-    // 1. Lấy danh sách truyện phân trang, sắp xếp theo truyện có chương MỚI CẬP NHẬT gần nhất lên đầu
-    // An toàn: nếu cột story_type CHƯA được tạo trên Supabase (thiếu chạy schema/ALTER TABLE),
-    // .eq('story_type', ...) sẽ khiến toàn bộ query lỗi -> sập cả trang chủ. Test thử trước,
-    // nếu lỗi thì fallback về không lọc theo type, tránh sập toàn web vì thiếu 1 cột.
-    let hasStoryTypeColumn = true;
-    try {
-      const { error: testErr } = await supabase.from('stories').select('story_type').limit(1);
-      if (testErr) hasStoryTypeColumn = false;
-    } catch (e) {
-      hasStoryTypeColumn = false;
-    }
-
-
-
+    // 1. Query truyện — lọc theo story_type trực tiếp.
+    // novel: match 'novel' hoặc NULL; comic: chỉ match 'comic'
     let query = supabase.from('stories_with_last_update').select('*, chapters(count)', { count: 'exact' });
-    if (hasStoryTypeColumn) {
-      query = query.eq('story_type', storyType);
+    if (storyType === 'comic') {
+      query = query.eq('story_type', 'comic');
+    } else {
+      query = query.or('story_type.eq.novel,story_type.is.null');
     }
     if (status === 'ongoing' || status === 'completed') {
       query = query.eq('status', status);
@@ -618,6 +609,35 @@ router.get('/', async (req, res) => {
   }
 });
 
+// ROUTE DEBUG TẠM - kiểm tra trực tiếp qua URL xem query lọc story_type có đúng không trên
+// đúng môi trường Vercel đang chạy, không cần vào Vercel Dashboard. Sẽ xoá sau khi hết bug.
+router.get('/debug-storytype', async (req, res) => {
+  try {
+    const results = {};
+    const { data: novelData, count: novelCount, error: novelErr } = await supabase
+      .from('stories_with_last_update')
+      .select('id, title, story_type', { count: 'exact' })
+      .or('story_type.eq.novel,story_type.is.null')
+      .limit(5);
+    results.novelCount = novelCount;
+    results.novelSample = novelData;
+    results.novelErr = novelErr ? novelErr.message : null;
+
+    const { data: comicData, count: comicCount, error: comicErr } = await supabase
+      .from('stories_with_last_update')
+      .select('id, title, story_type', { count: 'exact' })
+      .eq('story_type', 'comic')
+      .limit(5);
+    results.comicCount = comicCount;
+    results.comicSample = comicData;
+    results.comicErr = comicErr ? comicErr.message : null;
+
+    res.json(results);
+  } catch (e) {
+    res.status(500).json({ error: e.message, stack: e.stack });
+  }
+});
+
 // PARTIAL HTML (dùng cho fetch AJAX khi bấm tab Truyện chữ/Truyện tranh ở trang chủ) - CHỈ trả
 // về đúng đoạn grid truyện + phân trang (render bằng partials/stories-grid.ejs), KHÔNG kèm toàn
 // bộ layout/BXH/banner như route "/" để nhẹ và nhanh hơn, tránh phải load lại cả trang chỉ để
@@ -642,7 +662,11 @@ router.get('/api/stories-partial', async (req, res) => {
 
     let query = supabase.from('stories_with_last_update').select('*, chapters(count)', { count: 'exact' });
     if (hasStoryTypeColumn) {
-      query = query.eq('story_type', storyType);
+      if (storyType === 'comic') {
+        query = query.eq('story_type', 'comic');
+      } else {
+        query = query.or('story_type.eq.novel,story_type.is.null');
+      }
     }
     if (status === 'ongoing' || status === 'completed') {
       query = query.eq('status', status);
