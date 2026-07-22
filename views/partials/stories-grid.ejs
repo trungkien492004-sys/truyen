@@ -18,18 +18,27 @@
                         <%= story.title %>
                     </a>
                     <span class="story-author">Tác giả: <a href="/author/<%= encodeURIComponent(story.author || '') %>" style="color: var(--accent-color); text-decoration: none;"><%= story.author %></a></span>
-                    <div style="font-size: 0.78rem; color: var(--text-secondary); margin: 0.25rem 0;">
+                    <div style="font-size: 0.78rem; color: var(--text-secondary); margin: 0.25rem 0; display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center;">
                         <% if (story.last_chapter_number) { %>
                             <span style="color: var(--accent-color); font-weight: 600;">Mới: Chương <%= story.last_chapter_number %></span>
                         <% } else { %>
                             <span>Chưa có chương</span>
                         <% } %>
-                        <% if (story.status === 'completed') { %> · <span style="color: #22c55e;">✅ Hoàn thành</span><% } else { %> · <span style="color: #f59e0b;">🔄 Đang tiến hành</span><% } %>
+                        · 
+                        <span>Tổng: <%= story.chapter_count || 0 %> chương</span>
+                        · 
+                        <% if (story.status === 'completed') { %> <span style="color: #22c55e;">✅ Hoàn</span><% } else { %> <span style="color: #f59e0b;">🔄 Đang ra</span><% } %>
                     </div>
-                    <!-- Đánh giá truyện -->
-                    <div style="font-size: 0.78rem; color: #f59e0b; font-weight: 600; margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.2rem;">
-                        🌟 <span><%= story.avg_score || '0' %></span>
-                        <span style="color: var(--text-secondary); font-weight: normal;">(<%= story.rating_count || 0 %> lượt đánh giá)</span>
+                    <!-- Đánh giá và Theo dõi truyện -->
+                    <div style="font-size: 0.78rem; margin-bottom: 0.25rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem;">
+                        <span style="color: #f59e0b; font-weight: 600; display: flex; align-items: center; gap: 0.15rem;">
+                            🌟 <%= story.avg_score || '0' %>
+                        </span>
+                        <span style="color: var(--text-secondary);">(<%= story.rating_count || 0 %> đánh giá)</span>
+                        <span style="color: var(--text-secondary);">·</span>
+                        <span style="color: #ec4899; font-weight: 600; display: flex; align-items: center; gap: 0.15rem;">
+                            ❤️ <%= story.bookmark_count || 0 %> <span style="color: var(--text-secondary); font-weight: normal; font-size: 0.75rem;">theo dõi</span>
+                        </span>
                     </div>
                     <% if (story.last_update_at) { %>
                         <div style="font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 0.5rem;">

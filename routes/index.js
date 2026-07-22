@@ -357,7 +357,9 @@ router.get('/', async (req, res) => {
       hasStoryTypeColumn = false;
     }
 
-    let query = supabase.from('stories_with_last_update').select('*', { count: 'exact' });
+
+
+    let query = supabase.from('stories_with_last_update').select('*, chapters(count)');
     if (hasStoryTypeColumn) {
       query = query.eq('story_type', storyType);
     }
@@ -367,7 +369,7 @@ router.get('/', async (req, res) => {
 
     // Gộp tất cả truy vấn song song
     const [
-      { data: stories, count: totalCount, error: storiesError },
+      { data: rawStories, count: totalCount, error: storiesError },
       { data: genres, error: genresError },
       { data: topDaily },
       { data: topWeekly },
@@ -387,28 +389,53 @@ router.get('/', async (req, res) => {
     if (storiesError) throw storiesError;
     if (genresError) throw genresError;
 
-    // Lấy số chương mới nhất (last_chapter_number) của từng truyện trong trang hiện tại - dùng
-    // để hiển thị "Mới: Chương X" trên mỗi card. Trước đây field này chưa từng được set ở route,
-    // khiến mọi truyện hiển thị "Chưa có chương" trên trang chủ dù DB đã có đủ chương.
-    const storyIdsOnPage = (stories || []).map(s => s.id);
+    // Lấy số chương thực tế + map last_chapter_number, avg_score, rating_count, bookmark_count
+    const storyIdsOnPage = (rawStories || []).map(s => s.id);
     let lastChapterMap = {};
+    let ratingsMap = {};
+    let bookmarksMap = {};
+
     if (storyIdsOnPage.length > 0) {
-      const { data: chapterMaxData } = await supabase
-        .from('chapters')
-        .select('story_id, chapter_number')
-        .in('story_id', storyIdsOnPage)
-        .order('chapter_number', { ascending: false });
-      for (const ch of (chapterMaxData || [])) {
+      const [chapterMaxData, ratingsData, bookmarksData] = await Promise.all([
+        supabase
+          .from('chapters')
+          .select('story_id, chapter_number')
+          .in('story_id', storyIdsOnPage)
+          .order('chapter_number', { ascending: false }),
+        supabase
+          .from('story_ratings_summary')
+          .select('*')
+          .in('story_id', storyIdsOnPage),
+        supabase
+          .from('stories_bookmarks_count')
+          .select('id, bookmark_count')
+          .in('id', storyIdsOnPage)
+      ]);
+
+      for (const ch of (chapterMaxData.data || [])) {
         if (!(ch.story_id in lastChapterMap)) {
           lastChapterMap[ch.story_id] = ch.chapter_number;
         }
       }
+      for (const r of (ratingsData.data || [])) {
+        ratingsMap[r.story_id] = { avg_score: r.avg_score, rating_count: r.rating_count };
+      }
+      for (const b of (bookmarksData.data || [])) {
+        bookmarksMap[b.id] = b.bookmark_count;
+      }
     }
-    if (stories) {
-      stories.forEach(s => {
-        s.last_chapter_number = lastChapterMap[s.id] || null;
-      });
-    }
+
+    const stories = (rawStories || []).map(s => {
+      const rating = ratingsMap[s.id] || { avg_score: 0, rating_count: 0 };
+      return {
+        ...s,
+        chapter_count: (s.chapters && s.chapters[0] && s.chapters[0].count) || 0,
+        last_chapter_number: lastChapterMap[s.id] || null,
+        avg_score: rating.avg_score,
+        rating_count: rating.rating_count,
+        bookmark_count: bookmarksMap[s.id] || 0
+      };
+    });
 
     // Lấy song song dữ liệu phụ
     const [
@@ -587,7 +614,7 @@ router.get('/api/stories-partial', async (req, res) => {
       hasStoryTypeColumn = false;
     }
 
-    let query = supabase.from('stories_with_last_update').select('*', { count: 'exact' });
+    let query = supabase.from('stories_with_last_update').select('*, chapters(count)', { count: 'exact' });
     if (hasStoryTypeColumn) {
       query = query.eq('story_type', storyType);
     }
@@ -595,34 +622,59 @@ router.get('/api/stories-partial', async (req, res) => {
       query = query.eq('status', status);
     }
 
-    const { data: stories, count: totalCount, error: storiesError } = await query
+    const { data: rawStories, count: totalCount, error: storiesError } = await query
       .order('last_update_at', { ascending: false })
       .range(fromRange, toRange);
 
     if (storiesError) throw storiesError;
 
-    // Lấy last_chapter_number cho từng truyện trong trang này - cùng logic với route "/" để
-    // hiển thị đúng "Mới: Chương X" khi chuyển tab bằng AJAX (partials/stories-grid.ejs dùng
-    // chung 1 template cho cả 2 route).
-    const storyIdsOnPage = (stories || []).map(s => s.id);
+    // Lấy số chương thực tế + map last_chapter_number, avg_score, rating_count, bookmark_count
+    const storyIdsOnPage = (rawStories || []).map(s => s.id);
     let lastChapterMap = {};
+    let ratingsMap = {};
+    let bookmarksMap = {};
+
     if (storyIdsOnPage.length > 0) {
-      const { data: chapterMaxData } = await supabase
-        .from('chapters')
-        .select('story_id, chapter_number')
-        .in('story_id', storyIdsOnPage)
-        .order('chapter_number', { ascending: false });
-      for (const ch of (chapterMaxData || [])) {
+      const [chapterMaxData, ratingsData, bookmarksData] = await Promise.all([
+        supabase
+          .from('chapters')
+          .select('story_id, chapter_number')
+          .in('story_id', storyIdsOnPage)
+          .order('chapter_number', { ascending: false }),
+        supabase
+          .from('story_ratings_summary')
+          .select('*')
+          .in('story_id', storyIdsOnPage),
+        supabase
+          .from('stories_bookmarks_count')
+          .select('id, bookmark_count')
+          .in('id', storyIdsOnPage)
+      ]);
+
+      for (const ch of (chapterMaxData.data || [])) {
         if (!(ch.story_id in lastChapterMap)) {
           lastChapterMap[ch.story_id] = ch.chapter_number;
         }
       }
+      for (const r of (ratingsData.data || [])) {
+        ratingsMap[r.story_id] = { avg_score: r.avg_score, rating_count: r.rating_count };
+      }
+      for (const b of (bookmarksData.data || [])) {
+        bookmarksMap[b.id] = b.bookmark_count;
+      }
     }
-    if (stories) {
-      stories.forEach(s => {
-        s.last_chapter_number = lastChapterMap[s.id] || null;
-      });
-    }
+
+    const stories = (rawStories || []).map(s => {
+      const rating = ratingsMap[s.id] || { avg_score: 0, rating_count: 0 };
+      return {
+        ...s,
+        chapter_count: (s.chapters && s.chapters[0] && s.chapters[0].count) || 0,
+        last_chapter_number: lastChapterMap[s.id] || null,
+        avg_score: rating.avg_score,
+        rating_count: rating.rating_count,
+        bookmark_count: bookmarksMap[s.id] || 0
+      };
+    });
 
     const totalPages = Math.ceil((totalCount || 0) / limit);
 
@@ -727,11 +779,53 @@ router.get('/search', async (req, res) => {
     const { data: rawStories, error } = await q;
     if (error) throw error;
 
-    // 3. Tính số chương thực tế + lọc theo số chương tối thiểu (xử lý ở tầng ứng dụng)
-    let stories = (rawStories || []).map(s => ({
-      ...s,
-      chapter_count: (s.chapters && s.chapters[0] && s.chapters[0].count) || 0
-    }));
+    // Lấy số chương thực tế + map last_chapter_number, avg_score, rating_count, bookmark_count
+    const storyIdsOnPage = (rawStories || []).map(s => s.id);
+    let lastChapterMap = {};
+    let ratingsMap = {};
+    let bookmarksMap = {};
+
+    if (storyIdsOnPage.length > 0) {
+      const [chapterMaxData, ratingsData, bookmarksData] = await Promise.all([
+        supabase
+          .from('chapters')
+          .select('story_id, chapter_number')
+          .in('story_id', storyIdsOnPage)
+          .order('chapter_number', { ascending: false }),
+        supabase
+          .from('story_ratings_summary')
+          .select('*')
+          .in('story_id', storyIdsOnPage),
+        supabase
+          .from('stories_bookmarks_count')
+          .select('id, bookmark_count')
+          .in('id', storyIdsOnPage)
+      ]);
+
+      for (const ch of (chapterMaxData.data || [])) {
+        if (!(ch.story_id in lastChapterMap)) {
+          lastChapterMap[ch.story_id] = ch.chapter_number;
+        }
+      }
+      for (const r of (ratingsData.data || [])) {
+        ratingsMap[r.story_id] = { avg_score: r.avg_score, rating_count: r.rating_count };
+      }
+      for (const b of (bookmarksData.data || [])) {
+        bookmarksMap[b.id] = b.bookmark_count;
+      }
+    }
+
+    let stories = (rawStories || []).map(s => {
+      const rating = ratingsMap[s.id] || { avg_score: 0, rating_count: 0 };
+      return {
+        ...s,
+        chapter_count: (s.chapters && s.chapters[0] && s.chapters[0].count) || 0,
+        last_chapter_number: lastChapterMap[s.id] || null,
+        avg_score: rating.avg_score,
+        rating_count: rating.rating_count,
+        bookmark_count: bookmarksMap[s.id] || 0
+      };
+    });
 
     if (minChapters > 0) {
       stories = stories.filter(s => s.chapter_count >= minChapters);
@@ -889,41 +983,68 @@ router.get('/genre/:slug', async (req, res) => {
 
     if (relErr) throw relErr;
 
-    const storyIds = storyIdsData.map(item => item.story_id);
-    let stories = [];
+
 
     // 3. Lấy chi tiết các truyện từ ID
+    let rawStories = [];
     if (storyIds.length > 0) {
       const { data: storiesData, error: storiesErr } = await supabase
         .from('stories')
-        .select('*')
+        .select('*, chapters(count)')
         .in('id', storyIds)
         .order('created_at', { ascending: false });
       
       if (storiesErr) throw storiesErr;
-      stories = storiesData;
+      rawStories = storiesData || [];
     }
 
-    // Lấy last_chapter_number cho từng truyện (đồng bộ với trang chủ / /api/stories-partial)
-    const storyIdsOnPage = (stories || []).map(s => s.id);
+    // Lấy số chương thực tế + map last_chapter_number, avg_score, rating_count, bookmark_count
+    const storyIdsOnPage = rawStories.map(s => s.id);
     let lastChapterMap = {};
+    let ratingsMap = {};
+    let bookmarksMap = {};
+
     if (storyIdsOnPage.length > 0) {
-      const { data: chapterMaxData } = await supabase
-        .from('chapters')
-        .select('story_id, chapter_number')
-        .in('story_id', storyIdsOnPage)
-        .order('chapter_number', { ascending: false });
-      for (const ch of (chapterMaxData || [])) {
+      const [chapterMaxData, ratingsData, bookmarksData] = await Promise.all([
+        supabase
+          .from('chapters')
+          .select('story_id, chapter_number')
+          .in('story_id', storyIdsOnPage)
+          .order('chapter_number', { ascending: false }),
+        supabase
+          .from('story_ratings_summary')
+          .select('*')
+          .in('story_id', storyIdsOnPage),
+        supabase
+          .from('stories_bookmarks_count')
+          .select('id, bookmark_count')
+          .in('id', storyIdsOnPage)
+      ]);
+
+      for (const ch of (chapterMaxData.data || [])) {
         if (!(ch.story_id in lastChapterMap)) {
           lastChapterMap[ch.story_id] = ch.chapter_number;
         }
       }
+      for (const r of (ratingsData.data || [])) {
+        ratingsMap[r.story_id] = { avg_score: r.avg_score, rating_count: r.rating_count };
+      }
+      for (const b of (bookmarksData.data || [])) {
+        bookmarksMap[b.id] = b.bookmark_count;
+      }
     }
-    if (stories) {
-      stories.forEach(s => {
-        s.last_chapter_number = lastChapterMap[s.id] || null;
-      });
-    }
+
+    const stories = rawStories.map(s => {
+      const rating = ratingsMap[s.id] || { avg_score: 0, rating_count: 0 };
+      return {
+        ...s,
+        chapter_count: (s.chapters && s.chapters[0] && s.chapters[0].count) || 0,
+        last_chapter_number: lastChapterMap[s.id] || null,
+        avg_score: rating.avg_score,
+        rating_count: rating.rating_count,
+        bookmark_count: bookmarksMap[s.id] || 0
+      };
+    });
 
     res.render('home', {
       title: `Thể loại: ${activeGenre.name}`,
@@ -966,29 +1087,52 @@ router.get('/author/:name', async (req, res) => {
 
     if (error) throw error;
 
-    const stories = (rawStories || []).map(s => ({
-      ...s,
-      chapter_count: (s.chapters && s.chapters[0] && s.chapters[0].count) || 0
-    }));
-
-    // Lấy last_chapter_number cho từng truyện (để hiển thị "Mới: Chương X" đúng như trang chủ,
-    // cùng logic đã sửa ở route "/" và "/api/stories-partial")
-    const storyIdsOnPage = stories.map(s => s.id);
+    // Lấy số chương thực tế + map last_chapter_number, avg_score, rating_count, bookmark_count
+    const storyIdsOnPage = (rawStories || []).map(s => s.id);
     let lastChapterMap = {};
+    let ratingsMap = {};
+    let bookmarksMap = {};
+
     if (storyIdsOnPage.length > 0) {
-      const { data: chapterMaxData } = await supabase
-        .from('chapters')
-        .select('story_id, chapter_number')
-        .in('story_id', storyIdsOnPage)
-        .order('chapter_number', { ascending: false });
-      for (const ch of (chapterMaxData || [])) {
+      const [chapterMaxData, ratingsData, bookmarksData] = await Promise.all([
+        supabase
+          .from('chapters')
+          .select('story_id, chapter_number')
+          .in('story_id', storyIdsOnPage)
+          .order('chapter_number', { ascending: false }),
+        supabase
+          .from('story_ratings_summary')
+          .select('*')
+          .in('story_id', storyIdsOnPage),
+        supabase
+          .from('stories_bookmarks_count')
+          .select('id, bookmark_count')
+          .in('id', storyIdsOnPage)
+      ]);
+
+      for (const ch of (chapterMaxData.data || [])) {
         if (!(ch.story_id in lastChapterMap)) {
           lastChapterMap[ch.story_id] = ch.chapter_number;
         }
       }
+      for (const r of (ratingsData.data || [])) {
+        ratingsMap[r.story_id] = { avg_score: r.avg_score, rating_count: r.rating_count };
+      }
+      for (const b of (bookmarksData.data || [])) {
+        bookmarksMap[b.id] = b.bookmark_count;
+      }
     }
-    stories.forEach(s => {
-      s.last_chapter_number = lastChapterMap[s.id] || null;
+
+    const stories = (rawStories || []).map(s => {
+      const rating = ratingsMap[s.id] || { avg_score: 0, rating_count: 0 };
+      return {
+        ...s,
+        chapter_count: (s.chapters && s.chapters[0] && s.chapters[0].count) || 0,
+        last_chapter_number: lastChapterMap[s.id] || null,
+        avg_score: rating.avg_score,
+        rating_count: rating.rating_count,
+        bookmark_count: bookmarksMap[s.id] || 0
+      };
     });
 
     res.render('home', {
@@ -1909,14 +2053,20 @@ router.get('/profile', async (req, res) => {
     const ownedItems = (inventory || []).map(i => i.shop_items).filter(Boolean);
 
     // Tính toán Rank (Hạng trên BXH Độc Giả)
-    // View leaderboard_by_exp dùng cột 'id' (không phải 'user_id')
-    const [rankAbove, rankTied] = await Promise.all([
-      supabase.from('leaderboard_by_exp').select('id', { count: 'exact', head: true }).gt('chapters_read', chaptersCount),
-      supabase.from('leaderboard_by_exp').select('id', { count: 'exact', head: true }).eq('chapters_read', chaptersCount).gt('exp', exp)
-    ]);
-    const userRank = (rankAbove.count !== null && rankTied.count !== null)
-      ? rankAbove.count + rankTied.count + 1
-      : '-';
+    // Sắp xếp BXH theo đúng logic chapters_read desc, exp desc để lấy index chuẩn xác của user
+    const { data: leaderboardData } = await supabase
+      .from('leaderboard_by_exp')
+      .select('id')
+      .order('chapters_read', { ascending: false })
+      .order('exp', { ascending: false });
+
+    let userRank = '-';
+    if (leaderboardData) {
+      const idx = leaderboardData.findIndex(item => item.id === req.user.id);
+      if (idx !== -1) {
+        userRank = idx + 1;
+      }
+    }
 
     res.render('profile', {
       title: 'Trang cá nhân của tôi',
@@ -2283,14 +2433,19 @@ router.get('/user/:id', async (req, res) => {
     const chaptersRead = statsData ? (statsData.chapters_read || 0) : 0;
 
     // Tính toán Rank (Hạng trên BXH Độc Giả)
-    // View leaderboard_by_exp dùng cột 'id' (không phải 'user_id')
-    const [rankAbove2, rankTied2] = await Promise.all([
-      supabase.from('leaderboard_by_exp').select('id', { count: 'exact', head: true }).gt('chapters_read', chaptersRead),
-      supabase.from('leaderboard_by_exp').select('id', { count: 'exact', head: true }).eq('chapters_read', chaptersRead).gt('exp', exp)
-    ]);
-    const userRank = (rankAbove2.count !== null && rankTied2.count !== null)
-      ? rankAbove2.count + rankTied2.count + 1
-      : '-';
+    const { data: leaderboardData } = await supabase
+      .from('leaderboard_by_exp')
+      .select('id')
+      .order('chapters_read', { ascending: false })
+      .order('exp', { ascending: false });
+
+    let userRank = '-';
+    if (leaderboardData) {
+      const idx = leaderboardData.findIndex(item => item.id === userId);
+      if (idx !== -1) {
+        userRank = idx + 1;
+      }
+    }
 
     // Tính badge (Cảnh giới / Tu vi) dựa trên chaptersRead
     const { data: rankSettings } = await supabase.from('rank_settings').select('*').order('count', { ascending: false });
