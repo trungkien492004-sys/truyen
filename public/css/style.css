@@ -292,6 +292,11 @@ main {
     gap: 3rem;
 }
 
+/* Khi không có cột BXH (trang tác giả, tìm kiếm, thể loại) */
+.content-grid--full {
+    grid-template-columns: 1fr;
+}
+
 @media (max-width: 900px) {
     .content-grid {
         grid-template-columns: 1fr;

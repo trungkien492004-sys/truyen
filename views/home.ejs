@@ -887,7 +887,7 @@
         </select>
 
         <select name="year" onchange="this.form.submit()" style="padding: 0.5rem 0.8rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 0.85rem;">
-            <option value="">Mọi năm</option>
+            <option value="" <%= (!filters || !filters.year) ? 'selected' : '' %>>Mọi năm</option>
             <% const currentYear = new Date().getFullYear(); %>
             <% for (let y = currentYear; y >= 2020; y--) { %>
                 <option value="<%= y %>" <%= (typeof filters !== 'undefined' && filters.year == y) ? 'selected' : '' %>><%= y %></option>
@@ -922,7 +922,7 @@
     <% }) %>
 </div>
 
-<div class="content-grid">
+<div class="content-grid<%= (searchQuery || activeGenre || (typeof isAuthorPage !== 'undefined' && isAuthorPage)) ? ' content-grid--full' : '' %>">
     <!-- Cột trái: Danh sách truyện -->
     <div>
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem;">
@@ -931,12 +931,14 @@
                     🔍 Kết quả tìm kiếm cho "<%= searchQuery %>"
                 <% } else if (activeGenre) { %>
                     📚 Thể loại: <%= activeGenre.name %>
+                <% } else if (typeof isAuthorPage !== 'undefined' && isAuthorPage) { %>
+                    ✍️ Tác giả: <%= authorName %>
                 <% } else { %>
                     ✨ Truyện mới cập nhật
                 <% } %>
             </h2>
             
-            <% if (!searchQuery && !activeGenre) { %>
+            <% if (!searchQuery && !activeGenre && !(typeof isAuthorPage !== 'undefined' && isAuthorPage)) { %>
                 <div style="display: flex; gap: 0.4rem;">
                     <a href="/" class="btn <%= (!filters || !filters.status) ? 'btn-primary' : 'btn-secondary' %>" style="font-size: 0.8rem; padding: 0.35rem 0.8rem; border-radius: 8px; font-weight: 500;">Tất cả</a>
                     <a href="/?status=ongoing" class="btn <%= (filters && filters.status === 'ongoing') ? 'btn-primary' : 'btn-secondary' %>" style="font-size: 0.8rem; padding: 0.35rem 0.8rem; border-radius: 8px; font-weight: 500;">🔄 Đang ra</a>
@@ -952,7 +954,7 @@
              dưới (home-tab-ajax) sẽ chặn hành vi mặc định và fetch HTML partial để tránh reload
              cả trang, chỉ thay nội dung #stories-grid-container. -->
         <% const activeType = (typeof storyType !== 'undefined' && storyType === 'comic') ? 'comic' : 'novel'; %>
-        <% if (!searchQuery && !activeGenre) { %>
+        <% if (!searchQuery && !activeGenre && !(typeof isAuthorPage !== 'undefined' && isAuthorPage)) { %>
         <div class="type-tabs" id="home-type-tabs" style="display: flex; gap: 0.5rem; margin-bottom: 1.2rem;">
             <a href="/?type=novel<%= (filters && filters.status) ? '&status=' + filters.status : '' %>" class="type-tab-btn <%= activeType === 'novel' ? 'active' : '' %>" data-type="novel">📖 Truyện chữ</a>
             <a href="/?type=comic<%= (filters && filters.status) ? '&status=' + filters.status : '' %>" class="type-tab-btn <%= activeType === 'comic' ? 'active' : '' %>" data-type="comic">🖼️ Truyện tranh</a>
@@ -965,7 +967,7 @@
     </div>
 
     <!-- Cột phải: Bảng xếp hạng (Chỉ hiển thị ở trang chủ mặc định) -->
-    <% if (!searchQuery && !activeGenre) { %>
+    <% if (!searchQuery && !activeGenre && !(typeof isAuthorPage !== 'undefined' && isAuthorPage)) { %>
         <div style="position: sticky; top: 100px; display: flex; flex-direction: column; gap: 1.5rem;">
             <div class="rankings-container" style="position: relative !important; top: auto !important;">
                 

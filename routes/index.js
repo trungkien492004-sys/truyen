@@ -1155,6 +1155,8 @@ router.get('/author/:name', async (req, res) => {
       totalPages: 1,
       activeGenre: null,
       searchQuery: null,
+      isAuthorPage: true,
+      authorName,
       filters: { genre: '', status: '', minChapters: '', year: '', sort: 'newest', view_sort: '' }
     });
   } catch (err) {
