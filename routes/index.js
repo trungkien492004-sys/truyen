@@ -368,15 +368,21 @@ router.get('/', async (req, res) => {
     ]);
 
     if (storiesResult.status === 'rejected') {
-      console.warn('Stories query timeout/lỗi:', storiesResult.reason?.message);
+      console.warn('Stories query timeout/lỗi (rejected):', storiesResult.reason?.message);
+    } else if (storiesResult.value && storiesResult.value.error) {
+      console.warn('Stories query lỗi (fulfilled nhưng có error):', JSON.stringify(storiesResult.value.error));
     }
     if (genresResult.status === 'rejected') {
       console.warn('Genres query timeout/lỗi:', genresResult.reason?.message);
     }
 
-    const rawStories = (storiesResult.status === 'fulfilled') ? (storiesResult.value.data || []) : [];
-    const totalCount = (storiesResult.status === 'fulfilled') ? (storiesResult.value.count || 0) : 0;
-    const genres     = (genresResult.status  === 'fulfilled') ? (genresResult.value.data  || []) : [];
+    // LƯU Ý: Supabase-js không throw khi query lỗi (vd. lỗi cú pháp filter/join) - nó resolve
+    // bình thường (fulfilled) nhưng với { data: null, error: {...} }. allSettled chỉ bắt được
+    // exception JS thật (network/timeout), KHÔNG bắt được lỗi PostgREST trả về trong "value.error".
+    // Đây là lý do trước đây stories bị rỗng âm thầm dù không hề "rejected".
+    const rawStories = (storiesResult.status === 'fulfilled' && !storiesResult.value.error) ? (storiesResult.value.data || []) : [];
+    const totalCount = (storiesResult.status === 'fulfilled' && !storiesResult.value.error) ? (storiesResult.value.count || 0) : 0;
+    const genres     = (genresResult.status  === 'fulfilled' && !genresResult.value.error)  ? (genresResult.value.data  || []) : [];
 
     // BXH chạy allSettled: timeout/lỗi thì fallback [] — không crash trang chủ
     const [
