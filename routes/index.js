@@ -542,6 +542,67 @@ router.get('/', async (req, res) => {
   }
 });
 
+// PARTIAL HTML (dùng cho fetch AJAX khi bấm tab Truyện chữ/Truyện tranh ở trang chủ) - CHỈ trả
+// về đúng đoạn grid truyện + phân trang (render bằng partials/stories-grid.ejs), KHÔNG kèm toàn
+// bộ layout/BXH/banner như route "/" để nhẹ và nhanh hơn, tránh phải load lại cả trang chỉ để
+// đổi 1 khu vực nhỏ.
+router.get('/api/stories-partial', async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  try {
+    const status = req.query.status || '';
+    const storyType = (req.query.type === 'comic') ? 'comic' : 'novel';
+    const page = parseInt(req.query.page) || 1;
+    const limit = 12;
+    const fromRange = (page - 1) * limit;
+    const toRange = fromRange + limit - 1;
+
+    let hasStoryTypeColumn = true;
+    try {
+      const { error: testErr } = await supabase.from('stories').select('story_type').limit(1);
+      if (testErr) hasStoryTypeColumn = false;
+    } catch (e) {
+      hasStoryTypeColumn = false;
+    }
+
+    let query = supabase.from('stories_with_last_update').select('*', { count: 'exact' });
+    if (hasStoryTypeColumn) {
+      query = query.eq('story_type', storyType);
+    }
+    if (status === 'ongoing' || status === 'completed') {
+      query = query.eq('status', status);
+    }
+
+    const { data: stories, count: totalCount, error: storiesError } = await query
+      .order('last_update_at', { ascending: false })
+      .range(fromRange, toRange);
+
+    if (storiesError) throw storiesError;
+
+    const totalPages = Math.ceil((totalCount || 0) / limit);
+
+    // Render partial thành chuỗi HTML (không res.render trực tiếp vì cần trả JSON kèm URL mới
+    // để phía client cập nhật history.pushState đúng)
+    res.render('partials/stories-grid', {
+      stories: stories || [],
+      storyType,
+      searchQuery: null,
+      activeGenre: null,
+      currentPage: page,
+      totalPages,
+      filters: { status: status || '' }
+    }, (err, html) => {
+      if (err) {
+        console.error('Lỗi render partial stories-grid:', err);
+        return res.status(500).json({ success: false, error: 'Lỗi render.' });
+      }
+      res.json({ success: true, html });
+    });
+  } catch (err) {
+    console.error('Lỗi /api/stories-partial:', err);
+    res.status(500).json({ success: false, error: 'Lỗi hệ thống.' });
+  }
+});
+
 // TÌM KIẾM TRUYỆN (HỖ TRỢ LỌC NÂNG CAO KẾT HỢP NHIỀU TIÊU CHÍ)
 router.get('/search', async (req, res) => {
   const query = req.query.q ? req.query.q.trim() : '';
@@ -1817,16 +1878,35 @@ router.get('/leaderboard', async (req, res) => {
 
     const { getTypeRankings } = require('../services/storyClassifier');
 
+    // Lấy đủ 5 khoảng thời gian/tiêu chí (ngày/tuần/tháng/đánh giá/theo dõi) cho cả 2 loại
+    // truyện tranh và truyện chữ - trước đây trang /leaderboard chỉ lấy mỗi bản 'daily', khiến
+    // 2 tab "Truyện Tranh Top"/"Truyện Chữ Top" không có sub-tab lọc như bên trang chủ.
     const [
       { data: readers },
       topAuthors,
       topComicDaily,
-      topNovelDaily
+      topNovelDaily,
+      topComicWeekly,
+      topNovelWeekly,
+      topComicMonthly,
+      topNovelMonthly,
+      topComicRated,
+      topNovelRated,
+      topComicBookmarks,
+      topNovelBookmarks
     ] = await Promise.all([
       supabase.from('leaderboard_by_exp').select('*').order('chapters_read', { ascending: false }).order('exp', { ascending: false }).limit(20),
       fetchTopAuthors(20),
       getTypeRankings('comic', 'daily', 20),
-      getTypeRankings('novel', 'daily', 20)
+      getTypeRankings('novel', 'daily', 20),
+      getTypeRankings('comic', 'weekly', 20),
+      getTypeRankings('novel', 'weekly', 20),
+      getTypeRankings('comic', 'monthly', 20),
+      getTypeRankings('novel', 'monthly', 20),
+      getTypeRankings('comic', 'rated', 20),
+      getTypeRankings('novel', 'rated', 20),
+      getTypeRankings('comic', 'bookmarks', 20),
+      getTypeRankings('novel', 'bookmarks', 20)
     ]);
 
     const leaderboard = readers || [];
@@ -1838,6 +1918,14 @@ router.get('/leaderboard', async (req, res) => {
       topAuthors,
       topComicDaily,
       topNovelDaily,
+      topComicWeekly,
+      topNovelWeekly,
+      topComicMonthly,
+      topNovelMonthly,
+      topComicRated,
+      topNovelRated,
+      topComicBookmarks,
+      topNovelBookmarks,
       rankSettings
     });
   } catch (err) {

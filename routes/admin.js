@@ -87,6 +87,55 @@ async function getAllChaptersWithId(storyId) {
   return all;
 }
 
+// Chèn chương mới vào ĐÚNG vị trí số thứ tự, không đè mất chương cũ - nếu số chương mới trùng
+// với 1 chương đã tồn tại, TOÀN BỘ chương hiện có từ số đó trở đi (bao gồm cả chương trùng) sẽ
+// được đẩy lùi lên (+ số lượng chương mới đang chèn) để nhường chỗ, giống thao tác "chèn dòng"
+// trong Excel. Áp dụng thống nhất cho cả 3 đường upload: PDF, Word/txt, EPUB.
+//
+// Ví dụ: truyện đã có chương 1..10, admin đăng "chương 8" mới (1 chương) -> chương 8 cũ thành
+// chương 9, chương 9 cũ thành chương 10, ..., chương 10 cũ thành chương 11, rồi chương 8 mới
+// được ghi vào đúng vị trí 8 vừa trống ra.
+//
+// Lưu ý AN TOÀN: hàm này KHÔNG áp dụng nếu chapter_number nhỏ nhất của lô mới lớn hơn mọi
+// chapter_number đã có (tức là đăng tiếp nối bình thường, không trùng số nào) - trường hợp đó
+// vẫn dùng upsert như cũ, không cần đẩy lùi gì cả, tránh việc quét/update thừa không cần thiết.
+async function insertChaptersWithShift(storyId, newChapters) {
+  const numberedNewChapters = newChapters.filter(ch => Number.isFinite(ch.chapter_number));
+  if (numberedNewChapters.length === 0) {
+    // Không có chương nào xác định số -> không cần đẩy lùi, insert thẳng
+    return newChapters;
+  }
+
+  const minNewNumber = Math.min(...numberedNewChapters.map(ch => ch.chapter_number));
+  const countNewNumbered = numberedNewChapters.length;
+
+  const existing = await getAllExistingChapterNumbers(storyId);
+  const existingNumbersSet = new Set(existing.map(e => e.chapter_number));
+
+  // Chỉ cần đẩy lùi nếu số nhỏ nhất của lô mới ĐÃ tồn tại trong DB (nghĩa là bị trùng, cần chèn)
+  if (!existingNumbersSet.has(minNewNumber)) {
+    return newChapters;
+  }
+
+  // Lấy toàn bộ chương từ vị trí trùng trở đi (bao gồm cả chương trùng), sắp giảm dần để khi
+  // update từng chương KHÔNG bị đè lẫn nhau (phải đẩy chương SỐ LỚN NHẤT lên trước, rồi mới đến
+  // các chương nhỏ hơn - giống dồn ngăn kéo tủ từ trong ra ngoài, tránh ghi đè tạm thời).
+  const allChapters = await getAllChaptersWithId(storyId);
+  const chaptersToShift = allChapters
+    .filter(ch => ch.chapter_number >= minNewNumber)
+    .sort((a, b) => b.chapter_number - a.chapter_number);
+
+  for (const ch of chaptersToShift) {
+    const { error } = await supabase
+      .from('chapters')
+      .update({ chapter_number: ch.chapter_number + countNewNumbered })
+      .eq('id', ch.id);
+    if (error) throw error;
+  }
+
+  return newChapters;
+}
+
 // Hàm hỗ trợ upload file lên Supabase Storage
 async function uploadToSupabase(file, bucketName = 'uploads') {
   if (!file) return null;
@@ -876,6 +925,10 @@ router.post('/chapter/add', upload.array('txtfile', 100), async (req, res) => {
       successMessage = `Đã tải lên thành công và nhập ${chaptersToInsert.length} chương mới vào hệ thống!`;
     }
 
+    // Chèn chương (không đè mất chương cũ): nếu số chương trùng với chương đã tồn tại, đẩy lùi
+    // chương cũ + các chương sau nó lên trước khi ghi chương mới vào.
+    await insertChaptersWithShift(parseInt(story_id), chaptersToInsert);
+
     // Ghi vào Supabase theo từng lô batch (100 chương/lần) để tránh vượt quá giới hạn payload của Supabase/Vercel
     const BATCH_SIZE = 100;
     for (let i = 0; i < chaptersToInsert.length; i += BATCH_SIZE) {
@@ -984,11 +1037,13 @@ router.post('/chapter/add-json', async (req, res) => {
     const existingNumbers = new Set(existingChapters ? existingChapters.map(c => c.chapter_number) : []);
     const usedNumbers = new Set();
 
-    // Bước 1: Xử lý các chương có số cụ thể trước để tránh bị trùng lặp
+    // Bước 1: Xử lý các chương có số cụ thể - CHỈ khử trùng trong CHÍNH lô upload này (2 file
+    // cùng tên số chương trong 1 lần upload), KHÔNG còn tự tăng số khi trùng với chương ĐÃ CÓ
+    // trong DB nữa (trước đây làm vậy sẽ đổi số chương mới thay vì giữ đúng số người dùng nhập -
+    // giờ dùng insertChaptersWithShift bên dưới để CHÈN, đẩy lùi chương cũ thay vì né số mới).
     for (const chapter of chaptersToInsert) {
       if (chapter.chapter_number !== null && chapter.chapter_number !== undefined && !isNaN(chapter.chapter_number)) {
         let num = chapter.chapter_number;
-        // Nếu số chương bị trùng trong lô upload này, tự động tăng lên
         while (usedNumbers.has(num)) {
           num++;
         }
@@ -1018,6 +1073,10 @@ router.post('/chapter/add-json', async (req, res) => {
         chapter.title = `Chương ${chapter.chapter_number}`;
       }
     }
+
+    // Chèn chương (không đè mất chương cũ): nếu số chương trùng với chương đã tồn tại, đẩy lùi
+    // chương cũ + các chương sau nó lên trước khi ghi chương mới vào.
+    await insertChaptersWithShift(parseInt(story_id), chaptersToInsert);
 
     const { error: upsertErr } = await supabase
       .from('chapters')
@@ -1090,6 +1149,10 @@ router.post('/chapter/add-pdf', upload.single('pdffile'), async (req, res) => {
       seenNumbers.add(ch.chapter_number);
       return true;
     });
+
+    // Chèn chương (không đè mất chương cũ): nếu số chương trùng với chương đã tồn tại, đẩy lùi
+    // chương cũ + các chương sau nó lên trước khi ghi chương mới vào.
+    await insertChaptersWithShift(parseInt(story_id), chapters);
 
     const { error } = await supabase.from('chapters')
       .upsert(chapters, { onConflict: 'story_id,chapter_number' });

@@ -1,0 +1,82 @@
+<!-- Partial dùng chung cho grid truyện + phân trang ở trang chủ.
+     Được include() khi render trang chủ đầy đủ (SSR), và cũng là partial render bởi route
+     GET /api/stories-partial (dùng cho fetch AJAX khi bấm tab Truyện chữ/Truyện tranh -
+     không cần reload cả trang, chỉ thay nội dung khu vực này). -->
+<% const activeType = (typeof storyType !== 'undefined' && storyType === 'comic') ? 'comic' : 'novel'; %>
+
+<% if (stories.length === 0) { %>
+    <p style="color: var(--text-secondary); text-align: center; margin-top: 3rem;">Chưa có truyện nào được đăng tải trong danh mục này<% if (!searchQuery && !activeGenre) { %> ở mục <%= activeType === 'comic' ? 'Truyện tranh' : 'Truyện chữ' %><% } %>.</p>
+<% } else { %>
+    <div class="stories-grid" id="stories-grid">
+        <% stories.forEach(story => { %>
+            <div class="story-card">
+                <a href="/story/<%= story.id %>">
+                    <img src="<%= story.cover_url %>" alt="<%= story.title %>" class="story-cover">
+                </a>
+                <div class="story-info">
+                    <a href="/story/<%= story.id %>" class="story-title" title="<%= story.title %>">
+                        <%= story.title %>
+                    </a>
+                    <span class="story-author">Tác giả: <a href="/author/<%= encodeURIComponent(story.author || '') %>" style="color: var(--accent-color); text-decoration: none;"><%= story.author %></a></span>
+                    <div style="font-size: 0.78rem; color: var(--text-secondary); margin: 0.25rem 0;">
+                        <% if (story.last_chapter_number) { %>
+                            <span style="color: var(--accent-color); font-weight: 600;">Mới: Chương <%= story.last_chapter_number %></span>
+                        <% } else { %>
+                            <span>Chưa có chương</span>
+                        <% } %>
+                        <% if (story.status === 'completed') { %> · <span style="color: #22c55e;">✅ Hoàn thành</span><% } else { %> · <span style="color: #f59e0b;">🔄 Đang tiến hành</span><% } %>
+                    </div>
+                    <!-- Đánh giá truyện -->
+                    <div style="font-size: 0.78rem; color: #f59e0b; font-weight: 600; margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.2rem;">
+                        🌟 <span><%= story.avg_score || '0' %></span>
+                        <span style="color: var(--text-secondary); font-weight: normal;">(<%= story.rating_count || 0 %> lượt đánh giá)</span>
+                    </div>
+                    <% if (story.last_update_at) { %>
+                        <div style="font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                            🕒 Cập nhật: <%= new Date(story.last_update_at).toLocaleDateString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' }) %>
+                        </div>
+                    <% } %>
+                    <p class="story-desc-short"><%= story.description || 'Chưa có tóm tắt nội dung.' %></p>
+
+                    <% if (story.commissioned_by) { %>
+                        <div style="font-size: 0.8rem; background: rgba(59, 130, 246, 0.1); border-left: 2px solid var(--accent-color); padding: 0.3rem 0.5rem; margin-bottom: 0.8rem; border-radius: 0 4px 4px 0;">
+                            👑 Người đặt truyện: <strong><%= story.commissioned_by %></strong>
+                        </div>
+                    <% } %>
+
+                    <a href="/story/<%= story.id %>" class="btn btn-secondary btn-primary" style="margin-top: auto; font-size: 0.85rem; padding: 0.5rem;">Đọc ngay</a>
+                </div>
+            </div>
+        <% }) %>
+    </div>
+
+    <!-- Phân trang trang chủ -->
+    <% if (typeof totalPages !== 'undefined' && totalPages > 1) { %>
+        <div class="pagination" style="display: flex; justify-content: center; align-items: center; gap: 0.5rem; margin-top: 2rem;">
+            <%
+              let urlParams = '';
+              if (filters && filters.status) {
+                  urlParams += `status=${filters.status}&`;
+              }
+              if (typeof storyType !== 'undefined' && storyType) {
+                  urlParams += `type=${storyType}&`;
+              }
+            %>
+            <% if (currentPage > 1) { %>
+                <a href="/?<%= urlParams %>page=<%= currentPage - 1 %>" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; border-radius: 8px;">&larr; Trước</a>
+            <% } %>
+
+            <% for (let i = 1; i <= totalPages; i++) { %>
+                <% if (i === currentPage) { %>
+                    <span class="btn btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; border-radius: 8px; font-weight: bold; pointer-events: none;"><%= i %></span>
+                <% } else { %>
+                    <a href="/?<%= urlParams %>page=<%= i %>" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; border-radius: 8px;"><%= i %></a>
+                <% } %>
+            <% } %>
+
+            <% if (currentPage < totalPages) { %>
+                <a href="/?<%= urlParams %>page=<%= currentPage + 1 %>" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; border-radius: 8px;">Sau &rarr;</a>
+            <% } %>
+        </div>
+    <% } %>
+<% } %>

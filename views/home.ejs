@@ -947,92 +947,21 @@
 
         <!-- Tab lọc Truyện chữ / Truyện tranh - lọc THẬT ở tầng database (routes/index.js dùng
              cột story_type để .eq() ngay trong query), mỗi tab có phân trang riêng tách biệt
-             hoàn toàn, không phải ẩn/hiện client-side (cách cũ bị lỗi rỗng khi 1 trang toàn
-             1 loại truyện). -->
+             hoàn toàn (không phải ẩn/hiện client-side - cách đó bị lỗi rỗng khi 1 trang toàn
+             1 loại truyện). Link <a href> vẫn trỏ đúng URL làm fallback nếu JS lỗi/tắt; JS bên
+             dưới (home-tab-ajax) sẽ chặn hành vi mặc định và fetch HTML partial để tránh reload
+             cả trang, chỉ thay nội dung #stories-grid-container. -->
         <% const activeType = (typeof storyType !== 'undefined' && storyType === 'comic') ? 'comic' : 'novel'; %>
         <% if (!searchQuery && !activeGenre) { %>
-        <div class="type-tabs" style="display: flex; gap: 0.5rem; margin-bottom: 1.2rem;">
-            <a href="/?type=novel<%= (filters && filters.status) ? '&status=' + filters.status : '' %>" class="type-tab-btn <%= activeType === 'novel' ? 'active' : '' %>">📖 Truyện chữ</a>
-            <a href="/?type=comic<%= (filters && filters.status) ? '&status=' + filters.status : '' %>" class="type-tab-btn <%= activeType === 'comic' ? 'active' : '' %>">🖼️ Truyện tranh</a>
+        <div class="type-tabs" id="home-type-tabs" style="display: flex; gap: 0.5rem; margin-bottom: 1.2rem;">
+            <a href="/?type=novel<%= (filters && filters.status) ? '&status=' + filters.status : '' %>" class="type-tab-btn <%= activeType === 'novel' ? 'active' : '' %>" data-type="novel">📖 Truyện chữ</a>
+            <a href="/?type=comic<%= (filters && filters.status) ? '&status=' + filters.status : '' %>" class="type-tab-btn <%= activeType === 'comic' ? 'active' : '' %>" data-type="comic">🖼️ Truyện tranh</a>
         </div>
         <% } %>
 
-        <% if (stories.length === 0) { %>
-            <p style="color: var(--text-secondary); text-align: center; margin-top: 3rem;">Chưa có truyện nào được đăng tải trong danh mục này<% if (!searchQuery && !activeGenre) { %> ở mục <%= activeType === 'comic' ? 'Truyện tranh' : 'Truyện chữ' %><% } %>.</p>
-        <% } else { %>
-            <div class="stories-grid" id="stories-grid">
-                <% stories.forEach(story => { %>
-                    <div class="story-card">
-                        <a href="/story/<%= story.id %>">
-                            <img src="<%= story.cover_url %>" alt="<%= story.title %>" class="story-cover">
-                        </a>
-                        <div class="story-info">
-                            <a href="/story/<%= story.id %>" class="story-title" title="<%= story.title %>">
-                                <%= story.title %>
-                            </a>
-                            <span class="story-author">Tác giả: <a href="/author/<%= encodeURIComponent(story.author || '') %>" style="color: var(--accent-color); text-decoration: none;"><%= story.author %></a></span>
-                            <div style="font-size: 0.78rem; color: var(--text-secondary); margin: 0.25rem 0;">
-                                <% if (story.last_chapter_number) { %>
-                                    <span style="color: var(--accent-color); font-weight: 600;">Mới: Chương <%= story.last_chapter_number %></span>
-                                <% } else { %>
-                                    <span>Chưa có chương</span>
-                                <% } %>
-                                <% if (story.status === 'completed') { %> · <span style="color: #22c55e;">✅ Hoàn thành</span><% } else { %> · <span style="color: #f59e0b;">🔄 Đang tiến hành</span><% } %>
-                            </div>
-                            <!-- Đánh giá truyện -->
-                            <div style="font-size: 0.78rem; color: #f59e0b; font-weight: 600; margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.2rem;">
-                                🌟 <span><%= story.avg_score || '0' %></span>
-                                <span style="color: var(--text-secondary); font-weight: normal;">(<%= story.rating_count || 0 %> lượt đánh giá)</span>
-                            </div>
-                            <% if (story.last_update_at) { %>
-                                <div style="font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
-                                    🕒 Cập nhật: <%= new Date(story.last_update_at).toLocaleDateString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' }) %>
-                                </div>
-                            <% } %>
-                            <p class="story-desc-short"><%= story.description || 'Chưa có tóm tắt nội dung.' %></p>
-                            
-                            <% if (story.commissioned_by) { %>
-                                <div style="font-size: 0.8rem; background: rgba(59, 130, 246, 0.1); border-left: 2px solid var(--accent-color); padding: 0.3rem 0.5rem; margin-bottom: 0.8rem; border-radius: 0 4px 4px 0;">
-                                    👑 Người đặt truyện: <strong><%= story.commissioned_by %></strong>
-                                </div>
-                            <% } %>
-
-                            <a href="/story/<%= story.id %>" class="btn btn-secondary btn-primary" style="margin-top: auto; font-size: 0.85rem; padding: 0.5rem;">Đọc ngay</a>
-                        </div>
-                    </div>
-                <% }) %>
-            </div>
-
-            <!-- Phân trang trang chủ -->
-            <% if (typeof totalPages !== 'undefined' && totalPages > 1) { %>
-                <div class="pagination" style="display: flex; justify-content: center; align-items: center; gap: 0.5rem; margin-top: 2rem;">
-                    <%
-                      let urlParams = '';
-                      if (filters && filters.status) {
-                          urlParams += `status=${filters.status}&`;
-                      }
-                      if (typeof storyType !== 'undefined' && storyType) {
-                          urlParams += `type=${storyType}&`;
-                      }
-                    %>
-                    <% if (currentPage > 1) { %>
-                        <a href="/?<%= urlParams %>page=<%= currentPage - 1 %>" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; border-radius: 8px;">&larr; Trước</a>
-                    <% } %>
-                    
-                    <% for (let i = 1; i <= totalPages; i++) { %>
-                        <% if (i === currentPage) { %>
-                            <span class="btn btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; border-radius: 8px; font-weight: bold; pointer-events: none;"><%= i %></span>
-                        <% } else { %>
-                            <a href="/?<%= urlParams %>page=<%= i %>" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; border-radius: 8px;"><%= i %></a>
-                        <% } %>
-                    <% } %>
-                    
-                    <% if (currentPage < totalPages) { %>
-                        <a href="/?<%= urlParams %>page=<%= currentPage + 1 %>" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; border-radius: 8px;">Sau &rarr;</a>
-                    <% } %>
-                </div>
-            <% } %>
-        <% } %>
+        <div id="stories-grid-container">
+            <%- include('partials/stories-grid') %>
+        </div>
     </div>
 
     <!-- Cột phải: Bảng xếp hạng (Chỉ hiển thị ở trang chủ mặc định) -->
@@ -1277,6 +1206,54 @@
     }
 </style>
 <script>
+    // Chuyển tab Truyện chữ / Truyện tranh KHÔNG reload cả trang - fetch HTML partial từ
+    // /api/stories-partial (render bằng partials/stories-grid.ejs) rồi thay nội dung
+    // #stories-grid-container. Link <a href> gốc vẫn còn nguyên làm fallback nếu JS lỗi/tắt.
+    document.addEventListener('DOMContentLoaded', () => {
+        const tabsContainer = document.getElementById('home-type-tabs');
+        const gridContainer = document.getElementById('stories-grid-container');
+        if (!tabsContainer || !gridContainer) return;
+
+        async function loadStoriesTab(type, pushUrl) {
+            gridContainer.style.opacity = '0.5';
+            try {
+                const url = new URL(pushUrl, window.location.origin);
+                const resp = await fetch(`/api/stories-partial${url.search}`);
+                const data = await resp.json();
+                if (data.success) {
+                    gridContainer.innerHTML = data.html;
+                    tabsContainer.querySelectorAll('.type-tab-btn').forEach(btn => {
+                        btn.classList.toggle('active', btn.dataset.type === type);
+                    });
+                    window.history.pushState({}, '', pushUrl);
+                    gridContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                } else {
+                    // Fallback an toàn: nếu API lỗi, điều hướng thật để không kẹt trang
+                    window.location.href = pushUrl;
+                }
+            } catch (err) {
+                console.error('Lỗi tải tab truyện:', err);
+                window.location.href = pushUrl;
+            } finally {
+                gridContainer.style.opacity = '1';
+            }
+        }
+
+        tabsContainer.querySelectorAll('.type-tab-btn').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                loadStoriesTab(link.dataset.type, link.getAttribute('href'));
+            });
+        });
+
+        // Hỗ trợ nút back/forward của trình duyệt sau khi đã pushState
+        window.addEventListener('popstate', () => {
+            const params = new URLSearchParams(window.location.search);
+            const type = params.get('type') === 'comic' ? 'comic' : 'novel';
+            loadStoriesTab(type, window.location.pathname + window.location.search);
+        });
+    });
+
     function filterBxhType(type, evt) {
         // Cập nhật trạng thái active cho nút bấm
         document.querySelectorAll('.bxh-type-btn').forEach(btn => {
