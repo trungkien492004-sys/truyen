@@ -92,6 +92,12 @@ FROM stories s
 LEFT JOIN story_views v ON s.id = v.story_id AND v.created_at >= (NOW() - INTERVAL '365 days')
 GROUP BY s.id, s.title, s.author, s.cover_url;
 
+-- View tổng hợp số chương và chương mới nhất
+CREATE OR REPLACE VIEW story_chapters_summary AS
+SELECT story_id, COUNT(*) AS chapter_count, MAX(chapter_number) AS last_chapter_number
+FROM chapters
+GROUP BY story_id;
+
 -- ==========================================
 -- CHÈN DỮ LIỆU THỂ LOẠI MẪU (Bắt buộc chạy để có thể loại chọn)
 INSERT INTO genres (name, slug) VALUES 
