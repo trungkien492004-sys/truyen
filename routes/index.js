@@ -237,91 +237,23 @@ async function uploadToSupabase(file, bucketName = 'uploads') {
 // Hàm lấy danh sách BXH tác giả theo tổng lượt xem
 async function fetchTopAuthors(limitCount = 20) {
   try {
-    const { data: stories, error: storyErr } = await supabase
-      .from('stories')
-      .select('id, title, author');
+    const { data, error } = await supabase
+      .from('author_leaderboard')
+      .select('*')
+      .limit(limitCount);
         
-    if (storyErr) {
-      console.error('Lỗi lấy danh sách truyện cho BXH tác giả:', storyErr);
+    if (error) {
+      console.error('Lỗi lấy BXH tác giả từ DB:', error);
       return [];
     }
     
-    let chapters = [];
-    let page = 0;
-    const limit = 1000;
-    let hasMore = true;
-    while (hasMore) {
-      const { data: batch, error: chaptersErr } = await supabase
-        .from('chapters')
-        .select('story_id, views')
-        .range(page * limit, (page + 1) * limit - 1);
-        
-      if (chaptersErr) {
-        console.error('Lỗi lấy lượt xem chương cho BXH tác giả:', chaptersErr);
-        return [];
-      }
-      
-      if (!batch || batch.length === 0) {
-        hasMore = false;
-      } else {
-        chapters = chapters.concat(batch);
-        if (batch.length < limit) {
-          hasMore = false;
-        } else {
-          page++;
-        }
-      }
-    }
-    
-    const storyViews = {};
-    chapters.forEach(c => {
-      storyViews[c.story_id] = (storyViews[c.story_id] || 0) + (c.views || 0);
-    });
-    
-    const authorMap = {};
-    stories.forEach(s => {
-      const author = s.author ? s.author.trim() : '';
-      if (!author || 
-          author === 'Ẩn danh' || 
-          author.toLowerCase() === 'an danh' || 
-          author === 'Đang cập nhật' || 
-          author.toLowerCase() === 'dang cap nhat') {
-        return;
-      }
-      
-      const viewsCount = storyViews[s.id] || 0;
-      
-      if (!authorMap[author]) {
-        authorMap[author] = {
-          author: author,
-          totalViews: 0,
-          stories: []
-        };
-      }
-      
-      authorMap[author].totalViews += viewsCount;
-      authorMap[author].stories.push({
-        title: s.title,
-        views: viewsCount
-      });
-    });
-    
-    const leaderboard = Object.values(authorMap).map(a => {
-      let hottestStory = null;
-      if (a.stories.length > 0) {
-        a.stories.sort((x, y) => y.views - x.views);
-        hottestStory = a.stories[0];
-      }
-      return {
-        author: a.author,
-        totalViews: a.totalViews,
-        story_count: a.stories.length,
-        hottestStoryName: hottestStory ? hottestStory.title : 'N/A',
-        hottestStoryViews: hottestStory ? hottestStory.views : 0
-      };
-    }).sort((x, y) => y.totalViews - x.totalViews);
-    
-    return leaderboard.slice(0, limitCount);
+    return (data || []).map(row => ({
+      author: row.author,
+      totalViews: parseInt(row.total_views) || 0,
+      story_count: parseInt(row.story_count) || 0,
+      hottestStoryName: row.hottest_story_name,
+      hottestStoryViews: parseInt(row.hottest_story_views) || 0
+    }));
   } catch (e) {
     console.error('Lỗi trong fetchTopAuthors:', e);
     return [];
@@ -918,72 +850,27 @@ router.get('/search', async (req, res) => {
 
     if (viewSort === 'daily' || viewSort === 'monthly' || viewSort === 'all') {
       const viewCounts = {};
-      if (viewSort === 'all') {
-        let chapters = [];
-        let page = 0;
-        const limit = 1000;
-        let hasMore = true;
-        while (hasMore) {
-          const { data: batch, error: chapErr } = await supabase
-            .from('chapters')
-            .select('story_id, views')
-            .range(page * limit, (page + 1) * limit - 1);
-          if (chapErr) {
-            console.error('Lỗi query chapters trong search:', chapErr);
-            break;
-          }
-          if (!batch || batch.length === 0) {
-            hasMore = false;
-          } else {
-            chapters = chapters.concat(batch);
-            if (batch.length < limit) {
-              hasMore = false;
-            } else {
-              page++;
-            }
-          }
+      try {
+        if (viewSort === 'all') {
+          const { data: viewsData, error: viewErr } = await supabase
+            .from('story_alltime_views')
+            .select('story_id, view_count');
+          if (viewErr) throw viewErr;
+          (viewsData || []).forEach(v => {
+            viewCounts[v.story_id] = v.view_count || 0;
+          });
+        } else {
+          const viewTable = viewSort === 'daily' ? 'views_ranking_daily' : 'views_ranking_monthly';
+          const { data: viewsData, error: viewErr } = await supabase
+            .from(viewTable)
+            .select('id, view_count');
+          if (viewErr) throw viewErr;
+          (viewsData || []).forEach(v => {
+            viewCounts[v.id] = v.view_count || 0;
+          });
         }
-        chapters.forEach(c => {
-          viewCounts[c.story_id] = (viewCounts[c.story_id] || 0) + (c.views || 0);
-        });
-      } else {
-        let viewsData = [];
-        let page = 0;
-        const limit = 1000;
-        let hasMore = true;
-        while (hasMore) {
-          let viewQuery = supabase
-            .from('story_views')
-            .select('story_id')
-            .range(page * limit, (page + 1) * limit - 1);
-            
-          if (viewSort === 'daily') {
-            const dailyStart = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-            viewQuery = viewQuery.gte('created_at', dailyStart);
-          } else if (viewSort === 'monthly') {
-            const monthlyStart = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-            viewQuery = viewQuery.gte('created_at', monthlyStart);
-          }
-          
-          const { data: batch, error: viewErr } = await viewQuery;
-          if (viewErr) {
-            console.error('Lỗi query story_views trong search:', viewErr);
-            break;
-          }
-          if (!batch || batch.length === 0) {
-            hasMore = false;
-          } else {
-            viewsData = viewsData.concat(batch);
-            if (batch.length < limit) {
-              hasMore = false;
-            } else {
-              page++;
-            }
-          }
-        }
-        viewsData.forEach(v => {
-          viewCounts[v.story_id] = (viewCounts[v.story_id] || 0) + 1;
-        });
+      } catch (err) {
+        console.error(`Lỗi khi query BXH views trong search (${viewSort}):`, err);
       }
 
       stories = stories.sort((a, b) => {
