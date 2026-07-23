@@ -757,6 +757,14 @@ router.post('/story/add', upload.single('cover'), async (req, res) => {
       if (genreLinkErr) throw genreLinkErr;
     }
 
+    // Kích hoạt cào tự động dưới nền nếu có dán link nguồn
+    if (source_url && source_url.trim()) {
+      const { crawlNewChapters } = require('../services/autoCrawler');
+      crawlNewChapters(newStory.id).catch(err => {
+        console.error(`[AUTO-CRAWL] Error on story add for ${newStory.id}:`, err.message);
+      });
+    }
+
     const { data: allGenres } = await supabase.from('genres').select('*');
     res.render('admin/add-story', {
       title: 'Đăng bộ truyện mới',
@@ -1408,6 +1416,14 @@ router.post('/story/edit/:id', upload.single('cover'), async (req, res) => {
         .insert(storyGenresInsert);
 
       if (genreLinkErr) throw genreLinkErr;
+    }
+
+    // Kích hoạt cào tự động dưới nền nếu có dán link nguồn
+    if (source_url && source_url.trim()) {
+      const { crawlNewChapters } = require('../services/autoCrawler');
+      crawlNewChapters(storyId).catch(err => {
+        console.error(`[AUTO-CRAWL] Error on story edit for ${storyId}:`, err.message);
+      });
     }
 
     res.redirect('/admin');
