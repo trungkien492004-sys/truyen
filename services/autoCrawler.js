@@ -650,6 +650,125 @@ async function crawlNewChapters(storyId, ignoreLimit = false) {
 
       await new Promise(r => setTimeout(r, 1500));
     }
+  } else if (domain.includes('mangatoon')) {
+    // === COMIC CRAWLER: mangatooncom.vn ===
+    console.log(`[CRAWLER] Detected Mangatoon source: ${sourceUrl}`);
+    const baseUrl = sourceUrl.replace(/\/+$/, '');
+    const maxChaptersPerRun = ignoreLimit ? 999999 : 30;
+
+    // Fetch detail page to get all chapter links
+    const detailRes = await fetchWithTimeout(baseUrl);
+    if (!detailRes.ok) throw new Error(`Failed to fetch Mangatoon detail page. Status: ${detailRes.status}`);
+    const detailHtml = await detailRes.text();
+    const $d = cheerio.load(detailHtml);
+
+    const chapterLinks = [];
+    $d('.episodes-wrap-new a, .selected-episodes a').each((idx, el) => {
+      const href = $d(el).attr('href') || '';
+      const text = $d(el).text().trim();
+      if (href && href.includes('/watch/')) {
+        const absUrl = href.startsWith('http') ? href : `https://mangatooncom.vn${href}`;
+        chapterLinks.push({ text, url: absUrl });
+      }
+    });
+
+    if (chapterLinks.length === 0) {
+      throw new Error('No chapter links found on Mangatoon details page');
+    }
+
+    // Parse and determine chapter numbers
+    const parsedChapters = [];
+    for (const chap of chapterLinks) {
+      let num = parseFloat(parsedChapters.length + 1);
+      const cleanedText = chap.text.replace(/[\-\s]+/g, '.');
+      const numMatch = cleanedText.match(/Chapter\.(\d+(\.\d+)?)/i) || cleanedText.match(/Chap\.(\d+(\.\d+)?)/i) || cleanedText.match(/(\d+(\.\d+)?)/);
+      if (numMatch) {
+        num = parseFloat(numMatch[1]);
+      }
+      parsedChapters.push({
+        text: chap.text,
+        url: chap.url,
+        number: num
+      });
+    }
+
+    // Sort ascending by chapter number
+    parsedChapters.sort((a, b) => a.number - b.number);
+
+    // Get existing chapters in DB
+    const { data: existingChapters } = await supabase
+      .from('chapters')
+      .select('chapter_number')
+      .eq('story_id', storyId);
+    
+    const existingNumbers = new Set(existingChapters ? existingChapters.map(c => c.chapter_number) : []);
+
+    let newChaptersList = [];
+    for (const pc of parsedChapters) {
+      if (!existingNumbers.has(pc.number)) {
+        // Clean title
+        const cleanTitleText = pc.text.split('\n')[0].replace(/Chapter\s+/i, '').replace(/Chap\s+/i, '').trim();
+        newChaptersList.push({
+          title: `Chương ${pc.number}${cleanTitleText ? ': ' + cleanTitleText : ''}`,
+          url: pc.url,
+          number: pc.number
+        });
+      }
+    }
+
+    console.log(`[CRAWLER] Found ${newChaptersList.length} new chapters to crawl for Mangatoon.`);
+
+    for (const newChap of newChaptersList) {
+      if (newChaptersCount >= maxChaptersPerRun) break;
+      console.log(`[CRAWLER] Crawling Mangatoon chapter: ${newChap.url}`);
+      try {
+        const chapRes = await fetchWithTimeout(newChap.url);
+        if (!chapRes.ok) throw new Error(`HTTP ${chapRes.status}`);
+
+        const html = await chapRes.text();
+        const $c = cheerio.load(html);
+
+        // Parse Images
+        const images = [];
+        $c('.lazyload_img').each((idx, el) => {
+          const src = $c(el).attr('data-src') || $c(el).attr('src') || '';
+          if (src && src.startsWith('http') && !src.includes('logo') && !src.includes('avatar') && !src.includes('banner')) {
+            images.push(src);
+          }
+        });
+
+        if (images.length === 0) {
+          throw new Error('No images found in chapter');
+        }
+
+        // Build content HTML using proxy image
+        const contentHtml = images
+          .map(img => {
+            const encodedImg = encodeURIComponent(img);
+            const encodedRef = encodeURIComponent('https://mangatooncom.vn/');
+            return `<div style="text-align: center; margin-bottom: 10px;"><img src="/api/proxy-image?url=${encodedImg}&referer=${encodedRef}" style="max-width: 100%; height: auto; border-radius: 4px;" loading="lazy"></div>`;
+          })
+          .join('');
+
+        // Insert to DB
+        const { error: insErr } = await supabase
+          .from('chapters')
+          .insert([{
+            story_id: storyId,
+            chapter_number: newChap.number,
+            title: newChap.title,
+            content: contentHtml
+          }]);
+
+        if (insErr) throw insErr;
+
+        newChaptersCount++;
+        console.log(`[CRAWLER] Successfully added Mangatoon chapter: ${newChap.title}`);
+      } catch (err) {
+        console.error(`[CRAWLER] Error crawling chapter ${newChap.url}:`, err.message);
+      }
+      await new Promise(r => setTimeout(r, 1500));
+    }
   } else {
     console.log(`[CRAWLER] ⚠️ Domain "${domain}" is not supported for auto-crawl.`);
     return { success: false, error: `Domain ${domain} is not supported.` };
