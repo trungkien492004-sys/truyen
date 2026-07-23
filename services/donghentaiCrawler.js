@@ -82,7 +82,8 @@ async function syncLatestDongHentai(maxPages = 3) {
                 description: description,
                 cover_url: coverUrl,
                 status: 'ongoing',
-                story_type: 'comic'
+                story_type: 'comic',
+                source_url: `https://donghentai.xyz/manga/${storySlug}`
               }])
               .select('id')
               .single();
@@ -223,7 +224,8 @@ async function crawlSingleDongHentaiManga(storySlug) {
           description: description,
           cover_url: coverUrl,
           status: 'ongoing',
-          story_type: 'comic'
+          story_type: 'comic',
+          source_url: `https://donghentai.xyz/manga/${storySlug}`
         }])
         .select('id')
         .single();

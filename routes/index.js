@@ -2478,4 +2478,43 @@ router.post('/profile/equip-achievement', async (req, res) => {
   }
 });
 
+// PROXY ẢNH ĐỂ TRÁNH LỖI REFERER CHẶN HOTLINK (403 FORBIDDEN)
+router.get('/api/proxy-image', async (req, res) => {
+  const imageUrl = req.query.url;
+  const referer = req.query.referer || 'https://truyenqq.com.vn/';
+
+  if (!imageUrl) {
+    return res.status(400).send('Thiếu tham số url.');
+  }
+
+  try {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), 8000);
+
+    const imgRes = await fetch(imageUrl, {
+      signal: controller.signal,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Referer': referer
+      }
+    });
+
+    clearTimeout(id);
+
+    if (!imgRes.ok) {
+      return res.status(imgRes.status).send(`Failed to fetch image. Status: ${imgRes.status}`);
+    }
+
+    const contentType = imgRes.headers.get('content-type') || 'image/jpeg';
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache trong 24 giờ
+
+    const buffer = await imgRes.arrayBuffer();
+    res.send(Buffer.from(buffer));
+  } catch (err) {
+    console.error('[PROXY-IMAGE] Error proxying image:', err.message);
+    res.status(500).send('Lỗi hệ thống khi tải ảnh.');
+  }
+});
+
 module.exports = router;
