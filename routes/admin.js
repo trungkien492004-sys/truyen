@@ -702,9 +702,8 @@ router.post('/story/crawl-manual', async (req, res) => {
   }
 });
 
-// THỰC HIỆN ĐĂNG TRUYỆN MỚI
 router.post('/story/add', upload.single('cover'), async (req, res) => {
-  const { title, author, description, commissioned_by, genres, status, story_type } = req.body;
+  const { title, author, description, commissioned_by, genres, status, story_type, source_url } = req.body;
   
   if (!title) {
     return res.status(400).send('Tên truyện không được để trống.');
@@ -728,7 +727,8 @@ router.post('/story/add', upload.single('cover'), async (req, res) => {
           cover_url: coverUrl,
           commissioned_by: commissioned_by ? commissioned_by.trim() : null,
           status: status === 'completed' ? 'completed' : 'ongoing',
-          story_type: story_type === 'comic' ? 'comic' : 'novel'
+          story_type: story_type === 'comic' ? 'comic' : 'novel',
+          source_url: source_url ? source_url.trim() : null
         }
       ])
       .select('*')
@@ -1348,7 +1348,7 @@ router.get('/story/edit/:id', async (req, res) => {
 // THỰC HIỆN CẬP NHẬT TRUYỆN
 router.post('/story/edit/:id', upload.single('cover'), async (req, res) => {
   const storyId = parseInt(req.params.id);
-  const { title, author, description, commissioned_by, genres, status, story_type } = req.body;
+  const { title, author, description, commissioned_by, genres, status, story_type, source_url } = req.body;
 
   if (!title) {
     return res.status(400).send('Tên truyện không được để trống.');
@@ -1378,7 +1378,8 @@ router.post('/story/edit/:id', upload.single('cover'), async (req, res) => {
         cover_url: coverUrl,
         commissioned_by: commissioned_by ? commissioned_by.trim() : null,
         status: status === 'completed' ? 'completed' : 'ongoing',
-        story_type: story_type === 'comic' ? 'comic' : 'novel'
+        story_type: story_type === 'comic' ? 'comic' : 'novel',
+        source_url: source_url ? source_url.trim() : null
       })
       .eq('id', storyId);
 
@@ -1414,6 +1415,30 @@ router.post('/story/edit/:id', upload.single('cover'), async (req, res) => {
   } catch (err) {
     console.error('Lỗi cập nhật truyện:', err);
     res.redirect(`/admin/story/edit/${storyId}?error=${encodeURIComponent(err.message || 'Lỗi cập nhật truyện.')}`);
+  }
+});
+// THỰC HIỆN ĐỒNG BỘ CÀO CHƯƠNG MỚI TỪ NGUỒN (AUTO-CRAWL)
+router.post('/story/sync-source/:id', async (req, res) => {
+  const storyId = parseInt(req.params.id);
+  try {
+    const { crawlNewChapters } = require('../services/autoCrawler');
+    const result = await crawlNewChapters(storyId);
+    if (!result.success) {
+      return res.redirect(`/admin/story/edit/${storyId}?error=${encodeURIComponent(result.error || 'Cào chương mới thất bại.')}`);
+    }
+    
+    // Reset cache BXH Tranh/Chữ nếu có cập nhật chương mới
+    if (result.newChaptersCount > 0) {
+      try {
+        const { resetStoryTypesCache } = require('../services/storyClassifier');
+        resetStoryTypesCache();
+      } catch(e) {}
+    }
+
+    res.redirect(`/admin/story/edit/${storyId}?success=${encodeURIComponent(`Đồng bộ thành công! Đã tải thêm ${result.newChaptersCount} chương mới.`)}`);
+  } catch (err) {
+    console.error('Lỗi đồng bộ nguồn:', err);
+    res.redirect(`/admin/story/edit/${storyId}?error=${encodeURIComponent(err.message || 'Lỗi hệ thống khi đồng bộ nguồn.')}`);
   }
 });
 

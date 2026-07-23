@@ -120,4 +120,24 @@ router.get('/sync-donghentai', async (req, res) => {
     }
 });
 
+// Vercel Cron / Local Endpoint: /api/cron/sync-all-sources
+router.get('/sync-all-sources', async (req, res) => {
+    try {
+        const { syncAllActiveStories } = require('../services/autoCrawler');
+        
+        // Chạy bất đồng bộ để tránh bị timeout (hoặc đồng bộ tùy Vercel Serverless limit)
+        syncAllActiveStories()
+            .then(result => console.log('[CRON-CRAWLER] Auto-sync finished:', result))
+            .catch(err => console.error('[CRON-CRAWLER] Auto-sync failed:', err));
+
+        return res.status(200).json({
+            success: true,
+            message: 'Đã kích hoạt tiến trình tự động quét và cào chương mới cho tất cả các truyện có link nguồn.'
+        });
+    } catch (error) {
+        console.error('Error in sync-all-sources cron:', error);
+        return res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 module.exports = router;
