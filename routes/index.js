@@ -2515,4 +2515,6 @@ router.get('/api/proxy-image', async (req, res) => {
     console.error('[PROXY-IMAGE] Error proxying image:', err.message);
     res.status(500).send('Lỗi hệ thống khi tải ảnh.');
   }
+});
+
 module.exports = router;
