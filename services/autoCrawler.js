@@ -257,6 +257,106 @@ async function crawlNewChapters(storyId) {
 
       await new Promise(r => setTimeout(r, 1500));
     }
+  } else if (domain.includes('nettruyen')) {
+    // === COMIC CRAWLER: nettruyen ===
+    console.log(`[CRAWLER] Detected NetTruyen source: ${sourceUrl}`);
+    const baseUrl = sourceUrl.replace(/\/+$/, '');
+    
+    let num = maxDbChapter + 1;
+    let consecutiveErrors = 0;
+    const maxChaptersPerRun = 30;
+
+    while (newChaptersCount < maxChaptersPerRun && consecutiveErrors < 3) {
+      const chapUrl = `${baseUrl}/chuong-${num}`;
+      console.log(`[CRAWLER] Checking NetTruyen chapter ${num}: ${chapUrl}`);
+      
+      try {
+        const chapRes = await fetchWithTimeout(chapUrl);
+        if (chapRes.status === 404) {
+          console.log(`[CRAWLER] Chapter ${num} not found (404). Stopping crawl loop.`);
+          break;
+        }
+        if (!chapRes.ok) {
+          throw new Error(`HTTP ${chapRes.status}`);
+        }
+
+        const html = await chapRes.text();
+        const $c = cheerio.load(html);
+
+        // Parse Title
+        const fullTitleText = $c('h1').text().trim() || $c('title').text().trim();
+        const titleMatch = fullTitleText.match(/Chuông\s+\d+\s*:\s*(.*)/i) || fullTitleText.match(/Chương\s+\d+\s*-\s*(.*)/i) || [null, fullTitleText];
+        const subTitle = titleMatch[1] ? titleMatch[1].trim() : fullTitleText;
+        const finalTitle = `Chương ${num}: ${subTitle}`;
+
+        // Parse Images
+        const imagesSet = new Set();
+        $c('img').each((idx, el) => {
+          const src = $c(el).attr('src') || $c(el).attr('data-src') || '';
+          if (src.includes('otruyencdn.com')) {
+            imagesSet.add(src.replace(/\\+/g, ''));
+          }
+        });
+
+        $c('script').each((idx, el) => {
+          const text = $c(el).text();
+          const regex = /https:\/\/sv\d+\.otruyencdn\.com\/[^"']+/gi;
+          const matches = text.match(regex);
+          if (matches) {
+            matches.forEach(m => {
+              imagesSet.add(m.replace(/\\+/g, ''));
+            });
+          }
+        });
+
+        const images = Array.from(imagesSet);
+
+        if (images.length === 0) {
+          throw new Error('No images found in chapter');
+        }
+
+        // Sort images by filename order
+        images.sort((a, b) => {
+          const aMatch = a.match(/page_(\d+)/i);
+          const bMatch = b.match(/page_(\d+)/i);
+          if (aMatch && bMatch) {
+            return parseInt(aMatch[1]) - parseInt(bMatch[1]);
+          }
+          return a.localeCompare(b);
+        });
+
+        // Build content HTML
+        const contentHtml = images
+          .map(img => `<div style="text-align: center; margin-bottom: 10px;"><img src="${img}" style="max-width: 100%; height: auto; border-radius: 4px;" loading="lazy"></div>`)
+          .join('');
+
+        // Insert to DB
+        const { error: insErr } = await supabase
+          .from('chapters')
+          .insert([{
+            story_id: storyId,
+            chapter_number: num,
+            title: finalTitle,
+            content: contentHtml
+          }]);
+
+        if (insErr) {
+          throw insErr;
+        }
+
+        newChaptersCount++;
+        consecutiveErrors = 0;
+        console.log(`[CRAWLER] Successfully added chapter ${num}`);
+        num++;
+      } catch (err) {
+        console.error(`[CRAWLER] Error crawling chapter ${num}:`, err.message);
+        consecutiveErrors++;
+        num++;
+      }
+
+      await new Promise(r => setTimeout(r, 1500));
+    }
+
   } else if (domain.includes('truyenqq')) {
     // === COMIC CRAWLER: truyenqq ===
     console.log(`[CRAWLER] Detected TruyenQQ source: ${sourceUrl}`);
