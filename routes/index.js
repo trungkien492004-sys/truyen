@@ -280,7 +280,7 @@ router.get('/', async (req, res) => {
 
     // 1. Query truyện — lọc theo story_type trực tiếp.
     // novel: match 'novel' hoặc NULL; comic: chỉ match 'comic'
-    let query = supabase.from('stories_with_last_update').select('*, chapters(count)', { count: 'exact' });
+    let query = supabase.from('stories_with_last_update').select('*', { count: 'exact' });
     if (storyType === 'comic') {
       query = query.eq('story_type', 'comic');
     } else {
@@ -348,6 +348,7 @@ router.get('/', async (req, res) => {
     let lastChapterMap = {};
     let ratingsMap = {};
     let bookmarksMap = {};
+    let chapterCountMap = {};
 
     if (storyIdsOnPage.length > 0) {
       // QUAN TRỌNG: KHÔNG order('chapter_number', {ascending:false}) trên toàn bộ chapters của
@@ -374,6 +375,7 @@ router.get('/', async (req, res) => {
       ]);
 
       for (const ch of (chapterMaxData.data || [])) {
+        chapterCountMap[ch.story_id] = (chapterCountMap[ch.story_id] || 0) + 1;
         const current = lastChapterMap[ch.story_id];
         if (current === undefined || (ch.chapter_number != null && ch.chapter_number > current)) {
           lastChapterMap[ch.story_id] = ch.chapter_number;
@@ -391,7 +393,7 @@ router.get('/', async (req, res) => {
       const rating = ratingsMap[s.id] || { avg_score: 0, rating_count: 0 };
       return {
         ...s,
-        chapter_count: (s.chapters && s.chapters[0] && s.chapters[0].count) || 0,
+        chapter_count: chapterCountMap[s.id] || 0,
         last_chapter_number: lastChapterMap[s.id] || null,
         avg_score: rating.avg_score,
         rating_count: rating.rating_count,
@@ -606,7 +608,7 @@ router.get('/api/stories-partial', async (req, res) => {
       hasStoryTypeColumn = false;
     }
 
-    let query = supabase.from('stories_with_last_update').select('*, chapters(count)', { count: 'exact' });
+    let query = supabase.from('stories_with_last_update').select('*', { count: 'exact' });
     if (hasStoryTypeColumn) {
       if (storyType === 'comic') {
         query = query.eq('story_type', 'comic');
@@ -629,6 +631,7 @@ router.get('/api/stories-partial', async (req, res) => {
     let lastChapterMap = {};
     let ratingsMap = {};
     let bookmarksMap = {};
+    let chapterCountMap = {};
 
     if (storyIdsOnPage.length > 0) {
       // QUAN TRỌNG: KHÔNG order('chapter_number', {ascending:false}) trên toàn bộ chapters của
@@ -655,6 +658,7 @@ router.get('/api/stories-partial', async (req, res) => {
       ]);
 
       for (const ch of (chapterMaxData.data || [])) {
+        chapterCountMap[ch.story_id] = (chapterCountMap[ch.story_id] || 0) + 1;
         const current = lastChapterMap[ch.story_id];
         if (current === undefined || (ch.chapter_number != null && ch.chapter_number > current)) {
           lastChapterMap[ch.story_id] = ch.chapter_number;
@@ -672,7 +676,7 @@ router.get('/api/stories-partial', async (req, res) => {
       const rating = ratingsMap[s.id] || { avg_score: 0, rating_count: 0 };
       return {
         ...s,
-        chapter_count: (s.chapters && s.chapters[0] && s.chapters[0].count) || 0,
+        chapter_count: chapterCountMap[s.id] || 0,
         last_chapter_number: lastChapterMap[s.id] || null,
         avg_score: rating.avg_score,
         rating_count: rating.rating_count,
@@ -733,7 +737,7 @@ router.get('/search', async (req, res) => {
     }
 
     // 2. Xây dựng câu truy vấn chính trên bảng stories (kèm số lượng chương qua chapters(count))
-    let q = supabase.from('stories').select('*, chapters(count)');
+    let q = supabase.from('stories').select('*');
 
     if (query) {
       q = q.or(`title.ilike.%${query}%,author.ilike.%${query}%`);
@@ -789,6 +793,7 @@ router.get('/search', async (req, res) => {
     let lastChapterMap = {};
     let ratingsMap = {};
     let bookmarksMap = {};
+    let chapterCountMap = {};
 
     if (storyIdsOnPage.length > 0) {
       // QUAN TRỌNG: KHÔNG order('chapter_number', {ascending:false}) trên toàn bộ chapters của
@@ -815,6 +820,7 @@ router.get('/search', async (req, res) => {
       ]);
 
       for (const ch of (chapterMaxData.data || [])) {
+        chapterCountMap[ch.story_id] = (chapterCountMap[ch.story_id] || 0) + 1;
         const current = lastChapterMap[ch.story_id];
         if (current === undefined || (ch.chapter_number != null && ch.chapter_number > current)) {
           lastChapterMap[ch.story_id] = ch.chapter_number;
@@ -832,7 +838,7 @@ router.get('/search', async (req, res) => {
       const rating = ratingsMap[s.id] || { avg_score: 0, rating_count: 0 };
       return {
         ...s,
-        chapter_count: (s.chapters && s.chapters[0] && s.chapters[0].count) || 0,
+        chapter_count: chapterCountMap[s.id] || 0,
         last_chapter_number: lastChapterMap[s.id] || null,
         avg_score: rating.avg_score,
         rating_count: rating.rating_count,
@@ -952,14 +958,14 @@ router.get('/genre/:slug', async (req, res) => {
 
     if (relErr) throw relErr;
 
-
+    const storyIds = (storyIdsData || []).map(r => r.story_id);
 
     // 3. Lấy chi tiết các truyện từ ID
     let rawStories = [];
     if (storyIds.length > 0) {
       const { data: storiesData, error: storiesErr } = await supabase
         .from('stories')
-        .select('*, chapters(count)')
+        .select('*')
         .in('id', storyIds)
         .order('created_at', { ascending: false });
       
@@ -972,6 +978,7 @@ router.get('/genre/:slug', async (req, res) => {
     let lastChapterMap = {};
     let ratingsMap = {};
     let bookmarksMap = {};
+    let chapterCountMap = {};
 
     if (storyIdsOnPage.length > 0) {
       // QUAN TRỌNG: KHÔNG order('chapter_number', {ascending:false}) trên toàn bộ chapters của
@@ -998,6 +1005,7 @@ router.get('/genre/:slug', async (req, res) => {
       ]);
 
       for (const ch of (chapterMaxData.data || [])) {
+        chapterCountMap[ch.story_id] = (chapterCountMap[ch.story_id] || 0) + 1;
         const current = lastChapterMap[ch.story_id];
         if (current === undefined || (ch.chapter_number != null && ch.chapter_number > current)) {
           lastChapterMap[ch.story_id] = ch.chapter_number;
@@ -1015,7 +1023,7 @@ router.get('/genre/:slug', async (req, res) => {
       const rating = ratingsMap[s.id] || { avg_score: 0, rating_count: 0 };
       return {
         ...s,
-        chapter_count: (s.chapters && s.chapters[0] && s.chapters[0].count) || 0,
+        chapter_count: chapterCountMap[s.id] || 0,
         last_chapter_number: lastChapterMap[s.id] || null,
         avg_score: rating.avg_score,
         rating_count: rating.rating_count,
@@ -1059,7 +1067,7 @@ router.get('/author/:name', async (req, res) => {
     // Lấy tất cả truyện của tác giả này (kèm số lượng chương)
     const { data: rawStories, error } = await supabase
       .from('stories')
-      .select('*, chapters(count)')
+      .select('*')
       .ilike('author', authorName)
       .order('created_at', { ascending: false });
 
@@ -1070,6 +1078,7 @@ router.get('/author/:name', async (req, res) => {
     let lastChapterMap = {};
     let ratingsMap = {};
     let bookmarksMap = {};
+    let chapterCountMap = {};
 
     if (storyIdsOnPage.length > 0) {
       // QUAN TRỌNG: KHÔNG order('chapter_number', {ascending:false}) trên toàn bộ chapters của
@@ -1096,6 +1105,7 @@ router.get('/author/:name', async (req, res) => {
       ]);
 
       for (const ch of (chapterMaxData.data || [])) {
+        chapterCountMap[ch.story_id] = (chapterCountMap[ch.story_id] || 0) + 1;
         const current = lastChapterMap[ch.story_id];
         if (current === undefined || (ch.chapter_number != null && ch.chapter_number > current)) {
           lastChapterMap[ch.story_id] = ch.chapter_number;
@@ -1113,7 +1123,7 @@ router.get('/author/:name', async (req, res) => {
       const rating = ratingsMap[s.id] || { avg_score: 0, rating_count: 0 };
       return {
         ...s,
-        chapter_count: (s.chapters && s.chapters[0] && s.chapters[0].count) || 0,
+        chapter_count: chapterCountMap[s.id] || 0,
         last_chapter_number: lastChapterMap[s.id] || null,
         avg_score: rating.avg_score,
         rating_count: rating.rating_count,
