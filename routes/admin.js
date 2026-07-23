@@ -1461,6 +1461,35 @@ router.post('/story/sync-source/:id', async (req, res) => {
   }
 });
 
+// THỰC HIỆN ĐỒNG BỘ CHƯƠNG THEO TỪNG PHÂN ĐOẠN (CHUNKS) ĐỂ HIỂN THỊ TIẾN TRÌNH VÀ TRÁNH TIMEOUT
+router.post('/story/sync-source-chunk/:id', async (req, res) => {
+  const storyId = parseInt(req.params.id);
+  try {
+    const { crawlNewChapters } = require('../services/autoCrawler');
+    const result = await crawlNewChapters(storyId, false); // limit = 30-50 per run
+    
+    if (!result.success) {
+      return res.status(500).json({ success: false, error: result.error || 'Lỗi không xác định.' });
+    }
+    
+    if (result.newChaptersCount > 0) {
+      try {
+        const { resetStoryTypesCache } = require('../services/storyClassifier');
+        resetStoryTypesCache();
+      } catch(e) {}
+    }
+    
+    return res.json({
+      success: true,
+      addedCount: result.newChaptersCount,
+      hasMore: result.newChaptersCount > 0
+    });
+  } catch (err) {
+    console.error('Lỗi cào theo phân đoạn:', err);
+    return res.status(500).json({ success: false, error: err.message || 'Lỗi hệ thống.' });
+  }
+});
+
 // THỰC HIỆN XÓA TRUYỆN (VÀ CÁC THÔNG TIN LIÊN QUAN CASCADE) - Cho phép Admin và SP Admin xóa
 router.post('/story/delete/:id', isAdmin, async (req, res) => {
   const storyId = parseInt(req.params.id);

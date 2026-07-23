@@ -4,11 +4,109 @@
     <a href="/admin" style="color: var(--text-secondary); font-size: 0.9rem;">&larr; Quay lại Trang quản trị</a>
     <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
         <% if (story.source_url) { %>
-            <form action="/admin/story/sync-source/<%= story.id %>" method="POST" style="margin: 0;">
-                <button type="submit" class="btn btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.3rem; background: #3b82f6; border-color: #2563eb; color: #fff; cursor: pointer;">
+            <div style="position: relative; display: inline-block;">
+                <button id="btn-sync-source" class="btn btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.3rem; background: #3b82f6; border-color: #2563eb; color: #fff; cursor: pointer; border: 1px solid #2563eb;">
                     🔄 Quét chương mới từ nguồn
                 </button>
-            </form>
+                
+                <div id="sync-progress-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(4px); z-index: 99999; justify-content: center; align-items: center; flex-direction: column; color: #fff; font-family: system-ui, -apple-system, sans-serif;">
+                    <div style="background: #1e293b; padding: 2rem; border-radius: 16px; max-width: 450px; width: 90%; text-align: center; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.5);">
+                        <div id="sync-spinner" style="border: 4px solid rgba(255,255,255,0.1); border-top: 4px solid #3b82f6; border-radius: 50%; width: 45px; height: 45px; animation: sync-spin 1s linear infinite; margin: 0 auto 1.2rem;"></div>
+                        <h3 style="margin: 0 0 0.5rem; font-size: 1.25rem; font-weight: 600; color: #f8fafc;">Đang đồng bộ chương mới</h3>
+                        <p id="sync-status" style="margin: 0 0 1.2rem; color: #94a3b8; font-size: 0.9rem; line-height: 1.5;">Đang kết nối tới nguồn cào...</p>
+                        <div style="background: #334155; border-radius: 9999px; height: 10px; width: 100%; overflow: hidden; margin-bottom: 1.2rem;">
+                            <div id="sync-progress-bar" style="background: linear-gradient(90deg, #3b82f6, #60a5fa); height: 100%; width: 0%; transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);"></div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #94a3b8; border-top: 1px solid #334155; padding-top: 1rem;">
+                            <span>Chương đã cào: <strong id="sync-count-crawled" style="color: #3b82f6; font-size: 1rem;">0</strong></span>
+                            <span>Trạng thái: <strong id="sync-detail-status" style="color: #10b981;">Bắt đầu</strong></span>
+                        </div>
+                    </div>
+                </div>
+                <style>
+                    @keyframes sync-spin {
+                        0% { transform: rotate(0deg); }
+                        100% { transform: rotate(360deg); }
+                    }
+                </style>
+                <script>
+                    document.getElementById('btn-sync-source').addEventListener('click', async () => {
+                        const btn = document.getElementById('btn-sync-source');
+                        const overlay = document.getElementById('sync-progress-overlay');
+                        const statusText = document.getElementById('sync-status');
+                        const progressBar = document.getElementById('sync-progress-bar');
+                        const countText = document.getElementById('sync-count-crawled');
+                        const detailText = document.getElementById('sync-detail-status');
+                        
+                        btn.disabled = true;
+                        overlay.style.display = 'flex';
+                        let crawledCount = 0;
+                        let hasMore = true;
+                        let loopLimit = 30; // Tránh vòng lặp vô hạn
+                        let currentStep = 0;
+                        
+                        while (hasMore && currentStep < loopLimit) {
+                            currentStep++;
+                            try {
+                                statusText.innerText = 'Đang tải thêm chương mới (vui lòng giữ trình duyệt mở)...';
+                                detailText.innerText = 'Đang xử lý';
+                                detailText.style.color = '#3b82f6';
+                                
+                                const res = await fetch('/admin/story/sync-source-chunk/<%= story.id %>', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' }
+                                });
+                                
+                                if (res.status === 504) {
+                                    statusText.innerText = 'Timeout từ Vercel, nhưng hệ thống vẫn đang cào ngầm. Vui lòng tải lại trang sau 1 phút.';
+                                    detailText.innerText = 'Đang chờ';
+                                    detailText.style.color = '#eab308';
+                                    hasMore = false;
+                                    setTimeout(() => { window.location.reload(); }, 5000);
+                                    break;
+                                }
+                                
+                                const data = await res.json();
+                                
+                                if (!data.success) {
+                                    statusText.innerText = 'Đồng bộ kết thúc. Không còn chương mới nào được thêm.';
+                                    detailText.innerText = 'Đã dừng';
+                                    detailText.style.color = '#94a3b8';
+                                    hasMore = false;
+                                    setTimeout(() => { window.location.reload(); }, 2000);
+                                    break;
+                                }
+                                
+                                crawledCount += data.addedCount;
+                                countText.innerText = crawledCount;
+                                
+                                let p = Math.min(95, Math.floor((crawledCount / (crawledCount + 30)) * 100));
+                                progressBar.style.width = p + '%';
+                                
+                                if (!data.hasMore || data.addedCount === 0) {
+                                    hasMore = false;
+                                    progressBar.style.width = '100%';
+                                    statusText.innerText = 'Đồng bộ hoàn tất! CSDL đã được cập nhật.';
+                                    detailText.innerText = 'Thành công';
+                                    detailText.style.color = '#10b981';
+                                    setTimeout(() => {
+                                        window.location.reload();
+                                    }, 1500);
+                                }
+                            } catch (err) {
+                                console.error(err);
+                                statusText.innerText = 'Hoàn tất hoặc có ngắt quãng nhẹ từ Vercel. Đang cập nhật trang...';
+                                detailText.innerText = 'Hoàn thành';
+                                detailText.style.color = '#10b981';
+                                hasMore = false;
+                                setTimeout(() => { window.location.reload(); }, 2000);
+                                break;
+                            }
+                        }
+                        btn.disabled = false;
+                    });
+                </script>
+            </div>
         <% } %>
         <a href="/admin/story/download-epub/<%= story.id %>" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.2); color: #10b981; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 0.3rem;">
             📥 Tải File EPUB
