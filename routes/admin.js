@@ -1422,20 +1422,23 @@ router.post('/story/sync-source/:id', async (req, res) => {
   const storyId = parseInt(req.params.id);
   try {
     const { crawlNewChapters } = require('../services/autoCrawler');
-    const result = await crawlNewChapters(storyId);
-    if (!result.success) {
-      return res.redirect(`/admin/story/edit/${storyId}?error=${encodeURIComponent(result.error || 'Cào chương mới thất bại.')}`);
-    }
     
-    // Reset cache BXH Tranh/Chữ nếu có cập nhật chương mới
-    if (result.newChaptersCount > 0) {
-      try {
-        const { resetStoryTypesCache } = require('../services/storyClassifier');
-        resetStoryTypesCache();
-      } catch(e) {}
-    }
-
-    res.redirect(`/admin/story/edit/${storyId}?success=${encodeURIComponent(`Đồng bộ thành công! Đã tải thêm ${result.newChaptersCount} chương mới.`)}`);
+    // Chạy ngầm trong nền để tránh bị Vercel Serverless Function Timeout (504 Gateway Timeout)
+    crawlNewChapters(storyId)
+      .then(result => {
+        console.log(`[BACKGROUND-SYNC] Done for story ID ${storyId}. Added ${result.newChaptersCount} chapters.`);
+        if (result.newChaptersCount > 0) {
+          try {
+            const { resetStoryTypesCache } = require('../services/storyClassifier');
+            resetStoryTypesCache();
+          } catch(e) {}
+        }
+      })
+      .catch(err => {
+        console.error(`[BACKGROUND-SYNC] Error for story ID ${storyId}:`, err);
+      });
+      
+    res.redirect(`/admin/story/edit/${storyId}?success=${encodeURIComponent(`Đã kích hoạt tiến trình cào chương mới trong nền. Vui lòng tải lại trang (F5) sau ít phút để theo dõi tiến độ.`)}`);
   } catch (err) {
     console.error('Lỗi đồng bộ nguồn:', err);
     res.redirect(`/admin/story/edit/${storyId}?error=${encodeURIComponent(err.message || 'Lỗi hệ thống khi đồng bộ nguồn.')}`);

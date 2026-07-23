@@ -27,7 +27,7 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
 /**
  * Crawl new chapters for a single story by ID
  */
-async function crawlNewChapters(storyId) {
+async function crawlNewChapters(storyId, ignoreLimit = false) {
   console.log(`[CRAWLER] 🔄 Checking updates for story ID: ${storyId}`);
   
   // 1. Fetch story information from DB
@@ -173,7 +173,7 @@ async function crawlNewChapters(storyId) {
     
     let num = maxDbChapter + 1;
     let consecutiveErrors = 0;
-    const maxChaptersPerRun = 50;
+    const maxChaptersPerRun = ignoreLimit ? 999999 : 50;
 
     while (newChaptersCount < maxChaptersPerRun && consecutiveErrors < 3) {
       const chapUrl = `${baseUrl}/chuong-${num}`;
@@ -264,7 +264,7 @@ async function crawlNewChapters(storyId) {
     
     let num = maxDbChapter + 1;
     let consecutiveErrors = 0;
-    const maxChaptersPerRun = 30;
+    const maxChaptersPerRun = ignoreLimit ? 999999 : 30;
 
     while (newChaptersCount < maxChaptersPerRun && consecutiveErrors < 3) {
       const chapUrl = `${baseUrl}/chuong-${num}`;
@@ -361,33 +361,69 @@ async function crawlNewChapters(storyId) {
     // === COMIC CRAWLER: truyenqq ===
     console.log(`[CRAWLER] Detected TruyenQQ source: ${sourceUrl}`);
     const baseUrl = sourceUrl.replace(/\/+$/, '');
+    const maxChaptersPerRun = ignoreLimit ? 999999 : 30;
     
-    let num = maxDbChapter + 1;
-    let consecutiveErrors = 0;
-    const maxChaptersPerRun = 30;
+    // Fetch detail page to get all chapter links
+    const detailRes = await fetchWithTimeout(baseUrl);
+    if (!detailRes.ok) throw new Error(`Failed to fetch TruyenQQ detail page. Status: ${detailRes.status}`);
+    const detailHtml = await detailRes.text();
+    const $d = cheerio.load(detailHtml);
 
-    while (newChaptersCount < maxChaptersPerRun && consecutiveErrors < 3) {
-      const chapUrl = `${baseUrl}/chapter-${num}`;
-      console.log(`[CRAWLER] Checking TruyenQQ chapter ${num}: ${chapUrl}`);
-      
+    const chapterLinks = [];
+    $d('.chapter-list .item-name a, .works-chapter-item a, .list-chap a').each((idx, el) => {
+      const href = $d(el).attr('href') || '';
+      const text = $d(el).text().trim();
+      if (href) {
+        const absUrl = href.startsWith('http') ? href : `https://${domain}${href}`;
+        chapterLinks.push({ text, url: absUrl });
+      }
+    });
+
+    if (chapterLinks.length === 0) {
+      throw new Error('No chapter links found on TruyenQQ details page');
+    }
+
+    // Reverse to start from oldest (Chapter 1)
+    chapterLinks.reverse();
+
+    // Get existing chapters in DB
+    const { data: existingChapters } = await supabase
+      .from('chapters')
+      .select('chapter_number')
+      .eq('story_id', storyId);
+    
+    const existingNumbers = new Set(existingChapters ? existingChapters.map(c => c.chapter_number) : []);
+
+    let newChaptersList = [];
+    for (let i = 0; i < chapterLinks.length; i++) {
+      const chap = chapterLinks[i];
+      let num = i + 1; // Fallback number
+      const cleanedText = chap.text.replace(/[\-\s]+/g, '.');
+      const numMatch = cleanedText.match(/Chapter\.(\d+(\.\d+)?)/i) || cleanedText.match(/Chap\.(\d+(\.\d+)?)/i) || cleanedText.match(/(\d+(\.\d+)?)/);
+      if (numMatch) {
+        num = parseFloat(numMatch[1]);
+      }
+
+      if (!existingNumbers.has(num)) {
+        newChaptersList.push({
+          title: `Chương ${chap.text.replace(/Chapter\s+/i, '').replace(/Chap\s+/i, '')}`,
+          url: chap.url,
+          number: num
+        });
+      }
+    }
+
+    console.log(`[CRAWLER] Found ${newChaptersList.length} new chapters to crawl for TruyenQQ.`);
+
+    for (const newChap of newChaptersList) {
+      if (newChaptersCount >= maxChaptersPerRun) break;
+      console.log(`[CRAWLER] Crawling TruyenQQ chapter: ${newChap.url}`);
       try {
-        const chapRes = await fetchWithTimeout(chapUrl);
-        if (chapRes.status === 404) {
-          console.log(`[CRAWLER] Chapter ${num} not found (404). Stopping crawl loop.`);
-          break;
-        }
-        if (!chapRes.ok) {
-          throw new Error(`HTTP ${chapRes.status}`);
-        }
+        const chapRes = await fetchWithTimeout(newChap.url);
+        if (!chapRes.ok) throw new Error(`HTTP ${chapRes.status}`);
 
         const html = await chapRes.text();
         const $c = cheerio.load(html);
-
-        // Parse Title
-        const fullTitleText = $c('h1').text().trim() || $c('title').text().trim();
-        const titleMatch = fullTitleText.match(/Chapter\s+\d+\s*:\s*(.*)/i) || fullTitleText.match(/Chapter\s+\d+\s*-\s*(.*)/i) || [null, fullTitleText];
-        const subTitle = titleMatch[1] ? titleMatch[1].trim() : fullTitleText;
-        const finalTitle = `Chương ${num}: ${subTitle}`;
 
         // Parse Images
         const images = [];
@@ -416,25 +452,18 @@ async function crawlNewChapters(storyId) {
           .from('chapters')
           .insert([{
             story_id: storyId,
-            chapter_number: num,
-            title: finalTitle,
+            chapter_number: newChap.number,
+            title: newChap.title,
             content: contentHtml
           }]);
 
-        if (insErr) {
-          throw insErr;
-        }
+        if (insErr) throw insErr;
 
         newChaptersCount++;
-        consecutiveErrors = 0;
-        console.log(`[CRAWLER] Successfully added chapter ${num}`);
-        num++;
+        console.log(`[CRAWLER] Successfully added TruyenQQ chapter: ${newChap.title}`);
       } catch (err) {
-        console.error(`[CRAWLER] Error crawling chapter ${num}:`, err.message);
-        consecutiveErrors++;
-        num++;
+        console.error(`[CRAWLER] Error crawling chapter ${newChap.url}:`, err.message);
       }
-
       await new Promise(r => setTimeout(r, 1500));
     }
 
@@ -445,7 +474,7 @@ async function crawlNewChapters(storyId) {
     
     let num = maxDbChapter + 1;
     let consecutiveErrors = 0;
-    const maxChaptersPerRun = 50;
+    const maxChaptersPerRun = ignoreLimit ? 999999 : 50;
 
     while (newChaptersCount < maxChaptersPerRun && consecutiveErrors < 3) {
       const chapUrl = `${baseUrl}/chuong-${num}/`;
@@ -537,7 +566,7 @@ async function crawlNewChapters(storyId) {
     
     let num = maxDbChapter + 1;
     let consecutiveErrors = 0;
-    const maxChaptersPerRun = 50;
+    const maxChaptersPerRun = ignoreLimit ? 999999 : 50;
 
     while (newChaptersCount < maxChaptersPerRun && consecutiveErrors < 3) {
       const chapUrl = `${baseUrl}/chuong-${num}`;
