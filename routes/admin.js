@@ -1490,6 +1490,45 @@ router.post('/story/sync-source-chunk/:id', async (req, res) => {
   }
 });
 
+// ĐƯỜNG DẪN KIỂM TRA BLOCK MÁY CHỦ VERCEL (DIAGNOSTIC TEST)
+router.get('/test-fetch', async (req, res) => {
+  const urls = [
+    { name: 'TruyenMoiSS', url: 'https://truyenmoiss.org/chung-cuc-truyen-ky/chuong-1' },
+    { name: 'NetTruyen', url: 'https://nettruyenviet.shop/truyen-tranh/dao-hai-tac/chuong-1' },
+    { name: 'TruyenQQ', url: 'https://truyenqq.com.vn/dead-tube/chapter-1' }
+  ];
+  
+  const results = [];
+  for (const item of urls) {
+    try {
+      const start = Date.now();
+      const response = await fetch(item.url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        }
+      });
+      const duration = Date.now() - start;
+      const text = await response.text();
+      results.push({
+        name: item.name,
+        url: item.url,
+        status: response.status,
+        duration: `${duration}ms`,
+        bodySnippet: text.substring(0, 500)
+      });
+    } catch (err) {
+      results.push({
+        name: item.name,
+        url: item.url,
+        status: 'ERROR',
+        error: err.message
+      });
+    }
+  }
+  
+  res.json(results);
+});
+
 // THỰC HIỆN XÓA TRUYỆN (VÀ CÁC THÔNG TIN LIÊN QUAN CASCADE) - Cho phép Admin và SP Admin xóa
 router.post('/story/delete/:id', isAdmin, async (req, res) => {
   const storyId = parseInt(req.params.id);
