@@ -662,26 +662,35 @@ async function crawlNewChapters(storyId, ignoreLimit = false) {
     const detailHtml = await detailRes.text();
     const $d = cheerio.load(detailHtml);
 
-    const chapterLinks = [];
+    const chapterLinksRaw = [];
     $d('.episodes-wrap-new a, .selected-episodes a').each((idx, el) => {
       const href = $d(el).attr('href') || '';
       const text = $d(el).text().trim();
       if (href && href.includes('/watch/')) {
         const absUrl = href.startsWith('http') ? href : `https://mangatooncom.vn${href}`;
-        chapterLinks.push({ text, url: absUrl });
+        chapterLinksRaw.push({ text, url: absUrl });
       }
     });
 
-    if (chapterLinks.length === 0) {
+    if (chapterLinksRaw.length === 0) {
       throw new Error('No chapter links found on Mangatoon details page');
+    }
+
+    // De-duplicate by URL
+    const seenUrls = new Set();
+    const chapterLinks = [];
+    for (const item of chapterLinksRaw) {
+      if (!seenUrls.has(item.url)) {
+        seenUrls.add(item.url);
+        chapterLinks.push(item);
+      }
     }
 
     // Parse and determine chapter numbers
     const parsedChapters = [];
     for (const chap of chapterLinks) {
       let num = parseFloat(parsedChapters.length + 1);
-      const cleanedText = chap.text.replace(/[\-\s]+/g, '.');
-      const numMatch = cleanedText.match(/Chapter\.(\d+(\.\d+)?)/i) || cleanedText.match(/Chap\.(\d+(\.\d+)?)/i) || cleanedText.match(/(\d+(\.\d+)?)/);
+      const numMatch = chap.text.match(/Chapter\s+(\d+(\.\d+)?)/i) || chap.text.match(/Chap\s+(\d+(\.\d+)?)/i) || chap.text.match(/(\d+(\.\d+)?)/);
       if (numMatch) {
         num = parseFloat(numMatch[1]);
       }
@@ -728,14 +737,32 @@ async function crawlNewChapters(storyId, ignoreLimit = false) {
         const html = await chapRes.text();
         const $c = cheerio.load(html);
 
-        // Parse Images
-        const images = [];
-        $c('.lazyload_img').each((idx, el) => {
-          const src = $c(el).attr('data-src') || $c(el).attr('src') || '';
-          if (src && src.startsWith('http') && !src.includes('logo') && !src.includes('avatar') && !src.includes('banner')) {
-            images.push(src);
+        // Parse Images: Try to extract from JavaScript pictures variable first (which is needed for newer chapters), fall back to .lazyload_img HTML elements.
+        let images = [];
+        const picturesMatch = html.match(/pictures\s*=\s*(\[.*?\])\s*;/);
+        if (picturesMatch) {
+          try {
+            const parsedPics = JSON.parse(picturesMatch[1]);
+            images = parsedPics.map(p => {
+              let imgUrl = p.url || '';
+              if (imgUrl.includes('/encrypted/')) {
+                imgUrl = imgUrl.replace('/encrypted/', '/watermark/').replace('.webp', '.jpg');
+              }
+              return imgUrl;
+            }).filter(url => url.startsWith('http'));
+          } catch (e) {
+            console.error('[CRAWLER] Error parsing pictures JSON:', e.message);
           }
-        });
+        }
+
+        if (images.length === 0) {
+          $c('.lazyload_img').each((idx, el) => {
+            const src = $c(el).attr('data-src') || $c(el).attr('src') || '';
+            if (src && src.startsWith('http') && !src.includes('logo') && !src.includes('avatar') && !src.includes('banner')) {
+              images.push(src);
+            }
+          });
+        }
 
         if (images.length === 0) {
           throw new Error('No images found in chapter');
