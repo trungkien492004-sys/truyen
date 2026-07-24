@@ -262,99 +262,174 @@ async function crawlNewChapters(storyId, ignoreLimit = false) {
     console.log(`[CRAWLER] Detected NetTruyen source: ${sourceUrl}`);
     const baseUrl = sourceUrl.replace(/\/+$/, '');
     
-    let num = maxDbChapter + 1;
-    let consecutiveErrors = 0;
-    const maxChaptersPerRun = ignoreLimit ? 999999 : 30;
-
-    while (newChaptersCount < maxChaptersPerRun && consecutiveErrors < 3) {
-      const chapUrl = `${baseUrl}/chuong-${num}`;
-      console.log(`[CRAWLER] Checking NetTruyen chapter ${num}: ${chapUrl}`);
-      
-      try {
-        const chapRes = await fetchWithTimeout(chapUrl);
-        if (chapRes.status === 404) {
-          console.log(`[CRAWLER] Chapter ${num} not found (404). Stopping crawl loop.`);
-          break;
-        }
-        if (!chapRes.ok) {
-          throw new Error(`HTTP ${chapRes.status}`);
-        }
-
-        const html = await chapRes.text();
-        const $c = cheerio.load(html);
-
-        // Parse Title
-        const fullTitleText = $c('h1').text().trim() || $c('title').text().trim();
-        const titleMatch = fullTitleText.match(/Chuông\s+\d+\s*:\s*(.*)/i) || fullTitleText.match(/Chương\s+\d+\s*-\s*(.*)/i) || [null, fullTitleText];
-        const subTitle = titleMatch[1] ? titleMatch[1].trim() : fullTitleText;
-        const finalTitle = `Chương ${num}: ${subTitle}`;
-
-        // Parse Images
-        const imagesSet = new Set();
-        $c('img').each((idx, el) => {
-          const src = $c(el).attr('src') || $c(el).attr('data-src') || '';
-          if (src.includes('otruyencdn.com')) {
-            imagesSet.add(src.replace(/\\+/g, ''));
+    // Extract slug: e.g. https://nettruyenviet.shop/truyen-tranh/slave-game -> slave-game
+    const urlParts = baseUrl.split('/');
+    const slug = urlParts[urlParts.length - 1] || urlParts[urlParts.length - 2];
+    
+    let crawledViaApi = false;
+    try {
+      console.log(`[CRAWLER] Attempting to crawl via public Otruyen API for slug: ${slug}`);
+      const apiRes = await fetchWithTimeout(`https://otruyenapi.com/v1/api/truyen-tranh/${slug}`);
+      if (apiRes.ok) {
+        const apiJson = await apiRes.json();
+        if (apiJson.status === 'success' && apiJson.data && apiJson.data.item) {
+          const item = apiJson.data.item;
+          let serverData = [];
+          if (item.chapters && item.chapters.length > 0) {
+            serverData = item.chapters[0].server_data || [];
           }
-        });
+          
+          const newChapters = serverData.filter(ch => {
+            const num = parseFloat(ch.chapter_name);
+            return !isNaN(num) && num > maxDbChapter;
+          }).sort((a, b) => parseFloat(a.chapter_name) - parseFloat(b.chapter_name));
 
-        $c('script').each((idx, el) => {
-          const text = $c(el).text();
-          const regex = /https:\/\/sv\d+\.otruyencdn\.com\/[^"']+/gi;
-          const matches = text.match(regex);
-          if (matches) {
-            matches.forEach(m => {
-              imagesSet.add(m.replace(/\\+/g, ''));
-            });
+          const maxChaptersPerRun = ignoreLimit ? 999999 : 30;
+          const chaptersToCrawl = newChapters.slice(0, maxChaptersPerRun);
+          console.log(`[CRAWLER] Found ${newChapters.length} new chapters. Crawling first ${chaptersToCrawl.length}...`);
+
+          for (const ch of chaptersToCrawl) {
+            const num = parseFloat(ch.chapter_name);
+            const chapApiUrl = ch.chapter_api_data;
+            console.log(`[CRAWLER] Checking API chapter ${num}: ${chapApiUrl}`);
+
+            try {
+              const chapRes = await fetchWithTimeout(chapApiUrl);
+              if (!chapRes.ok) throw new Error(`HTTP ${chapRes.status}`);
+              const chapJson = await chapRes.json();
+              
+              if (chapJson.status === 'success' && chapJson.data && chapJson.data.item) {
+                const chapItem = chapJson.data.item;
+                const domainCdn = chapJson.data.domain_cdn || 'https://sv1.otruyencdn.com';
+                const chapterPath = chapItem.chapter_path;
+                const chapterImages = chapItem.chapter_image || [];
+                
+                if (chapterImages.length === 0) {
+                  throw new Error('No images found in API chapter');
+                }
+
+                const images = chapterImages.map(img => `${domainCdn}/${chapterPath}/${img.image_file}`);
+                const contentHtml = images
+                  .map(img => `<div style="text-align: center; margin-bottom: 10px;"><img src="${img}" style="max-width: 100%; height: auto; border-radius: 4px;" loading="lazy"></div>`)
+                  .join('');
+
+                const finalTitle = ch.chapter_title ? `Chương ${num}: ${ch.chapter_title}` : `Chương ${num}`;
+
+                const { error: insErr } = await supabase
+                  .from('chapters')
+                  .insert([{
+                    story_id: storyId,
+                    chapter_number: num,
+                    title: finalTitle,
+                    content: contentHtml
+                  }]);
+
+                if (insErr) throw insErr;
+                newChaptersCount++;
+                console.log(`[CRAWLER] Successfully added chapter ${num} via API`);
+              }
+            } catch (err) {
+              console.error(`[CRAWLER] Error crawling chapter ${num} via API:`, err.message);
+            }
+            await new Promise(r => setTimeout(r, 1000));
           }
-        });
-
-        const images = Array.from(imagesSet);
-
-        if (images.length === 0) {
-          throw new Error('No images found in chapter');
+          crawledViaApi = true;
         }
-
-        // Sort images by filename order
-        images.sort((a, b) => {
-          const aMatch = a.match(/page_(\d+)/i);
-          const bMatch = b.match(/page_(\d+)/i);
-          if (aMatch && bMatch) {
-            return parseInt(aMatch[1]) - parseInt(bMatch[1]);
-          }
-          return a.localeCompare(b);
-        });
-
-        // Build content HTML
-        const contentHtml = images
-          .map(img => `<div style="text-align: center; margin-bottom: 10px;"><img src="${img}" style="max-width: 100%; height: auto; border-radius: 4px;" loading="lazy"></div>`)
-          .join('');
-
-        // Insert to DB
-        const { error: insErr } = await supabase
-          .from('chapters')
-          .insert([{
-            story_id: storyId,
-            chapter_number: num,
-            title: finalTitle,
-            content: contentHtml
-          }]);
-
-        if (insErr) {
-          throw insErr;
-        }
-
-        newChaptersCount++;
-        consecutiveErrors = 0;
-        console.log(`[CRAWLER] Successfully added chapter ${num}`);
-        num++;
-      } catch (err) {
-        console.error(`[CRAWLER] Error crawling chapter ${num}:`, err.message);
-        consecutiveErrors++;
-        num++;
       }
+    } catch (err) {
+      console.error('[CRAWLER] Error fetching otruyenapi, falling back to scraper:', err.message);
+    }
 
-      await new Promise(r => setTimeout(r, 1500));
+    if (!crawledViaApi) {
+      let num = maxDbChapter + 1;
+      let consecutiveErrors = 0;
+      const maxChaptersPerRun = ignoreLimit ? 999999 : 30;
+
+      while (newChaptersCount < maxChaptersPerRun && consecutiveErrors < 3) {
+        const chapUrl = `${baseUrl}/chuong-${num}`;
+        console.log(`[CRAWLER] Checking NetTruyen chapter ${num}: ${chapUrl}`);
+        
+        try {
+          const chapRes = await fetchWithTimeout(chapUrl);
+          if (chapRes.status === 404) {
+            console.log(`[CRAWLER] Chapter ${num} not found (404). Stopping crawl loop.`);
+            break;
+          }
+          if (!chapRes.ok) {
+            throw new Error(`HTTP ${chapRes.status}`);
+          }
+
+          const html = await chapRes.text();
+          const $c = cheerio.load(html);
+
+          const fullTitleText = $c('h1').text().trim() || $c('title').text().trim();
+          const titleMatch = fullTitleText.match(/Chuông\s+\d+\s*:\s*(.*)/i) || fullTitleText.match(/Chương\s+\d+\s*-\s*(.*)/i) || [null, fullTitleText];
+          const subTitle = titleMatch[1] ? titleMatch[1].trim() : fullTitleText;
+          const finalTitle = `Chương ${num}: ${subTitle}`;
+
+          const imagesSet = new Set();
+          $c('img').each((idx, el) => {
+            const src = $c(el).attr('src') || $c(el).attr('data-src') || '';
+            if (src.includes('otruyencdn.com')) {
+              imagesSet.add(src.replace(/\\+/g, ''));
+            }
+          });
+
+          $c('script').each((idx, el) => {
+            const text = $c(el).text();
+            const regex = /https:\/\/sv\d+\.otruyencdn\.com\/[^"']+/gi;
+            const matches = text.match(regex);
+            if (matches) {
+              matches.forEach(m => {
+                imagesSet.add(m.replace(/\\+/g, ''));
+              });
+            }
+          });
+
+          const images = Array.from(imagesSet);
+
+          if (images.length === 0) {
+            throw new Error('No images found in chapter');
+          }
+
+          images.sort((a, b) => {
+            const aMatch = a.match(/page_(\d+)/i);
+            const bMatch = b.match(/page_(\d+)/i);
+            if (aMatch && bMatch) {
+              return parseInt(aMatch[1]) - parseInt(bMatch[1]);
+            }
+            return a.localeCompare(b);
+          });
+
+          const contentHtml = images
+            .map(img => `<div style="text-align: center; margin-bottom: 10px;"><img src="${img}" style="max-width: 100%; height: auto; border-radius: 4px;" loading="lazy"></div>`)
+            .join('');
+
+          const { error: insErr } = await supabase
+            .from('chapters')
+            .insert([{
+              story_id: storyId,
+              chapter_number: num,
+              title: finalTitle,
+              content: contentHtml
+            }]);
+
+          if (insErr) {
+            throw insErr;
+          }
+
+          newChaptersCount++;
+          consecutiveErrors = 0;
+          console.log(`[CRAWLER] Successfully added chapter ${num}`);
+          num++;
+        } catch (err) {
+          console.error(`[CRAWLER] Error crawling chapter ${num}:`, err.message);
+          consecutiveErrors++;
+          num++;
+        }
+
+        await new Promise(r => setTimeout(r, 1500));
+      }
     }
 
   } else if (domain.includes('truyenqq')) {
