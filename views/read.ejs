@@ -41,47 +41,18 @@
                     <input type="text" class="toc-search-input" placeholder="Tìm chương (ví dụ: 15, tên chương)..." style="width: 100%; padding: 0.5rem 0.7rem; border-radius: 6px; border: 1px solid var(--border-color); background: rgba(0,0,0,0.3); color: var(--text-primary); font-size: 0.85rem; outline: none;" onclick="event.stopPropagation()">
                 </div>
                 <div class="toc-search-results">
-                    <% if (chaptersList.length < 50) { %>
-                        <div style="padding-top: 0.3rem;">
-                            <% chaptersList.forEach(c => { %>
-                                <% const isActive = c.chapter_number === chapter.chapter_number; %>
-                                <a href="/story/<%= story.id %>/chapter/<%= c.chapter_number %>" data-search="<%= c.chapter_number %> <%= (c.title || '').toLowerCase() %>" style="display: block; padding: 0.5rem 1.2rem; color: <%= isActive ? 'var(--accent-color)' : 'var(--text-primary)' %>; font-size: 0.88rem; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.02); font-weight: <%= isActive ? 'bold' : 'normal' %>; transition: background 0.2s;" class="toc-item <%= isActive ? 'toc-item-active' : '' %>">
-                                    <% if (c.title && c.title.toLowerCase().startsWith('chương')) { %>
-                                        <%= c.title %>
-                                    <% } else { %>
-                                        Chương <%= c.chapter_number %><% if (c.title) { %>: <%= c.title %><% } %>
-                                    <% } %>
-                                </a>
-                            <% }) %>
-                        </div>
-                    <% } else { %>
-                        <%
-                            const chunkSize = 100;
-                            for (let i = 0; i < chaptersList.length; i += chunkSize) {
-                                const chunk = chaptersList.slice(i, i + chunkSize);
-                                const start = chunk[0].chapter_number;
-                                const end = chunk[chunk.length - 1].chapter_number;
-                                const hasActive = chunk.some(c => c.chapter_number === chapter.chapter_number);
-                        %>
-                            <details class="toc-chunk" style="margin-bottom: 0.3rem; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); border-radius: 6px;" <%= hasActive ? 'open' : '' %>>
-                                <summary style="padding: 0.6rem 1rem; cursor: pointer; font-weight: bold; color: var(--accent-color); outline: none; font-size: 0.9rem;">
-                                    Chương <%= start %> - <%= end %>
-                                </summary>
-                                <div style="padding-top: 0.3rem;">
-                                    <% chunk.forEach(c => { %>
-                                        <% const isActive = c.chapter_number === chapter.chapter_number; %>
-                                        <a href="/story/<%= story.id %>/chapter/<%= c.chapter_number %>" data-search="<%= c.chapter_number %> <%= (c.title || '').toLowerCase() %>" style="display: block; padding: 0.5rem 1.2rem; color: <%= isActive ? 'var(--accent-color)' : 'var(--text-primary)' %>; font-size: 0.88rem; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.02); font-weight: <%= isActive ? 'bold' : 'normal' %>; transition: background 0.2s;" class="toc-item <%= isActive ? 'toc-item-active' : '' %>">
-                                            <% if (c.title && c.title.toLowerCase().startsWith('chương')) { %>
-                                                <%= c.title %>
-                                            <% } else { %>
-                                                Chương <%= c.chapter_number %><% if (c.title) { %>: <%= c.title %><% } %>
-                                            <% } %>
-                                        </a>
-                                    <% }) %>
-                                </div>
-                            </details>
-                        <% } %>
-                    <% } %>
+                    <div style="padding-top: 0.3rem;">
+                        <% chaptersList.forEach(c => { %>
+                            <% const isActive = c.chapter_number === chapter.chapter_number; %>
+                            <a href="/story/<%= story.id %>/chapter/<%= c.chapter_number %>" data-search="<%= c.chapter_number %> <%= (c.title || '').toLowerCase() %>" style="display: block; padding: 0.5rem 1.2rem; color: <%= isActive ? 'var(--accent-color)' : 'var(--text-primary)' %>; font-size: 0.88rem; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.02); font-weight: <%= isActive ? 'bold' : 'normal' %>; transition: background 0.2s;" class="toc-item <%= isActive ? 'toc-item-active' : '' %>">
+                                <% if (c.title && c.title.toLowerCase().startsWith('chương')) { %>
+                                    <%= c.title %>
+                                <% } else { %>
+                                    Chương <%= c.chapter_number %><% if (c.title) { %>: <%= c.title %><% } %>
+                                <% } %>
+                            </a>
+                        <% }) %>
+                    </div>
                 </div>
             </div>
         </div>
@@ -297,14 +268,6 @@
             items.forEach(item => {
                 const matched = !keyword || (item.dataset.search || '').includes(keyword);
                 item.style.display = matched ? 'block' : 'none';
-            });
-
-            // Với danh sách chia nhóm (details/summary): ẩn nhóm không có kết quả nào khớp,
-            // và tự mở nhóm có kết quả để người dùng thấy ngay khi đang gõ tìm.
-            container.querySelectorAll('details.toc-chunk').forEach(chunk => {
-                const hasMatch = Array.from(chunk.querySelectorAll('a.toc-item')).some(item => item.style.display !== 'none');
-                chunk.style.display = hasMatch ? 'block' : 'none';
-                if (keyword) chunk.open = hasMatch;
             });
         });
     });
