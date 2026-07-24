@@ -1325,29 +1325,19 @@ router.get('/story/:story_id/chapter/:chapter_number', async (req, res) => {
       };
     }
 
-    // 4. Kiểm tra chương trước và chương sau để điều hướng
-    const { data: prevChapter } = await supabase
-      .from('chapters')
-      .select('chapter_number')
-      .eq('story_id', storyId)
-      .eq('chapter_number', chapterNumber - 1)
-      .single();
-
-    const { data: nextChapter } = await supabase
-      .from('chapters')
-      .select('chapter_number')
-      .eq('story_id', storyId)
-      .eq('chapter_number', chapterNumber + 1)
-      .single();
-
-    // 5. Lấy danh sách toàn bộ chương để hiển thị trong mục lục nhanh
+    // 4. Lấy danh sách toàn bộ chương để hiển thị trong mục lục nhanh và tính toán điều hướng
     const { data: chaptersList } = await supabase
       .from('chapters')
       .select('id, chapter_number, title')
       .eq('story_id', storyId)
       .order('chapter_number', { ascending: true });
 
-    // 6. Lấy danh sách bình luận của chương truyện này
+    // Tìm chương trước và chương sau dựa trên danh sách đã sắp xếp để hỗ trợ cả số thập phân và khoảng trống
+    const currentIndex = (chaptersList || []).findIndex(ch => Number(ch.chapter_number) === Number(chapterNumber));
+    const prevChapter = currentIndex > 0 ? chaptersList[currentIndex - 1] : null;
+    const nextChapter = currentIndex !== -1 && currentIndex < (chaptersList || []).length - 1 ? chaptersList[currentIndex + 1] : null;
+
+    // 5. Lấy danh sách bình luận của chương truyện này
     let comments = [];
     try {
       const { data: commentsData } = await supabase
@@ -1389,6 +1379,8 @@ router.get('/story/:story_id/chapter/:chapter_number', async (req, res) => {
       chapter,
       hasPrev: !!prevChapter,
       hasNext: !!nextChapter,
+      prevChapterNum: prevChapter ? prevChapter.chapter_number : null,
+      nextChapterNum: nextChapter ? nextChapter.chapter_number : null,
       chaptersList: chaptersList || [],
       comments,
       requiredSeconds
