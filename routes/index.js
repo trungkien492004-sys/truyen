@@ -1261,7 +1261,7 @@ router.get('/story/:story_id/chapter/:chapter_number', async (req, res) => {
   res.setHeader('Expires', '0');
 
   const storyId = parseInt(req.params.story_id);
-  const chapterNumber = parseInt(req.params.chapter_number);
+  const chapterNumber = parseFloat(req.params.chapter_number);
   
   try {
     // 1. Lấy thông tin truyện
@@ -1418,7 +1418,7 @@ router.post('/chapter/read-confirm', async (req, res) => {
 
   const { story_id, chapter_number } = req.body;
   const storyId = parseInt(story_id);
-  const chapterNumber = parseInt(chapter_number);
+  const chapterNumber = parseFloat(chapter_number);
 
   if (!storyId || !chapterNumber) {
     return res.status(400).json({ success: false, error: 'Tham số không hợp lệ.' });
@@ -1811,7 +1811,7 @@ router.post('/story/:story_id/comment', async (req, res) => {
   try {
     const commentData = {
       story_id: storyId,
-      chapter_number: chapter_number ? parseInt(chapter_number) : null,
+      chapter_number: chapter_number ? parseFloat(chapter_number) : null,
       user_id: req.user.id,
       content: content.trim(),
       parent_id: parent_id ? parseInt(parent_id) : null

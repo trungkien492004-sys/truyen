@@ -1570,7 +1570,7 @@ router.post('/chapter/edit/:id', async (req, res) => {
   }
 
   try {
-    const targetChapterNumber = Math.max(1, parseInt(chapter_number) || 1);
+    const targetChapterNumber = Math.max(1, parseFloat(chapter_number) || 1);
     const newTitle = title ? title.trim() : '';
 
     // Lấy thông tin chương hiện tại
