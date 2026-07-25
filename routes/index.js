@@ -1325,12 +1325,27 @@ router.get('/story/:story_id/chapter/:chapter_number', async (req, res) => {
       };
     }
 
-    // 4. Lấy danh sách toàn bộ chương để hiển thị trong mục lục nhanh và tính toán điều hướng
-    const { data: chaptersList } = await supabase
-      .from('chapters')
-      .select('id, chapter_number, title')
-      .eq('story_id', storyId)
-      .order('chapter_number', { ascending: true });
+    // 4. Lấy danh sách toàn bộ chương để hiển thị trong mục lục nhanh và tính toán điều hướng (hỗ trợ phân trang để vượt qua giới hạn 1000 dòng của PostgREST)
+    let chaptersList = [];
+    {
+      const PAGE_SIZE = 1000;
+      let from = 0;
+      while (true) {
+        const { data: pageData, error: pageErr } = await supabase
+          .from('chapters')
+          .select('id, chapter_number, title')
+          .eq('story_id', storyId)
+          .order('chapter_number', { ascending: true })
+          .range(from, from + PAGE_SIZE - 1);
+
+        if (pageErr) throw pageErr;
+        if (!pageData || pageData.length === 0) break;
+
+        chaptersList = chaptersList.concat(pageData);
+        if (pageData.length < PAGE_SIZE) break;
+        from += PAGE_SIZE;
+      }
+    }
 
     // Tìm chương trước và chương sau dựa trên danh sách đã sắp xếp để hỗ trợ cả số thập phân và khoảng trống
     const currentIndex = (chaptersList || []).findIndex(ch => Number(ch.chapter_number) === Number(chapterNumber));
