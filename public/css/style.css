@@ -1221,6 +1221,15 @@ footer {
         font-size: 0.7rem !important;
         margin: 0.1rem 0 !important;
     }
+    .story-meta-row {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 0.15rem !important;
+    }
+    .info-separator {
+        display: none !important;
+    }
     .story-info div[style*="color: #f59e0b"] {
         font-size: 0.7rem !important;
     }
