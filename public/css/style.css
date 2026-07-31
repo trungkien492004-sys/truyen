@@ -1166,6 +1166,34 @@ footer {
         font-size: 0.85rem !important;
     }
 
+    /* Tối ưu hóa đọc truyện tranh full màn hình trên Mobile */
+    .read-container--comic {
+        padding: 0 !important;
+        margin-left: -1rem !important;
+        margin-right: -1rem !important;
+        width: calc(100% + 2rem) !important;
+        max-width: calc(100% + 2rem) !important;
+    }
+    .read-container--comic .read-content {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    .read-container--comic .read-content img {
+        width: 100% !important;
+        max-width: 100% !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        margin: 0 auto !important;
+    }
+    .read-container--comic .read-header,
+    .read-container--comic .read-navigation,
+    .read-container--comic #word-count-badge {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+
     /* 7b. Tối ưu Danh sách bình luận & phản hồi trên Mobile */
     .replies-list {
         margin-left: 1.5rem !important;

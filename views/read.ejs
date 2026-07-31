@@ -1,6 +1,6 @@
 <%- include('partials/header') %>
 
-<div class="read-container">
+<div class="read-container <%= (typeof story !== 'undefined' && story && story.story_type === 'comic') ? 'read-container--comic' : '' %>">
     <div style="margin-bottom: 2rem;">
         <a href="/story/<%= story.id %>" style="color: var(--text-secondary); font-size: 0.9rem;">&larr; Quay lại trang chi tiết truyện</a>
     </div>
