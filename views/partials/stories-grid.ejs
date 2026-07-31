@@ -75,13 +75,43 @@
                 <a href="/?<%= urlParams %>page=<%= currentPage - 1 %>" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; border-radius: 8px;">&larr; Trước</a>
             <% } %>
 
-            <% for (let i = 1; i <= totalPages; i++) { %>
-                <% if (i === currentPage) { %>
-                    <span class="btn btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; border-radius: 8px; font-weight: bold; pointer-events: none;"><%= i %></span>
-                <% } else { %>
-                    <a href="/?<%= urlParams %>page=<%= i %>" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; border-radius: 8px;"><%= i %></a>
-                <% } %>
-            <% } %>
+            <% 
+              const range = 1; // Number of pages to show on each side of currentPage
+              const pages = [];
+              for (let i = 1; i <= totalPages; i++) {
+                  if (i === 1 || i === totalPages || (i >= currentPage - range && i <= currentPage + range)) {
+                      pages.push(i);
+                  }
+              }
+              
+              let lastPage = 0;
+              for (let i = 0; i < pages.length; i++) {
+                  const p = pages[i];
+                  if (lastPage > 0) {
+                      if (p - lastPage === 2) {
+                          const missing = lastPage + 1;
+            %>
+                          <a href="/?<%= urlParams %>page=<%= missing %>" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; border-radius: 8px;"><%= missing %></a>
+            <%
+                      } else if (p - lastPage > 2) {
+            %>
+                          <span style="color: var(--text-secondary); font-size: 0.85rem; padding: 0 0.2rem; user-select: none;">...</span>
+            <%
+                      }
+                  }
+                  
+                  if (p === currentPage) {
+            %>
+                      <span class="btn btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; border-radius: 8px; font-weight: bold; pointer-events: none;"><%= p %></span>
+            <%
+                  } else {
+            %>
+                      <a href="/?<%= urlParams %>page=<%= p %>" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; border-radius: 8px;"><%= p %></a>
+            <%
+                  }
+                  lastPage = p;
+              }
+            %>
 
             <% if (currentPage < totalPages) { %>
                 <a href="/?<%= urlParams %>page=<%= currentPage + 1 %>" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; border-radius: 8px;">Sau &rarr;</a>
