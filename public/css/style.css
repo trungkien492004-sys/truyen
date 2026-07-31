@@ -292,6 +292,10 @@ main {
     gap: 3rem;
 }
 
+.content-grid > * {
+    min-width: 0;
+}
+
 /* Khi không có cột BXH (trang tác giả, tìm kiếm, thể loại) */
 .content-grid--full {
     grid-template-columns: 1fr;
@@ -1196,6 +1200,11 @@ footer {
     .stories-grid {
         grid-template-columns: repeat(2, 1fr) !important;
         gap: 0.6rem !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    #stories-grid-container {
+        min-width: 0 !important;
     }
     .story-card {
         border-radius: 8px;
