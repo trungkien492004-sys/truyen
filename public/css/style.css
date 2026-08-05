@@ -593,6 +593,14 @@ main {
     max-width: 800px;
     margin: 0 auto;
 }
+.read-container--comic {
+    max-width: 1000px;
+}
+.read-container--comic .read-content img {
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto !important;
+}
 
 .read-header {
     text-align: center;
