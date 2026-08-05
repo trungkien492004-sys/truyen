@@ -70,102 +70,16 @@ async function crawlNewChapters(storyId, ignoreLimit = false) {
 
   // 4. Crawl based on domain
   if (domain.includes('donghentai')) {
-    // === COMIC CRAWLER: donghentai.xyz ===
-    // Source URL format: https://donghentai.xyz/manga/nghich-chuyen
-    console.log(`[CRAWLER] Detected DongHentai source: ${sourceUrl}`);
-    
-    // Fetch detail page to get all chapter links
-    const detailRes = await fetchWithTimeout(sourceUrl);
-    if (!detailRes.ok) throw new Error(`Failed to fetch DongHentai detail page. Status: ${detailRes.status}`);
-    const detailHtml = await detailRes.text();
-    const $ = cheerio.load(detailHtml);
-
-    // Extract chapter links
-    const sourceChapters = [];
-    $('a').each((idx, el) => {
-      const href = $(el).attr('href') || '';
-      // Chapter link format: /manga/nghich-chuyen/chuong-33
-      if (href.includes('/chuong-') || href.includes('/chapter-')) {
-        const numMatch = href.match(/(?:chuong|chapter)-(\d+)/i);
-        if (numMatch) {
-          const chapNum = parseInt(numMatch[1]);
-          if (chapNum > maxDbChapter) {
-            sourceChapters.push({
-              chapter_number: chapNum,
-              url: `https://donghentai.xyz${href}`,
-              title: $(el).text().replace(/Chương\s+\d+|Chapter\s+\d+/gi, '').replace(/\s+/g, ' ').trim() || `Chương ${chapNum}`
-            });
-          }
-        }
-      }
-    });
-
-    // Remove duplicates and sort ascending
-    const uniqueChapters = [];
-    const seen = new Set();
-    for (const c of sourceChapters) {
-      if (!seen.has(c.chapter_number)) {
-        seen.add(c.chapter_number);
-        uniqueChapters.push(c);
-      }
+    // === COMIC CRAWLER: donghentai.xyz via API ===
+    console.log(`[CRAWLER] Detected DongHentai source, routing to API crawler for slug: ${sourceUrl}`);
+    const { crawlSingleDongHentaiManga } = require('./donghentaiCrawler');
+    const slug = sourceUrl.replace(/\/+$/, '').split('/').pop();
+    const result = await crawlSingleDongHentaiManga(slug);
+    if (!result || !result.success) {
+      throw new Error(`Failed to crawl DongHentai: ${result ? result.error : 'Unknown error'}`);
     }
-    uniqueChapters.sort((a, b) => a.chapter_number - b.chapter_number);
-
-    console.log(`[CRAWLER] Found ${uniqueChapters.length} new chapters to crawl.`);
-
-    // Crawl each chapter page (limit to 30 chapters to prevent timeout)
-    const limitChapters = uniqueChapters.slice(0, 30);
-    for (const c of limitChapters) {
-      console.log(`[CRAWLER] Crawling DongHentai chapter ${c.chapter_number}: ${c.url}`);
-      const chapRes = await fetchWithTimeout(c.url);
-      if (!chapRes.ok) {
-        console.error(`[CRAWLER] Failed to fetch chapter page: ${c.url}`);
-        continue;
-      }
-      const chapHtml = await chapRes.text();
-      const $c = cheerio.load(chapHtml);
-
-      // Extract images
-      const images = [];
-      $c('img').each((idx, el) => {
-        const src = $c(el).attr('src') || '';
-        const alt = $c(el).attr('alt') || '';
-        // Real page images alt starting with "Page"
-        if (alt.toLowerCase().startsWith('page')) {
-          images.push(src);
-        }
-      });
-
-      if (images.length === 0) {
-        console.warn(`[CRAWLER] No comic pages found for chapter ${c.chapter_number}. Skipping.`);
-        continue;
-      }
-
-      // Build content HTML
-      const contentHtml = images
-        .map(img => `<div style="text-align: center; margin-bottom: 10px;"><img src="${img}" style="max-width: 100%; height: auto; border-radius: 4px;" loading="lazy"></div>`)
-        .join('');
-
-      // Insert chapter
-      const { error: insErr } = await supabase
-        .from('chapters')
-        .insert([{
-          story_id: storyId,
-          chapter_number: c.chapter_number,
-          title: `Chương ${c.chapter_number}${c.title ? ': ' + c.title : ''}`,
-          content: contentHtml
-        }]);
-
-      if (insErr) {
-        console.error(`[CRAWLER] Failed to insert chapter ${c.chapter_number}:`, insErr.message);
-      } else {
-        newChaptersCount++;
-        console.log(`[CRAWLER] Successfully added chapter ${c.chapter_number}`);
-      }
-      // Delay to avoid rate limits
-      await new Promise(r => setTimeout(r, 1000));
-    }
-
+    const { data: currentChaps } = await supabase.from('chapters').select('id').eq('story_id', storyId);
+    newChaptersCount = currentChaps ? Math.max(0, currentChaps.length - maxDbChapter) : 0;
   } else if (domain.includes('truyenmoiss')) {
     // === NOVEL CRAWLER: truyenmoiss.org ===
     console.log(`[CRAWLER] Detected TruyenMoiSS source: ${sourceUrl}`);

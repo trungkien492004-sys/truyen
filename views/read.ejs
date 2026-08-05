@@ -454,6 +454,16 @@
 <% } %>
 
 <script>
+    // Tự động proxy ảnh truyện tranh qua weserv.nl để tránh nhà mạng chặn ở VN
+    (function() {
+        document.querySelectorAll('#chapter-content img').forEach(img => {
+            const src = img.getAttribute('src');
+            if (src && src.startsWith('http') && !src.includes(window.location.hostname) && !src.includes('supabase.co')) {
+                img.setAttribute('src', 'https://images.weserv.nl/?url=' + encodeURIComponent(src));
+            }
+        });
+    })();
+
     // Xử lý gửi bình luận chính
     const commentForm = document.getElementById('comment-form');
     if (commentForm) {
