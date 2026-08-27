@@ -2146,7 +2146,8 @@ router.post('/chapter/add-manual', (req, res) => res.redirect('/admin/chapter/ad
 router.get('/chapter/add-bulk', (req, res) => res.redirect('/admin/chapter/add'));
 router.post('/chapter/add-bulk', (req, res) => res.redirect('/admin/chapter/add'));
 // Hàm tự tạo cấu trúc file EPUB tiêu chuẩn từ dữ liệu truyện và chương truyện
-function generateEpub(story, chapters) {
+// Hàm tự tạo cấu trúc file EPUB tiêu chuẩn từ dữ liệu truyện và chương truyện
+async function generateEpub(story, chapters) {
   const AdmZip = require('adm-zip');
   const zip = new AdmZip();
 
@@ -2191,7 +2192,91 @@ function generateEpub(story, chapters) {
 </ncx>`;
   zip.addFile('OEBPS/toc.ncx', Buffer.from(tocNcx));
 
+  // Manifest items
+  const manifestItems = [
+    { id: 'ncx', href: 'toc.ncx', type: 'application/x-dtbncx+xml' }
+  ];
+
+  // Process chapters content and fetch images
+  const processedChapters = [];
+  const imageMap = {}; // originalUrl -> { filename, id, type }
+  let imgCounter = 0;
+
+  for (let idx = 0; idx < chapters.length; idx++) {
+    const ch = chapters[idx];
+    let content = ch.content || '';
+
+    // Find all image URLs in the chapter content
+    const imgRegex = /<img[^>]+src=["']([^"']+)["'][^>]*>/gi;
+    let match;
+    const urls = [];
+    while ((match = imgRegex.exec(content)) !== null) {
+      urls.push(match[1]);
+    }
+
+    // Process each image URL
+    for (const url of urls) {
+      if (!imageMap[url]) {
+        imgCounter++;
+        // Detect file extension
+        let ext = 'jpg';
+        const urlClean = url.split('?')[0];
+        if (urlClean.endsWith('.png')) ext = 'png';
+        if (urlClean.endsWith('.gif')) ext = 'gif';
+        if (urlClean.endsWith('.webp')) ext = 'webp';
+        if (urlClean.endsWith('.jpeg')) ext = 'jpeg';
+
+        const filename = `image_${imgCounter}.${ext}`;
+        const mediaType = ext === 'jpg' ? 'image/jpeg' : `image/${ext}`;
+        const imgId = `img-${imgCounter}`;
+
+        try {
+          // Handle relative URLs
+          let fetchUrl = url;
+          if (url.startsWith('/')) {
+            const origin = process.env.GOOGLE_CALLBACK_URL 
+              ? new URL(process.env.GOOGLE_CALLBACK_URL).origin 
+              : 'https://truyen-psi.vercel.app';
+            fetchUrl = origin + url;
+          }
+
+          console.log(`Fetching image for EPUB: ${fetchUrl}`);
+          const res = await fetch(fetchUrl);
+          if (res.ok) {
+            const buffer = Buffer.from(await res.arrayBuffer());
+            zip.addFile(`OEBPS/images/${filename}`, buffer);
+            imageMap[url] = { filename, id: imgId, type: mediaType };
+            manifestItems.push({ id: imgId, href: `images/${filename}`, type: mediaType });
+            console.log(`Successfully embedded image: ${filename}`);
+          } else {
+            console.error(`Failed to fetch image: ${fetchUrl}, status: ${res.status}`);
+          }
+        } catch (err) {
+          console.error(`Error fetching image ${url}:`, err.message);
+        }
+      }
+
+      // Replace original src with local path
+      if (imageMap[url]) {
+        content = content.replace(url, `images/${imageMap[url].filename}`);
+      }
+    }
+
+    processedChapters.push({
+      title: ch.title,
+      content: content
+    });
+  }
+
   // 4. Content.opf (Khai báo manifest & spine thứ tự chương)
+  processedChapters.forEach((ch, idx) => {
+    manifestItems.push({
+      id: `chapter-${idx + 1}`,
+      href: `chapter-${idx + 1}.xhtml`,
+      type: 'application/xhtml+xml'
+    });
+  });
+
   let contentOpf = `<?xml version="1.0" encoding="UTF-8"?>
 <package xmlns="http://www.idpf.org/2007/opf" unique-identifier="BookID" version="2.0">
     <metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">
@@ -2200,19 +2285,18 @@ function generateEpub(story, chapters) {
         <dc:language>vi</dc:language>
         <dc:identifier id="BookID" opf:scheme="UUID">urn:uuid:${story.id}</dc:identifier>
     </metadata>
-    <manifest>
-        <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>`;
+    <manifest>`;
 
-  chapters.forEach((ch, idx) => {
+  manifestItems.forEach(item => {
     contentOpf += `
-        <item id="chapter-${idx + 1}" href="chapter-${idx + 1}.xhtml" media-type="application/xhtml+xml"/>`;
+        <item id="${item.id}" href="${item.href}" media-type="${item.type}"/>`;
   });
 
   contentOpf += `
     </manifest>
     <spine toc="ncx">`;
 
-  chapters.forEach((ch, idx) => {
+  processedChapters.forEach((ch, idx) => {
     contentOpf += `
         <itemref idref="chapter-${idx + 1}"/>`;
   });
@@ -2223,8 +2307,7 @@ function generateEpub(story, chapters) {
   zip.addFile('OEBPS/content.opf', Buffer.from(contentOpf));
 
   // 5. Nội dung các chương (XHTML tiêu chuẩn)
-  chapters.forEach((ch, idx) => {
-    const content = ch.content || '';
+  processedChapters.forEach((ch, idx) => {
     const xhtml = `<?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -2233,7 +2316,7 @@ function generateEpub(story, chapters) {
 </head>
 <body>
     <h2>${ch.title}</h2>
-    ${content}
+    ${ch.content}
 </body>
 </html>`;
     zip.addFile(`OEBPS/chapter-${idx + 1}.xhtml`, Buffer.from(xhtml));
@@ -2290,7 +2373,7 @@ router.get('/story/download-epub/:id', async (req, res) => {
       return res.status(400).send('Truyện chưa có chương nào để tải.');
     }
 
-    const epubBuffer = generateEpub(story, chapters);
+    const epubBuffer = await generateEpub(story, chapters);
     const safeTitle = story.title
       .replace(/[^a-zA-Z0-9ÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚÝàáâãèéêìíòóôõùúýĂăĐđĨĩŨũƠơƯưẠ-ỹ]/g, '_')
       .substring(0, 100);
