@@ -625,6 +625,7 @@ main {
     line-height: 1.8;
     color: var(--text-primary);
     margin-bottom: 4rem;
+    white-space: pre-line;
 }
 
 .read-content p {
