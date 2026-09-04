@@ -22,13 +22,27 @@ app.use(cookieParser());
 app.set('trust proxy', 1);
 
 // Cấu hình Cookie-Session thay thế cho Express-Session để hoạt động stateless trên Vercel Serverless
+// Cung cấp thời hạn 90 ngày (Remember-me dài hạn) và danh sách fallback keys ổn định
 app.use(cookieSession({
   name: 'session',
-  keys: [process.env.SESSION_SECRET || 'session_secret_fallback_key'],
-  maxAge: 24 * 60 * 60 * 1000, // Cookie tồn tại trong 24 giờ
+  keys: [
+    process.env.SESSION_SECRET || 'truyen_psi_secret_session_key_2026_fixed',
+    'session_secret_fallback_key',
+    'a_very_secret_key_change_me_in_production'
+  ],
+  maxAge: 90 * 24 * 60 * 60 * 1000, // Cookie duy trì đăng nhập trong 90 ngày
   secure: process.env.NODE_ENV === 'production',
-  sameSite: 'lax'
+  sameSite: 'lax',
+  httpOnly: true
 }));
+
+// Cơ chế Sliding Session: Tự động gia hạn hạn dùng cookie thêm 90 ngày mỗi khi người dùng truy cập web
+app.use((req, res, next) => {
+  if (req.session && req.session.passport) {
+    req.session._lastActive = Date.now();
+  }
+  next();
+});
 
 // Middleware vá lỗi tương thích giữa passport v0.6+ và cookie-session (do cookie-session không có hàm regenerate và save)
 app.use((req, res, next) => {

@@ -74,9 +74,18 @@ passport.serializeUser((user, done) => {
   done(null, user.google_id);
 });
 
+// In-memory cache cho user session (TTL: 5 phút) để tối ưu tốc độ và chống đứt phiên đăng nhập khi Supabase chập chờn
+const userSessionCache = new Map(); // google_id -> { user, expiresAt }
+
 // Lấy thông tin user từ Session
 passport.deserializeUser(async (googleId, done) => {
   try {
+    const now = Date.now();
+    const cached = userSessionCache.get(googleId);
+    if (cached && cached.expiresAt > now) {
+      return done(null, cached.user);
+    }
+
     const { data: user, error } = await supabase
       .from('users')
       .select('*')
@@ -84,14 +93,33 @@ passport.deserializeUser(async (googleId, done) => {
       .maybeSingle();
 
     if (error) {
-      return done(error, null);
-    }
-    if (!user) {
+      console.warn('Lỗi Supabase khi nạp user session:', error.message);
+      // Nếu có cache cũ (kể cả đã quá hạn), vẫn dùng lại để tránh ngắt session người dùng
+      if (cached && cached.user) {
+        return done(null, cached.user);
+      }
       return done(null, false);
     }
+
+    if (!user) {
+      userSessionCache.delete(googleId);
+      return done(null, false);
+    }
+
+    // Cập nhật cache 5 phút
+    userSessionCache.set(googleId, {
+      user,
+      expiresAt: now + 5 * 60 * 1000
+    });
+
     done(null, user);
   } catch (err) {
-    done(err, null);
+    console.error('Lỗi deserializeUser:', err);
+    const cached = userSessionCache.get(googleId);
+    if (cached && cached.user) {
+      return done(null, cached.user);
+    }
+    done(null, false);
   }
 });
 
