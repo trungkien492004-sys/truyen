@@ -146,6 +146,38 @@
 </script>
 
 <div class="chapters-container">
+    <% if (chapters && chapters.length > 0) { 
+        const latestChapters = chapters.slice(-5).reverse();
+    %>
+        <!-- MỤC 5 CHƯƠNG MỚI NHẤT -->
+        <div class="latest-chapters-box" style="margin-bottom: 1.5rem; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 1.2rem;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.8rem; border-bottom: 1px solid rgba(255, 255, 255, 0.06); padding-bottom: 0.6rem;">
+                <h3 style="margin: 0; font-size: 1.15rem; color: #f59e0b; display: flex; align-items: center; gap: 0.5rem;">
+                    🔥 5 chương mới nhất
+                </h3>
+                <span style="font-size: 0.8rem; color: var(--text-secondary);">Mới cập nhật</span>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 0.6rem;">
+                <% latestChapters.forEach(chap => { %>
+                    <a href="/story/<%= story.id %>/chapter/<%= chap.chapter_number %>" style="display: flex; justify-content: space-between; align-items: center; padding: 0.65rem 0.9rem; background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; text-decoration: none; color: var(--text-primary); transition: all 0.2s;" onmouseover="this.style.borderColor='var(--accent-color)'; this.style.background='rgba(99,102,241,0.1)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.06)'; this.style.background='rgba(0,0,0,0.25)'">
+                        <span style="font-weight: 500; font-size: 0.92rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; margin-right: 0.5rem;">
+                            <% if (chap.title && chap.title.toLowerCase().startsWith('chương')) { %>
+                                <strong><%= chap.title %></strong>
+                            <% } else { %>
+                                <strong>Chương <%= chap.chapter_number %></strong><% if (chap.title) { %>: <%= chap.title %><% } %>
+                            <% } %>
+                        </span>
+                        <span style="font-size: 0.78rem; color: var(--text-secondary); white-space: nowrap; flex-shrink: 0;">
+                            <% if (chap.created_at) { %>
+                                <%= new Date(chap.created_at).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }) %>
+                            <% } %>
+                        </span>
+                    </a>
+                <% }) %>
+            </div>
+        </div>
+    <% } %>
+
     <% const isCollapsed = chapters && chapters.length >= 50; %>
     <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: rgba(255,255,255,0.05); padding: 1rem 1.5rem; border-radius: 12px; margin-bottom: 1rem; border: 1px solid rgba(255,255,255,0.1); transition: background 0.3s;" onclick="document.getElementById('chapters-wrapper').classList.toggle('collapsed'); this.querySelector('.arrow').classList.toggle('up')" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">
         <h2 class="section-title" style="margin: 0; font-size: 1.3rem;">📖 Danh sách chương (<%= chapters ? chapters.length : 0 %>)</h2>
