@@ -392,7 +392,7 @@
                         </div>
                         
                         <!-- Nội dung comment có hightlight tags -->
-                        <div class="comment-content" style="font-size: 0.9rem; line-height: 1.6; color: var(--text-primary); white-space: pre-wrap; margin-bottom: 0.6rem;"><%- comment.content.replace(/@([a-zA-Z0-9_\sà-ỹÀ-Ỹ]+)/g, '<span style="color:var(--accent-color); font-weight:600;">@$1</span>') %></div>
+                        <div class="comment-content" style="font-size: 0.9rem; line-height: 1.6; color: var(--text-primary); white-space: pre-wrap; margin-bottom: 0.6rem;"><%- comment.content.replace(/@([^\s:@]+)/g, '<span style="color:var(--accent-color); font-weight:600;">@$1</span>') %></div>
                         
                         <!-- Action buttons -->
                         <div style="display: flex; align-items: center; gap: 1.2rem; font-size: 0.8rem; color: var(--text-secondary);">
@@ -411,52 +411,76 @@
                             <% } %>
                         </div>
 
+                        <!-- Form trả lời ẩn dành cho bình luận gốc -->
+                        <div id="reply-form-<%= comment.id %>" style="display: none; margin-top: 1rem; background: rgba(0,0,0,0.15); border-radius: 8px; padding: 0.8rem;">
+                            <textarea id="reply-textarea-<%= comment.id %>" placeholder="Viết câu trả lời của bạn..." required style="width: 100%; min-height: 60px; padding: 0.5rem 0.8rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 0.85rem; line-height: 1.4; resize: vertical; margin-bottom: 0.5rem;"></textarea>
+                            <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+                                <button onclick="cancelReply(<%= comment.id %>)" class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.3rem 0.8rem; border-radius: 6px;">Hủy</button>
+                                <button onclick="submitReply(<%= comment.id %>)" class="btn btn-primary" style="font-size: 0.75rem; padding: 0.3rem 0.8rem; border-radius: 6px;">Trả lời</button>
+                            </div>
+                        </div>
+
                         <!-- Danh sách phản hồi lồng nhau -->
                         <% const replies = comments.filter(c => c.parent_id === comment.id); %>
                         <% if (replies.length > 0) { %>
                             <div class="replies-container" style="margin-top: 1rem; padding-left: 1rem; border-left: 2px solid var(--border-color); display: flex; flex-direction: column; gap: 1rem;">
                                 <% replies.forEach(reply => { %>
-                                    <div class="comment-item" id="comment-<%= reply.id %>" style="display: flex; gap: 0.8rem;">
-                                        <div style="display: flex; flex-direction: column; align-items: center; gap: 0.2rem; flex-shrink: 0; min-width: 45px;">
-                                            <a href="/user/<%= reply.user_id %>" style="display: inline-block; position: relative;">
-                                                <% const rFrameClass = (reply.users && reply.users.equipped_frame) ? reply.users.equipped_frame : 'default-frame'; %>
-                                                <div class="avatar-frame <%= rFrameClass %>" style="width: 32px; height: 32px; padding: 2px;">
-                                                    <div class="avatar-glow"></div>
-                                                    <img src="<%= reply.users ? reply.users.avatar : '/css/silly_duck.png' %>" alt="avatar" class="avatar-img" style="border-width: 1px;">
-                                                    <% if (reply.users && reply.users.equipped_badge) { %>
-                                                        <div class="avatar-corner" style="position: absolute; top: -4px; right: -4px; font-size: 0.7rem; background: rgba(0,0,0,0.6); border-radius: 50%; padding: 2px; z-index: 10; border: 1px solid gold; display: flex; justify-content: center; align-items: center; width: 14px; height: 14px;">
-                                                            <%= getBadgeIcon(reply.users.equipped_badge) %>
-                                                        </div>
+                                    <div class="comment-item" id="comment-<%= reply.id %>" style="display: flex; gap: 0.8rem; flex-direction: column;">
+                                        <div style="display: flex; gap: 0.8rem; width: 100%;">
+                                            <div style="display: flex; flex-direction: column; align-items: center; gap: 0.2rem; flex-shrink: 0; min-width: 45px;">
+                                                <a href="/user/<%= reply.user_id %>" style="display: inline-block; position: relative;">
+                                                    <% const rFrameClass = (reply.users && reply.users.equipped_frame) ? reply.users.equipped_frame : 'default-frame'; %>
+                                                    <div class="avatar-frame <%= rFrameClass %>" style="width: 32px; height: 32px; padding: 2px;">
+                                                        <div class="avatar-glow"></div>
+                                                        <img src="<%= reply.users ? reply.users.avatar : '/css/silly_duck.png' %>" alt="avatar" class="avatar-img" style="border-width: 1px;">
+                                                        <% if (reply.users && reply.users.equipped_badge) { %>
+                                                            <div class="avatar-corner" style="position: absolute; top: -4px; right: -4px; font-size: 0.7rem; background: rgba(0,0,0,0.6); border-radius: 50%; padding: 2px; z-index: 10; border: 1px solid gold; display: flex; justify-content: center; align-items: center; width: 14px; height: 14px;">
+                                                                <%= getBadgeIcon(reply.users.equipped_badge) %>
+                                                            </div>
+                                                        <% } %>
+                                                    </div>
+                                                </a>
+                                                <% if (reply.users && reply.users.equipped_badge) { %>
+                                                    <div style="display: flex; flex-direction: column; align-items: center; margin-top: 4px; z-index: 2; line-height: 1.1;">
+                                                        <span class="game-title <%= getTitleRarityClass(reply.users.equipped_badge) %>" style="white-space: nowrap; font-size: 0.45rem !important; padding: 1px 6px !important; animation: none !important; transform: none !important; height: auto !important; width: max-content !important;"><%= reply.users.equipped_badge %></span>
+                                                        <span style="font-size: 0.4rem; color: #ffd700; letter-spacing: 1px; text-shadow: 0 0 2px rgba(255,255,255,0.3); margin-top: 2px;"><%= getStarsByChapters(reply.users.user_stats ? reply.users.user_stats.chapters_read : 0) %></span>
+                                                    </div>
+                                                <% } %>
+                                            </div>
+                                            <div style="flex: 1;">
+                                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.2rem;">
+                                                    <span style="font-weight: 600; font-size: 0.88rem;">
+                                                        <a href="/user/<%= reply.user_id %>" style="text-decoration: none; color: inherit; transition: color 0.2s;" onmouseover="this.style.color='var(--accent-color)'" onmouseout="this.style.color='inherit'">
+                                                            <%= reply.users ? reply.users.display_name : 'Độc giả ẩn danh' %>
+                                                        </a>
+                                                    </span>
+                                                    <span style="font-size: 0.75rem; color: var(--text-secondary);"><%= new Date(reply.created_at).toLocaleDateString('vi-VN', { hour: '2-digit', minute: '2-digit' }) %></span>
+                                                </div>
+                                                <div class="comment-content" style="font-size: 0.86rem; line-height: 1.5; color: var(--text-primary); white-space: pre-wrap; margin-bottom: 0.4rem;"><%- reply.content.replace(/@([^\s:@]+)/g, '<span style="color:var(--accent-color); font-weight:600;">@$1</span>') %></div>
+                                                <div style="display: flex; align-items: center; gap: 1rem;">
+                                                    <button onclick="likeComment(<%= reply.id %>)" class="like-btn" style="background: none; border: none; color: <%= reply.user_liked ? 'var(--accent-color)' : 'var(--text-secondary)' %>; cursor: pointer; display: flex; align-items: center; gap: 0.2rem; font-size: 0.75rem; padding: 0;">
+                                                        ❤️ <span class="likes-count"><%= reply.likes_count %></span> Thích
+                                                    </button>
+                                                    <% if (typeof user !== 'undefined' && user) { %>
+                                                        <button onclick="showReplyForm(<%= reply.id %>, '<%= reply.users ? reply.users.display_name : '' %>', <%= comment.id %>)" style="background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 0; font-size: 0.75rem;">
+                                                            💬 Trả lời
+                                                        </button>
+                                                    <% } %>
+                                                    <% if (typeof user !== 'undefined' && user && (user.id === reply.user_id || user.role === 'admin' || user.role === 'sp_admin')) { %>
+                                                        <button onclick="deleteComment(<%= reply.id %>)" style="background: none; border: none; color: #ef4444; cursor: pointer; padding: 0; font-size: 0.75rem; display: flex; align-items: center; gap: 0.2rem;">
+                                                            🗑️ Xóa
+                                                        </button>
                                                     <% } %>
                                                 </div>
-                                            </a>
-                                            <% if (reply.users && reply.users.equipped_badge) { %>
-                                                <div style="display: flex; flex-direction: column; align-items: center; margin-top: 4px; z-index: 2; line-height: 1.1;">
-                                                    <span class="game-title <%= getTitleRarityClass(reply.users.equipped_badge) %>" style="white-space: nowrap; font-size: 0.45rem !important; padding: 1px 6px !important; animation: none !important; transform: none !important; height: auto !important; width: max-content !important;"><%= reply.users.equipped_badge %></span>
-                                                    <span style="font-size: 0.4rem; color: #ffd700; letter-spacing: 1px; text-shadow: 0 0 2px rgba(255,255,255,0.3); margin-top: 2px;"><%= getStarsByChapters(reply.users.user_stats ? reply.users.user_stats.chapters_read : 0) %></span>
-                                                </div>
-                                            <% } %>
-                                        </div>
-                                        <div style="flex: 1;">
-                                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.2rem;">
-                                                <span style="font-weight: 600; font-size: 0.88rem;">
-                                                    <a href="/user/<%= reply.user_id %>" style="text-decoration: none; color: inherit; transition: color 0.2s;" onmouseover="this.style.color='var(--accent-color)'" onmouseout="this.style.color='inherit'">
-                                                        <%= reply.users ? reply.users.display_name : 'Độc giả ẩn danh' %>
-                                                    </a>
-
-                                                </span>
-                                                <span style="font-size: 0.75rem; color: var(--text-secondary);"><%= new Date(reply.created_at).toLocaleDateString('vi-VN', { hour: '2-digit', minute: '2-digit' }) %></span>
                                             </div>
-                                            <div class="comment-content" style="font-size: 0.86rem; line-height: 1.5; color: var(--text-primary); white-space: pre-wrap; margin-bottom: 0.4rem;"><%- reply.content.replace(/@([a-zA-Z0-9_\sà-ỹÀ-Ỹ]+)/g, '<span style="color:var(--accent-color); font-weight:600;">@$1</span>') %></div>
-                                            <div style="display: flex; align-items: center; gap: 1rem;">
-                                                <button onclick="likeComment(<%= reply.id %>)" class="like-btn" style="background: none; border: none; color: <%= reply.user_liked ? 'var(--accent-color)' : 'var(--text-secondary)' %>; cursor: pointer; display: flex; align-items: center; gap: 0.2rem; font-size: 0.75rem; padding: 0;">
-                                                    ❤️ <span class="likes-count"><%= reply.likes_count %></span> Thích
-                                                </button>
-                                                <% if (typeof user !== 'undefined' && user && (user.id === reply.user_id || user.role === 'admin' || user.role === 'sp_admin')) { %>
-                                                    <button onclick="deleteComment(<%= reply.id %>)" style="background: none; border: none; color: #ef4444; cursor: pointer; padding: 0; font-size: 0.75rem; display: flex; align-items: center; gap: 0.2rem;">
-                                                        🗑️ Xóa
-                                                    </button>
-                                                <% } %>
+                                        </div>
+
+                                        <!-- Form trả lời cho từng reply -->
+                                        <div id="reply-form-<%= reply.id %>" style="display: none; margin-top: 0.5rem; background: rgba(0,0,0,0.15); border-radius: 8px; padding: 0.8rem; width: 100%;">
+                                            <textarea id="reply-textarea-<%= reply.id %>" placeholder="Viết câu trả lời của bạn..." required style="width: 100%; min-height: 60px; padding: 0.5rem 0.8rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 0.85rem; line-height: 1.4; resize: vertical; margin-bottom: 0.5rem;"></textarea>
+                                            <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+                                                <button onclick="cancelReply(<%= reply.id %>)" class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.3rem 0.8rem; border-radius: 6px;">Hủy</button>
+                                                <button onclick="submitReply(<%= comment.id %>, <%= reply.id %>)" class="btn btn-primary" style="font-size: 0.75rem; padding: 0.3rem 0.8rem; border-radius: 6px;">Trả lời</button>
                                             </div>
                                         </div>
                                     </div>
@@ -532,11 +556,11 @@
     }
 
     // Hiển thị khung trả lời bình luận
-    function showReplyForm(commentId, displayName) {
+    function showReplyForm(targetId, displayName, rootParentId) {
         document.querySelectorAll('[id^="reply-form-"]').forEach(f => f.style.display = 'none');
         
-        const form = document.getElementById(`reply-form-${commentId}`);
-        const textarea = document.getElementById(`reply-textarea-${commentId}`);
+        const form = document.getElementById(`reply-form-${targetId}`);
+        const textarea = document.getElementById(`reply-textarea-${targetId}`);
         if (form && textarea) {
             form.style.display = 'block';
             textarea.value = `@${displayName} `;
@@ -550,9 +574,10 @@
     }
 
     // Gửi phản hồi bình luận
-    async function submitReply(parentCommentId) {
-        const textarea = document.getElementById(`reply-textarea-${parentCommentId}`);
-        const content = textarea.value;
+    async function submitReply(parentCommentId, targetReplyId) {
+        const inputId = targetReplyId || parentCommentId;
+        const textarea = document.getElementById(`reply-textarea-${inputId}`);
+        const content = textarea ? textarea.value : '';
         const storyId = '<%= story.id %>';
 
         if (!content || !content.trim()) {

@@ -590,15 +590,24 @@ main {
 
 /* TRANG ĐỌC CHƯƠNG (READ CHAPTER) */
 .read-container {
-    max-width: 800px;
+    max-width: 1200px;
     margin: 0 auto;
 }
 .read-container--comic {
-    max-width: 1000px;
+    max-width: 1200px;
+}
+.read-content img {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    display: block !important;
+    margin: 0 auto !important;
 }
 .read-container--comic .read-content img {
-    width: 100%;
-    max-width: 100%;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    display: block !important;
     margin: 0 auto !important;
 }
 

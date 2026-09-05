@@ -69,7 +69,16 @@ async function crawlNewChapters(storyId, ignoreLimit = false) {
   let newChaptersCount = 0;
 
   // 4. Crawl based on domain
-  if (domain.includes('donghentai')) {
+  if (domain.includes('vietmanhwa')) {
+    console.log(`[CRAWLER] Detected VietManhwa source: ${sourceUrl}`);
+    const { syncVietManhwaStory } = require('./vietmanhwaCrawler');
+    const result = await syncVietManhwaStory(sourceUrl, { maxChapters: ignoreLimit ? 999999 : 30 });
+    return {
+      success: true,
+      newChaptersCount: result.addedCount,
+      message: `Finished VietManhwa crawl for "${result.title}". Added ${result.addedCount} chapters.`
+    };
+  } else if (domain.includes('donghentai')) {
     // === COMIC CRAWLER: donghentai.xyz via API ===
     console.log(`[CRAWLER] Detected DongHentai source, routing to API crawler for slug: ${sourceUrl}`);
     const { crawlSingleDongHentaiManga } = require('./donghentaiCrawler');
