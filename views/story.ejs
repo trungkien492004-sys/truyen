@@ -439,8 +439,8 @@
                             </div>
                         </div>
 
-                        <!-- Danh sách phản hồi lồng nhau (Sắp xếp mới nhất lên trước) -->
-                        <% const replies = comments.filter(c => c.parent_id === comment.id).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)); %>
+                        <!-- Danh sách phản hồi lồng nhau (Sắp xếp theo thứ tự thời gian đối thoại) -->
+                        <% const replies = comments.filter(c => c.parent_id === comment.id).sort((a, b) => new Date(a.created_at) - new Date(b.created_at)); %>
                         <% if (replies.length > 0) { %>
                             <div class="replies-container" style="margin-top: 1rem; padding-left: 1rem; border-left: 2px solid var(--border-color); display: flex; flex-direction: column; gap: 1rem;">
                                 <% replies.forEach(reply => { %>

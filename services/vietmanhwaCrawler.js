@@ -102,22 +102,48 @@ async function fetchVietManhwaStoryDetail(storyUrl) {
   const authorMatch = stream.match(/"author",\s*"([^"]+)"/i) || stream.match(/"authorName",\s*"([^"]+)"/i);
   if (authorMatch) author = authorMatch[1];
 
-  // Extract all chapter slugs/paths from stream
-  // Pattern in stream: "chuong-15", "chuong-14", ... or "chap-1"
-  const chapMatches = stream.match(/chuong-\d+|chap-\d+/gi);
+  // Extract all chapter slugs/paths accurately from story links
+  const storyPath = new URL(storyUrl).pathname.replace(/\/+$/, '');
   const chapters = [];
-  if (chapMatches) {
-    const uniqueChaps = Array.from(new Set(chapMatches));
-    uniqueChaps.forEach(ch => {
-      const numMatch = ch.match(/\d+/);
-      if (numMatch) {
-        chapters.push({
-          slug: ch,
-          number: parseFloat(numMatch[0]),
-          url: `${storyUrl.replace(/\/+$/, '')}/${ch}`
-        });
+  const seenSlugs = new Set();
+
+  $('a').each((i, el) => {
+    const href = $(el).attr('href') || '';
+    if (href.includes(storyPath + '/')) {
+      const slugMatch = href.match(/(?:chuong|chap)-(\d+(?:\.\d+)?)/i);
+      if (slugMatch) {
+        const slug = slugMatch[0].toLowerCase();
+        if (!seenSlugs.has(slug)) {
+          seenSlugs.add(slug);
+          chapters.push({
+            slug,
+            number: parseFloat(slugMatch[1]),
+            url: href.startsWith('http') ? href : `https://vietmanhwa.com${href}`
+          });
+        }
       }
-    });
+    }
+  });
+
+  // Fallback to stream if no chapter <a> tags were present
+  if (chapters.length === 0) {
+    const chapMatches = stream.match(/chuong-\d+|chap-\d+/gi);
+    if (chapMatches) {
+      const uniqueChaps = Array.from(new Set(chapMatches));
+      uniqueChaps.forEach(ch => {
+        const numMatch = ch.match(/\d+/);
+        if (numMatch) {
+          const num = parseFloat(numMatch[0]);
+          if (num < 5000) {
+            chapters.push({
+              slug: ch,
+              number: num,
+              url: `${storyUrl.replace(/\/+$/, '')}/${ch}`
+            });
+          }
+        }
+      });
+    }
   }
 
   // Sort chapters ascending (Chap 1 -> Chap N)
