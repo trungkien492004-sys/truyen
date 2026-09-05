@@ -103,7 +103,7 @@ async function fetchVietManhwaStoryDetail(storyUrl) {
   if (authorMatch) author = authorMatch[1];
 
   // Extract all chapter slugs/paths accurately from story links
-  const storyPath = new URL(storyUrl).pathname.replace(/\/+$/, '');
+  const storyPath = new URL(cleanUrl).pathname.replace(/\/+$/, '');
   const chapters = [];
   const seenSlugs = new Set();
 
@@ -138,7 +138,7 @@ async function fetchVietManhwaStoryDetail(storyUrl) {
             chapters.push({
               slug: ch,
               number: num,
-              url: `${storyUrl.replace(/\/+$/, '')}/${ch}`
+              url: `${cleanUrl.replace(/\/+$/, '')}/${ch}`
             });
           }
         }
@@ -155,7 +155,7 @@ async function fetchVietManhwaStoryDetail(storyUrl) {
     author,
     description,
     coverUrl,
-    sourceUrl: storyUrl,
+    sourceUrl: cleanUrl,
     chapters
   };
 }
@@ -222,12 +222,12 @@ async function syncVietManhwaStory(storyUrl, options = {}) {
     throw new Error(`Could not parse title from ${storyUrl}`);
   }
 
-  // 1. Check duplicate by source_url (handling trailing slashes)
-  const cleanUrl = storyUrl.replace(/\/$/, '');
+  // 1. Check duplicate by source_url (handling trailing slashes & suffixes)
+  const cleanUrl = (detail.sourceUrl || storyUrl).replace(/\/$/, '');
   let { data: byUrl } = await supabase
     .from('stories')
     .select('id, title, source_url')
-    .or(`source_url.eq.${cleanUrl},source_url.eq.${cleanUrl}/`)
+    .or(`source_url.eq.${cleanUrl},source_url.eq.${cleanUrl}/,source_url.eq.${storyUrl}`)
     .limit(1);
 
   let existingStory = byUrl && byUrl.length > 0 ? byUrl[0] : null;
@@ -274,7 +274,7 @@ async function syncVietManhwaStory(storyUrl, options = {}) {
         cover_url: detail.coverUrl || '/css/default-cover.jpg',
         status: targetStatus,
         story_type: 'comic',
-        source_url: storyUrl
+        source_url: cleanUrl
       }])
       .select('*')
       .single();
