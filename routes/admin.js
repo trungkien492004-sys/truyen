@@ -557,9 +557,9 @@ async function parseSingleFileToChapter(file, storyId) {
   // Mặc định: 1 file = 1 chương -> Phân tích tên tệp tin để trích xuất số chương và tiêu đề chương
   const fileName = path.basename(file.originalname, path.extname(file.originalname)).trim();
   let chapter_number = null;
-  let title = '';
+  let title = fileName;
 
-  // 1. Kiểm tra định dạng 3 phần phân cách bởi _ hoặc -
+  // 1. Kiểm tra định dạng 3 phần phân cách bởi _ hoặc - (Ví dụ: TenTruyen - Chuong 1 - TieuDe)
   const parts = fileName.split(/[_-]/).map(p => p.trim());
   if (parts.length >= 3) {
     const chapNumStr = parts[1];
@@ -572,28 +572,28 @@ async function parseSingleFileToChapter(file, storyId) {
         chapter_number = parseFloat(standaloneNumMatch[1]);
       }
     }
-    title = parts[2];
+    title = parts.slice(2).join(' - ').trim() || fileName;
   } else {
-    // Không khớp định dạng 3 phần -> Tìm số chương trong toàn bộ tên file
-    // Hỗ trợ Chương 1, Chap 2, Chapter 3, Phần 4, Part 5, P6, p.7, p 8, chuong 9, phan 10, chuong10, p10...
-    const numMatch = fileName.match(/(?:Chương|Chap|Chapter|Phần|Part|P|chuong|phan)\s*?\.?\s*?(\d+(?:\.\d+)?)/i);
-    if (numMatch) {
-      chapter_number = parseFloat(numMatch[1]);
+    // 2. Kiểm tra tiền tố dạng: "Chương 1: Tiêu đề", "Chap 2 - Tiêu đề", "1. Tiêu đề"
+    const prefixMatch = fileName.match(/^(?:(?:Chương|Chap|Chapter|Phần|Part|P|chuong|phan)\s*?\.?\s*?)?(\d+(?:\.\d+)?)\s*[:\-_.]\s*(.*)$/i);
+    if (prefixMatch) {
+      chapter_number = parseFloat(prefixMatch[1]);
+      title = prefixMatch[2].trim() || fileName;
     } else {
-      // Tìm số chương viết dính liền không dấu: chuong1, phan2, p3...
-      const dínhMatch = fileName.match(/(?:chuong|phan|p|chap|part)(\d+(?:\.\d+)?)/i);
-      if (dínhMatch) {
-        chapter_number = parseFloat(dínhMatch[1]);
+      // 3. Kiểm tra tiền tố dạng: "Chương 1 Tiêu đề", "Chap 2 Tiêu đề"
+      const explicitPrefix = fileName.match(/^(?:Chương|Chap|Chapter|Phần|Part|P|chuong|phan)\s*?\.?\s*?(\d+(?:\.\d+)?)\s*(.*)$/i);
+      if (explicitPrefix) {
+        chapter_number = parseFloat(explicitPrefix[1]);
+        title = explicitPrefix[2].trim() || fileName;
       } else {
-        // Tìm bất kỳ số đơn lẻ nào trong tên file
-        const standaloneNumMatch = fileName.match(/(\d+(?:\.\d+)?)/);
-        if (standaloneNumMatch) {
-          chapter_number = parseFloat(standaloneNumMatch[1]);
+        // 4. Nếu tên file chỉ có số ở vị trí khác (hoặc không có số), giữ nguyên title là fileName
+        const numMatch = fileName.match(/(?:Chương|Chap|Chapter|Phần|Part|P|chuong|phan)\s*?\.?\s*?(\d+(?:\.\d+)?)/i);
+        if (numMatch) {
+          chapter_number = parseFloat(numMatch[1]);
         }
+        title = fileName;
       }
     }
-    // Thông minh: Giữ lại toàn bộ tên file gốc làm tiêu đề chương nếu không đúng định dạng 3 phần
-    title = fileName;
   }
 
   return [{
