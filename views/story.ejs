@@ -5,7 +5,7 @@
 </div>
 
 <div class="story-detail-header">
-    <img src="<%= story.cover_url %>" alt="<%= story.title %>" class="story-detail-cover">
+    <img src="<%= story.cover_url %>" alt="<%= story.title %>" class="story-detail-cover" onerror="this.onerror=null; this.src='/css/default-cover.jpg';" decoding="async">
     
     <div class="story-detail-info">
         <div style="display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; margin-bottom: 0.5rem;">

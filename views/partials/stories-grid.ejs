@@ -11,7 +11,7 @@
         <% stories.forEach(story => { %>
             <div class="story-card">
                 <a href="/story/<%= story.id %>">
-                    <img src="<%= story.cover_url %>" alt="<%= story.title %>" class="story-cover">
+                    <img src="<%= story.cover_url %>" alt="<%= story.title %>" class="story-cover" onerror="this.onerror=null; this.src='/css/default-cover.jpg';" decoding="async">
                 </a>
                 <div class="story-info">
                     <a href="/story/<%= story.id %>" class="story-title" title="<%= story.title %>">

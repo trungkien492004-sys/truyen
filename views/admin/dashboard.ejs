@@ -62,7 +62,7 @@
                 <% stories.forEach(story => { %>
                     <tr>
                         <td>
-                            <img src="<%= story.cover_url %>" alt="Cover" style="width: 40px; height: 50px; object-fit: cover; border-radius: 4px;">
+                            <img src="<%= story.cover_url %>" alt="Cover" style="width: 40px; height: 50px; object-fit: cover; border-radius: 4px;" onerror="this.onerror=null; this.src='/css/default-cover.jpg';">
                         </td>
                         <td>
                             <strong><%= story.title %></strong>

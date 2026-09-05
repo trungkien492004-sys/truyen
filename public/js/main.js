@@ -50,8 +50,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 const activeList = document.getElementById(`top-${targetTab}`);
                 if (activeList) {
                     activeList.classList.add('active');
-                }
             });
         });
     }
+
+    // 3. TỰ ĐỘNG THAY THẾ ẢNH BÌA LỖI BẰNG ẢNH MẶC ĐỊNH
+    window.addEventListener('error', (e) => {
+        if (e.target && e.target.tagName === 'IMG') {
+            if (!e.target.dataset.hasFallback) {
+                e.target.dataset.hasFallback = 'true';
+                e.target.src = '/css/default-cover.jpg';
+            }
+        }
+    }, true);
 });
