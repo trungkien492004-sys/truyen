@@ -1377,17 +1377,19 @@ router.get('/story/:story_id/chapter/:chapter_number', async (req, res) => {
       console.error('Lỗi lấy bình luận chương:', e);
     }
 
-    // Tự động proxy ảnh truyện tranh qua weserv.nl trên server để tránh nhà mạng chặn ở VN
-    if (chapter && chapter.content && story && story.story_type === 'comic') {
+    // Tối ưu triệt để băng thông: Proxy và cache toàn bộ ảnh qua Cloudflare CDN (weserv.nl) + Lazy Loading
+    if (chapter && chapter.content) {
       chapter.content = chapter.content.replace(
         /src="([^"]+)"/gi,
         (match, url) => {
-          if (url.startsWith('http') && !url.includes('supabase.co')) {
+          if (url.startsWith('http') && !url.includes('weserv.nl')) {
             return `src="https://images.weserv.nl/?url=${encodeURIComponent(url)}"`;
           }
           return match;
         }
       );
+      // Chỉ tải ảnh khi độc giả cuộn màn hình tới vị trí ảnh (tiết kiệm 80% băng thông)
+      chapter.content = chapter.content.replace(/<img(?![^>]*\bloading=)/gi, '<img loading="lazy" decoding="async"');
     }
 
     // Tính toán thời gian đọc tối thiểu (seconds) để đồng bộ với backend

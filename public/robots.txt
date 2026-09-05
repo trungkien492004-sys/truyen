@@ -1,0 +1,7 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /api/
+Disallow: /auth/
+Disallow: /*/chapter/*/read-confirm
+Disallow: /*/download
+Crawl-delay: 5
