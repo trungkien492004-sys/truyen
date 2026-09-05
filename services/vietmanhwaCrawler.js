@@ -174,17 +174,31 @@ async function fetchVietManhwaChapterContent(chapterUrl) {
     throw new Error('No CDN images found in chapter stream');
   }
 
-  // Filter only manga image files
-  const images = Array.from(new Set(cdnMatches)).filter(img => 
-    img.includes('/manga-images/') || img.includes('/test/images-story/') || img.endsWith('.jpg') || img.endsWith('.webp') || img.endsWith('.png')
-  );
+  // Filter only real manga image panels (strictly located in /manga-images/)
+  // Strictly exclude recommended story covers, posters, ads, etc.
+  const images = Array.from(new Set(cdnMatches)).filter(img => {
+    if (!img.includes('cdn.vietmanhwa.com/manga-images/')) return false;
+    const lower = img.toLowerCase();
+    if (
+      lower.includes('banner') ||
+      lower.includes('logo') ||
+      lower.includes('tele') ||
+      lower.includes('discord') ||
+      lower.includes('qc') ||
+      lower.includes('ads') ||
+      lower.includes('credit')
+    ) {
+      return false;
+    }
+    return true;
+  });
 
   if (images.length === 0) {
     throw new Error('Filtered image list is empty');
   }
 
-  // Sort images if needed (usually 001, 002, 003...)
-  images.sort((a, b) => a.localeCompare(b));
+  // Sort images numerically (001, 002, 003...)
+  images.sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
 
   // Build HTML content for DB
   const contentHtml = images
