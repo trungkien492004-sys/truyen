@@ -1377,7 +1377,7 @@ router.get('/story/:story_id/chapter/:chapter_number', async (req, res) => {
       console.error('Lỗi lấy bình luận chương:', e);
     }
 
-    // Tối ưu triệt để băng thông: Proxy và cache toàn bộ ảnh qua Cloudflare CDN (weserv.nl) + Lazy Loading
+    // Tối ưu tốc độ tải ảnh tức thì & bảo vệ băng thông Supabase qua Cloudflare CDN (weserv.nl)
     if (chapter && chapter.content) {
       chapter.content = chapter.content.replace(
         /src="([^"]+)"/gi,
@@ -1388,8 +1388,8 @@ router.get('/story/:story_id/chapter/:chapter_number', async (req, res) => {
           return match;
         }
       );
-      // Chỉ tải ảnh khi độc giả cuộn màn hình tới vị trí ảnh (tiết kiệm 80% băng thông)
-      chapter.content = chapter.content.replace(/<img(?![^>]*\bloading=)/gi, '<img loading="lazy" decoding="async"');
+      // Cho phép tải sẵn toàn bộ ảnh ngay khi mở chương, decoding="async" để cuộn trang mượt mà không bị khựng
+      chapter.content = chapter.content.replace(/<img(?![^>]*\bdecoding=)/gi, '<img decoding="async"');
     }
 
     // Tính toán thời gian đọc tối thiểu (seconds) để đồng bộ với backend
