@@ -1377,18 +1377,8 @@ router.get('/story/:story_id/chapter/:chapter_number', async (req, res) => {
       console.error('Lỗi lấy bình luận chương:', e);
     }
 
-    // Tối ưu tốc độ tải ảnh tức thì & bảo vệ băng thông Supabase qua Cloudflare CDN (weserv.nl)
+    // Giữ ảnh load trực tiếp từ nguồn (comic images không qua weserv vì một số domain bị weserv chặn)
     if (chapter && chapter.content) {
-      chapter.content = chapter.content.replace(
-        /src="([^"]+)"/gi,
-        (match, url) => {
-          if (url.startsWith('http') && !url.includes('weserv.nl')) {
-            return `src="https://images.weserv.nl/?url=${encodeURIComponent(url)}"`;
-          }
-          return match;
-        }
-      );
-      // Cho phép tải sẵn toàn bộ ảnh ngay khi mở chương, decoding="async" để cuộn trang mượt mà không bị khựng
       chapter.content = chapter.content.replace(/<img(?![^>]*\bdecoding=)/gi, '<img decoding="async"');
     }
 
