@@ -167,11 +167,15 @@
                                 <strong>Chương <%= chap.chapter_number %></strong><% if (chap.title) { %>: <%= chap.title %><% } %>
                             <% } %>
                         </span>
-                        <span style="font-size: 0.78rem; color: var(--text-secondary); white-space: nowrap; flex-shrink: 0;">
+                        <div style="font-size: 0.78rem; color: var(--text-secondary); white-space: nowrap; flex-shrink: 0; display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="display: inline-flex; align-items: center; gap: 0.2rem;" title="Lượt xem chương">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.7;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                <%= chap.views || 0 %>
+                            </span>
                             <% if (chap.created_at) { %>
-                                <%= new Date(chap.created_at).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }) %>
+                                <span>• <%= new Date(chap.created_at).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }) %></span>
                             <% } %>
-                        </span>
+                        </div>
                     </a>
                 <% }) %>
             </div>

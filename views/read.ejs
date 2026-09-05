@@ -14,7 +14,13 @@
                     Chương <%= chapter.chapter_number %><% if (chapter.title) { %>: <%= chapter.title %><% } %>
                 <% } %>
             </h1>
-            <p style="color: var(--text-secondary); font-size: 1rem; margin: 0;">Truyện: <strong><%= story.title %></strong></p>
+            <p style="color: var(--text-secondary); font-size: 0.95rem; margin: 0; display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap;">
+                <span>Truyện: <strong><%= story.title %></strong></span>
+                <span style="display: inline-flex; align-items: center; gap: 0.3rem; color: var(--text-secondary); font-size: 0.85rem;" title="Lượt xem chương này">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.7;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <%= chapter.views || 0 %> lượt xem
+                </span>
+            </p>
         </div>
         <% if (user && (user.role === 'admin' || user.role === 'sp_admin')) { %>
             <a href="/admin/chapter/edit/<%= chapter.id %>?redirect_to=/story/<%= story.id %>/chapter/<%= chapter.chapter_number %>" class="btn btn-secondary" style="border: 1px solid var(--accent-color); color: var(--accent-color); font-size: 0.85rem; padding: 0.4rem 0.8rem; border-radius: 6px; white-space: nowrap; font-weight: 500;">
