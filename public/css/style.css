@@ -594,7 +594,9 @@ main {
     margin: 0 auto;
 }
 .read-container--comic {
-    max-width: 1200px;
+    max-width: 1550px !important;
+    width: 96% !important;
+    margin: 0 auto !important;
 }
 .read-content img {
     width: 100% !important;
@@ -603,9 +605,14 @@ main {
     display: block !important;
     margin: 0 auto !important;
 }
+.read-container--comic .read-content {
+    max-width: 1550px !important;
+    width: 100% !important;
+    margin: 0 auto !important;
+}
 .read-container--comic .read-content img {
     width: 100% !important;
-    max-width: 100% !important;
+    max-width: 1550px !important;
     height: auto !important;
     display: block !important;
     margin: 0 auto !important;
@@ -1184,17 +1191,16 @@ footer {
         font-size: 0.85rem !important;
     }
 
-    /* Tối ưu hóa đọc truyện tranh full màn hình trên Mobile */
+    /* Tối ưu hóa đọc truyện tranh full màn hình trên Mobile: Cân đối 100%, không lệch phải */
     .read-container--comic {
-        padding: 0 !important;
-        margin-left: -1rem !important;
-        margin-right: -1rem !important;
-        width: calc(100% + 2rem) !important;
-        max-width: calc(100% + 2rem) !important;
+        padding: 0 0 4rem 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
     }
     .read-container--comic .read-content {
-        margin-left: 0 !important;
-        margin-right: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
         width: 100% !important;
         max-width: 100% !important;
     }
@@ -1204,12 +1210,16 @@ footer {
         border-radius: 0 !important;
         box-shadow: none !important;
         margin: 0 auto !important;
+        padding: 0 !important;
+        display: block !important;
     }
     .read-container--comic .read-header,
     .read-container--comic .read-navigation,
-    .read-container--comic #word-count-badge {
-        padding-left: 1rem !important;
-        padding-right: 1rem !important;
+    .read-container--comic #word-count-badge,
+    .read-container--comic > div:first-child,
+    .read-container--comic .comments-section {
+        padding-left: 0.8rem !important;
+        padding-right: 0.8rem !important;
     }
 
     /* 7b. Tối ưu Danh sách bình luận & phản hồi trên Mobile */

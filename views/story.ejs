@@ -350,6 +350,25 @@
         <% } else { %>
             <!-- Phân tách bình luận gốc và phản hồi -->
             <% 
+               const knownDisplayNames = Array.from(new Set((comments || []).map(c => c.users && c.users.display_name ? c.users.display_name.trim() : '').filter(Boolean))).sort((a, b) => b.length - a.length);
+
+               function formatCommentContent(text) {
+                   if (!text) return '';
+                   let escaped = text
+                       .replace(/&/g, '&amp;')
+                       .replace(/</g, '&lt;')
+                       .replace(/>/g, '&gt;')
+                       .replace(/"/g, '&quot;')
+                       .replace(/'/g, '&#039;');
+
+                   for (const name of knownDisplayNames) {
+                       const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                       const regex = new RegExp('@' + escapedName + '(?=[\\s,.:!?]|$)', 'g');
+                       escaped = escaped.replace(regex, '<span style="color:var(--accent-color); font-weight:600;">@' + name + '</span>');
+                   }
+                   escaped = escaped.replace(/@([a-zA-Z0-9_\u00C0-\u024F\u1EA0-\u1EF9]+)/g, '<span style="color:var(--accent-color); font-weight:600;">@$1</span>');
+                   return escaped;
+               }
 
                const topLevelComments = comments.filter(c => !c.parent_id); 
             %>
@@ -391,8 +410,8 @@
                             <span style="font-size: 0.78rem; color: var(--text-secondary);"><%= new Date(comment.created_at).toLocaleDateString('vi-VN', { hour: '2-digit', minute: '2-digit' }) %></span>
                         </div>
                         
-                        <!-- Nội dung comment có hightlight tags -->
-                        <div class="comment-content" style="font-size: 0.9rem; line-height: 1.6; color: var(--text-primary); white-space: pre-wrap; margin-bottom: 0.6rem;"><%- comment.content.replace(/@([^\s:@]+)/g, '<span style="color:var(--accent-color); font-weight:600;">@$1</span>') %></div>
+                        <!-- Nội dung comment có highlight tags chuẩn xác -->
+                        <div class="comment-content" style="font-size: 0.9rem; line-height: 1.6; color: var(--text-primary); white-space: pre-wrap; margin-bottom: 0.6rem;"><%- formatCommentContent(comment.content) %></div>
                         
                         <!-- Action buttons -->
                         <div style="display: flex; align-items: center; gap: 1.2rem; font-size: 0.8rem; color: var(--text-secondary);">
@@ -420,8 +439,8 @@
                             </div>
                         </div>
 
-                        <!-- Danh sách phản hồi lồng nhau -->
-                        <% const replies = comments.filter(c => c.parent_id === comment.id); %>
+                        <!-- Danh sách phản hồi lồng nhau (Sắp xếp mới nhất lên trước) -->
+                        <% const replies = comments.filter(c => c.parent_id === comment.id).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)); %>
                         <% if (replies.length > 0) { %>
                             <div class="replies-container" style="margin-top: 1rem; padding-left: 1rem; border-left: 2px solid var(--border-color); display: flex; flex-direction: column; gap: 1rem;">
                                 <% replies.forEach(reply => { %>
@@ -456,7 +475,7 @@
                                                     </span>
                                                     <span style="font-size: 0.75rem; color: var(--text-secondary);"><%= new Date(reply.created_at).toLocaleDateString('vi-VN', { hour: '2-digit', minute: '2-digit' }) %></span>
                                                 </div>
-                                                <div class="comment-content" style="font-size: 0.86rem; line-height: 1.5; color: var(--text-primary); white-space: pre-wrap; margin-bottom: 0.4rem;"><%- reply.content.replace(/@([^\s:@]+)/g, '<span style="color:var(--accent-color); font-weight:600;">@$1</span>') %></div>
+                                                <div class="comment-content" style="font-size: 0.86rem; line-height: 1.5; color: var(--text-primary); white-space: pre-wrap; margin-bottom: 0.4rem;"><%- formatCommentContent(reply.content) %></div>
                                                 <div style="display: flex; align-items: center; gap: 1rem;">
                                                     <button onclick="likeComment(<%= reply.id %>)" class="like-btn" style="background: none; border: none; color: <%= reply.user_liked ? 'var(--accent-color)' : 'var(--text-secondary)' %>; cursor: pointer; display: flex; align-items: center; gap: 0.2rem; font-size: 0.75rem; padding: 0;">
                                                         ❤️ <span class="likes-count"><%= reply.likes_count %></span> Thích

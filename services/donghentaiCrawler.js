@@ -4,6 +4,65 @@ const supabase = require('../config/supabase');
 const domain = 'https://donghentai.xyz';
 const apiBase = 'https://api.damconuong.cx/api/v1';
 
+function cleanTitle(str) {
+  if (!str) return '';
+  return str.toLowerCase()
+    .replace(/\[.*?\]|\(.*?\)/g, ' ')
+    .replace(/\b(18\+|one\s*shot|oneshot|raw|uncensored|khong che|khong\s*che|full|end\s*ss\d+|ss\d+|phan\s*\d+|mua\s*\d+)\b/gi, ' ')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[đĐ]/g, 'd')
+    .replace(/[^a-z0-9]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+async function findExistingStory(storyName, storySlug) {
+  const sourceUrl = `https://donghentai.xyz/manga/${storySlug}`;
+  
+  // 1. By exact source_url
+  const { data: byUrl } = await supabase
+    .from('stories')
+    .select('id, title, source_url, status')
+    .eq('source_url', sourceUrl)
+    .limit(1);
+
+  if (byUrl && byUrl.length > 0) return byUrl[0];
+
+  // 2. By source_url ending with slug
+  const { data: bySlug } = await supabase
+    .from('stories')
+    .select('id, title, source_url, status')
+    .ilike('source_url', `%/${storySlug}`)
+    .limit(1);
+
+  if (bySlug && bySlug.length > 0) return bySlug[0];
+
+  // 3. By exact title
+  const { data: byTitle } = await supabase
+    .from('stories')
+    .select('id, title, source_url, status')
+    .ilike('title', storyName)
+    .limit(1);
+
+  if (byTitle && byTitle.length > 0) return byTitle[0];
+
+  // 4. By cleaned normalized title
+  const cleanedTarget = cleanTitle(storyName);
+  if (cleanedTarget) {
+    const { data: allStories } = await supabase
+      .from('stories')
+      .select('id, title, source_url, status')
+      .limit(1000);
+
+    if (allStories) {
+      const match = allStories.find(s => cleanTitle(s.title) === cleanedTarget);
+      if (match) return match;
+    }
+  }
+
+  return null;
+}
+
 /**
  * Hàm kiểm tra và tự động cập nhật các chương mới nhất từ DongHentai.xyz
  * @param {number} maxPages - Số trang gần đây cần quét (Ví dụ: 3 trang = ~150 truyện mới cập nhật nhất)
@@ -61,15 +120,25 @@ async function syncLatestDongHentai(maxPages = 3) {
           } catch(bErr) {}
 
           // 3. Kiểm tra/Tạo truyện trong DB nếu truyện có chứa chương
-          const { data: existingStory } = await supabase
-            .from('stories')
-            .select('id')
-            .ilike('title', storyName)
-            .maybeSingle();
+          const existingStory = await findExistingStory(storyName, storySlug);
 
           let storyId;
+          const isOneShot = /oneshot|one-shot|one shot/i.test(storyName) || /oneshot|one-shot|one shot/i.test(description);
+          const targetStatus = isOneShot ? 'completed' : 'ongoing';
+
           if (existingStory) {
             storyId = existingStory.id;
+            // Đảm bảo cập nhật source_url nếu chưa có
+            const updateFields = {};
+            if (!existingStory.source_url) {
+              updateFields.source_url = `https://donghentai.xyz/manga/${storySlug}`;
+            }
+            if (isOneShot && existingStory.status !== 'completed') {
+              updateFields.status = 'completed';
+            }
+            if (Object.keys(updateFields).length > 0) {
+              await supabase.from('stories').update(updateFields).eq('id', storyId);
+            }
           } else {
             // Lấy tên tác giả từ API hoặc đặt là Ẩn danh
             const authorName = (item.artist && item.artist.name) ? item.artist.name : 'Ẩn danh';
@@ -81,7 +150,7 @@ async function syncLatestDongHentai(maxPages = 3) {
                 author: authorName,
                 description: description,
                 cover_url: coverUrl,
-                status: 'ongoing',
+                status: targetStatus,
                 story_type: 'comic',
                 source_url: `https://donghentai.xyz/manga/${storySlug}`
               }])
@@ -203,15 +272,24 @@ async function crawlSingleDongHentaiManga(storySlug) {
     if (sourceChapters.length === 0) return { success: false, error: 'Truyện chưa có chương nào phía nguồn.' };
 
     // Kiểm tra DB
-    const { data: existingStory } = await supabase
-      .from('stories')
-      .select('id')
-      .ilike('title', storyName)
-      .maybeSingle();
+    const existingStory = await findExistingStory(storyName, storySlug);
 
     let storyId;
+    const isOneShot = /oneshot|one-shot|one shot/i.test(storyName) || /oneshot|one-shot|one shot/i.test(description);
+    const targetStatus = isOneShot ? 'completed' : 'ongoing';
+
     if (existingStory) {
       storyId = existingStory.id;
+      const updateFields = {};
+      if (!existingStory.source_url) {
+        updateFields.source_url = `https://donghentai.xyz/manga/${storySlug}`;
+      }
+      if (isOneShot && existingStory.status !== 'completed') {
+        updateFields.status = 'completed';
+      }
+      if (Object.keys(updateFields).length > 0) {
+        await supabase.from('stories').update(updateFields).eq('id', storyId);
+      }
     } else {
       // Lấy tên tác giả từ API hoặc đặt là Ẩn danh
       const authorName = (item.artist && item.artist.name) ? item.artist.name : 'Ẩn danh';
@@ -223,7 +301,7 @@ async function crawlSingleDongHentaiManga(storySlug) {
           author: authorName,
           description: description,
           cover_url: coverUrl,
-          status: 'ongoing',
+          status: targetStatus,
           story_type: 'comic',
           source_url: `https://donghentai.xyz/manga/${storySlug}`
         }])

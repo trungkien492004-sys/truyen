@@ -9,9 +9,11 @@ function normalizeTitle(str) {
   if (!str) return '';
   return str
     .toLowerCase()
+    .replace(/\[.*?\]|\(.*?\)/g, ' ')
+    .replace(/\b(18\+|one\s*shot|oneshot|raw|uncensored|khong che|khong\s*che|full|end\s*ss\d+|ss\d+|phan\s*\d+|mua\s*\d+)\b/gi, ' ')
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '') // remove diacritics
-    .replace(/đ/g, 'd')
+    .replace(/[đĐ]/g, 'd')
     .replace(/[^a-z0-9\s]/g, '') // remove special characters
     .replace(/\s+/g, ' ')
     .trim();
@@ -84,10 +86,15 @@ async function fetchVietManhwaStoryDetail(storyUrl) {
 
   let description = $('meta[property="og:description"]').attr('content') || '';
   
-  // Find cover image from stream or meta
-  const cdnImages = stream.match(/https:\/\/cdn\.vietmanhwa\.com\/[^\s"<>'\\]+/g) || [];
+  // Find cover image from stream or meta (strictly avoiding generic Hooker placeholder 011111111111)
+  const cdnImages = (stream.match(/https:\/\/cdn\.vietmanhwa\.com\/[^\s"<>'\\]+/g) || [])
+    .filter(img => !img.includes('011111111111'));
+  
+  const ogImg = $('meta[property="og:image"]').attr('content');
+  const validOgImg = (ogImg && !ogImg.includes('011111111111')) ? ogImg : null;
+
   let coverUrl = cdnImages.find(img => img.includes('manga-posters/') || img.includes('poster-') || img.includes('story-images/')) 
-    || $('meta[property="og:image"]').attr('content') 
+    || validOgImg 
     || '/css/default-cover.jpg';
 
   // Extract author if available in stream
@@ -175,21 +182,26 @@ async function syncVietManhwaStory(storyUrl, options = {}) {
     throw new Error(`Could not parse title from ${storyUrl}`);
   }
 
-  // 1. Check duplicate by source_url
-  let { data: existingStory } = await supabase
+  // 1. Check duplicate by source_url (handling trailing slashes)
+  const cleanUrl = storyUrl.replace(/\/$/, '');
+  let { data: byUrl } = await supabase
     .from('stories')
     .select('id, title, source_url')
-    .eq('source_url', storyUrl)
-    .maybeSingle();
+    .or(`source_url.eq.${cleanUrl},source_url.eq.${cleanUrl}/`)
+    .limit(1);
+
+  let existingStory = byUrl && byUrl.length > 0 ? byUrl[0] : null;
 
   // 2. If not found by source_url, check duplicate by title / normalized title
   if (!existingStory) {
     const { data: allStories } = await supabase
       .from('stories')
-      .select('id, title, source_url');
+      .select('id, title, source_url')
+      .limit(1000);
 
     if (allStories) {
-      const match = allStories.find(s => normalizeTitle(s.title) === detail.normalizedTitle);
+      const targetNorm = normalizeTitle(detail.title);
+      const match = allStories.find(s => normalizeTitle(s.title) === targetNorm);
       if (match) {
         existingStory = match;
         console.log(`[VIETMANHWA] 🎯 Matched duplicate story by Title: "${detail.title}" -> DB ID: ${existingStory.id}`);
