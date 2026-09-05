@@ -1377,9 +1377,19 @@ router.get('/story/:story_id/chapter/:chapter_number', async (req, res) => {
       console.error('Lỗi lấy bình luận chương:', e);
     }
 
-    // Giữ ảnh load trực tiếp từ nguồn (comic images không qua weserv vì một số domain bị weserv chặn)
+    // Tối ưu tốc độ tải ảnh truyện tranh:
+    // 1. Xóa bỏ loading="lazy" (nếu có từ crawler) để trình duyệt tải song song toàn bộ ảnh ngay khi mở trang
+    // 2. Thêm loading="eager" & decoding="async" & fetchpriority="high" cho các ảnh đầu tiên
     if (chapter && chapter.content) {
-      chapter.content = chapter.content.replace(/<img(?![^>]*\bdecoding=)/gi, '<img decoding="async"');
+      chapter.content = chapter.content.replace(/\s*loading=["']?lazy["']?/gi, '');
+      let imgIdx = 0;
+      chapter.content = chapter.content.replace(/<img\b/gi, () => {
+        imgIdx++;
+        if (imgIdx <= 5) {
+          return '<img fetchpriority="high" loading="eager" decoding="async"';
+        }
+        return '<img loading="eager" decoding="async"';
+      });
     }
 
     // Tính toán thời gian đọc tối thiểu (seconds) để đồng bộ với backend
