@@ -261,7 +261,7 @@ async function fetchTopAuthors(limitCount = 20) {
 }
 
 // TRANG CHỦ & BẢNG XẾP HẠNG
-// build-tag: force-redeploy-2026-07-22b (đổi comment này để chắc chắn Vercel không dùng cache build cũ)
+// build-tag: redeploy-supabase-migrated-2026-09-05-1740
 router.get('/', async (req, res) => {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.setHeader('Pragma', 'no-cache');
