@@ -14,7 +14,9 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 
 function formatContentToHtml(content) {
   if (!content) return '';
   if (/<p>|<br>|<div>/i.test(content)) {
-    return content;
+    return content
+      .replace(/(<\/p>|<\/div>|<br\s*\/?>)\s*[\r\n]+/gi, '$1')
+      .replace(/[\r\n]+\s*(<p\b|<div\b)/gi, '$1');
   }
   return content
     .split(/\r?\n/)

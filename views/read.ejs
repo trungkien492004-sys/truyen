@@ -65,7 +65,7 @@
     </div>
 
     <!-- Nội dung chương truyện (Có thể chứa cả chữ và các thẻ ảnh đan xen) -->
-    <div class="read-content" id="chapter-content">
+    <div class="read-content <%= (chapter && chapter.content && /<p\b/i.test(chapter.content)) ? 'has-p-tags' : '' %>" id="chapter-content">
         <%- chapter.content %>
     </div>
 
@@ -120,6 +120,9 @@
 <style>
     .read-content {
         white-space: pre-line !important;
+    }
+    .read-content.has-p-tags {
+        white-space: normal !important;
     }
     /* Styling cho dropdown mục lục nhanh */
     .toc-dropdown-content::-webkit-scrollbar {

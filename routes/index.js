@@ -1381,6 +1381,13 @@ router.get('/story/:story_id/chapter/:chapter_number', async (req, res) => {
     // 1. Xóa bỏ loading="lazy" (nếu có từ crawler) để trình duyệt tải song song toàn bộ ảnh ngay khi mở trang
     // 2. Thêm loading="eager" & decoding="async" & fetchpriority="high" cho các ảnh đầu tiên
     if (chapter && chapter.content) {
+      // Làm sạch khoảng trắng/xuống dòng thừa giữa các thẻ HTML để tránh lỗi cách 2 dòng khi hiển thị
+      if (/<p\b|<div\b/i.test(chapter.content)) {
+        chapter.content = chapter.content
+          .replace(/(<\/p>|<\/div>|<br\s*\/?>)\s*[\r\n]+/gi, '$1')
+          .replace(/[\r\n]+\s*(<p\b|<div\b)/gi, '$1');
+      }
+
       chapter.content = chapter.content.replace(/\s*loading=["']?lazy["']?/gi, '');
       let imgIdx = 0;
       chapter.content = chapter.content.replace(/<img\b/gi, () => {
