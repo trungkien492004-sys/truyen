@@ -50,6 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const activeList = document.getElementById(`top-${targetTab}`);
                 if (activeList) {
                     activeList.classList.add('active');
+                }
             });
         });
     }
