@@ -60,8 +60,8 @@ function parseVietmanhwaStream(html) {
  * URL e.g. https://vietmanhwa.com/manhwa-18/ky-nghi-uot-ac-khong-che
  */
 async function fetchVietManhwaStoryDetail(storyUrl) {
-  // Fix sitemap URLs ending with '-2' redirect issue
-  const cleanUrl = storyUrl.replace(/-2$/, '');
+  // Fix sitemap URLs ending with '-2', '-3' etc. redirect issue
+  const cleanUrl = storyUrl.replace(/-\d+$/, '');
   console.log(`[VIETMANHWA] Fetching story details: ${cleanUrl} (Original: ${storyUrl})`);
   const html = await fetchUrl(cleanUrl);
   const stream = parseVietmanhwaStream(html);
