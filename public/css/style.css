@@ -216,6 +216,13 @@ main {
     margin: 2rem auto;
     padding: 0 2rem;
 }
+main.comic-main,
+main:has(.read-container--comic) {
+    max-width: 1650px !important;
+    width: 100% !important;
+    margin: 1rem auto !important;
+    padding: 0 !important;
+}
 
 /* TRANG CHỦ (HOME) LAYOUT */
 .hero-section {
@@ -594,9 +601,10 @@ main {
     margin: 0 auto;
 }
 .read-container--comic {
-    max-width: 1550px !important;
-    width: 96% !important;
+    max-width: 1650px !important;
+    width: 100% !important;
     margin: 0 auto !important;
+    padding: 1rem 0 5rem 0 !important;
 }
 .read-content img {
     width: 100% !important;
@@ -606,16 +614,19 @@ main {
     margin: 0 auto !important;
 }
 .read-container--comic .read-content {
-    max-width: 1550px !important;
+    max-width: 1650px !important;
     width: 100% !important;
     margin: 0 auto !important;
+    padding: 0 !important;
 }
 .read-container--comic .read-content img {
     width: 100% !important;
-    max-width: 1550px !important;
+    max-width: 1650px !important;
     height: auto !important;
     display: block !important;
     margin: 0 auto !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
 }
 
 .read-header {
@@ -1067,9 +1078,16 @@ footer {
     }
 
     /* 3. Main layout padding & grid gaps */
-    main {
+    main:not(.comic-main) {
         padding: 0 1rem;
         margin: 1rem auto;
+    }
+    main.comic-main,
+    main:has(.read-container--comic) {
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
     }
     .content-grid {
         gap: 1.5rem !important;

@@ -74,4 +74,4 @@
             }
         });
     </script>
-    <main>
+    <main <%- (typeof story !== 'undefined' && story && story.story_type === 'comic') ? 'class="comic-main"' : '' %>>

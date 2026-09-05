@@ -189,10 +189,25 @@
         border-color: transparent !important;
     }
 
+    main.comic-main,
+    main:has(.read-container--comic) {
+        max-width: 1650px !important;
+        width: 100% !important;
+        padding: 0 !important;
+        margin: 1rem auto !important;
+    }
+
     /* MOBILE RESPONSIVE OPTIMIZATION */
     @media (max-width: 768px) {
         body {
             overflow-x: hidden !important;
+        }
+        main.comic-main,
+        main:has(.read-container--comic) {
+            padding: 0 !important;
+            margin: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
         }
         .read-container:not(.read-container--comic) {
             padding: 1rem 0.6rem 4rem 0.6rem !important;
