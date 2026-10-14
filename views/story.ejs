@@ -77,6 +77,10 @@
                     <%= bookmarkStatus ? '💔 Bỏ theo dõi' : '❤️ Theo dõi' %>
                 </button>
             <% } %>
+
+            <% if (typeof user !== 'undefined' && user && (user.role === 'admin' || user.role === 'sp_admin')) { %>
+                <a href="/admin/story/download-epub/<%= story.id %>" class="btn btn-secondary" style="padding: 0.8rem 1.5rem; border-radius: 8px; font-weight: 600; display: inline-flex; align-items: center; gap: 0.4rem; background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.2); color: #10b981; text-decoration: none;">📥 Tải EPUB</a>
+            <% } %>
         </div>
     </div>
 </div>

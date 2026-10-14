@@ -2327,9 +2327,9 @@ async function generateEpub(story, chapters) {
   return zip.toBuffer();
 }
 
-// TUYẾN ĐƯỜNG TẢI TRUYỆN DƯỚI DẠNG FILE EPUB (Đã tắt để tiết kiệm băng thông)
+// TUYẾN ĐƯỜNG TẢI TRUYỆN DƯỚI DẠNG FILE EPUB
 router.get('/story/download-epub/:id', async (req, res) => {
-  return res.status(403).send('Tính năng tải EPUB tạm thời đóng để tối ưu băng thông máy chủ.');
+  const storyId = parseInt(req.params.id);
   try {
     const { data: story, error: storyErr } = await supabase
       .from('stories')
