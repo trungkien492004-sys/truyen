@@ -18,6 +18,8 @@ public/uploads/*
 !public/uploads/.gitkeep
 !public/uploads/shop/
 !public/uploads/shop/*
+!public/uploads/heroes/
+!public/uploads/heroes/*
 
 .vercel
 .env*

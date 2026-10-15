@@ -420,25 +420,25 @@ async function ensureUserArenaData(userId) {
     .eq('user_id', userId);
 
   if (!userHeroes || userHeroes.length === 0) {
-    const { data: bachDao } = await supabase.from('card_heroes').select('id').eq('name', 'Bạch Dao').single();
-    const { data: coThanhY } = await supabase.from('card_heroes').select('id').eq('name', 'Cố Thanh Y').single();
+    const { data: lieuNhuYen } = await supabase.from('card_heroes').select('id').eq('name', 'Liễu Như Yên').single();
+    const { data: toMongDao } = await supabase.from('card_heroes').select('id').eq('name', 'Tô Mộng Dao').single();
 
-    if (bachDao) {
+    if (lieuNhuYen) {
       await supabase.from('user_heroes').insert([{
         user_id: userId,
-        hero_id: bachDao.id,
+        hero_id: lieuNhuYen.id,
         is_unlocked: true,
         shards: 0,
         level: 1,
         star: 1
       }]);
     }
-    if (coThanhY) {
+    if (toMongDao) {
       await supabase.from('user_heroes').insert([{
         user_id: userId,
-        hero_id: coThanhY.id,
+        hero_id: toMongDao.id,
         is_unlocked: false,
-        shards: 20,
+        shards: 8,
         level: 1,
         star: 1
       }]);
