@@ -324,13 +324,22 @@
             <div id="result-bonus" style="color: #f59e0b; font-weight: 600;">🎁 Thưởng thêm: +1 Rương Bạc & 30 Đan EXP</div>
         </div>
 
-        <a href="/arena" class="btn btn-primary" style="display: block; width: 100%; padding: 0.8rem; font-size: 1rem; font-weight: 700; text-decoration: none; box-sizing: border-box;">
+        <a id="btn-return-arena" href="/arena" class="btn btn-primary" style="display: block; width: 100%; padding: 0.8rem; font-size: 1rem; font-weight: 700; text-decoration: none; box-sizing: border-box;">
             Trở Về Đấu Trường
         </a>
     </div>
 </div>
 
 <script>
+    const isDungeon = <%= typeof isDungeon !== 'undefined' && isDungeon ? 'true' : 'false' %>;
+    const stageId = <%= typeof stage !== 'undefined' && stage ? stage.stage : 0 %>;
+
+    // Cập nhật link quay về nếu là dungeon
+    if (isDungeon) {
+        const retBtn = document.getElementById('btn-return-arena');
+        if (retBtn) retBtn.href = '/arena#tab-dungeon';
+    }
+
     // Dữ liệu 2 đội truyền từ server
     const attackerTeam = <%- JSON.stringify(attackerTeam) %>;
     const defenderTeam = <%- JSON.stringify(defenderTeam) %>;
@@ -637,10 +646,13 @@
         const isWin = (winner === 'attacker');
         
         try {
-            const resp = await fetch('/arena/api/battle-result', {
+            const endpoint = isDungeon ? '/arena/api/dungeon-result' : '/arena/api/battle-result';
+            const body = isDungeon ? { stage_id: stageId, winner } : { defender_id: defenderId, winner };
+
+            const resp = await fetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ defender_id: defenderId, winner })
+                body: JSON.stringify(body)
             });
             const data = await resp.json();
 
@@ -653,18 +665,39 @@
 
             if (isWin) {
                 iconEl.innerText = '🎉';
-                titleEl.innerText = 'CHIẾN THẮNG VANG DỘI!';
+                titleEl.innerText = isDungeon ? 'VƯỢT ẢI THÀNH CÔNG!' : 'CHIẾN THẮNG VANG DỘI!';
                 titleEl.style.color = '#22c55e';
-                descEl.innerText = 'Bạn đã lãnh đạo các nàng thơ chiến thắng áp đảo!';
-                eloEl.innerText = `+${data.elo_change} Elo (Tổng: ${data.new_elo} - ${data.tier})`;
-                eloEl.style.color = '#22c55e';
-                bonusEl.innerText = '🎁 Thưởng: +1 Rương Bạc & +30 Đan EXP Tướng!';
+                descEl.innerText = isDungeon 
+                    ? `Bạn đã xuất sắc tiêu diệt Thủ Lĩnh Màn ${stageId}!` 
+                    : 'Bạn đã lãnh đạo các nàng thơ chiến thắng áp đảo!';
+
+                if (isDungeon) {
+                    eloEl.innerText = data.isFirstClear ? `🏆 Mở khóa Ải tiếp theo: Tầng ${data.newStage}!` : 'Đã vượt qua thử thách!';
+                    eloEl.style.color = '#f59e0b';
+                    let rDesc = '🎁 Phần Thưởng: ';
+                    if (data.rewards) {
+                        const parts = [];
+                        if (data.rewards.wooden_chests) parts.push(`+${data.rewards.wooden_chests} Hòm Gỗ`);
+                        if (data.rewards.silver_chests) parts.push(`+${data.rewards.silver_chests} Hòm Bạc`);
+                        if (data.rewards.gold_chests) parts.push(`+${data.rewards.gold_chests} Hòm Vàng`);
+                        if (data.rewards.exp_pills) parts.push(`+${data.rewards.exp_pills} Đan EXP`);
+                        if (data.rewards.star_stones) parts.push(`+${data.rewards.star_stones} Đá Sao`);
+                        rDesc += parts.join(' · ');
+                    }
+                    bonusEl.innerText = rDesc;
+                } else {
+                    eloEl.innerText = `+${data.elo_change} Elo (Tổng: ${data.new_elo} - ${data.tier})`;
+                    eloEl.style.color = '#22c55e';
+                    bonusEl.innerText = '🎁 Thưởng: +1 Rương Bạc & +30 Đan EXP Tướng!';
+                }
             } else {
                 iconEl.innerText = '💀';
                 titleEl.innerText = 'THẤT BẠI ĐÁNG TIẾC!';
                 titleEl.style.color = '#ef4444';
-                descEl.innerText = 'Đối thủ quá kiên cường. Hãy nâng cấp tướng và phục thù!';
-                eloEl.innerText = `${data.elo_change} Elo (Tổng: ${data.new_elo} - ${data.tier})`;
+                descEl.innerText = isDungeon 
+                    ? 'Yêu quái quá hung hãn! Hãy nâng cấp level và sao cho nữ tướng rồi thử lại.' 
+                    : 'Đối thủ quá kiên cường. Hãy nâng cấp tướng và phục thù!';
+                eloEl.innerText = isDungeon ? 'Chưa vượt qua ải' : `${data.elo_change} Elo (Tổng: ${data.new_elo} - ${data.tier})`;
                 eloEl.style.color = '#ef4444';
                 bonusEl.innerText = 'Cố gắng lên nhé!';
             }
@@ -673,7 +706,7 @@
         } catch (e) {
             console.error('Lỗi gửi kết quả trận đấu:', e);
             alert('Trận đấu kết thúc! Kết quả: ' + (isWin ? 'Chiến Thắng!' : 'Thất Bại!'));
-            window.location.href = '/arena';
+            window.location.href = isDungeon ? '/arena#tab-dungeon' : '/arena';
         }
     }
 

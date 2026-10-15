@@ -12,6 +12,346 @@ function requireAuth(req, res, next) {
 
 router.use(requireAuth);
 
+// ĐỊNH NGHĨA 10 MÀN THÁP THỬ THÁCH (PVE DUNGEON)
+const DUNGEON_STAGES = [
+  {
+    stage: 1,
+    name: 'Cương Thi Rơm',
+    title: 'Tầng 1 - Quỷ Rơm Tác Quái',
+    element: 'Mộc',
+    combat_power: 800,
+    avatar: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=200&auto=format&fit=crop&q=80',
+    boss: {
+      name: 'Quỷ Rơm Tác Quái',
+      title: 'Tầng 1 - Mộc Linh',
+      avatar_url: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=200&auto=format&fit=crop&q=80',
+      rarity: 'R',
+      element: 'wood',
+      level: 5,
+      star: 1,
+      hp: 1800,
+      max_hp: 1800,
+      atk: 180,
+      def: 60,
+      spd: 90,
+      crit: 5,
+      rage: 0,
+      max_rage: 100,
+      skill_basic: { name: 'Gai Rơm', desc: 'Đâm gai nhọn vào mục tiêu', dmg_rate: 1.0, rage_gain: 25 },
+      skill_ultimate: { name: 'Bão Cỏ Khô', desc: 'Tung bão gai quấn lấy toàn đội', dmg_rate: 1.8, rage_cost: 100 }
+    },
+    rewards: { wooden_chests: 1, exp_pills: 5, star_stones: 0 }
+  },
+  {
+    stage: 2,
+    name: 'Sói Yêu Nguyệt Nha',
+    title: 'Tầng 2 - Ma Lang Nguyệt Ảnh',
+    element: 'Ám',
+    combat_power: 1400,
+    avatar: 'https://images.unsplash.com/photo-1564865878688-9a244444042a?w=200&auto=format&fit=crop&q=80',
+    boss: {
+      name: 'Ma Lang Nguyệt Ảnh',
+      title: 'Tầng 2 - Ám Lang',
+      avatar_url: 'https://images.unsplash.com/photo-1564865878688-9a244444042a?w=200&auto=format&fit=crop&q=80',
+      rarity: 'SR',
+      element: 'dark',
+      level: 10,
+      star: 1,
+      hp: 2800,
+      max_hp: 2800,
+      atk: 280,
+      def: 90,
+      spd: 110,
+      crit: 10,
+      rage: 0,
+      max_rage: 100,
+      skill_basic: { name: 'Cắn Xé', desc: 'Nanh sói sắc nhọn tấn công', dmg_rate: 1.1, rage_gain: 25 },
+      skill_ultimate: { name: 'Nguyệt Thực Trảm', desc: 'Vuốt sói bóng đêm cào xé toàn đội', dmg_rate: 2.0, rage_cost: 100 }
+    },
+    rewards: { wooden_chests: 2, exp_pills: 10, star_stones: 1 }
+  },
+  {
+    stage: 3,
+    name: 'Bích Nhện Tinh',
+    title: 'Tầng 3 - Nhện Chúa Rừng Sương',
+    element: 'Độc',
+    combat_power: 2000,
+    avatar: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=200&auto=format&fit=crop&q=80',
+    boss: {
+      name: 'Bích Nhện Tinh',
+      title: 'Tầng 3 - Độc Chúa',
+      avatar_url: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=200&auto=format&fit=crop&q=80',
+      rarity: 'SR',
+      element: 'poison',
+      level: 15,
+      star: 1,
+      hp: 3800,
+      max_hp: 3800,
+      atk: 360,
+      def: 130,
+      spd: 100,
+      crit: 12,
+      rage: 0,
+      max_rage: 100,
+      skill_basic: { name: 'Phóng Tơ Độc', desc: 'Bắn tơ tẩm độc gây sát thương', dmg_rate: 1.1, rage_gain: 25 },
+      skill_ultimate: { name: 'Vạn Tiễn Tơ Độc', desc: 'Tơ độc bao phủ toàn chiến trường', dmg_rate: 2.1, rage_cost: 100 }
+    },
+    rewards: { wooden_chests: 2, exp_pills: 15, star_stones: 2 }
+  },
+  {
+    stage: 4,
+    name: 'Xích Hổ Yêu Ma',
+    title: 'Tầng 4 - Hổ Cốt Cuồng Nộ',
+    element: 'Lực',
+    combat_power: 2800,
+    avatar: 'https://images.unsplash.com/photo-1561731216-c3a4d99437d5?w=200&auto=format&fit=crop&q=80',
+    boss: {
+      name: 'Xích Hổ Yêu Ma',
+      title: 'Tầng 4 - Cuồng Thú',
+      avatar_url: 'https://images.unsplash.com/photo-1561731216-c3a4d99437d5?w=200&auto=format&fit=crop&q=80',
+      rarity: 'SR',
+      element: 'fire',
+      level: 20,
+      star: 2,
+      hp: 5000,
+      max_hp: 5000,
+      atk: 480,
+      def: 180,
+      spd: 105,
+      crit: 15,
+      rage: 0,
+      max_rage: 100,
+      skill_basic: { name: 'Hổ Trảo', desc: 'Vồ tới tát mạnh mục tiêu', dmg_rate: 1.15, rage_gain: 25 },
+      skill_ultimate: { name: 'Mãnh Hổ Hống', desc: 'Tiếng gầm làm chấn động toàn đội', dmg_rate: 2.2, rage_cost: 100 }
+    },
+    rewards: { wooden_chests: 3, silver_chests: 1, exp_pills: 20, star_stones: 2 }
+  },
+  {
+    stage: 5,
+    name: 'Thạch Cự Nhân',
+    title: 'Tầng 5 - Thủ Hộ Nham Thạch',
+    element: 'Thổ',
+    combat_power: 3600,
+    avatar: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=200&auto=format&fit=crop&q=80',
+    boss: {
+      name: 'Thạch Cự Nhân',
+      title: 'Tầng 5 - Thổ Ma Thần',
+      avatar_url: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=200&auto=format&fit=crop&q=80',
+      rarity: 'SSR',
+      element: 'earth',
+      level: 25,
+      star: 2,
+      hp: 7500,
+      max_hp: 7500,
+      atk: 560,
+      def: 280,
+      spd: 85,
+      crit: 10,
+      rage: 0,
+      max_rage: 100,
+      skill_basic: { name: 'Nham Đột', desc: 'Cột đá đâm lên từ mặt đất', dmg_rate: 1.2, rage_gain: 25 },
+      skill_ultimate: { name: 'Địa Chấn Sơn Diệt', desc: 'Dộng đất sụp đổ tàn phá quân địch', dmg_rate: 2.3, rage_cost: 100 }
+    },
+    rewards: { silver_chests: 2, exp_pills: 30, star_stones: 3 }
+  },
+  {
+    stage: 6,
+    name: 'Cửu Vĩ Linh Hồ',
+    title: 'Tầng 6 - Hỏa Hồ Mê Hoặc',
+    element: 'Hỏa',
+    combat_power: 4500,
+    avatar: 'https://images.unsplash.com/photo-1516934024742-b461fba47600?w=200&auto=format&fit=crop&q=80',
+    boss: {
+      name: 'Cửu Vĩ Linh Hồ',
+      title: 'Tầng 6 - Linh Thú',
+      avatar_url: 'https://images.unsplash.com/photo-1516934024742-b461fba47600?w=200&auto=format&fit=crop&q=80',
+      rarity: 'SSR',
+      element: 'fire',
+      level: 30,
+      star: 2,
+      hp: 9000,
+      max_hp: 9000,
+      atk: 720,
+      def: 240,
+      spd: 125,
+      crit: 20,
+      rage: 0,
+      max_rage: 100,
+      skill_basic: { name: 'Hỏa Hồ Đạn', desc: 'Cầu lửa ma mị thiêu đốt', dmg_rate: 1.2, rage_gain: 25 },
+      skill_ultimate: { name: 'Cửu Vĩ Nghiệp Hỏa', desc: 'Biển lửa chín đuôi thiêu rụi đội hình', dmg_rate: 2.4, rage_cost: 100 }
+    },
+    rewards: { silver_chests: 2, exp_pills: 40, star_stones: 4 }
+  },
+  {
+    stage: 7,
+    name: 'Vô Danh Kiếm Quỷ',
+    title: 'Tầng 7 - Hắc Ám Kiếm Ma',
+    element: 'Kiếm',
+    combat_power: 5500,
+    avatar: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=200&auto=format&fit=crop&q=80',
+    boss: {
+      name: 'Vô Danh Kiếm Quỷ',
+      title: 'Tầng 7 - Kiếm Hồn',
+      avatar_url: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=200&auto=format&fit=crop&q=80',
+      rarity: 'SSR',
+      element: 'dark',
+      level: 35,
+      star: 3,
+      hp: 11000,
+      max_hp: 11000,
+      atk: 900,
+      def: 330,
+      spd: 135,
+      crit: 25,
+      rage: 0,
+      max_rage: 100,
+      skill_basic: { name: 'Tàn Kiếm', desc: 'Kiếm khí sắc lạnh chém đứt không khí', dmg_rate: 1.25, rage_gain: 25 },
+      skill_ultimate: { name: 'Vạn Kiếm Quy Tông', desc: 'Vạn đạo kiếm khí cuồng bạo xé rách địch thủ', dmg_rate: 2.5, rage_cost: 100 }
+    },
+    rewards: { silver_chests: 3, exp_pills: 50, star_stones: 5 }
+  },
+  {
+    stage: 8,
+    name: 'Bắc Hải U Xà',
+    title: 'Tầng 8 - Cửu U Minh Xà',
+    element: 'Băng',
+    combat_power: 6800,
+    avatar: 'https://images.unsplash.com/photo-1531386151447-fd76ad50012f?w=200&auto=format&fit=crop&q=80',
+    boss: {
+      name: 'Bắc Hải U Xà',
+      title: 'Tầng 8 - Hàn Xà Vương',
+      avatar_url: 'https://images.unsplash.com/photo-1531386151447-fd76ad50012f?w=200&auto=format&fit=crop&q=80',
+      rarity: 'SSR',
+      element: 'ice',
+      level: 40,
+      star: 3,
+      hp: 13500,
+      max_hp: 13500,
+      atk: 1080,
+      def: 420,
+      spd: 120,
+      crit: 20,
+      rage: 0,
+      max_rage: 100,
+      skill_basic: { name: 'Hàn Băng Thấu Xương', desc: 'Hơi lạnh ngưng đọng tấn công mục tiêu', dmg_rate: 1.3, rage_gain: 25 },
+      skill_ultimate: { name: 'Băng Phong Vạn Lý', desc: 'Đóng băng toàn bộ chiến trường', dmg_rate: 2.6, rage_cost: 100 }
+    },
+    rewards: { silver_chests: 3, gold_chests: 1, exp_pills: 60, star_stones: 6 }
+  },
+  {
+    stage: 9,
+    name: 'Kim Xí Ma Bằng',
+    title: 'Tầng 9 - Cuồng Phong Ma Ưng',
+    element: 'Phong',
+    combat_power: 8200,
+    avatar: 'https://images.unsplash.com/photo-1543946207-39bd91e70ca7?w=200&auto=format&fit=crop&q=80',
+    boss: {
+      name: 'Kim Xí Ma Bằng',
+      title: 'Tầng 9 - Phong Vương',
+      avatar_url: 'https://images.unsplash.com/photo-1543946207-39bd91e70ca7?w=200&auto=format&fit=crop&q=80',
+      rarity: 'SSR',
+      element: 'wind',
+      level: 45,
+      star: 3,
+      hp: 16500,
+      max_hp: 16500,
+      atk: 1280,
+      def: 500,
+      spd: 155,
+      crit: 30,
+      rage: 0,
+      max_rage: 100,
+      skill_basic: { name: 'Phong Nhẫn', desc: 'Lưỡi đao gió chém ngọt mục tiêu', dmg_rate: 1.35, rage_gain: 25 },
+      skill_ultimate: { name: 'Long Quyển Phong Bạo', desc: 'Cơn bão lốc xoáy cuốn phăng toàn quân', dmg_rate: 2.7, rage_cost: 100 }
+    },
+    rewards: { gold_chests: 1, exp_pills: 80, star_stones: 8 }
+  },
+  {
+    stage: 10,
+    name: 'Vực Sâu Tà Long',
+    title: 'Tầng 10 - Trùm Cuối Thượng Cổ Tà Thần',
+    element: 'Thần Ma',
+    combat_power: 10000,
+    avatar: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=200&auto=format&fit=crop&q=80',
+    boss: {
+      name: 'Vực Sâu Tà Long',
+      title: 'Trùm Cuối Tầng 10',
+      avatar_url: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=200&auto=format&fit=crop&q=80',
+      rarity: 'UR',
+      element: 'dark',
+      level: 50,
+      star: 4,
+      hp: 22000,
+      max_hp: 22000,
+      atk: 1550,
+      def: 650,
+      spd: 140,
+      crit: 35,
+      rage: 0,
+      max_rage: 100,
+      skill_basic: { name: 'Hơi Thở Diệt Vong', desc: 'Hơi thở rồng tà ác thiêu đốt mục tiêu', dmg_rate: 1.4, rage_gain: 25 },
+      skill_ultimate: { name: 'Hắc Ám Long Tinh Bộc Phá', desc: 'Ngôi sao đen diệt thế hủy diệt toàn quân', dmg_rate: 3.0, rage_cost: 100 }
+    },
+    rewards: { gold_chests: 2, exp_pills: 100, star_stones: 15 }
+  }
+];
+
+// ĐỊNH NGHĨA DANH SÁCH NHIỆM VỤ HÀNG NGÀY
+const QUEST_DEFINITIONS = [
+  { id: 'read_1', name: 'Đọc 1 chương truyện', desc: 'Đọc xong 1 chương bất kỳ hôm nay', target: 1, type: 'read_chapters', reward: { wooden_chests: 1 }, reward_desc: '📦 1 Hòm Gỗ Nữ Thần' },
+  { id: 'read_5', name: 'Mọt sách chăm chỉ', desc: 'Đọc tích lũy 5 chương truyện hôm nay', target: 5, type: 'read_chapters', reward: { wooden_chests: 2, exp_pills: 10 }, reward_desc: '📦 2 Hòm Gỗ + 💊 10 Đan EXP' },
+  { id: 'read_10', name: 'Đại Độc Giả', desc: 'Đọc tích lũy 10 chương truyện hôm nay', target: 10, type: 'read_chapters', reward: { silver_chests: 1, exp_pills: 20 }, reward_desc: '🥈 1 Hòm Bạc + 💊 20 Đan EXP' },
+  { id: 'arena_1', name: 'Thử sức Đấu Trường', desc: 'Khiêu chiến 1 trận trong Đấu Trường Nữ Thần', target: 1, type: 'battles_fought', reward: { wooden_chests: 1, exp_pills: 5 }, reward_desc: '📦 1 Hòm Gỗ + 💊 5 Đan EXP' },
+  { id: 'dungeon_1', name: 'Trảm Yêu Trừ Ma', desc: 'Vượt qua 1 màn bất kỳ trong Tháp Thử Thách', target: 1, type: 'stages_cleared', reward: { wooden_chests: 1, star_stones: 1 }, reward_desc: '📦 1 Hòm Gỗ + ⭐ 1 Đá Nâng Sao' },
+  { id: 'chest_1', name: 'Khai Mở Vận May', desc: 'Mở 1 rương quà bất kỳ (Gỗ/Bạc/Vàng)', target: 1, type: 'chests_opened', reward: { exp_pills: 15 }, reward_desc: '💊 15 Đan EXP Tướng' }
+];
+
+// Helper: Lấy tiến độ nhiệm vụ hàng ngày của người chơi
+async function getDailyQuestsProgress(userId) {
+  const todayStr = new Date().toISOString().slice(0, 10);
+  let { data: qRow } = await supabase
+    .from('user_card_quests')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('quest_date', todayStr)
+    .maybeSingle();
+
+  if (!qRow) {
+    const { data: newRow } = await supabase
+      .from('user_card_quests')
+      .insert([{
+        user_id: userId,
+        quest_date: todayStr,
+        read_chapters: 0,
+        battles_fought: 0,
+        stages_cleared: 0,
+        chests_opened: 0,
+        claimed_quests: []
+      }])
+      .select()
+      .single();
+    qRow = newRow;
+  }
+
+  const claimed = Array.isArray(qRow?.claimed_quests) ? qRow.claimed_quests : [];
+
+  const questsWithStatus = QUEST_DEFINITIONS.map(q => {
+    const progress = qRow ? (qRow[q.type] || 0) : 0;
+    const isCompleted = progress >= q.target;
+    const isClaimed = claimed.includes(q.id);
+    return {
+      ...q,
+      progress: Math.min(progress, q.target),
+      current: progress,
+      isCompleted,
+      isClaimed,
+      canClaim: isCompleted && !isClaimed
+    };
+  });
+
+  return { quests: questsWithStatus, raw: qRow };
+}
+
 // Helper: Khởi tạo dữ liệu người chơi mới nếu chưa có
 async function ensureUserArenaData(userId) {
   // 1. Kiểm tra Rank
@@ -30,7 +370,8 @@ async function ensureUserArenaData(userId) {
         tier: 'Đồng',
         wins: 0,
         losses: 0,
-        daily_tickets: 5
+        daily_tickets: 5,
+        dungeon_stage: 1
       }])
       .select()
       .single();
@@ -46,6 +387,7 @@ async function ensureUserArenaData(userId) {
         .eq('user_id', userId);
       rank.daily_tickets = 5;
     }
+    if (!rank.dungeon_stage) rank.dungeon_stage = 1;
   }
 
   // 2. Kiểm tra Túi đồ
@@ -78,7 +420,6 @@ async function ensureUserArenaData(userId) {
     .eq('user_id', userId);
 
   if (!userHeroes || userHeroes.length === 0) {
-    // Tặng Bạch Dao (id: 4) đã mở khóa
     const { data: bachDao } = await supabase.from('card_heroes').select('id').eq('name', 'Bạch Dao').single();
     const { data: coThanhY } = await supabase.from('card_heroes').select('id').eq('name', 'Cố Thanh Y').single();
 
@@ -97,7 +438,7 @@ async function ensureUserArenaData(userId) {
         user_id: userId,
         hero_id: coThanhY.id,
         is_unlocked: false,
-        shards: 20, // cần thêm 10 mảnh để mở khóa
+        shards: 20,
         level: 1,
         star: 1
       }]);
@@ -112,7 +453,6 @@ async function ensureUserArenaData(userId) {
     .single();
 
   if (!team) {
-    // Tự động xếp tướng đầu tiên có vào slot_1
     const { data: firstHero } = await supabase
       .from('user_heroes')
       .select('hero_id')
@@ -146,6 +486,7 @@ router.get('/', async (req, res) => {
   const userId = req.user.id;
   try {
     const { rank, items, team } = await ensureUserArenaData(userId);
+    const { quests } = await getDailyQuestsProgress(userId);
 
     // Lấy toàn bộ tướng game + thông tin sở hữu của user
     const { data: allHeroes } = await supabase
@@ -172,7 +513,6 @@ router.get('/', async (req, res) => {
         level: owned ? owned.level : 1,
         star: owned ? owned.star : 1,
         exp: owned ? owned.exp : 0,
-        // Tính chỉ số sau khi nhân level và star
         hp: Math.round(h.base_hp * (1 + ((owned ? owned.level : 1) - 1) * 0.1) * (1 + ((owned ? owned.star : 1) - 1) * 0.2)),
         atk: Math.round(h.base_atk * (1 + ((owned ? owned.level : 1) - 1) * 0.1) * (1 + ((owned ? owned.star : 1) - 1) * 0.2)),
         def: Math.round(h.base_def * (1 + ((owned ? owned.level : 1) - 1) * 0.08)),
@@ -181,31 +521,43 @@ router.get('/', async (req, res) => {
       };
     });
 
-    // Lấy danh sách 4 đối thủ tiềm năng gần Elo của user (ngoại trừ bản thân)
-    const { data: opponentsRaw } = await supabase
+    // Lấy danh sách đối thủ xứng tầm
+    const minElo = Math.max(800, (rank.elo_points || 1000) - 250);
+    const maxElo = (rank.elo_points || 1000) + 250;
+
+    const { data: candidateRanks } = await supabase
       .from('arena_ranks')
       .select('user_id, elo_points, tier, wins, losses, users(id, display_name, avatar)')
       .neq('user_id', userId)
-      .order('elo_points', { ascending: false })
+      .gte('elo_points', minElo)
+      .lte('elo_points', maxElo)
       .limit(6);
 
-    // Lấy đội hình của các đối thủ
-    const opponentUserIds = (opponentsRaw || []).map(o => o.user_id);
-    let opponentTeamsMap = {};
-    if (opponentUserIds.length > 0) {
-      const { data: oppTeams } = await supabase
-        .from('user_card_teams')
-        .select('user_id, combat_power, slot1:slot_1(id, name, avatar_url, rarity), slot2:slot_2(id, name, avatar_url, rarity), slot3:slot_3(id, name, avatar_url, rarity)')
-        .in('user_id', opponentUserIds);
-
-      (oppTeams || []).forEach(t => {
-        opponentTeamsMap[t.user_id] = t;
-      });
+    let opponents = candidateRanks || [];
+    if (opponents.length < 3) {
+      const { data: anyOpponents } = await supabase
+        .from('arena_ranks')
+        .select('user_id, elo_points, tier, wins, losses, users(id, display_name, avatar)')
+        .neq('user_id', userId)
+        .limit(4);
+      opponents = anyOpponents || [];
     }
 
-    const opponents = (opponentsRaw || []).map(o => ({
+    // Gắn đội hình thủ của đối thủ
+    const oppUserIds = opponents.map(o => o.user_id);
+    const { data: oppTeams } = await supabase
+      .from('user_card_teams')
+      .select('*, slot1:slot_1(id, name, avatar_url, card_image_url, rarity), slot2:slot_2(id, name, avatar_url, card_image_url, rarity), slot3:slot_3(id, name, avatar_url, card_image_url, rarity)')
+      .in('user_id', oppUserIds);
+
+    const oppTeamMap = {};
+    (oppTeams || []).forEach(t => {
+      oppTeamMap[t.user_id] = t;
+    });
+
+    opponents = opponents.map(o => ({
       ...o,
-      team: opponentTeamsMap[o.user_id] || { combat_power: 1200, slot1: null, slot2: null, slot3: null }
+      team: oppTeamMap[o.user_id] || { combat_power: 1200, slot1: null, slot2: null, slot3: null }
     }));
 
     // Lấy Top 20 BXH Đấu trường
@@ -223,7 +575,10 @@ router.get('/', async (req, res) => {
       team,
       heroes: heroesList,
       opponents,
-      leaderboard: leaderboard || []
+      leaderboard: leaderboard || [],
+      quests,
+      dungeonStages: DUNGEON_STAGES,
+      userDungeonStage: rank.dungeon_stage || 1
     });
   } catch (err) {
     console.error('Lỗi tải trang Đấu Trường:', err);
@@ -237,7 +592,6 @@ router.post('/api/set-team', async (req, res) => {
   const { slot_1, slot_2, slot_3 } = req.body;
 
   try {
-    // Kiểm tra tướng có thuộc quyền sở hữu của user và đã mở khóa chưa
     const heroIds = [slot_1, slot_2, slot_3].filter(Boolean).map(id => parseInt(id));
     if (heroIds.length > 0) {
       const { data: ownedHeroes } = await supabase
@@ -255,15 +609,27 @@ router.post('/api/set-team', async (req, res) => {
       }
     }
 
-    // Tính sơ bộ tổng lực chiến
     const { data: heroStats } = await supabase
       .from('card_heroes')
-      .select('id, base_hp, base_atk, base_def')
-      .in('id', heroIds);
+      .select('id, base_hp, base_atk, base_def, base_spd')
+      .in('id', heroIds.length > 0 ? heroIds : [-1]);
+
+    const { data: userHeroStats } = await supabase
+      .from('user_heroes')
+      .select('hero_id, level, star')
+      .eq('user_id', userId)
+      .in('hero_id', heroIds.length > 0 ? heroIds : [-1]);
+
+    const uhMap = {};
+    (userHeroStats || []).forEach(uh => { uhMap[uh.hero_id] = uh; });
 
     let totalCp = 0;
     (heroStats || []).forEach(h => {
-      totalCp += Math.round(h.base_hp * 0.5 + h.base_atk * 2.5 + h.base_def * 1.5);
+      const uh = uhMap[h.id] || { level: 1, star: 1 };
+      const hp = Math.round(h.base_hp * (1 + (uh.level - 1) * 0.1) * (1 + (uh.star - 1) * 0.2));
+      const atk = Math.round(h.base_atk * (1 + (uh.level - 1) * 0.1) * (1 + (uh.star - 1) * 0.2));
+      const def = Math.round(h.base_def * (1 + (uh.level - 1) * 0.08));
+      totalCp += Math.round(hp * 0.2 + atk * 1.5 + def * 1.2 + h.base_spd * 2);
     });
 
     await supabase
@@ -283,100 +649,134 @@ router.post('/api/set-team', async (req, res) => {
   }
 });
 
-// 3. API TRIỆU HỒI / GHÉP MẢNH TƯỚNG
+// 3. API TRIỆU HỒI TƯỚNG (SUMMON / CRAFT)
 router.post('/api/summon-hero', async (req, res) => {
   const userId = req.user.id;
   const { hero_id } = req.body;
+  const heroId = parseInt(hero_id);
 
   try {
-    const { data: hero } = await supabase.from('card_heroes').select('*').eq('id', hero_id).single();
-    if (!hero) return res.status(404).json({ success: false, error: 'Không tìm thấy tướng.' });
+    const { data: hero } = await supabase
+      .from('card_heroes')
+      .select('id, name, shards_to_summon')
+      .eq('id', heroId)
+      .single();
 
-    const { data: userHero } = await supabase
+    if (!hero) {
+      return res.status(404).json({ success: false, error: 'Không tìm thấy tướng này!' });
+    }
+
+    const { data: uHero } = await supabase
       .from('user_heroes')
       .select('*')
       .eq('user_id', userId)
-      .eq('hero_id', hero_id)
-      .single();
+      .eq('hero_id', heroId)
+      .maybeSingle();
 
-    if (!userHero || userHero.shards < hero.shards_to_summon) {
+    if (uHero && uHero.is_unlocked) {
+      return res.status(400).json({ success: false, error: 'Bạn đã sở hữu tướng này rồi!' });
+    }
+
+    const currentShards = uHero ? uHero.shards : 0;
+    if (currentShards < hero.shards_to_summon) {
       return res.status(400).json({
         success: false,
-        error: `Chưa đủ mảnh! Hiện có ${userHero ? userHero.shards : 0}/${hero.shards_to_summon} mảnh.`
+        error: `Chưa đủ mảnh triệu hồi! Bạn có ${currentShards}/${hero.shards_to_summon} mảnh.`
       });
     }
 
-    if (userHero.is_unlocked) {
-      return res.status(400).json({ success: false, error: 'Tướng này bạn đã sở hữu rồi!' });
+    const remainingShards = currentShards - hero.shards_to_summon;
+    if (uHero) {
+      await supabase
+        .from('user_heroes')
+        .update({
+          is_unlocked: true,
+          shards: remainingShards,
+          level: 1,
+          star: 1
+        })
+        .eq('id', uHero.id);
+    } else {
+      await supabase
+        .from('user_heroes')
+        .insert([{
+          user_id: userId,
+          hero_id: heroId,
+          is_unlocked: true,
+          shards: remainingShards,
+          level: 1,
+          star: 1
+        }]);
     }
 
-    await supabase
-      .from('user_heroes')
-      .update({
-        is_unlocked: true,
-        shards: userHero.shards - hero.shards_to_summon
-      })
-      .eq('id', userHero.id);
-
-    res.json({ success: true, message: `Triệu hồi thành công Nữ Thần: ${hero.name}!` });
+    res.json({ success: true, message: `🎉 Chúc mừng bạn đã chiêu mộ thành công ${hero.name}!` });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-// 4. API NÂNG CẤP TƯỚNG (LEVEL UP)
+// 4. API TĂNG CẤP TƯỚNG (UPGRADE HERO LEVEL)
 router.post('/api/upgrade-hero', async (req, res) => {
   const userId = req.user.id;
   const { hero_id } = req.body;
+  const heroId = parseInt(hero_id);
 
   try {
-    const { data: userHero } = await supabase
+    const { data: uHero } = await supabase
       .from('user_heroes')
       .select('*')
       .eq('user_id', userId)
-      .eq('hero_id', hero_id)
+      .eq('hero_id', heroId)
       .single();
 
-    if (!userHero || !userHero.is_unlocked) {
-      return res.status(400).json({ success: false, error: 'Bạn chưa sở hữu tướng này!' });
+    if (!uHero || !uHero.is_unlocked) {
+      return res.status(400).json({ success: false, error: 'Bạn chưa mở khóa tướng này!' });
     }
 
-    const costExpPills = userHero.level * 10;
+    const currentLevel = uHero.level || 1;
+    if (currentLevel >= 50) {
+      return res.status(400).json({ success: false, error: 'Tướng đã đạt cấp tối đa (Lv.50)!' });
+    }
+
+    const pillsCost = currentLevel * 5;
+
     const { data: items } = await supabase
       .from('user_card_items')
       .select('exp_pills')
       .eq('user_id', userId)
       .single();
 
-    if (!items || items.exp_pills < costExpPills) {
+    if (!items || (items.exp_pills || 0) < pillsCost) {
       return res.status(400).json({
         success: false,
-        error: `Không đủ Đan EXP! Cần ${costExpPills} viên (hiện có: ${items ? items.exp_pills : 0}).`
+        error: `Không đủ Đan EXP! Cần ${pillsCost} viên, bạn hiện có ${items ? items.exp_pills : 0}.`
       });
     }
 
-    // Trừ đan và tăng level
     await supabase
       .from('user_card_items')
-      .update({ exp_pills: items.exp_pills - costExpPills })
+      .update({ exp_pills: items.exp_pills - pillsCost })
       .eq('user_id', userId);
 
-    const newLevel = userHero.level + 1;
     await supabase
       .from('user_heroes')
-      .update({ level: newLevel })
-      .eq('id', userHero.id);
+      .update({ level: currentLevel + 1 })
+      .eq('id', uHero.id);
 
-    res.json({ success: true, new_level: newLevel, remaining_pills: items.exp_pills - costExpPills });
+    res.json({
+      success: true,
+      new_level: currentLevel + 1,
+      remaining_pills: items.exp_pills - pillsCost
+    });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-// 5. API MỞ RƯƠNG (GACHA)
+// 5. API MỞ RƯƠNG QUÀ (OPEN CHEST / GACHA)
 router.post('/api/open-chest', async (req, res) => {
   const userId = req.user.id;
-  const { chest_type } = req.body; // 'wooden', 'silver', 'gold'
+  const { chest_type } = req.body;
 
   try {
     const { data: items } = await supabase
@@ -385,48 +785,56 @@ router.post('/api/open-chest', async (req, res) => {
       .eq('user_id', userId)
       .single();
 
-    const chestKey = `${chest_type}_chests`;
-    if (!items || items[chestKey] <= 0) {
-      return res.status(400).json({ success: false, error: 'Bạn không có loại rương này!' });
+    if (!items) {
+      return res.status(400).json({ success: false, error: 'Không tìm thấy túi đồ của bạn!' });
     }
 
-    // Trừ 1 rương
-    await supabase
-      .from('user_card_items')
-      .update({ [chestKey]: items[chestKey] - 1 })
-      .eq('user_id', userId);
+    let chestCol = '';
+    if (chest_type === 'wooden') chestCol = 'wooden_chests';
+    else if (chest_type === 'silver') chestCol = 'silver_chests';
+    else if (chest_type === 'gold') chestCol = 'gold_chests';
+    else return res.status(400).json({ success: false, error: 'Loại rương không hợp lệ!' });
 
-    // Thuật toán tỷ lệ rơi quà:
-    const { data: allHeroes } = await supabase.from('card_heroes').select('id, name, rarity, card_image_url');
+    if (!items[chestCol] || items[chestCol] <= 0) {
+      return res.status(400).json({ success: false, error: 'Bạn không có rương loại này!' });
+    }
+
+    const { data: allHeroes } = await supabase
+      .from('card_heroes')
+      .select('id, name, rarity, avatar_url, card_image_url');
+
     let gainedPills = 0;
     let gainedStones = 0;
-    let droppedHero = null;
     let gainedShards = 0;
+    let droppedHero = null;
 
     if (chest_type === 'wooden') {
-      gainedPills = Math.floor(Math.random() * 15) + 10;
-      // Rơi mảnh R hoặc SR
-      const rHeroes = allHeroes.filter(h => h.rarity === 'R' || h.rarity === 'SR');
-      droppedHero = rHeroes[Math.floor(Math.random() * rHeroes.length)] || allHeroes[0];
-      gainedShards = Math.floor(Math.random() * 3) + 2; // 2-4 mảnh
+      gainedPills = Math.floor(Math.random() * 6) + 5;
+      gainedStones = Math.random() < 0.2 ? 1 : 0;
+      gainedShards = Math.floor(Math.random() * 3) + 2;
+      const rList = allHeroes.filter(h => h.rarity === 'R' || h.rarity === 'SR');
+      if (rList.length > 0) droppedHero = rList[Math.floor(Math.random() * rList.length)];
     } else if (chest_type === 'silver') {
-      gainedPills = Math.floor(Math.random() * 30) + 20;
-      gainedStones = Math.floor(Math.random() * 2) + 1;
-      const srHeroes = allHeroes.filter(h => h.rarity === 'SR' || h.rarity === 'SSR');
-      droppedHero = srHeroes[Math.floor(Math.random() * srHeroes.length)] || allHeroes[0];
-      gainedShards = Math.floor(Math.random() * 6) + 4; // 4-9 mảnh
+      gainedPills = Math.floor(Math.random() * 16) + 15;
+      gainedStones = Math.floor(Math.random() * 3) + 1;
+      gainedShards = Math.floor(Math.random() * 6) + 5;
+      const srList = allHeroes.filter(h => h.rarity === 'SR' || h.rarity === 'SSR');
+      if (srList.length > 0) droppedHero = srList[Math.floor(Math.random() * srList.length)];
     } else if (chest_type === 'gold') {
-      gainedPills = Math.floor(Math.random() * 60) + 50;
-      gainedStones = Math.floor(Math.random() * 4) + 2;
-      const ssrHeroes = allHeroes.filter(h => h.rarity === 'SSR' || h.rarity === 'UR');
-      droppedHero = (ssrHeroes.length > 0) ? ssrHeroes[Math.floor(Math.random() * ssrHeroes.length)] : allHeroes[0];
-      gainedShards = Math.floor(Math.random() * 12) + 8; // 8-19 mảnh
+      gainedPills = Math.floor(Math.random() * 31) + 30;
+      gainedStones = Math.floor(Math.random() * 5) + 3;
+      gainedShards = Math.floor(Math.random() * 11) + 10;
+      const ssrList = allHeroes.filter(h => h.rarity === 'SSR' || h.rarity === 'UR');
+      if (ssrList.length > 0) droppedHero = ssrList[Math.floor(Math.random() * ssrList.length)];
     }
 
-    // Cộng tài nguyên
+    const updatedRemaining = items[chestCol] - 1;
+
+    // Trừ 1 hòm & cộng đan, đá
     await supabase
       .from('user_card_items')
       .update({
+        [chestCol]: updatedRemaining,
         exp_pills: (items.exp_pills || 0) + gainedPills,
         star_stones: (items.star_stones || 0) + gainedStones
       })
@@ -458,6 +866,28 @@ router.post('/api/open-chest', async (req, res) => {
       }
     }
 
+    // Cập nhật nhiệm vụ ngày: mở rương
+    try {
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const { data: qRow } = await supabase
+        .from('user_card_quests')
+        .select('id, chests_opened')
+        .eq('user_id', userId)
+        .eq('quest_date', todayStr)
+        .maybeSingle();
+
+      if (qRow) {
+        await supabase.from('user_card_quests')
+          .update({ chests_opened: qRow.chests_opened + 1, updated_at: new Date().toISOString() })
+          .eq('id', qRow.id);
+      } else {
+        await supabase.from('user_card_quests')
+          .insert([{ user_id: userId, quest_date: todayStr, chests_opened: 1 }]);
+      }
+    } catch (qe) {
+      console.error('Lỗi cập nhật quest chests_opened:', qe);
+    }
+
     res.json({
       success: true,
       rewards: {
@@ -465,6 +895,11 @@ router.post('/api/open-chest', async (req, res) => {
         stones: gainedStones,
         hero: droppedHero,
         shards: gainedShards
+      },
+      remaining_chests: {
+        wooden: chest_type === 'wooden' ? updatedRemaining : items.wooden_chests,
+        silver: chest_type === 'silver' ? updatedRemaining : items.silver_chests,
+        gold: chest_type === 'gold' ? updatedRemaining : items.gold_chests
       }
     });
   } catch (err) {
@@ -472,7 +907,79 @@ router.post('/api/open-chest', async (req, res) => {
   }
 });
 
-// 6. TRANG CHIẾN ĐẤU SÀN ĐẤU (BATTLE ARENA SCENE)
+// 6. API NHẬN THƯỞNG NHIỆM VỤ HÀNG NGÀY
+router.post('/api/claim-quest', async (req, res) => {
+  const userId = req.user.id;
+  const { quest_id } = req.body;
+  const questDef = QUEST_DEFINITIONS.find(q => q.id === quest_id);
+
+  if (!questDef) {
+    return res.status(400).json({ success: false, error: 'Nhiệm vụ không tồn tại!' });
+  }
+
+  try {
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const { data: qRow } = await supabase
+      .from('user_card_quests')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('quest_date', todayStr)
+      .maybeSingle();
+
+    if (!qRow) {
+      return res.status(400).json({ success: false, error: 'Chưa có tiến trình hôm nay!' });
+    }
+
+    const claimed = Array.isArray(qRow.claimed_quests) ? qRow.claimed_quests : [];
+    if (claimed.includes(quest_id)) {
+      return res.status(400).json({ success: false, error: 'Nhiệm vụ này bạn đã nhận thưởng rồi!' });
+    }
+
+    const currentVal = qRow[questDef.type] || 0;
+    if (currentVal < questDef.target) {
+      return res.status(400).json({ success: false, error: 'Chưa hoàn thành điều kiện nhiệm vụ!' });
+    }
+
+    // Trao thưởng vào user_card_items
+    const { data: curItems } = await supabase
+      .from('user_card_items')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+
+    if (curItems) {
+      const r = questDef.reward;
+      await supabase
+        .from('user_card_items')
+        .update({
+          wooden_chests: curItems.wooden_chests + (r.wooden_chests || 0),
+          silver_chests: curItems.silver_chests + (r.silver_chests || 0),
+          gold_chests: curItems.gold_chests + (r.gold_chests || 0),
+          exp_pills: curItems.exp_pills + (r.exp_pills || 0),
+          star_stones: curItems.star_stones + (r.star_stones || 0)
+        })
+        .eq('user_id', userId);
+    }
+
+    // Đánh dấu đã nhận
+    const updatedClaimed = [...claimed, quest_id];
+    await supabase
+      .from('user_card_quests')
+      .update({ claimed_quests: updatedClaimed, updated_at: new Date().toISOString() })
+      .eq('id', qRow.id);
+
+    res.json({
+      success: true,
+      reward_desc: questDef.reward_desc,
+      claimed_quests: updatedClaimed
+    });
+  } catch (err) {
+    console.error('Lỗi nhận thưởng nhiệm vụ:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 7. TRANG CHIẾN ĐẤU SÀN ĐẤU PVP (ARENA BATTLE SCENE)
 router.get('/battle/:defender_id', async (req, res) => {
   const attackerId = req.user.id;
   const defenderId = req.params.defender_id;
@@ -482,18 +989,16 @@ router.get('/battle/:defender_id', async (req, res) => {
   }
 
   try {
-    // Kiểm tra vé khiêu chiến
     const { data: attackerRank } = await supabase
       .from('arena_ranks')
-      .select('daily_tickets, elo_points')
+      .select('daily_tickets, elo_points, tier')
       .eq('user_id', attackerId)
       .single();
 
     if (!attackerRank || attackerRank.daily_tickets <= 0) {
-      return res.redirect('/arena?error=' + encodeURIComponent('Hôm nay bạn đã hết vé khiêu chiến (5/5 vé)!'));
+      return res.redirect('/arena?error=' + encodeURIComponent('Bạn đã hết vé khiêu chiến hôm nay! Hãy quay lại vào ngày mai.'));
     }
 
-    // Lấy thông tin 2 đội hình
     const [
       { data: attackerTeamRaw },
       { data: defenderTeamRaw },
@@ -506,7 +1011,6 @@ router.get('/battle/:defender_id', async (req, res) => {
       supabase.from('arena_ranks').select('elo_points, tier').eq('user_id', defenderId).single()
     ]);
 
-    // Lấy chi tiết thông tin các tướng trong đội hình
     const getTeamHeroes = async (teamRaw, uId) => {
       const ids = [teamRaw?.slot_1, teamRaw?.slot_2, teamRaw?.slot_3].filter(Boolean);
       if (ids.length === 0) return [];
@@ -549,7 +1053,6 @@ router.get('/battle/:defender_id', async (req, res) => {
       return res.redirect('/arena?error=' + encodeURIComponent('Đội hình của bạn chưa có tướng nào! Hãy vào tab Nữ Thần để xếp tướng.'));
     }
 
-    // Nếu đối thủ chưa xếp đội, tạo 1 bot tướng mẫu
     if (defenderTeam.length === 0) {
       const { data: defaultHero } = await supabase.from('card_heroes').select('*').limit(2);
       defenderTeam = (defaultHero || []).map(h => ({
@@ -579,6 +1082,7 @@ router.get('/battle/:defender_id', async (req, res) => {
     res.render('arena/battle', {
       title: '⚔️ Sàn Đấu Trực Tuyến - Waifu Arena',
       user: req.user,
+      isDungeon: false,
       defender: defenderUser || { id: defenderId, display_name: 'Độc giả thần bí', avatar: '/css/silly_duck.png' },
       attackerRank,
       defenderRank: defenderRank || { elo_points: 1000, tier: 'Đồng' },
@@ -591,10 +1095,98 @@ router.get('/battle/:defender_id', async (req, res) => {
   }
 });
 
-// 7. API KẾT THÚC TRẬN ĐẤU & CẬP NHẬT RANK
+// 8. TRANG CHIẾN ĐẤU VƯỢT ẢI THÁP THỬ THÁCH (PVE DUNGEON BATTLE SCENE)
+router.get('/dungeon/:stage_id', async (req, res) => {
+  const userId = req.user.id;
+  const stageId = parseInt(req.params.stage_id);
+  const stage = DUNGEON_STAGES.find(s => s.stage === stageId);
+
+  if (!stage) {
+    return res.redirect('/arena?error=' + encodeURIComponent('Màn chơi không tồn tại!'));
+  }
+
+  try {
+    const { rank } = await ensureUserArenaData(userId);
+    const userMaxStage = rank.dungeon_stage || 1;
+    if (stageId > userMaxStage) {
+      return res.redirect('/arena?error=' + encodeURIComponent(`Bạn chưa mở khóa Ải ${stageId}! Hãy hoàn thành các ải trước.`));
+    }
+
+    const { data: attackerTeamRaw } = await supabase
+      .from('user_card_teams')
+      .select('slot_1, slot_2, slot_3')
+      .eq('user_id', userId)
+      .single();
+
+    const ids = [attackerTeamRaw?.slot_1, attackerTeamRaw?.slot_2, attackerTeamRaw?.slot_3].filter(Boolean);
+    if (ids.length === 0) {
+      return res.redirect('/arena?error=' + encodeURIComponent('Đội hình của bạn chưa có tướng nào!'));
+    }
+
+    const { data: heroes } = await supabase.from('card_heroes').select('*').in('id', ids);
+    const { data: uHeroes } = await supabase.from('user_heroes').select('*').eq('user_id', userId).in('hero_id', ids);
+    const uhMap = {};
+    (uHeroes || []).forEach(uh => { uhMap[uh.hero_id] = uh; });
+
+    const attackerTeam = (heroes || []).map(h => {
+      const uh = uhMap[h.id] || { level: 1, star: 1 };
+      return {
+        id: h.id,
+        name: h.name,
+        title: h.title,
+        avatar_url: h.avatar_url || h.card_image_url,
+        card_image_url: h.card_image_url,
+        rarity: h.rarity,
+        element: h.element,
+        level: uh.level,
+        star: uh.star,
+        hp: Math.round(h.base_hp * (1 + (uh.level - 1) * 0.1) * (1 + (uh.star - 1) * 0.2)),
+        max_hp: Math.round(h.base_hp * (1 + (uh.level - 1) * 0.1) * (1 + (uh.star - 1) * 0.2)),
+        atk: Math.round(h.base_atk * (1 + (uh.level - 1) * 0.1) * (1 + (uh.star - 1) * 0.2)),
+        def: Math.round(h.base_def * (1 + (uh.level - 1) * 0.08)),
+        spd: h.base_spd,
+        crit: h.base_crit,
+        rage: 0,
+        max_rage: 100,
+        skill_basic: h.skill_basic,
+        skill_ultimate: h.skill_ultimate,
+        skill_passive: h.skill_passive
+      };
+    });
+
+    const boss = {
+      ...stage.boss,
+      id: 999000 + stage.stage,
+      rage: 0,
+      max_rage: 100,
+      isBoss: true
+    };
+
+    res.render('arena/battle', {
+      title: `🏰 Vượt Ải Tầng ${stage.stage}: ${stage.name} - Tháp Thử Thách`,
+      user: req.user,
+      isDungeon: true,
+      stage,
+      defender: {
+        id: 'dungeon_stage_' + stage.stage,
+        display_name: `${stage.title}`,
+        avatar: stage.avatar
+      },
+      attackerRank: rank,
+      defenderRank: { elo_points: stage.combat_power, tier: `Ải ${stage.stage}` },
+      attackerTeam,
+      defenderTeam: [boss]
+    });
+  } catch (err) {
+    console.error('Lỗi khởi tạo vượt ải:', err);
+    res.status(500).send('Lỗi khi vào ải: ' + err.message);
+  }
+});
+
+// 9. API KẾT THÚC TRẬN ĐẤU PVP & CẬP NHẬT RANK
 router.post('/api/battle-result', async (req, res) => {
   const attackerId = req.user.id;
-  const { defender_id, winner } = req.body; // winner: 'attacker' hoặc 'defender'
+  const { defender_id, winner } = req.body;
 
   try {
     const isAttackerWin = winner === 'attacker';
@@ -613,7 +1205,6 @@ router.post('/api/battle-result', async (req, res) => {
     const eloChange = isAttackerWin ? 25 : -12;
     const newAttackerElo = Math.max(800, curRank.elo_points + eloChange);
 
-    // Tính Rank Tier mới
     const calculateTier = (elo) => {
       if (elo >= 2200) return 'Vương Giả';
       if (elo >= 1800) return 'Kim Cương';
@@ -635,25 +1226,27 @@ router.post('/api/battle-result', async (req, res) => {
       })
       .eq('user_id', attackerId);
 
-    // Cập nhật Defender (nếu thua bị trừ nhẹ, nếu thắng được cộng nhẹ)
-    const { data: defRank } = await supabase
-      .from('arena_ranks')
-      .select('elo_points, wins, losses')
-      .eq('user_id', defender_id)
-      .single();
-
-    if (defRank) {
-      const defEloChange = isAttackerWin ? -10 : 15;
-      const newDefElo = Math.max(800, defRank.elo_points + defEloChange);
-      await supabase
+    // Cập nhật Defender nếu là user thật
+    if (defender_id && !defender_id.toString().startsWith('dungeon_')) {
+      const { data: defRank } = await supabase
         .from('arena_ranks')
-        .update({
-          elo_points: newDefElo,
-          tier: calculateTier(newDefElo),
-          wins: defRank.wins + (isAttackerWin ? 0 : 1),
-          losses: defRank.losses + (isAttackerWin ? 1 : 0)
-        })
-        .eq('user_id', defender_id);
+        .select('elo_points, wins, losses')
+        .eq('user_id', defender_id)
+        .single();
+
+      if (defRank) {
+        const defEloChange = isAttackerWin ? -10 : 15;
+        const newDefElo = Math.max(800, defRank.elo_points + defEloChange);
+        await supabase
+          .from('arena_ranks')
+          .update({
+            elo_points: newDefElo,
+            tier: calculateTier(newDefElo),
+            wins: defRank.wins + (isAttackerWin ? 0 : 1),
+            losses: defRank.losses + (isAttackerWin ? 1 : 0)
+          })
+          .eq('user_id', defender_id);
+      }
     }
 
     // Nếu thắng: Thưởng thêm 1 Hòm Bạc + 30 Đan EXP
@@ -672,14 +1265,27 @@ router.post('/api/battle-result', async (req, res) => {
       }
     }
 
-    // Ghi Battle log
-    await supabase.from('arena_battle_logs').insert([{
-      attacker_id: attackerId,
-      defender_id: defender_id,
-      winner_id: isAttackerWin ? attackerId : defender_id,
-      elo_change: eloChange,
-      log_summary: isAttackerWin ? 'Chiến thắng vang dội' : 'Thất bại đáng tiếc'
-    }]);
+    // Cập nhật quest: đánh đấu trường
+    try {
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const { data: qRow } = await supabase
+        .from('user_card_quests')
+        .select('id, battles_fought')
+        .eq('user_id', attackerId)
+        .eq('quest_date', todayStr)
+        .maybeSingle();
+
+      if (qRow) {
+        await supabase.from('user_card_quests')
+          .update({ battles_fought: qRow.battles_fought + 1, updated_at: new Date().toISOString() })
+          .eq('id', qRow.id);
+      } else {
+        await supabase.from('user_card_quests')
+          .insert([{ user_id: attackerId, quest_date: todayStr, battles_fought: 1 }]);
+      }
+    } catch (qe) {
+      console.error('Lỗi cập nhật quest battles_fought:', qe);
+    }
 
     res.json({
       success: true,
@@ -690,6 +1296,93 @@ router.post('/api/battle-result', async (req, res) => {
     });
   } catch (err) {
     console.error('Lỗi lưu kết quả trận đấu:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 10. API KẾT THÚC TRẬN ĐẤU PVE VƯỢT ẢI (DUNGEON RESULT)
+router.post('/api/dungeon-result', async (req, res) => {
+  const userId = req.user.id;
+  const { stage_id, winner } = req.body;
+  const stageId = parseInt(stage_id);
+  const stage = DUNGEON_STAGES.find(s => s.stage === stageId);
+
+  if (!stage) {
+    return res.status(400).json({ success: false, error: 'Màn chơi không hợp lệ!' });
+  }
+
+  const isWin = (winner === 'attacker');
+  try {
+    if (!isWin) {
+      return res.json({ success: true, isWin: false, message: 'Thất bại đáng tiếc!' });
+    }
+
+    // Thắng: Cập nhật quest stages_cleared
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const { data: qRow } = await supabase
+      .from('user_card_quests')
+      .select('id, stages_cleared')
+      .eq('user_id', userId)
+      .eq('quest_date', todayStr)
+      .maybeSingle();
+
+    if (qRow) {
+      await supabase.from('user_card_quests')
+        .update({ stages_cleared: qRow.stages_cleared + 1, updated_at: new Date().toISOString() })
+        .eq('id', qRow.id);
+    } else {
+      await supabase.from('user_card_quests')
+        .insert([{ user_id: userId, quest_date: todayStr, stages_cleared: 1 }]);
+    }
+
+    // Cập nhật tầng cao nhất của user
+    const { data: rank } = await supabase
+      .from('arena_ranks')
+      .select('dungeon_stage')
+      .eq('user_id', userId)
+      .single();
+
+    let newStage = rank ? rank.dungeon_stage : 1;
+    let isFirstClear = false;
+    if (rank && stageId >= (rank.dungeon_stage || 1)) {
+      newStage = Math.min(11, stageId + 1);
+      await supabase
+        .from('arena_ranks')
+        .update({ dungeon_stage: newStage })
+        .eq('user_id', userId);
+      isFirstClear = true;
+    }
+
+    // Trao thưởng vượt ải
+    const r = stage.rewards;
+    const { data: curItems } = await supabase
+      .from('user_card_items')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+
+    if (curItems) {
+      await supabase
+        .from('user_card_items')
+        .update({
+          wooden_chests: curItems.wooden_chests + (r.wooden_chests || 0),
+          silver_chests: curItems.silver_chests + (r.silver_chests || 0),
+          gold_chests: curItems.gold_chests + (r.gold_chests || 0),
+          exp_pills: curItems.exp_pills + (r.exp_pills || 0),
+          star_stones: curItems.star_stones + (r.star_stones || 0)
+        })
+        .eq('user_id', userId);
+    }
+
+    res.json({
+      success: true,
+      isWin: true,
+      isFirstClear,
+      newStage,
+      rewards: r
+    });
+  } catch (err) {
+    console.error('Lỗi kết quả vượt ải:', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });

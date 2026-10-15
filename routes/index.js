@@ -206,36 +206,64 @@ async function awardReadingExp(userId, storyId, chapterNumber) {
 // Hàm thưởng vật phẩm Đấu Trường Nữ Thần khi đọc truyện
 async function awardReadingCardDrop(userId, chaptersRead) {
   try {
-    let itemType = 'chest_wood';
-    let amount = 1;
     let itemName = '📦 Hòm Gỗ Nữ Thần';
+    const isSilver = (chaptersRead % 10 === 0);
+    const isPills = !isSilver && (Math.random() < 0.35);
 
-    if (chaptersRead % 10 === 0) {
-      itemType = 'chest_silver';
-      amount = 1;
-      itemName = '🥈 Hòm Bạc Nữ Thần';
-    } else if (Math.random() < 0.35) {
-      itemType = 'exp_pill_s';
-      amount = 2;
-      itemName = '💊 2x Đan EXP (Nhỏ)';
-    }
-
-    const { data: existing } = await supabase
+    // 1. Cập nhật túi đồ user_card_items
+    const { data: curItems } = await supabase
       .from('user_card_items')
-      .select('quantity')
+      .select('*')
       .eq('user_id', userId)
-      .eq('item_type', itemType)
       .maybeSingle();
 
-    const currentQty = existing ? existing.quantity : 0;
-    await supabase.from('user_card_items').upsert({
-      user_id: userId,
-      item_type: itemType,
-      quantity: currentQty + amount,
-      updated_at: new Date().toISOString()
-    }, { onConflict: 'user_id,item_type' });
+    if (curItems) {
+      if (isSilver) {
+        itemName = '🥈 Hòm Bạc Nữ Thần';
+        await supabase.from('user_card_items')
+          .update({ silver_chests: (curItems.silver_chests || 0) + 1, updated_at: new Date().toISOString() })
+          .eq('user_id', userId);
+      } else if (isPills) {
+        itemName = '💊 5x Đan EXP Tướng';
+        await supabase.from('user_card_items')
+          .update({ exp_pills: (curItems.exp_pills || 0) + 5, updated_at: new Date().toISOString() })
+          .eq('user_id', userId);
+      } else {
+        itemName = '📦 Hòm Gỗ Nữ Thần';
+        await supabase.from('user_card_items')
+          .update({ wooden_chests: (curItems.wooden_chests || 0) + 1, updated_at: new Date().toISOString() })
+          .eq('user_id', userId);
+      }
+    } else {
+      await supabase.from('user_card_items').insert([{
+        user_id: userId,
+        wooden_chests: isSilver ? 2 : 3,
+        silver_chests: isSilver ? 2 : 1,
+        gold_chests: 0,
+        exp_pills: 50,
+        star_stones: 5
+      }]);
+    }
 
-    return { itemType, amount, itemName };
+    // 2. Cập nhật tiến độ nhiệm vụ ngày
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const { data: qRow } = await supabase
+      .from('user_card_quests')
+      .select('id, read_chapters')
+      .eq('user_id', userId)
+      .eq('quest_date', todayStr)
+      .maybeSingle();
+
+    if (qRow) {
+      await supabase.from('user_card_quests')
+        .update({ read_chapters: qRow.read_chapters + 1, updated_at: new Date().toISOString() })
+        .eq('id', qRow.id);
+    } else {
+      await supabase.from('user_card_quests')
+        .insert([{ user_id: userId, quest_date: todayStr, read_chapters: 1 }]);
+    }
+
+    return { itemName };
   } catch (err) {
     console.error('Lỗi rơi vật phẩm thẻ bài:', err);
     return null;
