@@ -71,18 +71,18 @@
     </div>
 
     <% if (typeof story === 'undefined' || !story || story.story_type !== 'comic') { %>
-    <!-- TRÌNH PHÁT AUDIO TRUYỆN AI (TEXT-TO-SPEECH) -->
+    <!-- TRÌNH PHÁT AUDIO TRUYỆN AI (TEXT-TO-SPEECH TOÀN BỘ TRUYỆN CHỮ) -->
     <div class="audio-player-card" id="ai-audio-player">
         <div class="audio-player-header">
             <div style="display: flex; align-items: center; gap: 0.6rem;">
-                <span style="font-size: 1.3rem;">🎧</span>
+                <span style="font-size: 1.35rem;">🎧</span>
                 <div>
                     <div style="font-weight: 700; font-size: 0.95rem; color: #fff; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
                         <span>Giọng Đọc Audio AI</span>
-                        <span style="font-size: 0.65rem; font-weight: 700; background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 0.12rem 0.45rem; border-radius: 4px; text-transform: uppercase;">Miễn Phí · 0MB Data</span>
+                        <span style="font-size: 0.65rem; font-weight: 700; background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 0.12rem 0.45rem; border-radius: 4px; text-transform: uppercase;">Miễn Phí · +EXP Tu Vi</span>
                     </div>
                     <div id="audio-status-text" style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 2px;">
-                        Bấm "Nghe Truyện" để AI đọc chương này
+                        Bấm "Nghe Truyện" để AI đọc · Nghe xong được cộng EXP Tu Vi
                     </div>
                 </div>
             </div>
@@ -113,22 +113,29 @@
                 </button>
             </div>
 
-            <!-- Tốc độ đọc -->
+            <!-- Tốc độ đọc (Hỗ trợ tối đa 2x) -->
             <div style="display: flex; align-items: center; gap: 0.3rem;">
                 <label for="audio-select-rate" style="font-size: 0.76rem; color: var(--text-secondary);">Tốc độ:</label>
                 <select id="audio-select-rate" class="audio-select">
                     <option value="0.8">0.8x</option>
-                    <option value="1.0" selected>1.0x</option>
-                    <option value="1.2">1.2x</option>
-                    <option value="1.4">1.4x</option>
+                    <option value="1.0" selected>1.0x (Chuẩn)</option>
+                    <option value="1.25">1.25x</option>
+                    <option value="1.5">1.5x</option>
+                    <option value="1.75">1.75x</option>
+                    <option value="2.0">2.0x (Tối đa)</option>
                 </select>
             </div>
 
-            <!-- Giọng đọc -->
+            <!-- Phong cách Giọng Đọc AI (Nam & Nữ) -->
             <div style="display: flex; align-items: center; gap: 0.3rem;">
-                <label for="audio-select-voice" style="font-size: 0.76rem; color: var(--text-secondary);">Giọng:</label>
-                <select id="audio-select-voice" class="audio-select" style="max-width: 150px;">
-                    <option value="">Tự động</option>
+                <label for="audio-select-style" style="font-size: 0.76rem; color: var(--text-secondary);">Giọng AI:</label>
+                <select id="audio-select-style" class="audio-select" style="max-width: 165px;">
+                    <option value="female_soft" selected>👩 Nữ - Dịu Dàng</option>
+                    <option value="female_sweet">👧 Nữ - Trong Trẻo</option>
+                    <option value="male_warm">👨 Nam - Trầm Ấm</option>
+                    <option value="male_heroic">⚔️ Nam - Kiếm Hiệp</option>
+                    <option value="elder">🧙 Lão Tiền Bối</option>
+                    <option value="default">🌐 Hệ Thống Gốc</option>
                 </select>
             </div>
 
@@ -302,19 +309,8 @@
         background: linear-gradient(90deg, #6366f1, #ec4899);
         transition: width 0.2s linear;
     }
-    .audio-active-paragraph {
-        background: rgba(168, 85, 247, 0.18) !important;
-        border-left: 4px solid #a855f7 !important;
-        padding-left: 10px !important;
-        border-radius: 4px;
-        transition: all 0.3s ease;
-    }
     .tts-paragraph {
-        transition: background 0.3s ease, border-left 0.3s ease;
         cursor: pointer;
-    }
-    .tts-paragraph:hover {
-        background: rgba(255, 255, 255, 0.03);
     }
     @media (max-width: 600px) {
         .audio-player-card {
@@ -941,55 +937,72 @@
             
             if (secondsLeft <= 0) {
                 clearInterval(countdown);
-                
-                // Gửi xác nhận đọc chương lên server
-                try {
-                    const storyId = '<%= story.id %>';
-                    const chapterNumber = '<%= chapter.chapter_number %>';
-                    
-                    const resp = await fetch('/chapter/read-confirm', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ story_id: storyId, chapter_number: chapterNumber })
-                    });
-                    const data = await resp.json();
-                    
-                    if (data.success) {
-                        textSpan.innerHTML = '🎉 ' + data.message;
-                        dot.style.background = '#10b981';
-                        dot.style.animation = 'pulse-green 1.5s infinite';
+                window.claimReadingReward();
+            }
+        }, 1000);
+    })();
 
-                        // Ẩn nhẹ sau 5s
-                        setTimeout(() => {
-                            if (widget) {
-                                widget.style.opacity = '0.5';
-                                widget.style.transform = 'translateY(10px)';
-                            }
-                        }, 5000);
+    // Hàm nhận EXP khi đọc hoặc nghe xong chương truyện
+    window.claimReadingReward = async function() {
+        if (window._expRewardClaimed) return;
+        const textSpan = document.getElementById('progress-text');
+        const dot = document.getElementById('progress-dot');
+        const widget = document.getElementById('read-progress-widget');
+        const audioStatus = document.getElementById('audio-status-text');
 
-                        // Nếu vừa lên rank (Đột Phá Cảnh Giới) thì hiện banner, chỉ 1 lần/rank/ngày
-                        if (data.rankUp && data.rankUp.to) {
-                            const todayStr = new Date().toISOString().slice(0, 10);
-                            const seenKey = `rankup_seen_${data.rankUp.to}_${todayStr}`;
-                            if (!localStorage.getItem(seenKey)) {
-                                localStorage.setItem(seenKey, '1');
-                                showRankUpBanner(data.rankUp.from, data.rankUp.to);
-                            }
-                        }
-                    } else {
-                        textSpan.textContent = '❌ Lỗi: ' + data.error;
-                        dot.style.background = '#ef4444';
-                        dot.style.animation = 'none';
+        try {
+            const storyId = '<%= story.id %>';
+            const chapterNumber = '<%= chapter.chapter_number %>';
+            
+            const resp = await fetch('/chapter/read-confirm', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ story_id: storyId, chapter_number: chapterNumber })
+            });
+            const data = await resp.json();
+            
+            if (data.success) {
+                window._expRewardClaimed = true;
+                if (textSpan) textSpan.innerHTML = '🎉 ' + data.message;
+                if (dot) {
+                    dot.style.background = '#10b981';
+                    dot.style.animation = 'pulse-green 1.5s infinite';
+                }
+                if (audioStatus) {
+                    audioStatus.innerHTML = '🎉 <strong style="color: #10b981;">Đã cộng EXP Tu Vi thành công!</strong>';
+                }
+
+                setTimeout(() => {
+                    if (widget) {
+                        widget.style.opacity = '0.5';
+                        widget.style.transform = 'translateY(10px)';
                     }
-                } catch (err) {
-                    console.error('Lỗi khi gửi xác nhận đọc chương:', err);
-                    textSpan.textContent = '❌ Lỗi hệ thống ghi nhận EXP.';
+                }, 5000);
+
+                if (data.rankUp && data.rankUp.to) {
+                    const todayStr = new Date().toISOString().slice(0, 10);
+                    const seenKey = `rankup_seen_${data.rankUp.to}_${todayStr}`;
+                    if (!localStorage.getItem(seenKey)) {
+                        localStorage.setItem(seenKey, '1');
+                        showRankUpBanner(data.rankUp.from, data.rankUp.to);
+                    }
+                }
+            } else {
+                if (textSpan) textSpan.textContent = '❌ Lỗi: ' + data.error;
+                if (dot) {
                     dot.style.background = '#ef4444';
                     dot.style.animation = 'none';
                 }
             }
-        }, 1000);
-    })();
+        } catch (err) {
+            console.error('Lỗi khi gửi xác nhận đọc chương:', err);
+            if (textSpan) textSpan.textContent = '❌ Lỗi hệ thống ghi nhận EXP.';
+            if (dot) {
+                dot.style.background = '#ef4444';
+                dot.style.animation = 'none';
+            }
+        }
+    };
 
     function showRankUpBanner(fromRank, toRank) {
         const overlay = document.createElement('div');
@@ -1042,7 +1055,7 @@
         const btnStop = document.getElementById('audio-btn-stop');
         const btnPrev = document.getElementById('audio-btn-prev');
         const btnNext = document.getElementById('audio-btn-next');
-        const selectVoice = document.getElementById('audio-select-voice');
+        const selectStyle = document.getElementById('audio-select-style');
         const selectRate = document.getElementById('audio-select-rate');
         const checkAutoNext = document.getElementById('audio-check-autonext');
         const progressFill = document.getElementById('audio-progress-fill');
@@ -1050,7 +1063,7 @@
         const progressText = document.getElementById('audio-progress-text');
         const statusText = document.getElementById('audio-status-text');
 
-        // Phân tách đoạn văn để đọc từng đoạn (tránh timeout của browser)
+        // Phân tách đoạn văn để đọc tuần tự
         function initParagraphs() {
             const contentEl = document.getElementById('chapter-content');
             if (!contentEl) return;
@@ -1078,46 +1091,8 @@
             updateProgress();
         }
 
-        // Tải danh sách giọng nói từ hệ điều hành / trình duyệt
         function populateVoices() {
             voices = synth.getVoices() || [];
-            if (voices.length === 0) return;
-
-            selectVoice.innerHTML = '';
-            let viVoiceFound = false;
-            const savedVoice = localStorage.getItem('tts_voice_name');
-
-            const viVoices = voices.filter(v => v.lang && (v.lang.toLowerCase().includes('vi')));
-            const otherVoices = voices.filter(v => !v.lang || (!v.lang.toLowerCase().includes('vi')));
-
-            if (viVoices.length > 0) {
-                const viGroup = document.createElement('optgroup');
-                viGroup.label = 'Giọng Tiếng Việt';
-                viVoices.forEach(v => {
-                    const opt = document.createElement('option');
-                    opt.value = v.name;
-                    opt.textContent = `🇻🇳 ${v.name}`;
-                    if (savedVoice === v.name || (!savedVoice && !viVoiceFound)) {
-                        opt.selected = true;
-                        viVoiceFound = true;
-                    }
-                    viGroup.appendChild(opt);
-                });
-                selectVoice.appendChild(viGroup);
-            }
-
-            if (otherVoices.length > 0) {
-                const otherGroup = document.createElement('optgroup');
-                otherGroup.label = 'Giọng Khác / Mặc định';
-                otherVoices.forEach(v => {
-                    const opt = document.createElement('option');
-                    opt.value = v.name;
-                    opt.textContent = `🌐 ${v.name} (${v.lang || 'default'})`;
-                    if (savedVoice === v.name && !viVoiceFound) opt.selected = true;
-                    otherGroup.appendChild(opt);
-                });
-                selectVoice.appendChild(otherGroup);
-            }
         }
 
         if (synth.onvoiceschanged !== undefined) {
@@ -1129,6 +1104,9 @@
         if (localStorage.getItem('tts_rate')) {
             selectRate.value = localStorage.getItem('tts_rate');
         }
+        if (localStorage.getItem('tts_voice_style')) {
+            selectStyle.value = localStorage.getItem('tts_voice_style');
+        }
         if (localStorage.getItem('tts_autonext') !== null) {
             checkAutoNext.checked = localStorage.getItem('tts_autonext') === 'true';
         }
@@ -1137,8 +1115,8 @@
             localStorage.setItem('tts_rate', selectRate.value);
             if (isPlaying && !isPaused) speakParagraph(currentIdx);
         });
-        selectVoice.addEventListener('change', () => {
-            localStorage.setItem('tts_voice_name', selectVoice.value);
+        selectStyle.addEventListener('change', () => {
+            localStorage.setItem('tts_voice_style', selectStyle.value);
             if (isPlaying && !isPaused) speakParagraph(currentIdx);
         });
         checkAutoNext.addEventListener('change', () => {
@@ -1152,19 +1130,56 @@
             progressText.innerText = `${currentIdx + 1}/${paragraphs.length} (${pct}%)`;
         }
 
-        function highlightParagraph(idx) {
-            paragraphs.forEach((p, i) => {
-                if (i === idx) {
-                    p.classList.add('audio-active-paragraph');
-                    p.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                } else {
-                    p.classList.remove('audio-active-paragraph');
-                }
-            });
+        // Tự động cuộn theo vị trí đọc mà KHÔNG đổi màu/highlight nền chữ
+        function scrollToCurrentParagraph(idx) {
+            if (paragraphs[idx]) {
+                paragraphs[idx].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
         }
 
-        function clearHighlight() {
-            paragraphs.forEach(p => p.classList.remove('audio-active-paragraph'));
+        // Lựa chọn giọng nói và điều chế âm sắc (Pitch & Timbre) theo phong cách
+        function getVoiceAndModulation(styleKey) {
+            const viVoices = voices.filter(v => v.lang && v.lang.toLowerCase().includes('vi'));
+            let chosenVoice = null;
+            let pitch = 1.0;
+            let speedMod = 1.0;
+
+            const maleNames = ['nam', 'minh', 'an', 'man', 'male'];
+            const femaleNames = ['nu', 'my', 'linh', 'hoa', 'female', 'woman'];
+
+            if (styleKey === 'female_soft') {
+                // Nữ dịu dàng
+                chosenVoice = viVoices.find(v => femaleNames.some(fn => v.name.toLowerCase().includes(fn))) || viVoices[0] || null;
+                pitch = 1.06;
+                speedMod = 1.0;
+            } else if (styleKey === 'female_sweet') {
+                // Nữ trong trẻo, ngọt ngào
+                chosenVoice = viVoices.find(v => femaleNames.some(fn => v.name.toLowerCase().includes(fn))) || viVoices[0] || null;
+                pitch = 1.25;
+                speedMod = 1.02;
+            } else if (styleKey === 'male_warm') {
+                // Nam trầm ấm, MC radio
+                chosenVoice = viVoices.find(v => maleNames.some(mn => v.name.toLowerCase().includes(mn))) || viVoices[0] || null;
+                pitch = 0.78;
+                speedMod = 0.98;
+            } else if (styleKey === 'male_heroic') {
+                // Nam kiếm hiệp, hào hùng
+                chosenVoice = viVoices.find(v => maleNames.some(mn => v.name.toLowerCase().includes(mn))) || viVoices[0] || null;
+                pitch = 0.68;
+                speedMod = 1.04;
+            } else if (styleKey === 'elder') {
+                // Lão tiền bối kể chuyện
+                chosenVoice = viVoices[0] || null;
+                pitch = 0.58;
+                speedMod = 0.88;
+            } else {
+                // Mặc định
+                chosenVoice = viVoices[0] || null;
+                pitch = 1.0;
+                speedMod = 1.0;
+            }
+
+            return { voice: chosenVoice, pitch, speedMod };
         }
 
         function speakParagraph(idx) {
@@ -1176,25 +1191,27 @@
 
             currentIdx = idx;
             updateProgress();
-            highlightParagraph(idx);
+            scrollToCurrentParagraph(idx);
 
             const text = paragraphs[idx].innerText.trim();
             if (!text) {
-                // Đoạn rỗng, tự động đọc đoạn tiếp theo
                 speakParagraph(idx + 1);
                 return;
             }
 
             const utter = new SpeechSynthesisUtterance(text);
-            const selectedVoiceName = selectVoice.value;
-            const voiceObj = voices.find(v => v.name === selectedVoiceName);
-            if (voiceObj) {
-                utter.voice = voiceObj;
+            const styleConfig = getVoiceAndModulation(selectStyle.value);
+
+            if (styleConfig.voice) {
+                utter.voice = styleConfig.voice;
             } else {
                 utter.lang = 'vi-VN';
             }
-            utter.rate = parseFloat(selectRate.value) || 1.0;
-            utter.pitch = 1.0;
+
+            // Tính toán tốc độ đọc (tối đa 2.0x) và âm sắc
+            const baseRate = parseFloat(selectRate.value) || 1.0;
+            utter.rate = Math.min(2.0, Math.max(0.5, baseRate * styleConfig.speedMod));
+            utter.pitch = styleConfig.pitch;
 
             utter.onstart = () => {
                 statusText.innerText = `Đang đọc đoạn ${idx + 1}/${paragraphs.length}...`;
@@ -1225,21 +1242,25 @@
             isPlaying = false;
             isPaused = false;
             synth.cancel();
-            clearHighlight();
             btnPlay.innerHTML = '▶ Nghe Tiếp';
             progressFill.style.width = '100%';
 
+            // TỰ ĐỘNG CỘNG EXP KHI NGHE XONG AUDIO
+            if (typeof window.claimReadingReward === 'function') {
+                window.claimReadingReward();
+            }
+
             if (checkAutoNext.checked) {
                 <% if (hasNext && nextChapterNum) { %>
-                    statusText.innerText = '🎉 Đã đọc xong! Đang chuyển sang Chương <%= nextChapterNum %>...';
+                    statusText.innerHTML = '🎉 <strong style="color: #10b981;">Đã nhận EXP!</strong> Đang chuyển sang Chương <%= nextChapterNum %>...';
                     setTimeout(() => {
                         window.location.href = '/story/<%= story.id %>/chapter/<%= nextChapterNum %>?auto_audio=1';
                     }, 1800);
                 <% } else { %>
-                    statusText.innerText = '📖 Chúc mừng bạn đã đọc xong chương cuối cùng!';
+                    statusText.innerHTML = '🎉 <strong style="color: #10b981;">Đã nhận EXP!</strong> Bạn đã nghe hết chương cuối của truyện!';
                 <% } %>
             } else {
-                statusText.innerText = 'Đã đọc hết chương!';
+                statusText.innerHTML = '🎉 <strong style="color: #10b981;">Đã nghe xong chương & nhận EXP Tu Vi thành công!</strong>';
             }
         }
 
@@ -1266,7 +1287,6 @@
             isPlaying = false;
             isPaused = false;
             synth.cancel();
-            clearHighlight();
             currentIdx = 0;
             updateProgress();
             btnPlay.innerHTML = '▶ Nghe Truyện';
@@ -1280,7 +1300,7 @@
                     speakParagraph(currentIdx);
                 } else {
                     updateProgress();
-                    highlightParagraph(currentIdx);
+                    scrollToCurrentParagraph(currentIdx);
                 }
             }
         });
@@ -1292,12 +1312,12 @@
                     speakParagraph(currentIdx);
                 } else {
                     updateProgress();
-                    highlightParagraph(currentIdx);
+                    scrollToCurrentParagraph(currentIdx);
                 }
             }
         });
 
-        // Bấm trực tiếp vào thanh tiến trình để tua đoạn
+        // Tua nhanh trực tiếp khi bấm vào thanh tiến trình
         if (progressWrap) {
             progressWrap.addEventListener('click', (e) => {
                 const rect = progressWrap.getBoundingClientRect();
@@ -1309,12 +1329,12 @@
                     speakParagraph(currentIdx);
                 } else {
                     updateProgress();
-                    highlightParagraph(currentIdx);
+                    scrollToCurrentParagraph(currentIdx);
                 }
             });
         }
 
-        // Bấm vào bất kỳ đoạn văn nào trên bài viết để AI đọc ngay từ đoạn đó
+        // Bấm vào bất kỳ đoạn văn nào trên trang để nghe ngay từ đoạn đó
         const contentEl = document.getElementById('chapter-content');
         if (contentEl) {
             contentEl.addEventListener('click', (e) => {
@@ -1336,7 +1356,7 @@
 
         initParagraphs();
 
-        // Tự động phát tiếp nếu chuyển từ chương trước sang qua URL param
+        // Tự động phát khi chuyển từ chương trước sang qua URL param
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('auto_audio') === '1') {
             setTimeout(() => {
