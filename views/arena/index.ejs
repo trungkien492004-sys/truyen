@@ -1,25 +1,228 @@
 <%- include('../partials/header') %>
 
-<div style="max-width: 1200px; margin: 0 auto; padding: 1.5rem 1rem;">
+<style>
+/* CSS TỐI ƯU HÓA RESPONSIVE CHO ARENA */
+.arena-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1.2rem 1rem;
+    box-sizing: border-box;
+    overflow-x: hidden;
+}
+
+.arena-banner {
+    background: linear-gradient(135deg, rgba(236, 72, 153, 0.2) 0%, rgba(139, 92, 246, 0.2) 50%, rgba(59, 130, 246, 0.15) 100%);
+    border: 1px solid rgba(236, 72, 153, 0.35);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.arena-banner-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1.2rem;
+}
+
+.arena-rank-box {
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    padding: 0.8rem 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    backdrop-filter: blur(8px);
+}
+
+/* TABS CONTAINER - DESKTOP */
+.arena-tabs-bar {
+    display: flex;
+    gap: 0.5rem;
+    border-bottom: 2px solid var(--border-color);
+    margin-bottom: 1.8rem;
+    padding-bottom: 2px;
+}
+
+.arena-tab-btn {
+    padding: 0.7rem 1.2rem;
+    font-size: 0.92rem;
+    font-weight: 700;
+    border-radius: 8px 8px 0 0;
+    border: none;
+    cursor: pointer;
+    background: transparent;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+
+.arena-tab-btn.active {
+    background: var(--accent-color) !important;
+    color: white !important;
+}
+
+/* DANH SÁCH THẺ BÀI / ĐỐI THỦ / ẢI / NHIỆM VỤ */
+.arena-grid-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.2rem;
+}
+
+.heroes-grid-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1.2rem;
+}
+
+.chests-grid-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.2rem;
+}
+
+/* BẢNG XẾP HẠNG */
+.desktop-leaderboard {
+    display: block;
+}
+.mobile-leaderboard {
+    display: none;
+}
+
+/* ================================================== */
+/* MEDIA QUERY CHO MOBILE (< 768px)                   */
+/* ================================================== */
+@media (max-width: 768px) {
+    .arena-wrapper {
+        padding: 0.8rem 0.5rem;
+    }
+
+    .arena-banner {
+        padding: 1rem;
+        border-radius: 12px;
+        margin-bottom: 1rem;
+    }
+
+    .arena-banner-title {
+        font-size: 1.35rem !important;
+    }
+
+    .arena-banner-desc {
+        font-size: 0.82rem !important;
+    }
+
+    .arena-rank-box {
+        width: 100%;
+        box-sizing: border-box;
+        justify-content: space-between;
+        padding: 0.6rem 0.8rem;
+        gap: 0.8rem;
+    }
+
+    /* TABS BIẾN THÀNH LƯỚI 3 CỘT (2 HÀNG) - KHÔNG BAO GIỜ BỊ CUỘN NGANG */
+    .arena-tabs-bar {
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 6px !important;
+        border-bottom: none !important;
+        margin-bottom: 1.2rem !important;
+    }
+
+    .arena-tab-btn {
+        width: 100% !important;
+        padding: 0.55rem 0.2rem !important;
+        border-radius: 8px !important;
+        font-size: 0.75rem !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        text-align: center !important;
+        gap: 2px !important;
+        min-height: 52px !important;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-sizing: border-box;
+    }
+
+    .arena-tab-btn span {
+        margin: 0 !important;
+    }
+
+    /* CÁC THẺ CARD ĐẦU HÀNG TOÀN CHIỀU RỘNG TRÊN MOBILE */
+    .arena-grid-cards,
+    .heroes-grid-cards,
+    .chests-grid-cards {
+        grid-template-columns: 1fr !important;
+        gap: 0.9rem !important;
+    }
+
+    .team-slot-box {
+        padding: 0.5rem 0.3rem !important;
+    }
+
+    .team-slot-img {
+        width: 44px !important;
+        height: 44px !important;
+    }
+
+    /* ĐỔI BẢNG XẾP HẠNG THÀNH DẠNG CARD CHO MOBILE */
+    .desktop-leaderboard {
+        display: none !important;
+    }
+    .mobile-leaderboard {
+        display: flex !important;
+        flex-direction: column;
+        gap: 0.6rem;
+    }
+
+    .quest-card-item {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 0.8rem !important;
+    }
+
+    .quest-card-btn {
+        width: 100% !important;
+    }
+}
+
+@keyframes scaleUp {
+    from { transform: scale(0.85); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+</style>
+
+<div class="arena-wrapper">
     <!-- Banner tiêu đề Đấu Trường -->
-    <div style="background: linear-gradient(135deg, rgba(236, 72, 153, 0.2) 0%, rgba(139, 92, 246, 0.2) 50%, rgba(59, 130, 246, 0.15) 100%); border: 1px solid rgba(236, 72, 153, 0.35); border-radius: 16px; padding: 1.8rem; margin-bottom: 2rem; position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem;">
+    <div class="arena-banner">
+        <div class="arena-banner-inner">
             <div>
-                <div style="display: inline-block; background: rgba(236, 72, 153, 0.2); border: 1px solid rgba(236, 72, 153, 0.4); color: #f472b6; font-size: 0.8rem; font-weight: 700; padding: 0.25rem 0.6rem; border-radius: 20px; margin-bottom: 0.5rem;">
+                <div style="display: inline-block; background: rgba(236, 72, 153, 0.2); border: 1px solid rgba(236, 72, 153, 0.4); color: #f472b6; font-size: 0.75rem; font-weight: 700; padding: 0.2rem 0.55rem; border-radius: 20px; margin-bottom: 0.4rem;">
                     👑 WAIFU ARENA & DUNGEON · MÙA 1
                 </div>
-                <h1 style="margin: 0; font-size: 1.8rem; color: #fff; text-shadow: 0 2px 10px rgba(236, 72, 153, 0.5);">
+                <h1 class="arena-banner-title" style="margin: 0; font-size: 1.8rem; color: #fff; text-shadow: 0 2px 10px rgba(236, 72, 153, 0.5);">
                     ⚔️ Đấu Trường Nữ Thần
                 </h1>
-                <p style="color: var(--text-secondary); margin: 0.4rem 0 0 0; font-size: 0.95rem;">
-                    Chiêu mộ các nàng thơ, khiêu chiến độc giả, vượt 10 tầng Tháp Thử Thách và làm nhiệm vụ nhận rương!
+                <p class="arena-banner-desc" style="color: var(--text-secondary); margin: 0.3rem 0 0 0; font-size: 0.9rem;">
+                    Chiêu mộ 20 nàng thơ, so tài xếp hạng, vượt Tháp Thử Thách và mở rương!
                 </p>
             </div>
 
             <!-- Khối thông tin Rank & Tháp của người chơi -->
-            <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 1rem 1.4rem; display: flex; align-items: center; gap: 1.2rem; backdrop-filter: blur(8px);">
+            <div class="arena-rank-box">
                 <div style="text-align: center;">
-                    <div style="font-size: 1.8rem;">
+                    <div style="font-size: 1.6rem;">
                         <% if (rank.tier === 'Vương Giả') { %>👑<% } %>
                         <% if (rank.tier === 'Kim Cương') { %>💎<% } %>
                         <% if (rank.tier === 'Bạch Kim') { %>✨<% } %>
@@ -27,73 +230,75 @@
                         <% if (rank.tier === 'Bạc') { %>🥈<% } %>
                         <% if (rank.tier === 'Đồng') { %>🥉<% } %>
                     </div>
-                    <div style="font-size: 0.8rem; font-weight: 700; color: #f59e0b; margin-top: 2px;"><%= rank.tier %></div>
+                    <div style="font-size: 0.78rem; font-weight: 700; color: #f59e0b; margin-top: 1px;"><%= rank.tier %></div>
                 </div>
-                <div style="border-left: 1px solid rgba(255, 255, 255, 0.1); padding-left: 1rem;">
-                    <div style="font-size: 0.8rem; color: var(--text-secondary);">Điểm Xếp Hạng: <strong style="color: #60a5fa; font-size: 1.1rem;"><%= rank.elo_points %></strong> Elo</div>
-                    <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 2px;">
-                        🏰 Vượt Ải: <strong style="color: #a855f7;">Tầng <%= userDungeonStage %>/10</strong> · 🎫 Vé: <strong style="color: #f472b6;"><%= rank.daily_tickets %>/5</strong>
+                <div style="border-left: 1px solid rgba(255, 255, 255, 0.1); padding-left: 0.8rem; flex: 1;">
+                    <div style="font-size: 0.78rem; color: var(--text-secondary);">Điểm Rank: <strong style="color: #60a5fa; font-size: 1rem;"><%= rank.elo_points %></strong> Elo</div>
+                    <div style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 2px;">
+                        🏰 Vượt Ải: <strong style="color: #c084fc;">Tầng <%= userDungeonStage %>/10</strong> · 🎫 Vé: <strong style="color: #f472b6;"><%= rank.daily_tickets %>/5</strong>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- TABS ĐIỀU HƯỚNG CHÍNH -->
+    <!-- TABS ĐIỀU HƯỚNG CHÍNH - TỰ ĐỘNG THÀNH LƯỚI 3 CỘT TRÊN MOBILE -->
     <% 
         const canClaimCount = (quests || []).filter(q => q.canClaim).length;
         const totalChests = (items.wooden_chests + items.silver_chests + items.gold_chests);
     %>
-    <div style="display: flex; gap: 0.5rem; border-bottom: 2px solid var(--border-color); margin-bottom: 1.8rem; overflow-x: auto; padding-bottom: 2px;">
-        <button id="btn-tab-arena" class="arena-tab-btn active" onclick="switchArenaTab('tab-arena', event)" style="padding: 0.7rem 1.2rem; font-size: 0.92rem; font-weight: 700; border-radius: 8px 8px 0 0; border: none; cursor: pointer; background: var(--accent-color); color: white; display: flex; align-items: center; gap: 0.4rem; white-space: nowrap;">
-            ⚔️ Đấu Trường PVP
+    <div class="arena-tabs-bar">
+        <button id="btn-tab-arena" class="arena-tab-btn active" onclick="switchArenaTab('tab-arena', event)">
+            <span>⚔️ Đấu Trường</span>
         </button>
-        <button id="btn-tab-dungeon" class="arena-tab-btn" onclick="switchArenaTab('tab-dungeon', event)" style="padding: 0.7rem 1.2rem; font-size: 0.92rem; font-weight: 700; border-radius: 8px 8px 0 0; border: none; cursor: pointer; background: transparent; color: var(--text-secondary); display: flex; align-items: center; gap: 0.4rem; white-space: nowrap;">
-            🏰 Tháp Thử Thách (10 Màn)
-            <span style="background: rgba(168, 85, 247, 0.2); color: #c084fc; font-size: 0.72rem; padding: 0.15rem 0.45rem; border-radius: 10px; font-weight: 800;">Tầng <%= userDungeonStage %></span>
+        <button id="btn-tab-dungeon" class="arena-tab-btn" onclick="switchArenaTab('tab-dungeon', event)">
+            <span>🏰 Vượt Ải</span>
+            <span style="background: rgba(168, 85, 247, 0.3); color: #c084fc; font-size: 0.68rem; padding: 0.1rem 0.35rem; border-radius: 6px; font-weight: 800;">T<%= userDungeonStage %></span>
         </button>
-        <button id="btn-tab-quests" class="arena-tab-btn" onclick="switchArenaTab('tab-quests', event)" style="padding: 0.7rem 1.2rem; font-size: 0.92rem; font-weight: 700; border-radius: 8px 8px 0 0; border: none; cursor: pointer; background: transparent; color: var(--text-secondary); display: flex; align-items: center; gap: 0.4rem; white-space: nowrap; position: relative;">
-            📜 Nhiệm Vụ Hàng Ngày
+        <button id="btn-tab-quests" class="arena-tab-btn" onclick="switchArenaTab('tab-quests', event)">
+            <span>📜 Nhiệm Vụ</span>
             <% if (canClaimCount > 0) { %>
-                <span id="badge-quest-count" style="background: #ef4444; color: white; font-size: 0.7rem; padding: 0.15rem 0.45rem; border-radius: 10px; font-weight: 800; animation: pulse 1.5s infinite;"><%= canClaimCount %></span>
+                <span id="badge-quest-count" style="background: #ef4444; color: white; font-size: 0.68rem; padding: 0.1rem 0.35rem; border-radius: 10px; font-weight: 800; animation: pulse 1.5s infinite;"><%= canClaimCount %></span>
             <% } %>
         </button>
-        <button id="btn-tab-heroes" class="arena-tab-btn" onclick="switchArenaTab('tab-heroes', event)" style="padding: 0.7rem 1.2rem; font-size: 0.92rem; font-weight: 700; border-radius: 8px 8px 0 0; border: none; cursor: pointer; background: transparent; color: var(--text-secondary); display: flex; align-items: center; gap: 0.4rem; white-space: nowrap;">
-            💃 Nữ Thần (<%= heroes.filter(h => h.is_unlocked).length %>/<%= heroes.length %>)
+        <button id="btn-tab-heroes" class="arena-tab-btn" onclick="switchArenaTab('tab-heroes', event)">
+            <span>💃 Nữ Thần</span>
+            <span style="font-size: 0.7rem; color: #f472b6; font-weight: 700;"><%= heroes.filter(h => h.is_unlocked).length %>/<%= heroes.length %></span>
         </button>
-        <button id="btn-tab-chests" class="arena-tab-btn" onclick="switchArenaTab('tab-chests', event)" style="padding: 0.7rem 1.2rem; font-size: 0.92rem; font-weight: 700; border-radius: 8px 8px 0 0; border: none; cursor: pointer; background: transparent; color: var(--text-secondary); display: flex; align-items: center; gap: 0.4rem; white-space: nowrap;">
-            🎁 Mở Rương (<span id="tab-total-chests"><%= totalChests %></span>)
+        <button id="btn-tab-chests" class="arena-tab-btn" onclick="switchArenaTab('tab-chests', event)">
+            <span>🎁 Mở Rương</span>
+            <span id="tab-total-chests" style="background: rgba(245, 158, 11, 0.25); color: #f59e0b; font-size: 0.68rem; padding: 0.1rem 0.35rem; border-radius: 6px; font-weight: 800;"><%= totalChests %></span>
         </button>
-        <button id="btn-tab-ranks" class="arena-tab-btn" onclick="switchArenaTab('tab-ranks', event)" style="padding: 0.7rem 1.2rem; font-size: 0.92rem; font-weight: 700; border-radius: 8px 8px 0 0; border: none; cursor: pointer; background: transparent; color: var(--text-secondary); display: flex; align-items: center; gap: 0.4rem; white-space: nowrap;">
-            🏆 Bảng Xếp Hạng
+        <button id="btn-tab-ranks" class="arena-tab-btn" onclick="switchArenaTab('tab-ranks', event)">
+            <span>🏆 Xếp Hạng</span>
         </button>
     </div>
 
     <!-- TAB 1: ĐẤU TRƯỜNG KHIÊU CHIẾN PVP -->
     <div id="tab-arena" class="arena-tab-content">
-        <!-- Đội hình thủ hiện tại của tôi -->
-        <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.2rem; margin-bottom: 2rem;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
-                <div style="font-size: 1rem; font-weight: 700; color: #f59e0b; display: flex; align-items: center; gap: 0.4rem;">
-                    🛡️ Đội Hình Ra Trận Của Bạn <span style="font-size: 0.8rem; color: var(--text-secondary);">(Tổng Lực Chiến: <strong style="color: #60a5fa;"><%= team.combat_power || 1500 %></strong>)</span>
+        <!-- Đội hình ra trận của tôi -->
+        <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 12px; padding: 1rem; margin-bottom: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem; flex-wrap: wrap; gap: 0.4rem;">
+                <div style="font-size: 0.95rem; font-weight: 700; color: #f59e0b; display: flex; align-items: center; gap: 0.4rem;">
+                    🛡️ Đội Hình Xuất Trận <span style="font-size: 0.8rem; color: var(--text-secondary);">(LC: <strong style="color: #60a5fa;"><%= team.combat_power || 1500 %></strong>)</span>
                 </div>
-                <button onclick="switchArenaTab('tab-heroes')" class="btn btn-secondary" style="font-size: 0.8rem; padding: 0.35rem 0.8rem;">
+                <button onclick="switchArenaTab('tab-heroes')" class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.3rem 0.7rem;">
                     🔄 Đổi Đội Hình
                 </button>
             </div>
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; max-width: 600px;">
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem;">
                 <% const slots = [team.slot1, team.slot2, team.slot3]; %>
                 <% const slotNames = ['Tiên Phong', 'Chủ Lực', 'Hỗ Trợ']; %>
                 <% slots.forEach((h, idx) => { %>
-                    <div style="background: rgba(0,0,0,0.3); border: 1px dashed <%= h ? 'var(--accent-color)' : 'var(--border-color)' %>; border-radius: 10px; padding: 0.8rem; text-align: center; position: relative;">
-                        <span style="font-size: 0.7rem; color: var(--text-secondary); position: absolute; top: 4px; left: 6px;"><%= slotNames[idx] %></span>
+                    <div class="team-slot-box" style="background: rgba(0,0,0,0.3); border: 1px dashed <%= h ? 'var(--accent-color)' : 'var(--border-color)' %>; border-radius: 10px; padding: 0.6rem 0.3rem; text-align: center; position: relative;">
+                        <span style="font-size: 0.65rem; color: var(--text-secondary); position: absolute; top: 3px; left: 5px;"><%= slotNames[idx] %></span>
                         <% if (h) { %>
-                            <img src="<%= h.avatar_url || h.card_image_url %>" alt="" style="width: 54px; height: 54px; border-radius: 50%; object-fit: cover; margin-top: 0.6rem; border: 2px solid #f59e0b;">
-                            <div style="font-weight: 600; font-size: 0.85rem; margin-top: 0.3rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><%= h.name %></div>
-                            <span style="font-size: 0.72rem; color: #f472b6;"><%= h.rarity %></span>
+                            <img class="team-slot-img" src="<%= h.avatar_url || h.card_image_url %>" alt="" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; margin-top: 0.5rem; border: 2px solid #f59e0b;">
+                            <div style="font-weight: 600; font-size: 0.78rem; margin-top: 0.2rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><%= h.name %></div>
+                            <span style="font-size: 0.68rem; color: #f472b6; font-weight: 800;"><%= h.rarity %></span>
                         <% } else { %>
-                            <div style="height: 54px; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); font-size: 1.5rem; margin-top: 0.6rem;">➕</div>
-                            <div style="font-size: 0.8rem; color: var(--text-secondary);">Trống</div>
+                            <div class="team-slot-img" style="height: 50px; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); font-size: 1.3rem; margin-top: 0.5rem;">➕</div>
+                            <div style="font-size: 0.75rem; color: var(--text-secondary);">Trống</div>
                         <% } %>
                     </div>
                 <% }) %>
@@ -101,50 +306,50 @@
         </div>
 
         <!-- Danh sách đối thủ khiêu chiến -->
-        <h3 style="font-size: 1.15rem; color: var(--text-primary); margin-bottom: 1rem;">
+        <h3 style="font-size: 1.05rem; color: var(--text-primary); margin-bottom: 0.8rem;">
             🎯 Đối Thủ Xứng Tầm Hôm Nay
         </h3>
 
         <% if (opponents.length === 0) { %>
             <p style="color: var(--text-secondary); text-align: center; padding: 2rem;">Chưa có đối thủ nào trong tầm Rank. Hãy rèn luyện tướng và chờ thêm cao thủ tham gia!</p>
         <% } else { %>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.2rem;">
+            <div class="arena-grid-cards">
                 <% opponents.forEach(opp => { %>
-                    <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.2rem; display: flex; flex-direction: column; justify-content: space-between; transition: all 0.2s;" onmouseover="this.style.borderColor='var(--accent-color)';" onmouseout="this.style.borderColor='var(--border-color)';">
-                        <div style="display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1rem;">
-                            <img src="<%= opp.users ? opp.users.avatar : '/css/silly_duck.png' %>" alt="" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid #60a5fa;">
+                    <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 14px; padding: 1rem; display: flex; flex-direction: column; justify-content: space-between; transition: all 0.2s;" onmouseover="this.style.borderColor='var(--accent-color)';" onmouseout="this.style.borderColor='var(--border-color)';">
+                        <div style="display: flex; align-items: center; gap: 0.7rem; margin-bottom: 0.8rem;">
+                            <img src="<%= opp.users ? opp.users.avatar : '/css/silly_duck.png' %>" alt="" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid #60a5fa;">
                             <div style="flex: 1; min-width: 0;">
-                                <div style="font-weight: 700; font-size: 0.95rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                <div style="font-weight: 700; font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                                     <%= opp.users ? opp.users.display_name : 'Độc giả thần bí' %>
                                 </div>
-                                <div style="font-size: 0.8rem; color: var(--text-secondary); display: flex; gap: 0.5rem; align-items: center; margin-top: 2px;">
+                                <div style="font-size: 0.75rem; color: var(--text-secondary); display: flex; gap: 0.4rem; align-items: center; margin-top: 1px;">
                                     <span style="color: #f59e0b; font-weight: 600;"><%= opp.tier %></span>
                                     <span>·</span>
                                     <span><%= opp.elo_points %> Elo</span>
                                 </div>
                             </div>
-                            <span style="font-size: 0.8rem; background: rgba(59, 130, 246, 0.15); color: #60a5fa; padding: 0.3rem 0.6rem; border-radius: 6px; font-weight: 600;">
+                            <span style="font-size: 0.75rem; background: rgba(59, 130, 246, 0.15); color: #60a5fa; padding: 0.25rem 0.5rem; border-radius: 6px; font-weight: 700;">
                                 LC: <%= opp.team.combat_power || 1200 %>
                             </span>
                         </div>
 
                         <!-- Đội hình đối thủ -->
-                        <div style="display: flex; gap: 0.6rem; background: rgba(0,0,0,0.25); border-radius: 8px; padding: 0.6rem; margin-bottom: 1rem;">
+                        <div style="display: flex; gap: 0.4rem; background: rgba(0,0,0,0.25); border-radius: 8px; padding: 0.5rem; margin-bottom: 0.8rem;">
                             <% const opSlots = [opp.team.slot1, opp.team.slot2, opp.team.slot3]; %>
                             <% opSlots.forEach(h => { %>
-                                <div style="flex: 1; text-align: center;">
+                                <div style="flex: 1; text-align: center; min-width: 0;">
                                     <% if (h) { %>
-                                        <img src="<%= h.avatar_url || h.card_image_url %>" alt="" style="width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 1px solid #f472b6;">
-                                        <div style="font-size: 0.72rem; color: #cbd5e1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><%= h.name %></div>
+                                        <img src="<%= h.avatar_url || h.card_image_url %>" alt="" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 1px solid #f472b6;">
+                                        <div style="font-size: 0.68rem; color: #cbd5e1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><%= h.name %></div>
                                     <% } else { %>
-                                        <div style="width: 38px; height: 38px; border-radius: 50%; background: rgba(255,255,255,0.05); margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: var(--text-secondary);">Trống</div>
+                                        <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.05); margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: var(--text-secondary);">Trống</div>
                                     <% } %>
                                 </div>
                             <% }) %>
                         </div>
 
-                        <a href="/arena/battle/<%= opp.user_id %>" class="btn btn-primary" style="width: 100%; text-align: center; text-decoration: none; padding: 0.6rem; font-weight: 700; border-radius: 8px; box-sizing: border-box; display: block;">
-                            ⚔️ Khiêu Chiến Đối Thủ
+                        <a href="/arena/battle/<%= opp.user_id %>" class="btn btn-primary" style="width: 100%; text-align: center; text-decoration: none; padding: 0.55rem; font-weight: 700; border-radius: 8px; box-sizing: border-box; display: block; font-size: 0.85rem;">
+                            ⚔️ Khiêu Chiến Ngay
                         </a>
                     </div>
                 <% }) %>
@@ -154,55 +359,55 @@
 
     <!-- TAB 2: THÁP THỬ THÁCH (10 MÀN VƯỢT ẢI PVE) -->
     <div id="tab-dungeon" class="arena-tab-content" style="display: none;">
-        <div style="background: linear-gradient(135deg, rgba(168, 85, 247, 0.15) 0%, rgba(59, 130, 246, 0.15) 100%); border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 12px; padding: 1.2rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div style="background: linear-gradient(135deg, rgba(168, 85, 247, 0.15) 0%, rgba(59, 130, 246, 0.15) 100%); border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 12px; padding: 1rem; margin-bottom: 1.2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.6rem;">
             <div>
-                <h3 style="margin: 0; color: #c084fc; font-size: 1.2rem;">🏰 Tháp Thử Thách - Trảm Yêu Trừ Ma</h3>
-                <p style="margin: 0.3rem 0 0 0; color: var(--text-secondary); font-size: 0.88rem;">
+                <h3 style="margin: 0; color: #c084fc; font-size: 1.1rem;">🏰 Tháp Thử Thách - Trảm Yêu Trừ Ma</h3>
+                <p style="margin: 0.2rem 0 0 0; color: var(--text-secondary); font-size: 0.82rem;">
                     Vượt 10 tầng ải yêu ma với độ khó tăng dần. Mỗi tầng rơi rương quý, đan EXP và mảnh tướng!
                 </p>
             </div>
-            <div style="background: rgba(0,0,0,0.4); padding: 0.5rem 1rem; border-radius: 8px; font-weight: 700; font-size: 0.9rem; color: #e9d5ff;">
-                Tiến độ: <span style="color: #a855f7; font-size: 1.1rem;"><%= Math.min(10, userDungeonStage) %>/10</span> Ải
+            <div style="background: rgba(0,0,0,0.4); padding: 0.4rem 0.8rem; border-radius: 8px; font-weight: 700; font-size: 0.85rem; color: #e9d5ff;">
+                Tiến độ: <span style="color: #a855f7; font-size: 1rem;"><%= Math.min(10, userDungeonStage) %>/10</span> Ải
             </div>
         </div>
 
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.2rem;">
+        <div class="arena-grid-cards">
             <% dungeonStages.forEach(stg => { %>
                 <% 
                     const isPassed = (userDungeonStage > stg.stage);
                     const isCurrent = (userDungeonStage === stg.stage);
                     const isLocked = (userDungeonStage < stg.stage);
                 %>
-                <div style="background: var(--bg-secondary); border: 2px solid <%= isCurrent ? '#a855f7' : (isPassed ? '#22c55e' : 'var(--border-color)') %>; border-radius: 14px; padding: 1.2rem; display: flex; flex-direction: column; justify-content: space-between; position: relative; <%= isCurrent ? 'box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);' : '' %> <%= isLocked ? 'opacity: 0.6;' : '' %>">
+                <div style="background: var(--bg-secondary); border: 2px solid <%= isCurrent ? '#a855f7' : (isPassed ? '#22c55e' : 'var(--border-color)') %>; border-radius: 14px; padding: 1rem; display: flex; flex-direction: column; justify-content: space-between; position: relative; <%= isCurrent ? 'box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);' : '' %> <%= isLocked ? 'opacity: 0.6;' : '' %>">
                     <!-- Huy hiệu trạng thái -->
-                    <div style="position: absolute; top: 12px; right: 12px;">
+                    <div style="position: absolute; top: 10px; right: 10px;">
                         <% if (isPassed) { %>
-                            <span style="background: rgba(34, 197, 94, 0.2); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.4); padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.72rem; font-weight: 700;">✅ Đã Vượt</span>
+                            <span style="background: rgba(34, 197, 94, 0.2); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.4); padding: 0.15rem 0.5rem; border-radius: 20px; font-size: 0.68rem; font-weight: 700;">✅ Đã Vượt</span>
                         <% } else if (isCurrent) { %>
-                            <span style="background: rgba(168, 85, 247, 0.25); color: #c084fc; border: 1px solid #a855f7; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.72rem; font-weight: 800; animation: pulse 1.5s infinite;">🔥 Ải Hiện Tại</span>
+                            <span style="background: rgba(168, 85, 247, 0.25); color: #c084fc; border: 1px solid #a855f7; padding: 0.15rem 0.5rem; border-radius: 20px; font-size: 0.68rem; font-weight: 800; animation: pulse 1.5s infinite;">🔥 Ải Hiện Tại</span>
                         <% } else { %>
-                            <span style="background: rgba(255, 255, 255, 0.05); color: var(--text-secondary); border: 1px solid rgba(255, 255, 255, 0.1); padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.72rem; font-weight: 600;">🔒 Khóa</span>
+                            <span style="background: rgba(255, 255, 255, 0.05); color: var(--text-secondary); border: 1px solid rgba(255, 255, 255, 0.1); padding: 0.15rem 0.5rem; border-radius: 20px; font-size: 0.68rem; font-weight: 600;">🔒 Khóa</span>
                         <% } %>
                     </div>
 
                     <div>
-                        <div style="display: flex; gap: 0.9rem; align-items: center; margin-bottom: 1rem;">
-                            <img src="<%= stg.avatar %>" alt="" style="width: 58px; height: 58px; border-radius: 12px; object-fit: cover; border: 2px solid <%= isCurrent ? '#a855f7' : 'var(--border-color)' %>;">
-                            <div>
-                                <span style="font-size: 0.75rem; color: #a855f7; font-weight: 700;">MÀN <%= stg.stage %> · Hệ <%= stg.element %></span>
-                                <h4 style="margin: 0.2rem 0 0.1rem 0; font-size: 1.05rem; color: #fff;"><%= stg.name %></h4>
-                                <div style="font-size: 0.78rem; color: var(--text-secondary);"><%= stg.title %></div>
+                        <div style="display: flex; gap: 0.8rem; align-items: center; margin-bottom: 0.8rem;">
+                            <img src="<%= stg.avatar %>" alt="" style="width: 52px; height: 52px; border-radius: 10px; object-fit: cover; border: 2px solid <%= isCurrent ? '#a855f7' : 'var(--border-color)' %>;">
+                            <div style="min-width: 0; flex: 1;">
+                                <span style="font-size: 0.7rem; color: #a855f7; font-weight: 800;">MÀN <%= stg.stage %> · Hệ <%= stg.element %></span>
+                                <h4 style="margin: 0.1rem 0; font-size: 0.98rem; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><%= stg.name %></h4>
+                                <div style="font-size: 0.75rem; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><%= stg.title %></div>
                             </div>
                         </div>
 
                         <!-- Chỉ số & Phần thưởng -->
-                        <div style="background: rgba(0,0,0,0.25); border-radius: 8px; padding: 0.6rem 0.8rem; margin-bottom: 1rem; font-size: 0.8rem;">
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.3rem;">
-                                <span style="color: var(--text-secondary);">Lực chiến khuyến nghị:</span>
+                        <div style="background: rgba(0,0,0,0.25); border-radius: 8px; padding: 0.5rem 0.7rem; margin-bottom: 0.8rem; font-size: 0.78rem;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                                <span style="color: var(--text-secondary);">Khuyến nghị:</span>
                                 <strong style="color: #60a5fa;"><%= stg.combat_power %> LC</strong>
                             </div>
                             <div style="display: flex; justify-content: space-between;">
-                                <span style="color: var(--text-secondary);">Thưởng vượt ải:</span>
+                                <span style="color: var(--text-secondary);">Phần thưởng:</span>
                                 <span style="color: #f59e0b; font-weight: 600;">
                                     <% const rw = stg.rewards; %>
                                     <%= rw.wooden_chests ? '📦' + rw.wooden_chests + ' ' : '' %>
@@ -216,11 +421,11 @@
                     </div>
 
                     <% if (isLocked) { %>
-                        <button disabled class="btn btn-secondary" style="width: 100%; padding: 0.6rem; font-size: 0.88rem; opacity: 0.6; cursor: not-allowed;">
+                        <button disabled class="btn btn-secondary" style="width: 100%; padding: 0.55rem; font-size: 0.82rem; opacity: 0.6; cursor: not-allowed;">
                             🔒 Cần Vượt Ải <%= stg.stage - 1 %>
                         </button>
                     <% } else { %>
-                        <a href="/arena/dungeon/<%= stg.stage %>" class="btn btn-primary" style="width: 100%; text-align: center; text-decoration: none; padding: 0.6rem; font-weight: 700; border-radius: 8px; box-sizing: border-box; display: block; background: <%= isCurrent ? 'linear-gradient(135deg, #a855f7, #6366f1)' : 'var(--accent-color)' %>;">
+                        <a href="/arena/dungeon/<%= stg.stage %>" class="btn btn-primary" style="width: 100%; text-align: center; text-decoration: none; padding: 0.55rem; font-weight: 700; border-radius: 8px; box-sizing: border-box; display: block; font-size: 0.85rem; background: <%= isCurrent ? 'linear-gradient(135deg, #a855f7, #6366f1)' : 'var(--accent-color)' %>;">
                             <%= isPassed ? '⚔️ Khiêu Chiến Lại' : '⚔️ Khiêu Chiến Ngay' %>
                         </a>
                     <% } %>
@@ -231,36 +436,36 @@
 
     <!-- TAB 3: NHIỆM VỤ HÀNG NGÀY -->
     <div id="tab-quests" class="arena-tab-content" style="display: none;">
-        <div style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(236, 72, 153, 0.15) 100%); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 12px; padding: 1.2rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(236, 72, 153, 0.15) 100%); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 12px; padding: 1rem; margin-bottom: 1.2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.6rem;">
             <div>
-                <h3 style="margin: 0; color: #f59e0b; font-size: 1.2rem;">📜 Nhiệm Vụ Hàng Ngày (Tự Động Reset 00:00)</h3>
-                <p style="margin: 0.3rem 0 0 0; color: var(--text-secondary); font-size: 0.88rem;">
+                <h3 style="margin: 0; color: #f59e0b; font-size: 1.1rem;">📜 Nhiệm Vụ Hàng Ngày (Tự Động Reset 00:00)</h3>
+                <p style="margin: 0.2rem 0 0 0; color: var(--text-secondary); font-size: 0.82rem;">
                     Đọc truyện, đấu rank và mở hòm để nhận thêm hàng loạt rương quà và đan bồi dưỡng!
                 </p>
             </div>
-            <div style="color: #60a5fa; font-size: 0.85rem; font-weight: 600;">
+            <div style="color: #60a5fa; font-size: 0.8rem; font-weight: 600;">
                 🎁 Hoàn thành càng nhiều, tướng càng mạnh!
             </div>
         </div>
 
-        <div style="display: flex; flex-direction: column; gap: 1rem;">
+        <div style="display: flex; flex-direction: column; gap: 0.8rem;">
             <% quests.forEach(q => { %>
-                <div style="background: var(--bg-secondary); border: 1px solid <%= q.canClaim ? '#22c55e' : 'var(--border-color)' %>; border-radius: 12px; padding: 1.2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; <%= q.canClaim ? 'box-shadow: 0 0 15px rgba(34, 197, 94, 0.2);' : '' %>">
-                    <div style="flex: 1; min-width: 250px;">
-                        <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.3rem;">
-                            <h4 style="margin: 0; font-size: 1rem; color: #fff;"><%= q.name %></h4>
-                            <span style="font-size: 0.75rem; background: rgba(245, 158, 11, 0.15); color: #f59e0b; padding: 0.15rem 0.5rem; border-radius: 12px; font-weight: 600;">
+                <div class="quest-card-item" style="background: var(--bg-secondary); border: 1px solid <%= q.canClaim ? '#22c55e' : 'var(--border-color)' %>; border-radius: 12px; padding: 1rem; display: flex; justify-content: space-between; align-items: center; gap: 0.8rem; <%= q.canClaim ? 'box-shadow: 0 0 15px rgba(34, 197, 94, 0.2);' : '' %>">
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem; flex-wrap: wrap;">
+                            <h4 style="margin: 0; font-size: 0.95rem; color: #fff;"><%= q.name %></h4>
+                            <span style="font-size: 0.72rem; background: rgba(245, 158, 11, 0.15); color: #f59e0b; padding: 0.12rem 0.45rem; border-radius: 10px; font-weight: 700;">
                                 <%= q.reward_desc %>
                             </span>
                         </div>
-                        <p style="margin: 0 0 0.5rem 0; font-size: 0.82rem; color: var(--text-secondary);"><%= q.desc %></p>
+                        <p style="margin: 0 0 0.4rem 0; font-size: 0.8rem; color: var(--text-secondary);"><%= q.desc %></p>
                         
                         <!-- Thanh tiến độ -->
-                        <div style="display: flex; align-items: center; gap: 0.8rem; max-width: 380px;">
-                            <div style="flex: 1; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden;">
-                                <div style="width: <%= Math.min(100, Math.round((q.progress / q.target) * 100)) %>%; height: 100%; background: <%= q.isCompleted ? '#22c55e' : '#60a5fa' %>; border-radius: 4px;"></div>
+                        <div style="display: flex; align-items: center; gap: 0.6rem; max-width: 320px;">
+                            <div style="flex: 1; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
+                                <div style="width: <%= Math.min(100, Math.round((q.progress / q.target) * 100)) %>%; height: 100%; background: <%= q.isCompleted ? '#22c55e' : '#60a5fa' %>; border-radius: 3px;"></div>
                             </div>
-                            <span style="font-size: 0.8rem; font-weight: 700; color: <%= q.isCompleted ? '#22c55e' : 'var(--text-secondary)' %>;">
+                            <span style="font-size: 0.75rem; font-weight: 700; color: <%= q.isCompleted ? '#22c55e' : 'var(--text-secondary)' %>;">
                                 <%= q.current %>/<%= q.target %>
                             </span>
                         </div>
@@ -269,15 +474,15 @@
                     <!-- Nút hành động nhận thưởng -->
                     <div>
                         <% if (q.isClaimed) { %>
-                            <button disabled class="btn btn-secondary" style="padding: 0.55rem 1.4rem; font-size: 0.85rem; font-weight: 600; opacity: 0.6; cursor: default;">
+                            <button disabled class="btn btn-secondary quest-card-btn" style="padding: 0.5rem 1.2rem; font-size: 0.82rem; font-weight: 600; opacity: 0.6; cursor: default;">
                                 ✔️ Đã Nhận
                             </button>
                         <% } else if (q.canClaim) { %>
-                            <button id="btn-claim-<%= q.id %>" onclick="claimQuestReward('<%= q.id %>')" class="btn btn-primary" style="padding: 0.55rem 1.4rem; font-size: 0.85rem; font-weight: 700; background: linear-gradient(135deg, #22c55e, #16a34a); box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);">
+                            <button id="btn-claim-<%= q.id %>" onclick="claimQuestReward('<%= q.id %>')" class="btn btn-primary quest-card-btn" style="padding: 0.5rem 1.2rem; font-size: 0.82rem; font-weight: 700; background: linear-gradient(135deg, #22c55e, #16a34a); box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);">
                                 🎁 Nhận Thưởng
                             </button>
                         <% } else { %>
-                            <button disabled class="btn btn-secondary" style="padding: 0.55rem 1.4rem; font-size: 0.85rem; opacity: 0.5; cursor: not-allowed;">
+                            <button disabled class="btn btn-secondary quest-card-btn" style="padding: 0.5rem 1.2rem; font-size: 0.82rem; opacity: 0.5; cursor: not-allowed;">
                                 Chưa Xong
                             </button>
                         <% } %>
@@ -287,28 +492,28 @@
         </div>
     </div>
 
-    <!-- TAB 4: DANH SÁCH NỮ THẦN CỦA TÔI -->
+    <!-- TAB 4: DANH SÁCH 20 NỮ THẦN CỦA TÔI -->
     <div id="tab-heroes" class="arena-tab-content" style="display: none;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem; flex-wrap: wrap; gap: 0.8rem;">
-            <h3 style="font-size: 1.2rem; color: #ec4899; margin: 0;">
-                💃 Bộ Sưu Tập Nữ Thần (<%= heroes.filter(h => h.is_unlocked).length %>/<%= heroes.length %> Đã Chiêu Mộ)
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.6rem;">
+            <h3 style="font-size: 1.1rem; color: #ec4899; margin: 0;">
+                💃 Bộ Sưu Tập Nữ Thần (<%= heroes.filter(h => h.is_unlocked).length %>/<%= heroes.length %>)
             </h3>
-            <div style="font-size: 0.85rem; color: var(--text-secondary); display: flex; gap: 1rem;">
-                <span>💊 Đan EXP: <strong id="val-exp-pills" style="color: #60a5fa;"><%= items.exp_pills %></strong> viên</span>
-                <span>⭐ Đá Sao: <strong id="val-star-stones" style="color: #f59e0b;"><%= items.star_stones %></strong> viên</span>
+            <div style="font-size: 0.8rem; color: var(--text-secondary); display: flex; gap: 0.8rem;">
+                <span>💊 Đan EXP: <strong id="val-exp-pills" style="color: #60a5fa;"><%= items.exp_pills %></strong></span>
+                <span>⭐ Đá Sao: <strong id="val-star-stones" style="color: #f59e0b;"><%= items.star_stones %></strong></span>
             </div>
         </div>
 
-        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.5rem;">
+        <div class="heroes-grid-cards">
             <% heroes.forEach(hero => { %>
                 <div style="background: var(--bg-secondary); border: 2px solid <%= hero.is_unlocked ? 'var(--accent-color)' : 'rgba(255,255,255,0.08)' %>; border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; position: relative; <%= !hero.is_unlocked ? 'filter: grayscale(85%); opacity: 0.75;' : '' %>">
                     <!-- Phẩm chất & Hệ phái -->
-                    <div style="position: absolute; top: 10px; left: 10px; z-index: 2; display: flex; gap: 0.4rem;">
-                        <span style="font-size: 0.75rem; font-weight: 800; padding: 0.2rem 0.5rem; border-radius: 6px; 
+                    <div style="position: absolute; top: 8px; left: 8px; z-index: 2; display: flex; gap: 0.35rem;">
+                        <span style="font-size: 0.72rem; font-weight: 800; padding: 0.15rem 0.45rem; border-radius: 6px; 
                             background: <%= hero.rarity === 'UR' ? '#dc2626' : (hero.rarity === 'SSR' ? '#f59e0b' : (hero.rarity === 'SR' ? '#a855f7' : '#3b82f6')) %>; color: white;">
                             <%= hero.rarity %>
                         </span>
-                        <span style="font-size: 0.75rem; background: rgba(0,0,0,0.6); color: #fff; padding: 0.2rem 0.5rem; border-radius: 6px;">
+                        <span style="font-size: 0.72rem; background: rgba(0,0,0,0.6); color: #fff; padding: 0.15rem 0.45rem; border-radius: 6px; font-weight: 700;">
                             <%= hero.element.toUpperCase() %>
                         </span>
                     </div>
@@ -317,20 +522,20 @@
                     <div style="height: 220px; overflow: hidden; position: relative; background: #000;">
                         <img src="<%= hero.card_image_url || hero.avatar_url %>" alt="" style="width: 100%; height: 100%; object-fit: cover; object-position: top;">
                         <% if (hero.is_unlocked) { %>
-                            <div style="position: absolute; bottom: 8px; right: 10px; background: rgba(0,0,0,0.7); padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.8rem; font-weight: 700; color: #22c55e;">
+                            <div style="position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,0.75); padding: 0.2rem 0.55rem; border-radius: 12px; font-size: 0.75rem; font-weight: 700; color: #22c55e;">
                                 Lv.<%= hero.level %> ⭐<%= hero.star %>
                             </div>
                         <% } %>
                     </div>
 
                     <!-- Thông tin chi tiết -->
-                    <div style="padding: 1rem; flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
+                    <div style="padding: 0.9rem; flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
                         <div>
-                            <h4 style="margin: 0; font-size: 1.1rem; color: #fff;"><%= hero.name %></h4>
-                            <p style="margin: 0.2rem 0 0.8rem 0; font-size: 0.8rem; color: var(--text-secondary);"><%= hero.title || hero.role %></p>
+                            <h4 style="margin: 0; font-size: 1.05rem; color: #fff;"><%= hero.name %></h4>
+                            <p style="margin: 0.15rem 0 0.6rem 0; font-size: 0.78rem; color: var(--text-secondary);"><%= hero.title || hero.role %></p>
 
                             <!-- Chỉ số cơ bản -->
-                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.4rem; font-size: 0.75rem; background: rgba(0,0,0,0.2); padding: 0.6rem; border-radius: 8px; margin-bottom: 0.8rem;">
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.35rem; font-size: 0.74rem; background: rgba(0,0,0,0.2); padding: 0.5rem; border-radius: 8px; margin-bottom: 0.7rem;">
                                 <div>❤️ HP: <strong style="color: #22c55e;"><%= hero.hp %></strong></div>
                                 <div>⚔️ Công: <strong style="color: #ef4444;"><%= hero.atk %></strong></div>
                                 <div>🛡️ Thủ: <strong style="color: #3b82f6;"><%= hero.def %></strong></div>
@@ -341,17 +546,17 @@
                         <!-- Nút thao tác -->
                         <div>
                             <% if (hero.is_unlocked) { %>
-                                <div style="display: flex; gap: 0.5rem;">
-                                    <button onclick="upgradeHero('<%= hero.id %>')" class="btn btn-secondary" style="flex: 1; font-size: 0.8rem; padding: 0.5rem 0.2rem;">
-                                        💊 Nâng Cấp (<%= hero.level * 5 %> Đan)
+                                <div style="display: flex; gap: 0.4rem;">
+                                    <button onclick="upgradeHero('<%= hero.id %>')" class="btn btn-secondary" style="flex: 1; font-size: 0.78rem; padding: 0.5rem 0.2rem;">
+                                        💊 Nâng Cấp (<%= hero.level * 5 %>)
                                     </button>
-                                    <button onclick="openSetTeamModal('<%= hero.id %>', '<%= hero.name %>')" class="btn btn-primary" style="flex: 1; font-size: 0.8rem; padding: 0.5rem 0.2rem;">
+                                    <button onclick="openSetTeamModal('<%= hero.id %>', '<%= hero.name %>')" class="btn btn-primary" style="flex: 1; font-size: 0.78rem; padding: 0.5rem 0.2rem;">
                                         ⚔️ Ra Trận
                                     </button>
                                 </div>
                             <% } else { %>
                                 <div style="margin-bottom: 0.5rem;">
-                                    <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.2rem;">
+                                    <div style="display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 0.2rem;">
                                         <span>Mảnh tướng:</span>
                                         <span><%= hero.shards %>/<%= hero.shards_to_summon %></span>
                                     </div>
@@ -359,8 +564,8 @@
                                         <div style="width: <%= Math.min(100, Math.round((hero.shards / hero.shards_to_summon) * 100)) %>%; height: 100%; background: #ec4899; border-radius: 3px;"></div>
                                     </div>
                                 </div>
-                                <button onclick="summonHero('<%= hero.id %>')" class="btn btn-primary" style="width: 100%; font-size: 0.85rem; padding: 0.5rem; font-weight: 700;" <%= hero.shards < hero.shards_to_summon ? 'disabled' : '' %>>
-                                    ✨ Chiêu Mộ (<%= hero.shards %>/<%= hero.shards_to_summon %> Mảnh)
+                                <button onclick="summonHero('<%= hero.id %>')" class="btn btn-primary" style="width: 100%; font-size: 0.82rem; padding: 0.5rem; font-weight: 700;" <%= hero.shards < hero.shards_to_summon ? 'disabled' : '' %>>
+                                    ✨ Chiêu Mộ (<%= hero.shards %>/<%= hero.shards_to_summon %>)
                                 </button>
                             <% } %>
                         </div>
@@ -372,55 +577,55 @@
 
     <!-- TAB 5: RƯƠNG QUÀ & RÚT THẺ GACHA -->
     <div id="tab-chests" class="arena-tab-content" style="display: none;">
-        <div style="background: linear-gradient(135deg, rgba(234, 179, 8, 0.15) 0%, rgba(236, 72, 153, 0.15) 100%); border: 1px solid rgba(234, 179, 8, 0.3); border-radius: 12px; padding: 1.2rem; margin-bottom: 1.5rem;">
-            <h3 style="margin: 0; color: #f59e0b; font-size: 1.2rem;">🎁 Mở Rương Quà & Thu Thập Mảnh Tướng</h3>
-            <p style="margin: 0.3rem 0 0 0; color: var(--text-secondary); font-size: 0.88rem;">
+        <div style="background: linear-gradient(135deg, rgba(234, 179, 8, 0.15) 0%, rgba(236, 72, 153, 0.15) 100%); border: 1px solid rgba(234, 179, 8, 0.3); border-radius: 12px; padding: 1rem; margin-bottom: 1.2rem;">
+            <h3 style="margin: 0; color: #f59e0b; font-size: 1.1rem;">🎁 Mở Rương Quà & Thu Thập Mảnh Tướng</h3>
+            <p style="margin: 0.2rem 0 0 0; color: var(--text-secondary); font-size: 0.82rem;">
                 Nhận rương bằng cách đọc truyện mỗi ngày, vượt ải Tháp Thử Thách hoặc chiến thắng tại Đấu Trường!
             </p>
         </div>
 
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
+        <div class="chests-grid-cards">
             <!-- Hòm Gỗ -->
-            <div style="background: var(--bg-secondary); border: 1px solid #78350f; border-radius: 14px; padding: 1.5rem; text-align: center; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+            <div style="background: var(--bg-secondary); border: 1px solid #78350f; border-radius: 14px; padding: 1.2rem; text-align: center; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
                 <div>
-                    <div style="font-size: 3.5rem; margin-bottom: 0.5rem;">📦</div>
-                    <h4 style="margin: 0; font-size: 1.15rem; color: #d97706;">Rương Gỗ Nữ Thần</h4>
-                    <p style="color: var(--text-secondary); font-size: 0.8rem; margin: 0.5rem 0;">Chứa: 2-4 Mảnh tướng R/SR + 5-10 Đan EXP.</p>
-                    <div style="font-size: 1.1rem; font-weight: 700; color: #fff; margin: 1rem 0;">
+                    <div style="font-size: 3rem; margin-bottom: 0.4rem;">📦</div>
+                    <h4 style="margin: 0; font-size: 1.1rem; color: #d97706;">Rương Gỗ Nữ Thần</h4>
+                    <p style="color: var(--text-secondary); font-size: 0.78rem; margin: 0.4rem 0;">Chứa: 2-4 Mảnh tướng R/SR + 5-10 Đan EXP.</p>
+                    <div style="font-size: 1rem; font-weight: 700; color: #fff; margin: 0.8rem 0;">
                         Số lượng: <span id="count-wooden" style="color: #60a5fa;"><%= items.wooden_chests %></span>
                     </div>
                 </div>
-                <button id="btn-open-wooden" onclick="openChest('wooden')" class="btn btn-primary" style="width: 100%; padding: 0.65rem; font-weight: 700; background: linear-gradient(135deg, #b45309, #78350f);" <%= items.wooden_chests <= 0 ? 'disabled' : '' %>>
+                <button id="btn-open-wooden" onclick="openChest('wooden')" class="btn btn-primary" style="width: 100%; padding: 0.6rem; font-weight: 700; font-size: 0.88rem; background: linear-gradient(135deg, #b45309, #78350f);" <%= items.wooden_chests <= 0 ? 'disabled' : '' %>>
                     Mở Rương Gỗ
                 </button>
             </div>
 
             <!-- Hòm Bạc -->
-            <div style="background: var(--bg-secondary); border: 1px solid #94a3b8; border-radius: 14px; padding: 1.5rem; text-align: center; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 4px 15px rgba(148, 163, 184, 0.1);">
+            <div style="background: var(--bg-secondary); border: 1px solid #94a3b8; border-radius: 14px; padding: 1.2rem; text-align: center; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 4px 15px rgba(148, 163, 184, 0.1);">
                 <div>
-                    <div style="font-size: 3.5rem; margin-bottom: 0.5rem;">🥈</div>
-                    <h4 style="margin: 0; font-size: 1.15rem; color: #cbd5e1;">Rương Bạc Tinh Thảo</h4>
-                    <p style="color: var(--text-secondary); font-size: 0.8rem; margin: 0.5rem 0;">Chứa: 5-10 Mảnh SR/SSR + 15-30 Đan EXP + Đá sao.</p>
-                    <div style="font-size: 1.1rem; font-weight: 700; color: #fff; margin: 1rem 0;">
+                    <div style="font-size: 3rem; margin-bottom: 0.4rem;">🥈</div>
+                    <h4 style="margin: 0; font-size: 1.1rem; color: #cbd5e1;">Rương Bạc Tinh Thảo</h4>
+                    <p style="color: var(--text-secondary); font-size: 0.78rem; margin: 0.4rem 0;">Chứa: 5-10 Mảnh SR/SSR + 15-30 Đan EXP + Đá sao.</p>
+                    <div style="font-size: 1rem; font-weight: 700; color: #fff; margin: 0.8rem 0;">
                         Số lượng: <span id="count-silver" style="color: #60a5fa;"><%= items.silver_chests %></span>
                     </div>
                 </div>
-                <button id="btn-open-silver" onclick="openChest('silver')" class="btn btn-primary" style="width: 100%; padding: 0.65rem; font-weight: 700; background: linear-gradient(135deg, #64748b, #475569);" <%= items.silver_chests <= 0 ? 'disabled' : '' %>>
+                <button id="btn-open-silver" onclick="openChest('silver')" class="btn btn-primary" style="width: 100%; padding: 0.6rem; font-weight: 700; font-size: 0.88rem; background: linear-gradient(135deg, #64748b, #475569);" <%= items.silver_chests <= 0 ? 'disabled' : '' %>>
                     Mở Rương Bạc
                 </button>
             </div>
 
             <!-- Hòm Vàng -->
-            <div style="background: var(--bg-secondary); border: 1px solid #eab308; border-radius: 14px; padding: 1.5rem; text-align: center; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 4px 20px rgba(234, 179, 8, 0.15);">
+            <div style="background: var(--bg-secondary); border: 1px solid #eab308; border-radius: 14px; padding: 1.2rem; text-align: center; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 4px 20px rgba(234, 179, 8, 0.15);">
                 <div>
-                    <div style="font-size: 3.5rem; margin-bottom: 0.5rem;">👑</div>
-                    <h4 style="margin: 0; font-size: 1.15rem; color: #eab308;">Rương Vàng Thượng Cổ</h4>
-                    <p style="color: var(--text-secondary); font-size: 0.8rem; margin: 0.5rem 0;">Chứa: 10-20 Mảnh SSR/UR + 30-60 Đan EXP + 3-7 Đá sao.</p>
-                    <div style="font-size: 1.1rem; font-weight: 700; color: #fff; margin: 1rem 0;">
+                    <div style="font-size: 3rem; margin-bottom: 0.4rem;">👑</div>
+                    <h4 style="margin: 0; font-size: 1.1rem; color: #eab308;">Rương Vàng Thượng Cổ</h4>
+                    <p style="color: var(--text-secondary); font-size: 0.78rem; margin: 0.4rem 0;">Chứa: 10-20 Mảnh SSR/UR + 30-60 Đan EXP + 3-7 Đá sao.</p>
+                    <div style="font-size: 1rem; font-weight: 700; color: #fff; margin: 0.8rem 0;">
                         Số lượng: <span id="count-gold" style="color: #60a5fa;"><%= items.gold_chests %></span>
                     </div>
                 </div>
-                <button id="btn-open-gold" onclick="openChest('gold')" class="btn btn-primary" style="width: 100%; padding: 0.65rem; font-weight: 700; background: linear-gradient(135deg, #f59e0b, #d97706);" <%= items.gold_chests <= 0 ? 'disabled' : '' %>>
+                <button id="btn-open-gold" onclick="openChest('gold')" class="btn btn-primary" style="width: 100%; padding: 0.6rem; font-weight: 700; font-size: 0.88rem; background: linear-gradient(135deg, #f59e0b, #d97706);" <%= items.gold_chests <= 0 ? 'disabled' : '' %>>
                     Mở Rương Vàng
                 </button>
             </div>
@@ -429,16 +634,18 @@
 
     <!-- TAB 6: BẢNG XẾP HẠNG -->
     <div id="tab-ranks" class="arena-tab-content" style="display: none;">
-        <h3 style="font-size: 1.2rem; color: #f59e0b; margin-bottom: 1rem;">🏆 Bảng Phong Thần Đấu Trường (Top 20)</h3>
-        <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden;">
-            <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+        <h3 style="font-size: 1.15rem; color: #f59e0b; margin-bottom: 0.8rem;">🏆 Bảng Phong Thần Đấu Trường (Top 20)</h3>
+
+        <!-- GIAO DIỆN DESKTOP (BẢNG TRUYỀN THỐNG) -->
+        <div class="desktop-leaderboard" style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
                 <thead>
                     <tr style="border-bottom: 1px solid var(--border-color); background: rgba(0,0,0,0.2); text-align: left;">
-                        <th style="padding: 0.8rem 1rem;">Hạng</th>
-                        <th style="padding: 0.8rem 1rem;">Độc Giả</th>
-                        <th style="padding: 0.8rem 1rem;">Bậc Rank</th>
-                        <th style="padding: 0.8rem 1rem;">Điểm Elo</th>
-                        <th style="padding: 0.8rem 1rem;">Tỷ Lệ Thắng</th>
+                        <th style="padding: 0.75rem 1rem;">Hạng</th>
+                        <th style="padding: 0.75rem 1rem;">Độc Giả</th>
+                        <th style="padding: 0.75rem 1rem;">Bậc Rank</th>
+                        <th style="padding: 0.75rem 1rem;">Điểm Elo</th>
+                        <th style="padding: 0.75rem 1rem;">Tỷ Lệ Thắng</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -449,16 +656,16 @@
                     <% } else { %>
                         <% leaderboard.forEach((lead, idx) => { %>
                             <tr style="border-bottom: 1px solid rgba(255,255,255,0.04);">
-                                <td style="padding: 0.8rem 1rem; font-weight: 700;">
+                                <td style="padding: 0.75rem 1rem; font-weight: 700;">
                                     <% if (idx === 0) { %>🥇 1<% } else if (idx === 1) { %>🥈 2<% } else if (idx === 2) { %>🥉 3<% } else { %>#<%= idx + 1 %><% } %>
                                 </td>
-                                <td style="padding: 0.8rem 1rem; display: flex; align-items: center; gap: 0.6rem;">
+                                <td style="padding: 0.75rem 1rem; display: flex; align-items: center; gap: 0.6rem;">
                                     <img src="<%= lead.users ? lead.users.avatar : '/css/silly_duck.png' %>" alt="" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">
                                     <span style="font-weight: 600;"><%= lead.users ? lead.users.display_name : 'Độc giả' %></span>
                                 </td>
-                                <td style="padding: 0.8rem 1rem; color: #f59e0b; font-weight: 600;"><%= lead.tier %></td>
-                                <td style="padding: 0.8rem 1rem; font-weight: 700; color: #60a5fa;"><%= lead.elo_points %></td>
-                                <td style="padding: 0.8rem 1rem; color: var(--text-secondary);">
+                                <td style="padding: 0.75rem 1rem; color: #f59e0b; font-weight: 600;"><%= lead.tier %></td>
+                                <td style="padding: 0.75rem 1rem; font-weight: 700; color: #60a5fa;"><%= lead.elo_points %></td>
+                                <td style="padding: 0.75rem 1rem; color: var(--text-secondary);">
                                     <% const total = (lead.wins || 0) + (lead.losses || 0); %>
                                     <%= total > 0 ? Math.round(((lead.wins || 0) / total) * 100) : 0 %>% (<%= lead.wins %>W - <%= lead.losses %>L)
                                 </td>
@@ -468,70 +675,91 @@
                 </tbody>
             </table>
         </div>
+
+        <!-- GIAO DIỆN MOBILE (DẠNG CARD RIÊNG BIỆT - KHÔNG CUỘN NGANG) -->
+        <div class="mobile-leaderboard">
+            <% if (leaderboard.length === 0) { %>
+                <p style="text-align: center; padding: 1.5rem; color: var(--text-secondary);">Chưa có dữ liệu xếp hạng.</p>
+            <% } else { %>
+                <% leaderboard.forEach((lead, idx) => { %>
+                    <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 10px; padding: 0.75rem; display: flex; align-items: center; justify-content: space-between; gap: 0.6rem;">
+                        <div style="display: flex; align-items: center; gap: 0.6rem; min-width: 0;">
+                            <div style="font-weight: 800; font-size: 0.95rem; width: 26px; text-align: center;">
+                                <% if (idx === 0) { %>🥇<% } else if (idx === 1) { %>🥈<% } else if (idx === 2) { %>🥉<% } else { %>#<%= idx + 1 %><% } %>
+                            </div>
+                            <img src="<%= lead.users ? lead.users.avatar : '/css/silly_duck.png' %>" alt="" style="width: 38px; height: 38px; border-radius: 50%; object-fit: cover;">
+                            <div style="min-width: 0;">
+                                <div style="font-weight: 700; font-size: 0.85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                    <%= lead.users ? lead.users.display_name : 'Độc giả' %>
+                                </div>
+                                <div style="font-size: 0.72rem; color: #f59e0b; font-weight: 600;">
+                                    <%= lead.tier %> · <span style="color: #60a5fa;"><%= lead.elo_points %> Elo</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="text-align: right; font-size: 0.75rem;">
+                            <% const total = (lead.wins || 0) + (lead.losses || 0); %>
+                            <div style="font-weight: 700; color: #22c55e;"><%= total > 0 ? Math.round(((lead.wins || 0) / total) * 100) : 0 %>% Thắng</div>
+                            <div style="color: var(--text-secondary); font-size: 0.68rem;"><%= lead.wins %>W - <%= lead.losses %>L</div>
+                        </div>
+                    </div>
+                <% }) %>
+            <% } %>
+        </div>
     </div>
 </div>
 
 <!-- Modal Hiển Thị Phần Thưởng Mở Rương (Không Reload Về Đầu) -->
-<div id="chest-reward-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 99999; align-items: center; justify-content: center; backdrop-filter: blur(8px);">
-    <div style="background: var(--bg-secondary); border: 2px solid #f59e0b; border-radius: 16px; padding: 2rem; width: 90%; max-width: 440px; text-align: center; box-shadow: 0 0 40px rgba(245, 158, 11, 0.4); animation: scaleUp 0.25s ease-out;">
-        <div style="font-size: 3.5rem; margin-bottom: 0.5rem;">🎉</div>
-        <h2 style="margin: 0; color: #f59e0b; font-size: 1.5rem;">MỞ RƯƠNG THÀNH CÔNG!</h2>
-        <p style="color: var(--text-secondary); font-size: 0.88rem; margin: 0.4rem 0 1.2rem 0;">Bạn đã thu thập được các chiến lợi phẩm sau:</p>
+<div id="chest-reward-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 99999; align-items: center; justify-content: center; backdrop-filter: blur(8px); padding: 1rem; box-sizing: border-box;">
+    <div style="background: var(--bg-secondary); border: 2px solid #f59e0b; border-radius: 16px; padding: 1.5rem; width: 100%; max-width: 400px; text-align: center; box-shadow: 0 0 40px rgba(245, 158, 11, 0.4); animation: scaleUp 0.25s ease-out; box-sizing: border-box;">
+        <div style="font-size: 3rem; margin-bottom: 0.3rem;">🎉</div>
+        <h2 style="margin: 0; color: #f59e0b; font-size: 1.35rem;">MỞ RƯƠNG THÀNH CÔNG!</h2>
+        <p style="color: var(--text-secondary); font-size: 0.82rem; margin: 0.3rem 0 1rem 0;">Bạn đã thu thập được các chiến lợi phẩm sau:</p>
 
         <!-- Thẻ tướng rơi ra -->
-        <div id="modal-reward-hero-wrap" style="display: none; background: rgba(0,0,0,0.4); border: 1px solid #ec4899; border-radius: 12px; padding: 1rem; margin-bottom: 1rem; align-items: center; gap: 1rem; text-align: left;">
-            <img id="modal-reward-hero-img" src="" alt="" style="width: 54px; height: 54px; border-radius: 50%; object-fit: cover; border: 2px solid #ec4899;">
-            <div>
-                <span id="modal-reward-hero-rarity" style="font-size: 0.72rem; font-weight: 800; background: #ec4899; color: white; padding: 0.15rem 0.4rem; border-radius: 4px;">SSR</span>
-                <div id="modal-reward-hero-name" style="font-weight: 700; font-size: 0.95rem; color: #fff; margin-top: 2px;">Nhiễm Nhiễm</div>
-                <div style="font-size: 0.8rem; color: #f472b6;">Nhận thêm: <strong id="modal-reward-hero-shards">+5</strong> Mảnh Tướng</div>
+        <div id="modal-reward-hero-wrap" style="display: none; background: rgba(0,0,0,0.4); border: 1px solid #ec4899; border-radius: 12px; padding: 0.8rem; margin-bottom: 0.9rem; align-items: center; gap: 0.8rem; text-align: left;">
+            <img id="modal-reward-hero-img" src="" alt="" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid #ec4899;">
+            <div style="min-width: 0; flex: 1;">
+                <span id="modal-reward-hero-rarity" style="font-size: 0.68rem; font-weight: 800; background: #ec4899; color: white; padding: 0.12rem 0.35rem; border-radius: 4px;">SSR</span>
+                <div id="modal-reward-hero-name" style="font-weight: 700; font-size: 0.9rem; color: #fff; margin-top: 2px;">Nhiễm Nhiễm</div>
+                <div style="font-size: 0.78rem; color: #f472b6;">Nhận thêm: <strong id="modal-reward-hero-shards">+5</strong> Mảnh Tướng</div>
             </div>
         </div>
 
         <!-- Các vật phẩm khác -->
-        <div style="background: rgba(0,0,0,0.25); border-radius: 10px; padding: 0.8rem; margin-bottom: 1.5rem; display: flex; justify-content: space-around; font-size: 0.9rem;">
+        <div style="background: rgba(0,0,0,0.25); border-radius: 10px; padding: 0.7rem; margin-bottom: 1.2rem; display: flex; justify-content: space-around; font-size: 0.85rem;">
             <div>💊 <strong id="modal-reward-pills" style="color: #60a5fa;">+0</strong> Đan EXP</div>
-            <div>⭐ <strong id="modal-reward-stones" style="color: #f59e0b;">+0</strong> Đá Nâng Sao</div>
+            <div>⭐ <strong id="modal-reward-stones" style="color: #f59e0b;">+0</strong> Đá Sao</div>
         </div>
 
-        <button onclick="document.getElementById('chest-reward-modal').style.display='none'" class="btn btn-primary" style="width: 100%; padding: 0.75rem; font-weight: 700; font-size: 0.95rem;">
+        <button onclick="document.getElementById('chest-reward-modal').style.display='none'" class="btn btn-primary" style="width: 100%; padding: 0.7rem; font-weight: 700; font-size: 0.9rem;">
             Tuyệt Vời! Tiếp Tục
         </button>
     </div>
 </div>
 
 <!-- Modal chọn vị trí ra trận -->
-<div id="set-team-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
-    <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.8rem; width: 90%; max-width: 420px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-        <h3 style="margin-top: 0; color: #ec4899; font-size: 1.2rem;">⚔️ Xếp Tướng Ra Trận</h3>
-        <p style="color: var(--text-secondary); font-size: 0.85rem;" id="modal-hero-text">Chọn vị trí cho tướng:</p>
+<div id="set-team-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(4px); padding: 1rem; box-sizing: border-box;">
+    <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.5rem; width: 100%; max-width: 380px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); box-sizing: border-box;">
+        <h3 style="margin-top: 0; color: #ec4899; font-size: 1.15rem;">⚔️ Xếp Tướng Ra Trận</h3>
+        <p style="color: var(--text-secondary); font-size: 0.82rem;" id="modal-hero-text">Chọn vị trí cho tướng:</p>
         
-        <div style="display: flex; flex-direction: column; gap: 0.8rem; margin: 1.2rem 0;">
-            <button onclick="confirmSetSlot(1)" class="btn btn-secondary" style="padding: 0.7rem; text-align: left; font-weight: 600;">
+        <div style="display: flex; flex-direction: column; gap: 0.6rem; margin: 1rem 0;">
+            <button onclick="confirmSetSlot(1)" class="btn btn-secondary" style="padding: 0.65rem; text-align: left; font-weight: 600; font-size: 0.85rem;">
                 🛡️ Vị trí 1: Tiên Phong (Hàng Đầu)
             </button>
-            <button onclick="confirmSetSlot(2)" class="btn btn-secondary" style="padding: 0.7rem; text-align: left; font-weight: 600;">
+            <button onclick="confirmSetSlot(2)" class="btn btn-secondary" style="padding: 0.65rem; text-align: left; font-weight: 600; font-size: 0.85rem;">
                 ⚔️ Vị trí 2: Chủ Lực (Sát Thương)
             </button>
-            <button onclick="confirmSetSlot(3)" class="btn btn-secondary" style="padding: 0.7rem; text-align: left; font-weight: 600;">
+            <button onclick="confirmSetSlot(3)" class="btn btn-secondary" style="padding: 0.65rem; text-align: left; font-weight: 600; font-size: 0.85rem;">
                 💚 Vị trí 3: Hỗ Trợ (Hậu Phương)
             </button>
         </div>
 
-        <button onclick="document.getElementById('set-team-modal').style.display='none'" class="btn btn-secondary" style="width: 100%;">Hủy bỏ</button>
+        <button onclick="document.getElementById('set-team-modal').style.display='none'" class="btn btn-secondary" style="width: 100%; padding: 0.55rem; font-size: 0.85rem;">Hủy bỏ</button>
     </div>
 </div>
-
-<style>
-@keyframes scaleUp {
-    from { transform: scale(0.85); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
-}
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.6; }
-}
-</style>
 
 <script>
     let selectedHeroIdForTeam = null;
@@ -587,7 +815,6 @@
                 const r = data.rewards;
                 const rem = data.remaining_chests;
 
-                // Cập nhật số rương trực tiếp trên giao diện
                 if (rem) {
                     const cWood = document.getElementById('count-wooden');
                     const cSilv = document.getElementById('count-silver');
@@ -600,7 +827,6 @@
                     const tabTotal = document.getElementById('tab-total-chests');
                     if (tabTotal) tabTotal.innerText = total;
 
-                    // Disable nút nếu hết
                     if (rem.wooden <= 0) document.getElementById('btn-open-wooden').disabled = true;
                     if (rem.silver <= 0) document.getElementById('btn-open-silver').disabled = true;
                     if (rem.gold <= 0) document.getElementById('btn-open-gold').disabled = true;
@@ -646,7 +872,7 @@
             const data = await resp.json();
 
             if (data.success) {
-                alert(`🎉 Chúc mừng bạn đã nhận thưởng nhiệm vụ:\n\n${data.reward_desc}!`);
+                alert(`🎉 Chúc mừng bạn đã nhận thưởng:\n\n${data.reward_desc}!`);
                 if (btn) {
                     btn.innerText = '✔️ Đã Nhận';
                     btn.classList.remove('btn-primary');
@@ -655,7 +881,6 @@
                     btn.style.background = 'transparent';
                     btn.style.boxShadow = 'none';
                 }
-                // Giảm badge
                 const badge = document.getElementById('badge-quest-count');
                 if (badge) {
                     const cur = parseInt(badge.innerText) - 1;
