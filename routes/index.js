@@ -200,7 +200,46 @@ async function awardReadingExp(userId, storyId, chapterNumber) {
     console.error('Lỗi kiểm tra lên rank:', err);
   }
 
-  return { earnedExp: true, rankUp };
+  return { earnedExp: true, rankUp, chaptersRead };
+}
+
+// Hàm thưởng vật phẩm Đấu Trường Nữ Thần khi đọc truyện
+async function awardReadingCardDrop(userId, chaptersRead) {
+  try {
+    let itemType = 'chest_wood';
+    let amount = 1;
+    let itemName = '📦 Hòm Gỗ Nữ Thần';
+
+    if (chaptersRead % 10 === 0) {
+      itemType = 'chest_silver';
+      amount = 1;
+      itemName = '🥈 Hòm Bạc Nữ Thần';
+    } else if (Math.random() < 0.35) {
+      itemType = 'exp_pill_s';
+      amount = 2;
+      itemName = '💊 2x Đan EXP (Nhỏ)';
+    }
+
+    const { data: existing } = await supabase
+      .from('user_card_items')
+      .select('quantity')
+      .eq('user_id', userId)
+      .eq('item_type', itemType)
+      .maybeSingle();
+
+    const currentQty = existing ? existing.quantity : 0;
+    await supabase.from('user_card_items').upsert({
+      user_id: userId,
+      item_type: itemType,
+      quantity: currentQty + amount,
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'user_id,item_type' });
+
+    return { itemType, amount, itemName };
+  } catch (err) {
+    console.error('Lỗi rơi vật phẩm thẻ bài:', err);
+    return null;
+  }
 }
 
 // Hàm hỗ trợ upload file lên Supabase Storage
@@ -1550,13 +1589,17 @@ router.post('/chapter/read-confirm', async (req, res) => {
     });
   }
 
-  // Cộng EXP
+  // Cộng EXP & Chiến lợi phẩm Nữ Thần
   let earnedExp = false;
   let rankUp = null;
+  let cardDrop = null;
   try {
     const result = await awardReadingExp(req.user.id, storyId, chapterNumber);
     earnedExp = result ? result.earnedExp : false;
     rankUp = result ? result.rankUp : null;
+    if (earnedExp) {
+      cardDrop = await awardReadingCardDrop(req.user.id, result.chaptersRead || 1);
+    }
   } catch (err) {
     console.error('Lỗi cộng EXP trong xác nhận:', err);
   }
@@ -1564,10 +1607,16 @@ router.post('/chapter/read-confirm', async (req, res) => {
   // Xóa thông tin đọc trong session để tránh gửi lại nhiều lần
   delete req.session.reading;
 
+  let message = earnedExp ? 'Đã ghi nhận đọc chương thành công! +5 EXP' : 'Đã ghi nhận đọc chương. (Chương này đã tính EXP trước đó)';
+  if (cardDrop) {
+    message += ` 🎁 Chiến Lợi Phẩm Đấu Trường: ${cardDrop.itemName}!`;
+  }
+
   res.json({
     success: true,
-    message: earnedExp ? 'Đã ghi nhận đọc chương thành công! +5 EXP' : 'Đã ghi nhận đọc chương. (Chương này đã tính EXP trước đó)',
-    rankUp
+    message,
+    rankUp,
+    cardDrop
   });
 });
 

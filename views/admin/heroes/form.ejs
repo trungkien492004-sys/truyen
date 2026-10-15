@@ -1,0 +1,196 @@
+<%- include('../../partials/header') %>
+
+<div style="max-width: 900px; margin: 0 auto; padding: 1.5rem 1rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <h1 class="section-title" style="margin-bottom: 0.3rem;"><%= hero ? '✏️ Chỉnh Sửa Nữ Tướng' : '✨ Tạo Nữ Tướng Mới' %></h1>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0;">Điền thông tin, chỉ số chiến đấu và mô tả chiêu thức cho nàng thơ.</p>
+        </div>
+        <a href="/admin/heroes" class="btn btn-secondary">Quay lại danh sách</a>
+    </div>
+
+    <form action="<%= hero ? '/admin/heroes/edit/' + hero.id : '/admin/heroes/create' %>" method="POST" enctype="multipart/form-data" style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; display: flex; flex-direction: column; gap: 1.5rem;">
+        
+        <!-- THÔNG TIN CƠ BẢN -->
+        <div>
+            <h3 style="color: #ec4899; font-size: 1.1rem; margin-top: 0; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                1. Thông Tin Nữ Thần
+            </h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                <div>
+                    <label style="display: block; font-size: 0.85rem; margin-bottom: 0.4rem; font-weight: 600;">Tên Nữ Tướng *</label>
+                    <input type="text" name="name" required value="<%= hero ? hero.name : '' %>" placeholder="Ví dụ: Nhiễm Nhiễm, Liễu Như Yên..." style="width: 100%; padding: 0.6rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); box-sizing: border-box;">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.85rem; margin-bottom: 0.4rem; font-weight: 600;">Danh Hiệu / Biệt Danh</label>
+                    <input type="text" name="title" value="<%= hero ? hero.title : '' %>" placeholder="Ví dụ: Cực Phẩm Mị Hoặc, Băng Tuyết Kiếm Tiên..." style="width: 100%; padding: 0.6rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); box-sizing: border-box;">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                <div>
+                    <label style="display: block; font-size: 0.85rem; margin-bottom: 0.4rem; font-weight: 600;">Phẩm Chất (Rarity)</label>
+                    <select name="rarity" style="width: 100%; padding: 0.6rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary);">
+                        <option value="R" <%= (hero && hero.rarity === 'R') ? 'selected' : '' %>>R (Lam - Thường)</option>
+                        <option value="SR" <%= (!hero || hero.rarity === 'SR') ? 'selected' : '' %>>SR (Tím - Hiếm)</option>
+                        <option value="SSR" <%= (hero && hero.rarity === 'SSR') ? 'selected' : '' %>>SSR (Vàng - Cực Hiếm)</option>
+                        <option value="UR" <%= (hero && hero.rarity === 'UR') ? 'selected' : '' %>>UR (Đỏ - Thần Thoại)</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.85rem; margin-bottom: 0.4rem; font-weight: 600;">Hệ Nguyên Tố</label>
+                    <select name="element" style="width: 100%; padding: 0.6rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary);">
+                        <option value="fire" <%= (hero && hero.element === 'fire') ? 'selected' : '' %>>🔥 Hỏa (Lửa)</option>
+                        <option value="water" <%= (hero && hero.element === 'water') ? 'selected' : '' %>>💧 Thủy (Nước)</option>
+                        <option value="wind" <%= (hero && hero.element === 'wind') ? 'selected' : '' %>>🌪️ Phong (Gió)</option>
+                        <option value="thunder" <%= (hero && hero.element === 'thunder') ? 'selected' : '' %>>⚡ Lôi (Sét)</option>
+                        <option value="dark" <%= (hero && hero.element === 'dark') ? 'selected' : '' %>>🌑 Ám (Bóng tối)</option>
+                        <option value="light" <%= (hero && hero.element === 'light') ? 'selected' : '' %>>☀️ Quang (Ánh sáng)</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.85rem; margin-bottom: 0.4rem; font-weight: 600;">Vai Trò Đội Hình</label>
+                    <select name="role" style="width: 100%; padding: 0.6rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary);">
+                        <option value="dps" <%= (!hero || hero.role === 'dps') ? 'selected' : '' %>>⚔️ Sát Thương Chủ Lực</option>
+                        <option value="tank" <%= (hero && hero.role === 'tank') ? 'selected' : '' %>>🛡️ Phòng Thủ / Đỡ Đòn</option>
+                        <option value="healer" <%= (hero && hero.role === 'healer') ? 'selected' : '' %>>💚 Hồi Máu / Cứu Viện</option>
+                        <option value="support" <%= (hero && hero.role === 'support') ? 'selected' : '' %>>🔮 Khống Chế / Hỗ Trợ</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.85rem; margin-bottom: 0.4rem; font-weight: 600;">Mảnh Triệu Hồi</label>
+                    <input type="number" name="shards_to_summon" value="<%= hero ? hero.shards_to_summon : 30 %>" min="10" max="200" style="width: 100%; padding: 0.6rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); box-sizing: border-box;">
+                </div>
+            </div>
+
+            <div style="margin-top: 1rem;">
+                <label style="display: block; font-size: 0.85rem; margin-bottom: 0.4rem; font-weight: 600;">Tiểu Sử / Mô Tả Tính Cách</label>
+                <textarea name="bio" rows="2" placeholder="Cốt truyện, tính cách quyến rũ, xuất thân nàng thơ..." style="width: 100%; padding: 0.6rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); box-sizing: border-box;"><%= hero ? hero.bio : '' %></textarea>
+            </div>
+        </div>
+
+        <!-- HÌNH ẢNH NỮ THẦN -->
+        <div>
+            <h3 style="color: #60a5fa; font-size: 1.1rem; margin-top: 0; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                2. Hình Ảnh Nữ Tướng (Waifu Art)
+            </h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                <div>
+                    <label style="display: block; font-size: 0.85rem; margin-bottom: 0.4rem; font-weight: 600;">Ảnh Thẻ Bài Toàn Thân (Card Art) *</label>
+                    <input type="file" name="card_image" accept="image/*" style="display: block; margin-bottom: 0.4rem; font-size: 0.85rem;">
+                    <input type="text" name="card_image_url" value="<%= hero ? hero.card_image_url : '' %>" placeholder="Hoặc dán URL ảnh trực tiếp..." style="width: 100%; padding: 0.6rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); box-sizing: border-box;">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.85rem; margin-bottom: 0.4rem; font-weight: 600;">Avatar Nhỏ / Icon Sàn Đấu (Tùy chọn)</label>
+                    <input type="file" name="avatar_image" accept="image/*" style="display: block; margin-bottom: 0.4rem; font-size: 0.85rem;">
+                    <input type="text" name="avatar_url" value="<%= hero ? hero.avatar_url : '' %>" placeholder="URL avatar (để trống tự lấy theo ảnh thẻ)..." style="width: 100%; padding: 0.6rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); box-sizing: border-box;">
+                </div>
+            </div>
+        </div>
+
+        <!-- CHỈ SỐ CƠ BẢN -->
+        <div>
+            <h3 style="color: #f59e0b; font-size: 1.1rem; margin-top: 0; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                3. Chỉ Số Chiến Đấu Cơ Bản (Cấp 1)
+            </h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem;">
+                <div>
+                    <label style="display: block; font-size: 0.85rem; margin-bottom: 0.4rem; font-weight: 600;">❤️ Máu (HP)</label>
+                    <input type="number" name="base_hp" value="<%= hero ? hero.base_hp : 1000 %>" min="100" style="width: 100%; padding: 0.6rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); box-sizing: border-box;">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.85rem; margin-bottom: 0.4rem; font-weight: 600;">⚔️ Tấn Công (ATK)</label>
+                    <input type="number" name="base_atk" value="<%= hero ? hero.base_atk : 200 %>" min="10" style="width: 100%; padding: 0.6rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); box-sizing: border-box;">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.85rem; margin-bottom: 0.4rem; font-weight: 600;">🛡️ Phòng Thủ (DEF)</label>
+                    <input type="number" name="base_def" value="<%= hero ? hero.base_def : 80 %>" min="10" style="width: 100%; padding: 0.6rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); box-sizing: border-box;">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.85rem; margin-bottom: 0.4rem; font-weight: 600;">👟 Tốc Độ (SPD)</label>
+                    <input type="number" name="base_spd" value="<%= hero ? hero.base_spd : 100 %>" min="10" style="width: 100%; padding: 0.6rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); box-sizing: border-box;">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.85rem; margin-bottom: 0.4rem; font-weight: 600;">💥 Chí Mạng (%)</label>
+                    <input type="number" step="0.1" name="base_crit" value="<%= hero ? hero.base_crit : 10.0 %>" min="0" max="100" style="width: 100%; padding: 0.6rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); box-sizing: border-box;">
+                </div>
+            </div>
+        </div>
+
+        <!-- CHIÊU THỨC / KỸ NĂNG -->
+        <div>
+            <h3 style="color: #10b981; font-size: 1.1rem; margin-top: 0; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                4. Bộ Kỹ Năng / Chiêu Thức Độc Quyền
+            </h3>
+
+            <!-- Chiêu Đánh Thường -->
+            <div style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid rgba(255,255,255,0.05);">
+                <div style="font-weight: 700; color: #60a5fa; font-size: 0.95rem; margin-bottom: 0.6rem;">⚡ Kỹ Năng 1: Đánh Thường (Hồi 25 Nộ)</div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.8rem;">
+                    <div>
+                        <label style="display: block; font-size: 0.8rem; margin-bottom: 0.2rem;">Tên chiêu</label>
+                        <input type="text" name="basic_name" value="<%= hero?.skill_basic?.name || 'Đánh Thường' %>" placeholder="Tên chiêu thức đánh thường..." style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.8rem; margin-bottom: 0.2rem;">Hệ số Sát thương (% ATK)</label>
+                        <input type="number" step="0.1" name="basic_dmg" value="<%= hero?.skill_basic?.dmg_rate || 1.0 %>" style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); box-sizing: border-box;">
+                    </div>
+                </div>
+                <div style="margin-top: 0.5rem;">
+                    <label style="display: block; font-size: 0.8rem; margin-bottom: 0.2rem;">Mô tả chiêu thức</label>
+                    <input type="text" name="basic_desc" value="<%= hero?.skill_basic?.desc || 'Tấn công 1 kẻ địch gây 100% sát thương, hồi 25 Nộ.' %>" style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); box-sizing: border-box;">
+                </div>
+            </div>
+
+            <!-- Tuyệt Kỹ Nộ -->
+            <div style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid rgba(255,255,255,0.05);">
+                <div style="font-weight: 700; color: #ec4899; font-size: 0.95rem; margin-bottom: 0.6rem;">🔥 Kỹ Năng 2: Tuyệt Kỹ Nộ (Tiêu hao 100 Nộ)</div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.8rem;">
+                    <div>
+                        <label style="display: block; font-size: 0.8rem; margin-bottom: 0.2rem;">Tên Tuyệt kỹ</label>
+                        <input type="text" name="ulti_name" value="<%= hero?.skill_ultimate?.name || 'Tuyệt Kỹ Nộ' %>" placeholder="Tên chiêu nộ..." style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.8rem; margin-bottom: 0.2rem;">Hệ số Sát thương (% ATK)</label>
+                        <input type="number" step="0.1" name="ulti_dmg" value="<%= hero?.skill_ultimate?.dmg_rate || 2.5 %>" style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.8rem; margin-bottom: 0.2rem;">Hiệu ứng chiêu thức</label>
+                        <select name="ulti_effect" style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary);">
+                            <option value="none" <%= (!hero?.skill_ultimate?.effect || hero?.skill_ultimate?.effect === 'none') ? 'selected' : '' %>>Không có (Thuần sát thương cao)</option>
+                            <option value="stun" <%= (hero?.skill_ultimate?.effect === 'stun') ? 'selected' : '' %>>💫 Mê Hoặc / Choáng (Khống chế 1 lượt)</option>
+                            <option value="heal_team" <%= (hero?.skill_ultimate?.effect === 'heal_team') ? 'selected' : '' %>>💚 Hồi Máu Toàn Đội</option>
+                            <option value="crit_burst" <%= (hero?.skill_ultimate?.effect === 'crit_burst') ? 'selected' : '' %>>💥 Bạo Kích Cực Đại (Sát thương đơn thể)</option>
+                            <option value="paralyze" <%= (hero?.skill_ultimate?.effect === 'paralyze') ? 'selected' : '' %>>⚡ Tê Liệt 2 Mục Tiêu</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="margin-top: 0.5rem;">
+                    <label style="display: block; font-size: 0.8rem; margin-bottom: 0.2rem;">Mô tả chiêu thức nộ</label>
+                    <input type="text" name="ulti_desc" value="<%= hero?.skill_ultimate?.desc || 'Tiêu hao 100 Nộ. Gây sát thương cực lớn lên toàn bộ đội hình địch.' %>" style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); box-sizing: border-box;">
+                </div>
+            </div>
+
+            <!-- Nội Tại -->
+            <div style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                <div style="font-weight: 700; color: #eab308; font-size: 0.95rem; margin-bottom: 0.6rem;">🌟 Kỹ Năng 3: Nội Tại (Bị động)</div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.8rem;">
+                    <div>
+                        <label style="display: block; font-size: 0.8rem; margin-bottom: 0.2rem;">Tên Nội tại</label>
+                        <input type="text" name="passive_name" value="<%= hero?.skill_passive?.name || 'Nội Tại' %>" placeholder="Tên nội tại..." style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.8rem; margin-bottom: 0.2rem;">Mô tả hiệu ứng</label>
+                        <input type="text" name="passive_desc" value="<%= hero?.skill_passive?.desc || 'Tăng 10% Công và 10% Máu.' %>" style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); box-sizing: border-box;">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="padding: 0.8rem 2rem; font-size: 1rem; font-weight: 700; align-self: flex-start;">
+            <%= hero ? '💾 Lưu Cập Nhật Nữ Tướng' : '🚀 Tạo Nữ Tướng Ngay' %>
+        </button>
+    </form>
+</div>
+
+<%- include('../../partials/footer') %>

@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="stylesheet" href="/css/style.css?v=17">
+    <style>
+        body {
+            background: #090d16;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+            font-family: system-ui, -apple-system, sans-serif;
+            overflow-x: hidden;
+            user-select: none;
+        }
+        .battle-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 1rem;
+            box-sizing: border-box;
+        }
+        .vs-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 0.8rem 1.2rem;
+            margin-bottom: 1.2rem;
+            backdrop-filter: blur(8px);
+        }
+        .battle-arena {
+            flex: 1;
+            background: radial-gradient(circle at center, #1e1b4b 0%, #090d16 80%);
+            border: 2px solid rgba(99, 102, 241, 0.3);
+            border-radius: 16px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.8), 0 10px 30px rgba(0,0,0,0.5);
+            min-height: 440px;
+        }
+        .team-row {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            gap: 1rem;
+            position: relative;
+            z-index: 2;
+        }
+        .hero-card {
+            background: rgba(15, 23, 42, 0.7);
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 0.6rem;
+            width: 140px;
+            text-align: center;
+            position: relative;
+            transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+        }
+        .hero-card.acting {
+            border-color: #f59e0b;
+            box-shadow: 0 0 20px #f59e0b, 0 0 40px rgba(245, 158, 11, 0.4);
+            transform: translateY(-8px) scale(1.05);
+        }
+        .hero-card.targetable:hover {
+            border-color: #ef4444;
+            box-shadow: 0 0 15px #ef4444;
+            transform: scale(1.04);
+        }
+        .hero-card.dead {
+            opacity: 0.35;
+            filter: grayscale(100%);
+            pointer-events: none;
+            transform: scale(0.9);
+        }
+        .hero-img-wrap {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            margin: 0 auto 0.4rem auto;
+            position: relative;
+            overflow: hidden;
+            border: 2px solid #6366f1;
+        }
+        .hero-img-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .bar-wrap {
+            width: 100%;
+            height: 6px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 3px;
+        }
+        .hp-bar-fill {
+            height: 100%;
+            background: #22c55e;
+            transition: width 0.3s ease;
+        }
+        .rage-bar-fill {
+            height: 100%;
+            background: #f59e0b;
+            transition: width 0.3s ease;
+        }
+        .floating-dmg {
+            position: absolute;
+            font-size: 1.4rem;
+            font-weight: 900;
+            color: #ef4444;
+            text-shadow: 0 0 8px #000;
+            pointer-events: none;
+            animation: floatUp 0.9s ease-out forwards;
+            z-index: 99;
+        }
+        .floating-crit {
+            color: #facc15;
+            font-size: 1.7rem;
+        }
+        .floating-heal {
+            color: #4ade80;
+            font-size: 1.5rem;
+        }
+        @keyframes floatUp {
+            0% { opacity: 0; transform: translateY(0) scale(0.8); }
+            30% { opacity: 1; transform: translateY(-20px) scale(1.2); }
+            100% { opacity: 0; transform: translateY(-50px) scale(1); }
+        }
+        .action-panel {
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1rem 1.4rem;
+            margin-top: 1.2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .btn-skill {
+            padding: 0.75rem 1.5rem;
+            font-size: 0.95rem;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+        }
+        .btn-skill-basic {
+            background: #3b82f6;
+            color: white;
+        }
+        .btn-skill-basic:hover { background: #2563eb; transform: translateY(-2px); }
+        .btn-skill-ulti {
+            background: linear-gradient(135deg, #ec4899, #f59e0b);
+            color: white;
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .btn-skill-ulti.ready {
+            opacity: 1;
+            cursor: pointer;
+            box-shadow: 0 0 20px #ec4899, 0 0 35px rgba(245, 158, 11, 0.5);
+            animation: pulseGlow 1.2s infinite;
+        }
+        @keyframes pulseGlow {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 99999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(8px);
+        }
+        .modal-box {
+            background: #0f172a;
+            border: 2px solid #6366f1;
+            border-radius: 16px;
+            padding: 2.2rem;
+            width: 90%;
+            max-width: 450px;
+            text-align: center;
+            animation: zoomIn 0.3s ease-out;
+        }
+        @keyframes zoomIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="battle-container">
+    <!-- Header VS -->
+    <div class="vs-header">
+        <div style="display: flex; align-items: center; gap: 0.8rem;">
+            <img src="<%= user.avatar %>" alt="" style="width: 42px; height: 42px; border-radius: 50%; border: 2px solid #22c55e;">
+            <div>
+                <div style="font-weight: 700; font-size: 0.95rem; color: #22c55e;">Bạn (Phe Công - Online)</div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary);"><%= attackerRank.tier %> · <%= attackerRank.elo_points %> Elo</div>
+            </div>
+        </div>
+
+        <div style="text-align: center;">
+            <div style="font-weight: 900; font-size: 1.4rem; color: #f59e0b; text-shadow: 0 0 10px #f59e0b;">VS</div>
+            <div style="font-size: 0.75rem; color: var(--text-secondary);">Hiệp <span id="round-counter">1</span></div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 0.8rem; text-align: right;">
+            <div>
+                <div style="font-weight: 700; font-size: 0.95rem; color: #ef4444;"><%= defender.display_name %> (Thủ - Auto AI)</div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary);"><%= defenderRank.tier %> · <%= defenderRank.elo_points %> Elo</div>
+            </div>
+            <img src="<%= defender.avatar %>" alt="" style="width: 42px; height: 42px; border-radius: 50%; border: 2px solid #ef4444;">
+        </div>
+    </div>
+
+    <!-- SÀN ĐẤU CHIẾN THUẬT -->
+    <div class="battle-arena" id="arena-stage">
+        <!-- ĐỘI HÌNH ĐỊCH (OFFLINE / TRÊN) -->
+        <div class="team-row" id="defender-team-row">
+            <% defenderTeam.forEach((h, idx) => { %>
+                <div class="hero-card defender-card" id="def-<%= idx %>" onclick="selectEnemyTarget(<%= idx %>)">
+                    <div class="hero-img-wrap" style="border-color: #ef4444;">
+                        <img src="<%= h.avatar_url %>" alt="<%= h.name %>">
+                    </div>
+                    <div style="font-size: 0.8rem; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><%= h.name %></div>
+                    <div class="bar-wrap" style="margin-top: 4px;">
+                        <div class="hp-bar-fill" id="hp-bar-def-<%= idx %>" style="width: 100%;"></div>
+                    </div>
+                    <div class="bar-wrap">
+                        <div class="rage-bar-fill" id="rage-bar-def-<%= idx %>" style="width: 0%;"></div>
+                    </div>
+                    <div style="font-size: 0.7rem; color: var(--text-secondary);" id="hp-text-def-<%= idx %>"><%= h.hp %>/<%= h.max_hp %></div>
+                </div>
+            <% }) %>
+        </div>
+
+        <!-- HIỆU ỨNG CHIẾN ĐẤU TRUNG TÂM -->
+        <div style="text-align: center; position: relative; z-index: 1;">
+            <div id="battle-announcement" style="font-size: 1.15rem; font-weight: 800; color: #f59e0b; text-shadow: 0 0 10px rgba(0,0,0,0.8); min-height: 28px;">
+                Trận đấu bắt đầu! Hãy chọn chiêu và mục tiêu.
+            </div>
+        </div>
+
+        <!-- ĐỘI HÌNH TA (ONLINE / DƯỚI) -->
+        <div class="team-row" id="attacker-team-row">
+            <% attackerTeam.forEach((h, idx) => { %>
+                <div class="hero-card attacker-card" id="atk-<%= idx %>">
+                    <div class="hero-img-wrap" style="border-color: #22c55e;">
+                        <img src="<%= h.avatar_url %>" alt="<%= h.name %>">
+                    </div>
+                    <div style="font-size: 0.8rem; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><%= h.name %></div>
+                    <div class="bar-wrap" style="margin-top: 4px;">
+                        <div class="hp-bar-fill" id="hp-bar-atk-<%= idx %>" style="width: 100%;"></div>
+                    </div>
+                    <div class="bar-wrap">
+                        <div class="rage-bar-fill" id="rage-bar-atk-<%= idx %>" style="width: 0%;"></div>
+                    </div>
+                    <div style="font-size: 0.7rem; color: var(--text-secondary);" id="hp-text-atk-<%= idx %>"><%= h.hp %>/<%= h.max_hp %></div>
+                </div>
+            <% }) %>
+        </div>
+    </div>
+
+    <!-- BẢNG ĐIỀU KHIỂN CHIÊU THỨC (CHO BẠN TỰ BẤM) -->
+    <div class="action-panel">
+        <div style="display: flex; align-items: center; gap: 0.8rem;">
+            <div id="turn-indicator" style="font-weight: 700; font-size: 0.95rem; color: #60a5fa;">
+                Đang chờ lượt...
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 0.8rem; align-items: center; flex-wrap: wrap;" id="skill-buttons-group">
+            <button id="btn-basic" onclick="playerCastSkill('basic')" class="btn-skill btn-skill-basic">
+                ⚡ Đánh Thường (+25 Nộ)
+            </button>
+            <button id="btn-ulti" onclick="playerCastSkill('ultimate')" class="btn-skill btn-skill-ulti">
+                🔥 Tuyệt Kỹ Nộ (100 Nộ)
+            </button>
+        </div>
+
+        <div style="display: flex; gap: 0.5rem;">
+            <button id="btn-auto" onclick="toggleAuto()" class="btn btn-secondary" style="font-weight: 700; font-size: 0.85rem; padding: 0.6rem 1rem;">
+                🤖 Bật AUTO
+            </button>
+            <button onclick="skipBattle()" class="btn btn-secondary" style="font-size: 0.85rem; padding: 0.6rem 0.8rem; color: #94a3b8;">
+                ⏩ Kết thúc nhanh
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Kết quả trận đấu -->
+<div class="modal-overlay" id="result-modal">
+    <div class="modal-box">
+        <div id="result-icon" style="font-size: 3.5rem; margin-bottom: 0.5rem;">🏆</div>
+        <h2 id="result-title" style="margin: 0; font-size: 1.8rem; color: #22c55e;">CHIẾN THẮNG!</h2>
+        <p id="result-desc" style="color: var(--text-secondary); margin: 0.6rem 0 1.5rem 0;">Bạn đã đánh bại đối thủ vang dội trên Đấu Trường!</p>
+        
+        <div style="background: rgba(0,0,0,0.4); border-radius: 10px; padding: 1rem; margin-bottom: 1.5rem; font-size: 0.95rem;">
+            <div style="margin-bottom: 0.4rem;">Điểm Xếp Hạng: <strong id="result-elo" style="color: #60a5fa;">+25 Elo</strong></div>
+            <div id="result-bonus" style="color: #f59e0b; font-weight: 600;">🎁 Thưởng thêm: +1 Rương Bạc & 30 Đan EXP</div>
+        </div>
+
+        <a href="/arena" class="btn btn-primary" style="display: block; width: 100%; padding: 0.8rem; font-size: 1rem; font-weight: 700; text-decoration: none; box-sizing: border-box;">
+            Trở Về Đấu Trường
+        </a>
+    </div>
+</div>
+
+<script>
+    // Dữ liệu 2 đội truyền từ server
+    const attackerTeam = <%- JSON.stringify(attackerTeam) %>;
+    const defenderTeam = <%- JSON.stringify(defenderTeam) %>;
+    const defenderId = '<%= defender.id %>';
+
+    let currentTurnIndex = 0;
+    let turnQueue = [];
+    let isAuto = false;
+    let isWaitingPlayerInput = false;
+    let selectedTargetIndex = 0; // index mục tiêu trong defenderTeam
+    let roundCount = 1;
+    let battleFinished = false;
+
+    // Gán cờ team cho từng hero
+    attackerTeam.forEach((h, i) => { h.team = 'attacker'; h.index = i; h.isDead = false; h.rage = 0; });
+    defenderTeam.forEach((h, i) => { h.team = 'defender'; h.index = i; h.isDead = false; h.rage = 0; });
+
+    // Khởi tạo hàng đợi lượt đi dựa theo Tốc Độ (SPD)
+    function buildTurnQueue() {
+        const all = [...attackerTeam, ...defenderTeam].filter(h => !h.isDead);
+        all.sort((a, b) => b.spd - a.spd);
+        turnQueue = all;
+        currentTurnIndex = 0;
+    }
+
+    // Cập nhật giao diện thanh máu và thanh nộ
+    function updateUI() {
+        attackerTeam.forEach((h, i) => {
+            const hpPct = Math.max(0, Math.min(100, (h.hp / h.max_hp) * 100));
+            const ragePct = Math.max(0, Math.min(100, (h.rage / h.max_rage) * 100));
+            const hpEl = document.getElementById(`hp-bar-atk-${i}`);
+            const rageEl = document.getElementById(`rage-bar-atk-${i}`);
+            const textEl = document.getElementById(`hp-text-atk-${i}`);
+            const cardEl = document.getElementById(`atk-${i}`);
+            if (hpEl) hpEl.style.width = hpPct + '%';
+            if (rageEl) rageEl.style.width = ragePct + '%';
+            if (textEl) textEl.innerText = `${Math.max(0, h.hp)}/${h.max_hp}`;
+            if (cardEl && h.isDead) cardEl.classList.add('dead');
+        });
+
+        defenderTeam.forEach((h, i) => {
+            const hpPct = Math.max(0, Math.min(100, (h.hp / h.max_hp) * 100));
+            const ragePct = Math.max(0, Math.min(100, (h.rage / h.max_rage) * 100));
+            const hpEl = document.getElementById(`hp-bar-def-${i}`);
+            const rageEl = document.getElementById(`rage-bar-def-${i}`);
+            const textEl = document.getElementById(`hp-text-def-${i}`);
+            const cardEl = document.getElementById(`def-${i}`);
+            if (hpEl) hpEl.style.width = hpPct + '%';
+            if (rageEl) rageEl.style.width = ragePct + '%';
+            if (textEl) textEl.innerText = `${Math.max(0, h.hp)}/${h.max_hp}`;
+            if (cardEl && h.isDead) cardEl.classList.add('dead');
+        });
+    }
+
+    // Hiệu ứng số sát thương nảy lên
+    function showFloatingNumber(cardId, num, type = 'dmg') {
+        const card = document.getElementById(cardId);
+        if (!card) return;
+        const floatEl = document.createElement('div');
+        floatEl.className = 'floating-dmg' + (type === 'crit' ? ' floating-crit' : '') + (type === 'heal' ? ' floating-heal' : '');
+        floatEl.innerText = (type === 'heal' ? '+' : '-') + num;
+        card.appendChild(floatEl);
+        setTimeout(() => floatEl.remove(), 900);
+    }
+
+    // Thông báo hiệp đấu
+    function announce(text) {
+        const el = document.getElementById('battle-announcement');
+        if (el) el.innerText = text;
+    }
+
+    // Chọn mục tiêu đánh (click vào tướng địch)
+    function selectEnemyTarget(idx) {
+        if (defenderTeam[idx] && !defenderTeam[idx].isDead) {
+            selectedTargetIndex = idx;
+            document.querySelectorAll('.defender-card').forEach((c, i) => {
+                c.style.borderColor = (i === idx) ? '#ef4444' : 'rgba(255, 255, 255, 0.15)';
+            });
+            announce(`Đã chọn mục tiêu: [${defenderTeam[idx].name}]`);
+        }
+    }
+
+    // Kiểm tra kết thúc trận đấu
+    function checkBattleOver() {
+        const atkAlive = attackerTeam.some(h => !h.isDead);
+        const defAlive = defenderTeam.some(h => !h.isDead);
+        if (!atkAlive) return 'defender';
+        if (!defAlive) return 'attacker';
+        return null;
+    }
+
+    // Người chơi bấm chiêu (hoặc Auto gọi)
+    function playerCastSkill(skillType) {
+        if (!isWaitingPlayerInput && !isAuto) return;
+        const currentHero = turnQueue[currentTurnIndex];
+        if (!currentHero || currentHero.team !== 'attacker') return;
+
+        if (skillType === 'ultimate' && currentHero.rage < 100) {
+            alert('Chưa đủ 100 Nộ để xuất chiêu Nộ!');
+            return;
+        }
+
+        isWaitingPlayerInput = false;
+        disableSkillButtons();
+        executeHeroAction(currentHero, skillType);
+    }
+
+    // Thực thi hành động của tướng
+    function executeHeroAction(hero, skillType) {
+        if (battleFinished) return;
+
+        // Đánh dấu thẻ bài đang xuất chiêu
+        const cardId = (hero.team === 'attacker' ? `atk-${hero.index}` : `def-${hero.index}`);
+        const card = document.getElementById(cardId);
+        if (card) card.classList.add('acting');
+
+        // Tìm mục tiêu
+        let targets = [];
+        const enemyTeam = (hero.team === 'attacker' ? defenderTeam : attackerTeam);
+        const aliveEnemies = enemyTeam.filter(e => !e.isDead);
+
+        if (aliveEnemies.length === 0) {
+            finishBattle();
+            return;
+        }
+
+        if (skillType === 'ultimate') {
+            const ulti = hero.skill_ultimate;
+            hero.rage = 0; // xả nộ
+            announce(`🔥 [${hero.name}] tung Tuyệt Kỹ: "${ulti.name}"!`);
+
+            if (ulti.effect === 'heal_team') {
+                // Hồi máu toàn đội
+                const allyTeam = (hero.team === 'attacker' ? attackerTeam : defenderTeam).filter(a => !a.isDead);
+                allyTeam.forEach(ally => {
+                    const healAmount = Math.round(ally.max_hp * (ulti.heal_rate || 0.35));
+                    ally.hp = Math.min(ally.max_hp, ally.hp + healAmount);
+                    showFloatingNumber((ally.team === 'attacker' ? `atk-${ally.index}` : `def-${ally.index}`), healAmount, 'heal');
+                });
+            } else if (ulti.target === 'single') {
+                // Đánh đơn mục tiêu cực mạnh
+                const target = aliveEnemies.find(e => e.index === selectedTargetIndex) || aliveEnemies[0];
+                dealDamage(hero, target, ulti.dmg_rate, true);
+            } else {
+                // Đánh toàn bộ kẻ địch
+                aliveEnemies.forEach(target => {
+                    dealDamage(hero, target, ulti.dmg_rate, false);
+                });
+            }
+        } else {
+            // Đánh thường
+            hero.rage = Math.min(100, hero.rage + (hero.skill_basic?.rage_gain || 25));
+            announce(`⚡ [${hero.name}] dùng chiêu: "${hero.skill_basic?.name || 'Đánh thường'}"!`);
+            const target = (hero.team === 'attacker')
+                ? (aliveEnemies.find(e => e.index === selectedTargetIndex) || aliveEnemies[0])
+                : aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
+            dealDamage(hero, target, hero.skill_basic?.dmg_rate || 1.0, false);
+        }
+
+        updateUI();
+
+        setTimeout(() => {
+            if (card) card.classList.remove('acting');
+            const winner = checkBattleOver();
+            if (winner) {
+                battleFinished = true;
+                handleBattleEnd(winner);
+            } else {
+                nextTurn();
+            }
+        }, 800);
+    }
+
+    // Tính toán sát thương
+    function dealDamage(attacker, defender, rate, isBurst = false) {
+        const isCrit = (Math.random() * 100) < (attacker.crit || 10);
+        let dmg = Math.round((attacker.atk * rate) - (defender.def * 0.4));
+        if (dmg < 50) dmg = Math.floor(Math.random() * 30) + 40; // sát thương tối thiểu
+        if (isCrit || isBurst) dmg = Math.round(dmg * 1.5);
+
+        defender.hp -= dmg;
+        defender.rage = Math.min(100, defender.rage + 15); // nhận đòn hồi nộ
+
+        if (defender.hp <= 0) {
+            defender.hp = 0;
+            defender.isDead = true;
+        }
+
+        const defCardId = (defender.team === 'attacker' ? `atk-${defender.index}` : `def-${defender.index}`);
+        showFloatingNumber(defCardId, dmg, isCrit ? 'crit' : 'dmg');
+    }
+
+    // Chuyển sang lượt tiếp theo
+    function nextTurn() {
+        if (battleFinished) return;
+
+        currentTurnIndex++;
+        if (currentTurnIndex >= turnQueue.length) {
+            roundCount++;
+            document.getElementById('round-counter').innerText = roundCount;
+            buildTurnQueue();
+        }
+
+        const hero = turnQueue[currentTurnIndex];
+        if (!hero || hero.isDead) {
+            nextTurn();
+            return;
+        }
+
+        // Tự động nhắm mục tiêu còn sống đầu tiên
+        const aliveEnemies = (hero.team === 'attacker' ? defenderTeam : attackerTeam).filter(e => !e.isDead);
+        if (!aliveEnemies.some(e => e.index === selectedTargetIndex)) {
+            selectedTargetIndex = aliveEnemies[0]?.index || 0;
+        }
+        selectEnemyTarget(selectedTargetIndex);
+
+        if (hero.team === 'attacker') {
+            // Lượt của bạn
+            document.getElementById('turn-indicator').innerText = `✨ Lượt của: [${hero.name}]`;
+            
+            // Cập nhật trạng thái nút Ulti
+            const btnUlti = document.getElementById('btn-ulti');
+            if (hero.rage >= 100) {
+                btnUlti.classList.add('ready');
+                btnUlti.innerText = `🔥 ${hero.skill_ultimate?.name || 'Tuyệt Kỹ Nộ'} (SẴN SÀNG!)`;
+            } else {
+                btnUlti.classList.remove('ready');
+                btnUlti.innerText = `🔥 Tuyệt Kỹ Nộ (${hero.rage}/100 Nộ)`;
+            }
+
+            if (isAuto) {
+                // Auto mode
+                setTimeout(() => {
+                    const skill = (hero.rage >= 100) ? 'ultimate' : 'basic';
+                    playerCastSkill(skill);
+                }, 500);
+            } else {
+                isWaitingPlayerInput = true;
+                enableSkillButtons();
+            }
+        } else {
+            // Lượt của đối thủ (Offline Auto AI)
+            document.getElementById('turn-indicator').innerText = `🛡️ [${hero.name}] phe địch đang ra chiêu...`;
+            disableSkillButtons();
+            setTimeout(() => {
+                const skill = (hero.rage >= 100) ? 'ultimate' : 'basic';
+                executeHeroAction(hero, skill);
+            }, 600);
+        }
+    }
+
+    function enableSkillButtons() {
+        document.getElementById('btn-basic').disabled = false;
+        document.getElementById('btn-basic').style.opacity = '1';
+    }
+
+    function disableSkillButtons() {
+        document.getElementById('btn-basic').disabled = true;
+        document.getElementById('btn-basic').style.opacity = '0.5';
+    }
+
+    function toggleAuto() {
+        isAuto = !isAuto;
+        const btn = document.getElementById('btn-auto');
+        if (isAuto) {
+            btn.style.background = '#22c55e';
+            btn.innerText = '⚡ ĐANG AUTO...';
+            if (isWaitingPlayerInput) {
+                const currentHero = turnQueue[currentTurnIndex];
+                const skill = (currentHero && currentHero.rage >= 100) ? 'ultimate' : 'basic';
+                playerCastSkill(skill);
+            }
+        } else {
+            btn.style.background = '';
+            btn.innerText = '🤖 Bật AUTO';
+        }
+    }
+
+    function skipBattle() {
+        if (battleFinished) return;
+        isAuto = true;
+        // Chạy nhanh tất cả các lượt đến khi xong
+        let maxRounds = 100;
+        while (!checkBattleOver() && maxRounds-- > 0) {
+            const h = turnQueue[currentTurnIndex];
+            if (h && !h.isDead) {
+                const skill = (h.rage >= 100) ? 'ultimate' : 'basic';
+                const aliveEnemies = (h.team === 'attacker' ? defenderTeam : attackerTeam).filter(e => !e.isDead);
+                if (aliveEnemies.length > 0) {
+                    const target = aliveEnemies[0];
+                    dealDamage(h, target, (skill === 'ultimate' ? 2.5 : 1.0));
+                }
+            }
+            currentTurnIndex++;
+            if (currentTurnIndex >= turnQueue.length) buildTurnQueue();
+        }
+        updateUI();
+        const winner = checkBattleOver() || 'attacker';
+        handleBattleEnd(winner);
+    }
+
+    async function handleBattleEnd(winner) {
+        battleFinished = true;
+        const isWin = (winner === 'attacker');
+        
+        try {
+            const resp = await fetch('/arena/api/battle-result', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ defender_id: defenderId, winner })
+            });
+            const data = await resp.json();
+
+            const modal = document.getElementById('result-modal');
+            const iconEl = document.getElementById('result-icon');
+            const titleEl = document.getElementById('result-title');
+            const descEl = document.getElementById('result-desc');
+            const eloEl = document.getElementById('result-elo');
+            const bonusEl = document.getElementById('result-bonus');
+
+            if (isWin) {
+                iconEl.innerText = '🎉';
+                titleEl.innerText = 'CHIẾN THẮNG VANG DỘI!';
+                titleEl.style.color = '#22c55e';
+                descEl.innerText = 'Bạn đã lãnh đạo các nàng thơ chiến thắng áp đảo!';
+                eloEl.innerText = `+${data.elo_change} Elo (Tổng: ${data.new_elo} - ${data.tier})`;
+                eloEl.style.color = '#22c55e';
+                bonusEl.innerText = '🎁 Thưởng: +1 Rương Bạc & +30 Đan EXP Tướng!';
+            } else {
+                iconEl.innerText = '💀';
+                titleEl.innerText = 'THẤT BẠI ĐÁNG TIẾC!';
+                titleEl.style.color = '#ef4444';
+                descEl.innerText = 'Đối thủ quá kiên cường. Hãy nâng cấp tướng và phục thù!';
+                eloEl.innerText = `${data.elo_change} Elo (Tổng: ${data.new_elo} - ${data.tier})`;
+                eloEl.style.color = '#ef4444';
+                bonusEl.innerText = 'Cố gắng lên nhé!';
+            }
+
+            modal.style.display = 'flex';
+        } catch (e) {
+            console.error('Lỗi gửi kết quả trận đấu:', e);
+            alert('Trận đấu kết thúc! Kết quả: ' + (isWin ? 'Chiến Thắng!' : 'Thất Bại!'));
+            window.location.href = '/arena';
+        }
+    }
+
+    // Bắt đầu hiệp 1 khi tải trang
+    document.addEventListener('DOMContentLoaded', () => {
+        buildTurnQueue();
+        updateUI();
+        nextTurn();
+    });
+</script>
+
+</body>
+</html>

@@ -29,3 +29,4 @@ HANDOFF.md
 !routes/*.js
 !config/*.js
 !services/*.js
+!scripts/*.js

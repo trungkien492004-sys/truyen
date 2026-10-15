@@ -2231,6 +2231,202 @@ router.get('/story/download-epub/:id', async (req, res) => {
   }
 });
 
+// QUẢN LÝ NỮ TƯỚNG (WAIFU HEROES ADMIN)
+router.get('/heroes', async (req, res) => {
+  try {
+    const { data: heroes, error } = await supabase
+      .from('card_heroes')
+      .select('*')
+      .order('id', { ascending: true });
+
+    res.render('admin/heroes/index', {
+      title: '👑 Quản Lý Nữ Tướng - Admin',
+      user: req.user,
+      heroes: heroes || []
+    });
+  } catch (err) {
+    console.error('Lỗi danh sách tướng:', err);
+    res.status(500).send('Lỗi hệ thống: ' + err.message);
+  }
+});
+
+router.get('/heroes/create', (req, res) => {
+  res.render('admin/heroes/form', {
+    title: '✨ Tạo Nữ Tướng Mới - Admin',
+    user: req.user,
+    hero: null
+  });
+});
+
+router.post('/heroes/create', upload.fields([{ name: 'card_image', maxCount: 1 }, { name: 'avatar_image', maxCount: 1 }]), async (req, res) => {
+  try {
+    const {
+      name, title, bio, rarity, element, role,
+      base_hp, base_atk, base_def, base_spd, base_crit,
+      shards_to_summon, card_image_url, avatar_url,
+      basic_name, basic_desc, basic_dmg,
+      ulti_name, ulti_desc, ulti_dmg, ulti_effect,
+      passive_name, passive_desc
+    } = req.body;
+
+    let finalCardImg = card_image_url || '';
+    let finalAvatarImg = avatar_url || '';
+
+    if (req.files && req.files.card_image && req.files.card_image[0]) {
+      finalCardImg = await uploadToSupabase(req.files.card_image[0], 'uploads');
+    }
+    if (req.files && req.files.avatar_image && req.files.avatar_image[0]) {
+      finalAvatarImg = await uploadToSupabase(req.files.avatar_image[0], 'uploads');
+    }
+    if (!finalAvatarImg && finalCardImg) finalAvatarImg = finalCardImg;
+
+    const skill_basic = {
+      name: basic_name || 'Đánh Thường',
+      desc: basic_desc || 'Tấn công gây sát thương và hồi Nộ',
+      dmg_rate: parseFloat(basic_dmg) || 1.0,
+      rage_gain: 25,
+      target: 'single'
+    };
+
+    const skill_ultimate = {
+      name: ulti_name || 'Tuyệt Kỹ',
+      desc: ulti_desc || 'Tiêu hao 100 Nộ gây sát thương cực đại',
+      dmg_rate: parseFloat(ulti_dmg) || 2.5,
+      rage_cost: 100,
+      target: ulti_effect === 'heal_team' ? 'all_allies' : 'all',
+      effect: ulti_effect || 'none'
+    };
+
+    const skill_passive = {
+      name: passive_name || 'Nội Tại',
+      desc: passive_desc || 'Tăng cường thuộc tính'
+    };
+
+    const { error: insertErr } = await supabase.from('card_heroes').insert([{
+      name: name.trim(),
+      title: title ? title.trim() : null,
+      bio: bio ? bio.trim() : null,
+      rarity: rarity || 'SR',
+      element: element || 'fire',
+      role: role || 'dps',
+      base_hp: parseInt(base_hp) || 1000,
+      base_atk: parseInt(base_atk) || 200,
+      base_def: parseInt(base_def) || 80,
+      base_spd: parseInt(base_spd) || 100,
+      base_crit: parseFloat(base_crit) || 10.0,
+      shards_to_summon: parseInt(shards_to_summon) || 30,
+      card_image_url: finalCardImg,
+      avatar_url: finalAvatarImg,
+      skill_basic,
+      skill_ultimate,
+      skill_passive
+    }]);
+
+    if (insertErr) throw insertErr;
+
+    res.redirect('/admin/heroes');
+  } catch (err) {
+    console.error('Lỗi tạo nữ tướng:', err);
+    res.status(500).send('Lỗi khi tạo nữ tướng: ' + err.message);
+  }
+});
+
+router.get('/heroes/edit/:id', async (req, res) => {
+  const heroId = parseInt(req.params.id);
+  try {
+    const { data: hero } = await supabase.from('card_heroes').select('*').eq('id', heroId).single();
+    if (!hero) return res.status(404).send('Không tìm thấy tướng.');
+
+    res.render('admin/heroes/form', {
+      title: '✏️ Chỉnh Sửa Nữ Tướng - Admin',
+      user: req.user,
+      hero
+    });
+  } catch (err) {
+    res.status(500).send('Lỗi: ' + err.message);
+  }
+});
+
+router.post('/heroes/edit/:id', upload.fields([{ name: 'card_image', maxCount: 1 }, { name: 'avatar_image', maxCount: 1 }]), async (req, res) => {
+  const heroId = parseInt(req.params.id);
+  try {
+    const {
+      name, title, bio, rarity, element, role,
+      base_hp, base_atk, base_def, base_spd, base_crit,
+      shards_to_summon, card_image_url, avatar_url,
+      basic_name, basic_desc, basic_dmg,
+      ulti_name, ulti_desc, ulti_dmg, ulti_effect,
+      passive_name, passive_desc
+    } = req.body;
+
+    let finalCardImg = card_image_url;
+    let finalAvatarImg = avatar_url;
+
+    if (req.files && req.files.card_image && req.files.card_image[0]) {
+      finalCardImg = await uploadToSupabase(req.files.card_image[0], 'uploads');
+    }
+    if (req.files && req.files.avatar_image && req.files.avatar_image[0]) {
+      finalAvatarImg = await uploadToSupabase(req.files.avatar_image[0], 'uploads');
+    }
+
+    const skill_basic = {
+      name: basic_name || 'Đánh Thường',
+      desc: basic_desc || 'Tấn công gây sát thương và hồi Nộ',
+      dmg_rate: parseFloat(basic_dmg) || 1.0,
+      rage_gain: 25,
+      target: 'single'
+    };
+
+    const skill_ultimate = {
+      name: ulti_name || 'Tuyệt Kỹ',
+      desc: ulti_desc || 'Tiêu hao 100 Nộ gây sát thương cực đại',
+      dmg_rate: parseFloat(ulti_dmg) || 2.5,
+      rage_cost: 100,
+      target: ulti_effect === 'heal_team' ? 'all_allies' : 'all',
+      effect: ulti_effect || 'none'
+    };
+
+    const skill_passive = {
+      name: passive_name || 'Nội Tại',
+      desc: passive_desc || 'Tăng cường thuộc tính'
+    };
+
+    await supabase.from('card_heroes').update({
+      name: name.trim(),
+      title: title ? title.trim() : null,
+      bio: bio ? bio.trim() : null,
+      rarity: rarity || 'SR',
+      element: element || 'fire',
+      role: role || 'dps',
+      base_hp: parseInt(base_hp) || 1000,
+      base_atk: parseInt(base_atk) || 200,
+      base_def: parseInt(base_def) || 80,
+      base_spd: parseInt(base_spd) || 100,
+      base_crit: parseFloat(base_crit) || 10.0,
+      shards_to_summon: parseInt(shards_to_summon) || 30,
+      card_image_url: finalCardImg,
+      avatar_url: finalAvatarImg,
+      skill_basic,
+      skill_ultimate,
+      skill_passive
+    }).eq('id', heroId);
+
+    res.redirect('/admin/heroes');
+  } catch (err) {
+    res.status(500).send('Lỗi cập nhật: ' + err.message);
+  }
+});
+
+router.post('/heroes/delete/:id', async (req, res) => {
+  const heroId = parseInt(req.params.id);
+  try {
+    await supabase.from('card_heroes').delete().eq('id', heroId);
+    res.redirect('/admin/heroes');
+  } catch (err) {
+    res.status(500).send('Lỗi xóa tướng: ' + err.message);
+  }
+});
+
 module.exports = router;
 
 
