@@ -1871,62 +1871,6 @@ async function handleCommentMentions(commentContent, storyId, chapterNumber, sen
   }
 }
 
-// Thuật toán AI gợi ý truyện dựa trên thể loại đọc nhiều nhất
-async function getAiRecommendations(userId) {
-  try {
-    const { data: reads } = await supabase.from('chapter_reads').select('story_id');
-    const readStoryIds = (reads || []).map(r => r.story_id);
-    
-    if (readStoryIds.length === 0) {
-      const { data: popular } = await supabase.from('stories_bookmarks_count').select('*').order('bookmark_count', { ascending: false }).limit(6);
-      return popular || [];
-    }
-
-    const { data: readGenres } = await supabase.from('story_genres').select('genre_id').in('story_id', readStoryIds);
-    const genreCounts = {};
-    (readGenres || []).forEach(g => {
-      genreCounts[g.genre_id] = (genreCounts[g.genre_id] || 0) + 1;
-    });
-
-    const topGenres = Object.keys(genreCounts).map(Number).sort((a, b) => genreCounts[b] - genreCounts[a]).slice(0, 3);
-    if (topGenres.length === 0) {
-      const { data: popular } = await supabase.from('stories_bookmarks_count').select('*').order('bookmark_count', { ascending: false }).limit(6);
-      return popular || [];
-    }
-
-    const { data: bookmarks } = await supabase.from('bookmarks').select('story_id').eq('user_id', userId);
-    const bookmarkedIds = (bookmarks || []).map(b => b.story_id);
-    const excludeIds = [...new Set([...readStoryIds, ...bookmarkedIds])];
-
-    const { data: candidateStoryGenres } = await supabase
-      .from('story_genres')
-      .select('story_id, genre_id')
-      .in('genre_id', topGenres);
-
-    const scores = {};
-    (candidateStoryGenres || []).forEach(sg => {
-      if (excludeIds.includes(sg.story_id)) return;
-      scores[sg.story_id] = (scores[sg.story_id] || 0) + 1;
-    });
-
-    const sortedIds = Object.keys(scores).map(Number).sort((a, b) => scores[b] - scores[a]).slice(0, 6);
-    if (sortedIds.length === 0) {
-      const { data: popular } = await supabase.from('stories_bookmarks_count').select('*').order('bookmark_count', { ascending: false }).limit(6);
-      return popular || [];
-    }
-
-    const { data: recs } = await supabase.from('stories').select('*, chapters(count)').in('id', sortedIds);
-    return (recs || []).map(r => ({
-      ...r,
-      chapter_count: (r.chapters && r.chapters[0] && r.chapters[0].count) || 0,
-      match_score: Math.round((scores[r.id] / topGenres.length) * 100)
-    }));
-  } catch (e) {
-    console.error('Lỗi thuật toán AI gợi ý:', e);
-    return [];
-  }
-}
-
 // Route đăng bình luận
 router.post('/story/:story_id/comment', async (req, res) => {
   if (!req.user || !req.user.id) {
@@ -2210,22 +2154,9 @@ router.post('/profile/update', async (req, res) => {
   }
 });
 
-// AI gợi ý truyện cho độc giả
-router.get('/ai-recommend', async (req, res) => {
-  if (!req.user || !req.user.id) {
-    return res.redirect('/auth/login');
-  }
-  try {
-    const recs = await getAiRecommendations(req.user.id);
-    res.render('ai-recommend', {
-      title: 'AI Gợi Ý Truyện Dành Cho Bạn',
-      user: req.user,
-      stories: recs
-    });
-  } catch (err) {
-    console.error('Lỗi gợi ý AI:', err);
-    res.status(500).send('Lỗi hệ thống.');
-  }
+// Chuyển hướng nếu vào link cũ /ai-recommend
+router.get('/ai-recommend', (req, res) => {
+  res.redirect('/');
 });
 
 // Trang Bảng Xếp Hạng Độc Giả toàn diện
