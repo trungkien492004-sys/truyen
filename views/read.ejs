@@ -1047,13 +1047,7 @@
         const audioCard = document.getElementById('ai-audio-player');
         if (!audioCard) return;
 
-        if (!('speechSynthesis' in window)) {
-            audioCard.style.display = 'none';
-            console.warn('Thiết bị hoặc trình duyệt không hỗ trợ Web Speech API.');
-            return;
-        }
-
-        const synth = window.speechSynthesis;
+        const synth = ('speechSynthesis' in window) ? window.speechSynthesis : null;
         let paragraphs = [];
         let currentIdx = 0;
         let isPlaying = false;
@@ -1116,7 +1110,7 @@
             } else if (lower.includes('minh')) {
                 return '🇻🇳 Minh (Nam - Apple)';
             } else if (lower.includes('an')) {
-                return '🇻🇳 An (Nam)';
+                return '🇻🇳 An (Nam - Windows)';
             } else if (lower.includes('google')) {
                 return '🇻🇳 Google Tiếng Việt (Thiết bị)';
             }
@@ -1129,7 +1123,7 @@
         }
 
         function populateVoices() {
-            voices = synth.getVoices() || [];
+            voices = synth ? (synth.getVoices() || []) : [];
             if (!selectVoice) return;
 
             selectVoice.innerHTML = '';
@@ -1139,10 +1133,13 @@
             // 1. LUÔN LUÔN CÓ GIỌNG NỮ GOOGLE (Chạy trực tiếp cho mọi máy Chrome / Android / iOS / PC)
             const googleOpt = document.createElement('option');
             googleOpt.value = 'google_female';
-            googleOpt.textContent = '👩 Giọng Nữ Google (Chị Google Chuẩn · Rất Ngọt)';
-            if (savedVoice === 'google_female' || !savedVoice) {
+            googleOpt.textContent = '👩 Giọng Nữ Google Chuẩn (Chị Google Tiếng Việt · Rất Hay)';
+            
+            // Ưu tiên chọn Giọng Nữ Google mặc định (hoặc nếu trước đây bị kẹt giọng Microsoft An)
+            if (!savedVoice || savedVoice === 'google_female' || savedVoice.toLowerCase().includes('an')) {
                 googleOpt.selected = true;
                 selectedSet = true;
+                localStorage.setItem('tts_voice_name', 'google_female');
             }
             selectVoice.appendChild(googleOpt);
 
@@ -1150,12 +1147,12 @@
             const viVoices = voices.filter(v => v.lang && v.lang.toLowerCase().includes('vi'));
             if (viVoices.length > 0) {
                 const grp = document.createElement('optgroup');
-                grp.label = 'Giọng Hệ Thống Thiết Bị Của Bạn';
+                grp.label = 'Giọng Hệ Thống Thiết Bị (Offline)';
                 viVoices.forEach(v => {
                     const opt = document.createElement('option');
                     opt.value = v.name;
                     opt.textContent = formatVoiceLabel(v.name);
-                    if (savedVoice === v.name) {
+                    if (!selectedSet && savedVoice === v.name) {
                         opt.selected = true;
                         selectedSet = true;
                     }
@@ -1165,7 +1162,7 @@
             }
         }
 
-        if (synth.onvoiceschanged !== undefined) {
+        if (synth && synth.onvoiceschanged !== undefined) {
             synth.onvoiceschanged = populateVoices;
         }
         populateVoices();
@@ -1210,7 +1207,7 @@
         }
 
         function speakParagraph(idx) {
-            synth.cancel();
+            if (synth) synth.cancel();
             if (currentAudio) {
                 currentAudio.pause();
                 currentAudio = null;
@@ -1263,6 +1260,13 @@
                     console.error('Lỗi khi phát audio:', err);
                 });
             } else {
+                if (!synth) {
+                    console.warn('Trình duyệt không hỗ trợ Web Speech synth, chuyển sang Giọng Nữ Google.');
+                    selectVoice.value = 'google_female';
+                    speakParagraph(idx);
+                    return;
+                }
+
                 // NẾU CHỌN GIỌNG THIẾT BỊ -> CHẠY QUA WEB SPEECH
                 const utter = new SpeechSynthesisUtterance(text);
                 const voiceObj = voices.find(v => v.name === selectedVoice);
@@ -1305,7 +1309,7 @@
         function finishReading() {
             isPlaying = false;
             isPaused = false;
-            synth.cancel();
+            if (synth) synth.cancel();
             if (currentAudio) {
                 currentAudio.pause();
                 currentAudio = null;
@@ -1343,7 +1347,7 @@
                 btnPlay.innerHTML = '⏸ Tạm Dừng';
                 if (currentAudio) {
                     currentAudio.play();
-                } else {
+                } else if (synth) {
                     synth.resume();
                 }
                 statusText.innerText = `Đang đọc tiếp đoạn ${currentIdx + 1}...`;
@@ -1352,7 +1356,7 @@
                 btnPlay.innerHTML = '▶ Tiếp Tục';
                 if (currentAudio) {
                     currentAudio.pause();
-                } else {
+                } else if (synth) {
                     synth.pause();
                 }
                 statusText.innerText = 'Đã tạm dừng đọc';
@@ -1362,7 +1366,7 @@
         btnStop.addEventListener('click', () => {
             isPlaying = false;
             isPaused = false;
-            synth.cancel();
+            if (synth) synth.cancel();
             if (currentAudio) {
                 currentAudio.pause();
                 currentAudio = null;
