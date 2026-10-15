@@ -70,6 +70,77 @@
         <% } %>
     </div>
 
+    <% if (typeof story === 'undefined' || !story || story.story_type !== 'comic') { %>
+    <!-- TRÌNH PHÁT AUDIO TRUYỆN AI (TEXT-TO-SPEECH) -->
+    <div class="audio-player-card" id="ai-audio-player">
+        <div class="audio-player-header">
+            <div style="display: flex; align-items: center; gap: 0.6rem;">
+                <span style="font-size: 1.3rem;">🎧</span>
+                <div>
+                    <div style="font-weight: 700; font-size: 0.95rem; color: #fff; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                        <span>Giọng Đọc Audio AI</span>
+                        <span style="font-size: 0.65rem; font-weight: 700; background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 0.12rem 0.45rem; border-radius: 4px; text-transform: uppercase;">Miễn Phí · 0MB Data</span>
+                    </div>
+                    <div id="audio-status-text" style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 2px;">
+                        Bấm "Nghe Truyện" để AI đọc chương này
+                    </div>
+                </div>
+            </div>
+            <div style="font-size: 0.8rem; color: #a855f7; font-weight: 600;" id="audio-progress-text">
+                0/0 (0%)
+            </div>
+        </div>
+
+        <!-- Thanh tiến trình đọc audio -->
+        <div class="audio-progress-bar-wrap" id="audio-progress-wrap" title="Bấm vào thanh để tua đoạn đọc">
+            <div class="audio-progress-bar-fill" id="audio-progress-fill"></div>
+        </div>
+
+        <!-- Cụm điều khiển -->
+        <div class="audio-controls-row">
+            <button id="audio-btn-play" class="audio-btn audio-btn-primary">
+                ▶ Nghe Truyện
+            </button>
+            <button id="audio-btn-stop" class="audio-btn" title="Dừng đọc">
+                ⏹ Dừng
+            </button>
+            <div style="display: flex; gap: 0.25rem;">
+                <button id="audio-btn-prev" class="audio-btn" title="Đoạn trước">
+                    ⏮
+                </button>
+                <button id="audio-btn-next" class="audio-btn" title="Đoạn tiếp">
+                    ⏭
+                </button>
+            </div>
+
+            <!-- Tốc độ đọc -->
+            <div style="display: flex; align-items: center; gap: 0.3rem;">
+                <label for="audio-select-rate" style="font-size: 0.76rem; color: var(--text-secondary);">Tốc độ:</label>
+                <select id="audio-select-rate" class="audio-select">
+                    <option value="0.8">0.8x</option>
+                    <option value="1.0" selected>1.0x</option>
+                    <option value="1.2">1.2x</option>
+                    <option value="1.4">1.4x</option>
+                </select>
+            </div>
+
+            <!-- Giọng đọc -->
+            <div style="display: flex; align-items: center; gap: 0.3rem;">
+                <label for="audio-select-voice" style="font-size: 0.76rem; color: var(--text-secondary);">Giọng:</label>
+                <select id="audio-select-voice" class="audio-select" style="max-width: 150px;">
+                    <option value="">Tự động</option>
+                </select>
+            </div>
+
+            <!-- Tự chuyển chương -->
+            <label style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.76rem; color: var(--text-secondary); cursor: pointer; user-select: none;">
+                <input type="checkbox" id="audio-check-autonext" checked style="accent-color: #a855f7;">
+                Tự qua chương
+            </label>
+        </div>
+    </div>
+    <% } %>
+
     <!-- Nội dung chương truyện (Có thể chứa cả chữ và các thẻ ảnh đan xen) -->
     <div class="read-content <%= (chapter && chapter.content && /<p\b/i.test(chapter.content)) ? 'has-p-tags' : '' %>" id="chapter-content">
         <%- chapter.content %>
@@ -151,6 +222,119 @@
     .read-content.has-p-tags {
         white-space: normal !important;
     }
+
+    /* CSS CHO TRÌNH PHÁT AUDIO TRUYỆN AI */
+    .audio-player-card {
+        background: linear-gradient(135deg, rgba(30, 27, 75, 0.75) 0%, rgba(15, 23, 42, 0.9) 100%);
+        border: 1px solid rgba(139, 92, 246, 0.35);
+        border-radius: 14px;
+        padding: 0.9rem 1.2rem;
+        margin: 1.2rem 0 1.8rem 0;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.35);
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease;
+    }
+    .audio-player-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.8rem;
+    }
+    .audio-controls-row {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        flex-wrap: wrap;
+        margin-top: 0.8rem;
+    }
+    .audio-btn {
+        background: var(--bg-secondary);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        color: #fff;
+        border-radius: 8px;
+        padding: 0.45rem 0.85rem;
+        font-size: 0.82rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        transition: all 0.2s ease;
+    }
+    .audio-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+        transform: translateY(-1px);
+    }
+    .audio-btn-primary {
+        background: linear-gradient(135deg, #6366f1, #a855f7);
+        border: none;
+        box-shadow: 0 2px 10px rgba(168, 85, 247, 0.4);
+    }
+    .audio-btn-primary:hover {
+        background: linear-gradient(135deg, #4f46e5, #9333ea);
+        box-shadow: 0 4px 15px rgba(168, 85, 247, 0.6);
+    }
+    .audio-select {
+        background: rgba(15, 23, 42, 0.9);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        color: #fff;
+        border-radius: 6px;
+        padding: 0.32rem 0.5rem;
+        font-size: 0.78rem;
+        outline: none;
+        cursor: pointer;
+    }
+    .audio-select:focus {
+        border-color: #a855f7;
+    }
+    .audio-progress-bar-wrap {
+        width: 100%;
+        height: 6px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 3px;
+        overflow: hidden;
+        margin: 0.8rem 0 0.3rem 0;
+        cursor: pointer;
+    }
+    .audio-progress-bar-fill {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, #6366f1, #ec4899);
+        transition: width 0.2s linear;
+    }
+    .audio-active-paragraph {
+        background: rgba(168, 85, 247, 0.18) !important;
+        border-left: 4px solid #a855f7 !important;
+        padding-left: 10px !important;
+        border-radius: 4px;
+        transition: all 0.3s ease;
+    }
+    .tts-paragraph {
+        transition: background 0.3s ease, border-left 0.3s ease;
+        cursor: pointer;
+    }
+    .tts-paragraph:hover {
+        background: rgba(255, 255, 255, 0.03);
+    }
+    @media (max-width: 600px) {
+        .audio-player-card {
+            padding: 0.75rem 0.7rem;
+            margin: 1rem 0 1.4rem 0;
+        }
+        .audio-controls-row {
+            gap: 0.35rem;
+        }
+        .audio-btn {
+            padding: 0.38rem 0.6rem;
+            font-size: 0.75rem;
+        }
+        .audio-select {
+            padding: 0.28rem 0.4rem;
+            font-size: 0.74rem;
+            max-width: 120px !important;
+        }
+    }
+
     /* Styling cho dropdown mục lục nhanh */
     .toc-dropdown-content::-webkit-scrollbar {
         width: 6px;
@@ -831,6 +1015,335 @@
         }, 6000);
     }
     <% } %>
+
+    /* ============================================================
+       TRÌNH ĐIỀU KHIỂN GIỌNG ĐỌC AUDIO AI (WEB SPEECH API)
+       ============================================================ */
+    (function initWebSpeechAudio() {
+        const audioCard = document.getElementById('ai-audio-player');
+        if (!audioCard) return;
+
+        if (!('speechSynthesis' in window)) {
+            audioCard.style.display = 'none';
+            console.warn('Thiết bị hoặc trình duyệt không hỗ trợ Web Speech API.');
+            return;
+        }
+
+        const synth = window.speechSynthesis;
+        let paragraphs = [];
+        let currentIdx = 0;
+        let isPlaying = false;
+        let isPaused = false;
+        let currentUtterance = null;
+        let voices = [];
+
+        // DOM Elements
+        const btnPlay = document.getElementById('audio-btn-play');
+        const btnStop = document.getElementById('audio-btn-stop');
+        const btnPrev = document.getElementById('audio-btn-prev');
+        const btnNext = document.getElementById('audio-btn-next');
+        const selectVoice = document.getElementById('audio-select-voice');
+        const selectRate = document.getElementById('audio-select-rate');
+        const checkAutoNext = document.getElementById('audio-check-autonext');
+        const progressFill = document.getElementById('audio-progress-fill');
+        const progressWrap = document.getElementById('audio-progress-wrap');
+        const progressText = document.getElementById('audio-progress-text');
+        const statusText = document.getElementById('audio-status-text');
+
+        // Phân tách đoạn văn để đọc từng đoạn (tránh timeout của browser)
+        function initParagraphs() {
+            const contentEl = document.getElementById('chapter-content');
+            if (!contentEl) return;
+
+            let pEls = contentEl.querySelectorAll('p');
+            if (pEls.length === 0) {
+                const raw = contentEl.innerText || '';
+                const lines = raw.split(/\n+/).map(l => l.trim()).filter(l => l.length > 0);
+                contentEl.innerHTML = '';
+                lines.forEach((line, i) => {
+                    const p = document.createElement('p');
+                    p.className = 'tts-paragraph';
+                    p.id = `tts-p-${i}`;
+                    p.textContent = line;
+                    contentEl.appendChild(p);
+                });
+                pEls = contentEl.querySelectorAll('p');
+            } else {
+                pEls.forEach((p, i) => {
+                    p.classList.add('tts-paragraph');
+                    p.id = `tts-p-${i}`;
+                });
+            }
+            paragraphs = Array.from(pEls);
+            updateProgress();
+        }
+
+        // Tải danh sách giọng nói từ hệ điều hành / trình duyệt
+        function populateVoices() {
+            voices = synth.getVoices() || [];
+            if (voices.length === 0) return;
+
+            selectVoice.innerHTML = '';
+            let viVoiceFound = false;
+            const savedVoice = localStorage.getItem('tts_voice_name');
+
+            const viVoices = voices.filter(v => v.lang && (v.lang.toLowerCase().includes('vi')));
+            const otherVoices = voices.filter(v => !v.lang || (!v.lang.toLowerCase().includes('vi')));
+
+            if (viVoices.length > 0) {
+                const viGroup = document.createElement('optgroup');
+                viGroup.label = 'Giọng Tiếng Việt';
+                viVoices.forEach(v => {
+                    const opt = document.createElement('option');
+                    opt.value = v.name;
+                    opt.textContent = `🇻🇳 ${v.name}`;
+                    if (savedVoice === v.name || (!savedVoice && !viVoiceFound)) {
+                        opt.selected = true;
+                        viVoiceFound = true;
+                    }
+                    viGroup.appendChild(opt);
+                });
+                selectVoice.appendChild(viGroup);
+            }
+
+            if (otherVoices.length > 0) {
+                const otherGroup = document.createElement('optgroup');
+                otherGroup.label = 'Giọng Khác / Mặc định';
+                otherVoices.forEach(v => {
+                    const opt = document.createElement('option');
+                    opt.value = v.name;
+                    opt.textContent = `🌐 ${v.name} (${v.lang || 'default'})`;
+                    if (savedVoice === v.name && !viVoiceFound) opt.selected = true;
+                    otherGroup.appendChild(opt);
+                });
+                selectVoice.appendChild(otherGroup);
+            }
+        }
+
+        if (synth.onvoiceschanged !== undefined) {
+            synth.onvoiceschanged = populateVoices;
+        }
+        populateVoices();
+
+        // Khôi phục cài đặt đã lưu
+        if (localStorage.getItem('tts_rate')) {
+            selectRate.value = localStorage.getItem('tts_rate');
+        }
+        if (localStorage.getItem('tts_autonext') !== null) {
+            checkAutoNext.checked = localStorage.getItem('tts_autonext') === 'true';
+        }
+
+        selectRate.addEventListener('change', () => {
+            localStorage.setItem('tts_rate', selectRate.value);
+            if (isPlaying && !isPaused) speakParagraph(currentIdx);
+        });
+        selectVoice.addEventListener('change', () => {
+            localStorage.setItem('tts_voice_name', selectVoice.value);
+            if (isPlaying && !isPaused) speakParagraph(currentIdx);
+        });
+        checkAutoNext.addEventListener('change', () => {
+            localStorage.setItem('tts_autonext', checkAutoNext.checked);
+        });
+
+        function updateProgress() {
+            if (paragraphs.length === 0) return;
+            const pct = Math.min(100, Math.round(((currentIdx + 1) / paragraphs.length) * 100));
+            progressFill.style.width = `${pct}%`;
+            progressText.innerText = `${currentIdx + 1}/${paragraphs.length} (${pct}%)`;
+        }
+
+        function highlightParagraph(idx) {
+            paragraphs.forEach((p, i) => {
+                if (i === idx) {
+                    p.classList.add('audio-active-paragraph');
+                    p.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                } else {
+                    p.classList.remove('audio-active-paragraph');
+                }
+            });
+        }
+
+        function clearHighlight() {
+            paragraphs.forEach(p => p.classList.remove('audio-active-paragraph'));
+        }
+
+        function speakParagraph(idx) {
+            synth.cancel();
+            if (idx < 0 || idx >= paragraphs.length) {
+                finishReading();
+                return;
+            }
+
+            currentIdx = idx;
+            updateProgress();
+            highlightParagraph(idx);
+
+            const text = paragraphs[idx].innerText.trim();
+            if (!text) {
+                // Đoạn rỗng, tự động đọc đoạn tiếp theo
+                speakParagraph(idx + 1);
+                return;
+            }
+
+            const utter = new SpeechSynthesisUtterance(text);
+            const selectedVoiceName = selectVoice.value;
+            const voiceObj = voices.find(v => v.name === selectedVoiceName);
+            if (voiceObj) {
+                utter.voice = voiceObj;
+            } else {
+                utter.lang = 'vi-VN';
+            }
+            utter.rate = parseFloat(selectRate.value) || 1.0;
+            utter.pitch = 1.0;
+
+            utter.onstart = () => {
+                statusText.innerText = `Đang đọc đoạn ${idx + 1}/${paragraphs.length}...`;
+            };
+
+            utter.onend = () => {
+                if (isPlaying && !isPaused) {
+                    if (currentIdx + 1 < paragraphs.length) {
+                        speakParagraph(currentIdx + 1);
+                    } else {
+                        finishReading();
+                    }
+                }
+            };
+
+            utter.onerror = (e) => {
+                if (isPlaying && !isPaused && e.error !== 'interrupted' && e.error !== 'canceled') {
+                    console.warn('Lỗi đọc đoạn, chuyển đoạn tiếp:', e);
+                    speakParagraph(currentIdx + 1);
+                }
+            };
+
+            currentUtterance = utter;
+            synth.speak(utter);
+        }
+
+        function finishReading() {
+            isPlaying = false;
+            isPaused = false;
+            synth.cancel();
+            clearHighlight();
+            btnPlay.innerHTML = '▶ Nghe Tiếp';
+            progressFill.style.width = '100%';
+
+            if (checkAutoNext.checked) {
+                <% if (hasNext && nextChapterNum) { %>
+                    statusText.innerText = '🎉 Đã đọc xong! Đang chuyển sang Chương <%= nextChapterNum %>...';
+                    setTimeout(() => {
+                        window.location.href = '/story/<%= story.id %>/chapter/<%= nextChapterNum %>?auto_audio=1';
+                    }, 1800);
+                <% } else { %>
+                    statusText.innerText = '📖 Chúc mừng bạn đã đọc xong chương cuối cùng!';
+                <% } %>
+            } else {
+                statusText.innerText = 'Đã đọc hết chương!';
+            }
+        }
+
+        btnPlay.addEventListener('click', () => {
+            if (!isPlaying) {
+                isPlaying = true;
+                isPaused = false;
+                btnPlay.innerHTML = '⏸ Tạm Dừng';
+                speakParagraph(currentIdx);
+            } else if (isPaused) {
+                isPaused = false;
+                btnPlay.innerHTML = '⏸ Tạm Dừng';
+                synth.resume();
+                statusText.innerText = `Đang đọc tiếp đoạn ${currentIdx + 1}...`;
+            } else {
+                isPaused = true;
+                btnPlay.innerHTML = '▶ Tiếp Tục';
+                synth.pause();
+                statusText.innerText = 'Đã tạm dừng đọc';
+            }
+        });
+
+        btnStop.addEventListener('click', () => {
+            isPlaying = false;
+            isPaused = false;
+            synth.cancel();
+            clearHighlight();
+            currentIdx = 0;
+            updateProgress();
+            btnPlay.innerHTML = '▶ Nghe Truyện';
+            statusText.innerText = 'Đã dừng hẳn';
+        });
+
+        btnPrev.addEventListener('click', () => {
+            if (currentIdx > 0) {
+                currentIdx--;
+                if (isPlaying && !isPaused) {
+                    speakParagraph(currentIdx);
+                } else {
+                    updateProgress();
+                    highlightParagraph(currentIdx);
+                }
+            }
+        });
+
+        btnNext.addEventListener('click', () => {
+            if (currentIdx + 1 < paragraphs.length) {
+                currentIdx++;
+                if (isPlaying && !isPaused) {
+                    speakParagraph(currentIdx);
+                } else {
+                    updateProgress();
+                    highlightParagraph(currentIdx);
+                }
+            }
+        });
+
+        // Bấm trực tiếp vào thanh tiến trình để tua đoạn
+        if (progressWrap) {
+            progressWrap.addEventListener('click', (e) => {
+                const rect = progressWrap.getBoundingClientRect();
+                const clickX = e.clientX - rect.left;
+                const ratio = Math.max(0, Math.min(1, clickX / rect.width));
+                const targetIdx = Math.floor(ratio * paragraphs.length);
+                currentIdx = Math.min(paragraphs.length - 1, targetIdx);
+                if (isPlaying && !isPaused) {
+                    speakParagraph(currentIdx);
+                } else {
+                    updateProgress();
+                    highlightParagraph(currentIdx);
+                }
+            });
+        }
+
+        // Bấm vào bất kỳ đoạn văn nào trên bài viết để AI đọc ngay từ đoạn đó
+        const contentEl = document.getElementById('chapter-content');
+        if (contentEl) {
+            contentEl.addEventListener('click', (e) => {
+                const p = e.target.closest('.tts-paragraph');
+                if (p) {
+                    const idx = paragraphs.indexOf(p);
+                    if (idx !== -1) {
+                        currentIdx = idx;
+                        if (!isPlaying) {
+                            isPlaying = true;
+                            isPaused = false;
+                            btnPlay.innerHTML = '⏸ Tạm Dừng';
+                        }
+                        speakParagraph(currentIdx);
+                    }
+                }
+            });
+        }
+
+        initParagraphs();
+
+        // Tự động phát tiếp nếu chuyển từ chương trước sang qua URL param
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('auto_audio') === '1') {
+            setTimeout(() => {
+                btnPlay.click();
+            }, 800);
+        }
+    })();
 </script>
 
 <%- include('partials/footer') %>
