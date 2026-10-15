@@ -1439,12 +1439,32 @@ router.get('/story/:story_id/chapter/:chapter_number', async (req, res) => {
 
     // 3b. Lưu lịch sử đọc (tiến độ đọc gần nhất) nếu người dùng đã đăng nhập
     if (req.user && req.user.id) {
-      supabase.from('reading_history').upsert(
-        { user_id: req.user.id, story_id: storyId, chapter_number: chapterNumber, updated_at: new Date().toISOString() },
-        { onConflict: 'user_id,story_id' }
-      ).then(({ error }) => {
-        if (error) console.error('Lỗi khi lưu lịch sử đọc:', error);
-      });
+      (async () => {
+        try {
+          const { data: existHist } = await supabase
+            .from('reading_history')
+            .select('id')
+            .eq('user_id', req.user.id)
+            .eq('story_id', storyId)
+            .maybeSingle();
+
+          if (existHist) {
+            await supabase.from('reading_history').update({
+              chapter_number: chapterNumber,
+              updated_at: new Date().toISOString()
+            }).eq('id', existHist.id);
+          } else {
+            await supabase.from('reading_history').insert([{
+              user_id: req.user.id,
+              story_id: storyId,
+              chapter_number: chapterNumber,
+              updated_at: new Date().toISOString()
+            }]);
+          }
+        } catch (e) {
+          console.error('Lỗi khi lưu lịch sử đọc:', e);
+        }
+      })();
 
       // 3c. Lưu thông tin bắt đầu đọc vào session để tính thời gian đọc (tránh hack/buff EXP)
       req.session.reading = {
@@ -1665,13 +1685,25 @@ router.post('/rate/:story_id', async (req, res) => {
   }
 
   try {
-    const { error } = await supabase
+    const { data: existRating } = await supabase
       .from('ratings')
-      .upsert(
-        { user_id: req.user.id, story_id: storyId, score },
-        { onConflict: 'user_id,story_id' }
-      );
-    if (error) throw error;
+      .select('id')
+      .eq('user_id', req.user.id)
+      .eq('story_id', storyId)
+      .maybeSingle();
+
+    if (existRating) {
+      const { error } = await supabase
+        .from('ratings')
+        .update({ score })
+        .eq('id', existRating.id);
+      if (error) throw error;
+    } else {
+      const { error } = await supabase
+        .from('ratings')
+        .insert([{ user_id: req.user.id, story_id: storyId, score }]);
+      if (error) throw error;
+    }
 
     const { data: summary } = await supabase
       .from('story_ratings_summary')
@@ -1714,13 +1746,25 @@ router.post('/bookmark/:story_id', async (req, res) => {
     const validStatuses = ['reading', 'plan_to_read', 'completed', 'favorite'];
     const newStatus = validStatuses.includes(status) ? status : 'reading';
 
-    const { error } = await supabase
+    const { data: existBookmark } = await supabase
       .from('bookmarks')
-      .upsert(
-        { user_id: req.user.id, story_id: storyId, status: newStatus },
-        { onConflict: 'user_id,story_id' }
-      );
-    if (error) throw error;
+      .select('id')
+      .eq('user_id', req.user.id)
+      .eq('story_id', storyId)
+      .maybeSingle();
+
+    if (existBookmark) {
+      const { error } = await supabase
+        .from('bookmarks')
+        .update({ status: newStatus })
+        .eq('id', existBookmark.id);
+      if (error) throw error;
+    } else {
+      const { error } = await supabase
+        .from('bookmarks')
+        .insert([{ user_id: req.user.id, story_id: storyId, status: newStatus }]);
+      if (error) throw error;
+    }
 
     res.json({ success: true, message: 'Đã cập nhật theo dõi truyện!', status: newStatus });
   } catch (err) {
@@ -2616,6 +2660,125 @@ router.get('/api/proxy-image', async (req, res) => {
   }
 });
 
+// TỪ ĐIỂN PHIÊN ÂM TIẾNG ANH SANG TIẾNG VIỆT CHO TRUYỆN CHỮ
+// Giúp Chị Google đọc cực kỳ chuẩn, không bị nuốt chữ hay đánh vần đúp-lờ-vê (W)
+const NOVEL_PHONETIC_DICT = [
+  // Nhân vật & Thuật ngữ truyện đặc thù (như truyện Thao Túng tác giả Niken)
+  [/\bCharles\s+Darwin\b/gi, 'Sác-lơ Đác-uyn'],
+  [/\bDarwin\b/gi, 'Đác-uyn'],
+  [/\bCharles\b/gi, 'Sác-lơ'],
+  [/\bWin\b/gi, 'Uyn'],
+  [/\bWinner\b/gi, 'Uyn-nơ'],
+  [/\bDrone\b/gi, 'Đờ-rôn'],
+  [/\bBlackjack\b/gi, 'Blách-giắc'],
+  [/\bCasino\b/gi, 'Ca-si-nô'],
+  [/\bDealer\b/gi, 'Đi-lơ'],
+  [/\bPoker\b/gi, 'Pô-kơ'],
+  [/\bRoulette\b/gi, 'Ru-lét'],
+  [/\bVIP\b/gi, 'Víp'],
+  [/\bChips?\b/gi, 'Chíp'],
+  [/\bJackpot\b/gi, 'Giắc-pót'],
+
+  // Thuật ngữ Hệ Thống / Game / Dị Năng / Đô Thị
+  [/\bSystem\b/gi, 'Xít-tầm'],
+  [/\bStatus\b/gi, 'Xì-ta-tớt'],
+  [/\bSkill\b/gi, 'X-kin'],
+  [/\bLevel\b/gi, 'Le-vồ'],
+  [/\bItem\b/gi, 'Ai-tầm'],
+  [/\bQuest\b/gi, 'Quét'],
+  [/\bBoss\b/gi, 'Bót'],
+  [/\bGame\b/gi, 'Gêm'],
+  [/\bPlayer\b/gi, 'Pờ-lây-ơ'],
+  [/\bAdmin\b/gi, 'Át-min'],
+  [/\bHack\b/gi, 'Hách'],
+  [/\bHacker\b/gi, 'Hắc-cơ'],
+  [/\bBug\b/gi, 'Bắc'],
+  [/\bBuff\b/gi, 'Bắp'],
+  [/\bNerf\b/gi, 'Nớp'],
+  [/\bTop\b/gi, 'Tóp'],
+  [/\bPro\b/gi, 'Pờ-rô'],
+  [/\bNoob\b/gi, 'Núp'],
+  [/\bSolo\b/gi, 'Sô-lô'],
+  [/\bTeam\b/gi, 'Tim'],
+  [/\bGuild\b/gi, 'Giu-lờ'],
+  [/\bDamage\b|\bDame\b/gi, 'Đam'],
+  [/\bTanker\b|\bTank\b/gi, 'Teng-kơ'],
+  [/\bSupport\b/gi, 'Súp-pót'],
+  [/\bCombo\b/gi, 'Com-bô'],
+  [/\bRank\b/gi, 'Ranh'],
+  [/\bPass\b/gi, 'Pát'],
+  [/\bPassword\b/gi, 'Pát-uốt'],
+
+  // Đời sống, Công nghệ & Từ mượn phổ biến
+  [/\bBar\b/gi, 'Ba'],
+  [/\bClub\b/gi, 'Cờ-lắp'],
+  [/\bShow\b/gi, 'Sô'],
+  [/\bView\b/gi, 'Viu'],
+  [/\bReview\b/gi, 'Rê-viu'],
+  [/\bFollow\b/gi, 'Phô-lâu'],
+  [/\bOK\b|\bOk\b|\bok\b/g, 'Ô kê'],
+  [/\bAI\b/g, 'A-I'],
+  [/\bIQ\b/g, 'I-Q'],
+  [/\bEQ\b/g, 'E-Q'],
+  [/\bNPC\b/g, 'N-P-C'],
+  [/\bPK\b/g, 'P-K'],
+  [/\bHP\b/g, 'H-P'],
+  [/\bMP\b/g, 'M-P'],
+  [/\bEXP\b/g, 'E-X-P'],
+  [/\bFPS\b/g, 'F-P-S'],
+  [/\bPC\b/g, 'P-C'],
+  [/\bGoogle\b/gi, 'Gúc-gồ'],
+  [/\bFacebook\b/gi, 'Phây-xơ-búc'],
+  [/\bInternet\b/gi, 'In-tơ-nét'],
+  [/\bOnline\b/gi, 'On-lai'],
+  [/\bOffline\b/gi, 'Óp-lai'],
+  [/\bRobot\b/gi, 'Rô-bốt'],
+  [/\bSecurity\b/gi, 'Bảo vệ'],
+  [/\bClick\b/gi, 'Clích'],
+  [/\bCode\b/gi, 'Cốt'],
+  [/\bData\b/gi, 'Đa-ta'],
+  [/\bLink\b/gi, 'Linh'],
+  [/\bFile\b/gi, 'Phai'],
+  [/\bApp\b/gi, 'Áp'],
+  [/\bShip\b/gi, 'Síp'],
+  [/\bShop\b/gi, 'Sóp'],
+  [/\bSale\b/gi, 'Seo'],
+  [/\bOrder\b/gi, 'O-đơ'],
+  [/\bHot\b/gi, 'Hót'],
+  [/\bFan\b/gi, 'Phan'],
+  [/\bIdol\b/gi, 'Ai-đần'],
+  [/\bLive\b|\bLivestream\b/gi, 'Lai-x-trim'],
+  [/\bVideo\b/gi, 'Vi-đê-ô'],
+  [/\bCheck\b/gi, 'Chếch'],
+  [/\bCard\b/gi, 'Cạc'],
+  [/\bSmartphone\b/gi, 'Điện thoại thông minh'],
+  [/\bLaptop\b/gi, 'Láp-tóp']
+];
+
+function normalizeTtsText(text) {
+  let result = text;
+  for (const [pattern, replacement] of NOVEL_PHONETIC_DICT) {
+    result = result.replace(pattern, replacement);
+  }
+  // Khử chữ 'w' và 'W' còn sót lại để tránh Google đọc thành "đúp-lờ-vê" / "vê-kép"
+  result = result.replace(/\bw([aeiou])/gi, 'u$1');
+  result = result.replace(/([aeiou])w\b/gi, '$1u');
+  result = result.replace(/w/gi, 'u');
+  return result;
+}
+
+// Kiểm tra đoạn văn có phải thuần tiếng Anh không (để chuyển hẳn sang giọng đọc bản ngữ en)
+function isPredominantlyEnglish(text) {
+  const vietDiacritics = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i;
+  if (vietDiacritics.test(text)) return false;
+
+  const words = text.toLowerCase().match(/\b[a-z]{2,}\b/g) || [];
+  if (words.length < 3) return false;
+  const enStops = new Set(['the', 'and', 'is', 'in', 'it', 'you', 'that', 'he', 'was', 'for', 'on', 'are', 'as', 'with', 'his', 'they', 'at', 'be', 'this', 'have', 'from', 'or', 'one', 'had', 'by', 'word', 'but', 'not', 'what', 'all', 'were', 'we', 'when', 'your', 'can', 'said', 'there', 'use', 'an', 'each', 'which', 'she', 'do', 'how', 'their', 'if', 'will', 'up', 'other', 'about', 'out', 'many', 'then', 'them', 'these', 'so', 'some', 'her', 'would', 'make', 'like', 'him', 'into', 'time', 'has', 'look', 'two', 'more', 'write', 'go', 'see', 'number', 'no', 'way', 'could', 'people', 'my', 'than', 'first', 'water', 'been', 'call', 'who', 'oil', 'its', 'now', 'find']);
+  const enCount = words.filter(w => enStops.has(w)).length;
+  return (enCount / words.length) >= 0.35 || enCount >= 3;
+}
+
 // API STREAM AUDIO GIỌNG NỮ GOOGLE (MIỄN PHÍ, HOẠT ĐỘNG 100% TRÊN CHROME VÀ MỌI TRÌNH DUYỆT)
 function splitTtsChunks(text, maxLen = 175) {
   const sentences = text.split(/(?<=[.!?,\n;:])\s+/);
@@ -2648,14 +2811,18 @@ function splitTtsChunks(text, maxLen = 175) {
 }
 
 router.get('/api/tts', async (req, res) => {
-  const text = (req.query.text || '').trim();
-  if (!text) return res.status(400).send('Missing text');
+  const rawText = (req.query.text || '').trim();
+  if (!rawText) return res.status(400).send('Missing text');
 
   try {
-    const chunks = splitTtsChunks(text, 175);
+    const isEnglish = isPredominantlyEnglish(rawText);
+    const targetLang = isEnglish ? 'en' : 'vi';
+    const processedText = isEnglish ? rawText : normalizeTtsText(rawText);
+
+    const chunks = splitTtsChunks(processedText, 175);
     const audioBuffers = await Promise.all(
       chunks.map(async (c) => {
-        const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=vi&client=tw-ob&q=${encodeURIComponent(c)}`;
+        const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${targetLang}&client=tw-ob&q=${encodeURIComponent(c)}`;
         const r = await fetch(url, {
           headers: {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
