@@ -1059,6 +1059,7 @@
         let isPlaying = false;
         let isPaused = false;
         let currentUtterance = null;
+        let currentAudio = null;
         let voices = [];
 
         // DOM Elements
@@ -1103,7 +1104,7 @@
             updateProgress();
         }
 
-        // Tải danh sách giọng nói thực tế từ thiết bị/trình duyệt (CHỈ LẤY GIỌNG TIẾNG VIỆT)
+        // Tải danh sách giọng nói thực tế từ thiết bị/trình duyệt
         function formatVoiceLabel(rawName) {
             const lower = rawName.toLowerCase();
             if (lower.includes('hoaimy') || lower.includes('hoài my')) {
@@ -1117,7 +1118,7 @@
             } else if (lower.includes('an')) {
                 return '🇻🇳 An (Nam)';
             } else if (lower.includes('google')) {
-                return '🇻🇳 Google Tiếng Việt';
+                return '🇻🇳 Google Tiếng Việt (Thiết bị)';
             }
             const clean = rawName
                 .replace(/Microsoft\s+/gi, '')
@@ -1129,30 +1130,38 @@
 
         function populateVoices() {
             voices = synth.getVoices() || [];
-            if (voices.length === 0 || !selectVoice) return;
+            if (!selectVoice) return;
 
             selectVoice.innerHTML = '';
-            // Chỉ lọc các giọng Tiếng Việt (loại bỏ hoàn toàn giọng nước ngoài)
-            const viVoices = voices.filter(v => v.lang && v.lang.toLowerCase().includes('vi'));
             const savedVoice = localStorage.getItem('tts_voice_name');
             let selectedSet = false;
 
+            // 1. LUÔN LUÔN CÓ GIỌNG NỮ GOOGLE (Chạy trực tiếp cho mọi máy Chrome / Android / iOS / PC)
+            const googleOpt = document.createElement('option');
+            googleOpt.value = 'google_female';
+            googleOpt.textContent = '👩 Giọng Nữ Google (Chị Google Chuẩn · Rất Ngọt)';
+            if (savedVoice === 'google_female' || !savedVoice) {
+                googleOpt.selected = true;
+                selectedSet = true;
+            }
+            selectVoice.appendChild(googleOpt);
+
+            // 2. Các giọng Tiếng Việt cài trên máy người dùng (Edge / Safari / Android)
+            const viVoices = voices.filter(v => v.lang && v.lang.toLowerCase().includes('vi'));
             if (viVoices.length > 0) {
+                const grp = document.createElement('optgroup');
+                grp.label = 'Giọng Hệ Thống Thiết Bị Của Bạn';
                 viVoices.forEach(v => {
                     const opt = document.createElement('option');
                     opt.value = v.name;
                     opt.textContent = formatVoiceLabel(v.name);
-                    if (savedVoice === v.name || (!selectedSet && !savedVoice)) {
+                    if (savedVoice === v.name) {
                         opt.selected = true;
                         selectedSet = true;
                     }
-                    selectVoice.appendChild(opt);
+                    grp.appendChild(opt);
                 });
-            } else {
-                const opt = document.createElement('option');
-                opt.value = '';
-                opt.textContent = '⚠️ Thiết bị chưa có giọng Tiếng Việt';
-                selectVoice.appendChild(opt);
+                selectVoice.appendChild(grp);
             }
         }
 
@@ -1173,8 +1182,13 @@
         }
 
         selectRate.addEventListener('change', () => {
+            const newRate = Math.min(2.0, Math.max(0.5, parseFloat(selectRate.value) || 1.0));
             localStorage.setItem('tts_rate', selectRate.value);
-            if (isPlaying && !isPaused) speakParagraph(currentIdx);
+            if (currentAudio) {
+                currentAudio.playbackRate = newRate;
+            } else if (isPlaying && !isPaused) {
+                speakParagraph(currentIdx);
+            }
         });
         selectPitch.addEventListener('change', () => {
             localStorage.setItem('tts_pitch', selectPitch.value);
@@ -1197,6 +1211,11 @@
 
         function speakParagraph(idx) {
             synth.cancel();
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
+            }
+
             if (idx < 0 || idx >= paragraphs.length) {
                 finishReading();
                 return;
@@ -1204,7 +1223,7 @@
 
             currentIdx = idx;
             updateProgress();
-            // KHÔNG tự động cuộn màn hình theo yêu cầu người dùng (kệ cho đọc)
+            // Không tự cuộn màn hình theo yêu cầu người đọc
 
             const text = paragraphs[idx].innerText.trim();
             if (!text) {
@@ -1212,48 +1231,85 @@
                 return;
             }
 
-            const utter = new SpeechSynthesisUtterance(text);
-            const selectedVoiceName = selectVoice.value;
-            const voiceObj = voices.find(v => v.name === selectedVoiceName);
+            const selectedVoice = selectVoice.value;
 
-            if (voiceObj) {
-                utter.voice = voiceObj;
-            } else {
-                utter.lang = 'vi-VN';
-            }
+            // NẾU CHỌN GIỌNG NỮ GOOGLE -> PHÁT QUA AUDIO STREAM TỪ GOOGLE
+            if (selectedVoice === 'google_female') {
+                const url = `/api/tts?text=${encodeURIComponent(text)}`;
+                const audio = new Audio(url);
+                currentAudio = audio;
+                audio.playbackRate = Math.min(2.0, Math.max(0.5, parseFloat(selectRate.value) || 1.0));
 
-            utter.rate = Math.min(2.0, Math.max(0.5, parseFloat(selectRate.value) || 1.0));
-            utter.pitch = parseFloat(selectPitch.value) || 1.0;
+                statusText.innerText = `Đang đọc đoạn ${idx + 1}/${paragraphs.length} (Giọng Nữ Google)...`;
 
-            utter.onstart = () => {
-                statusText.innerText = `Đang đọc đoạn ${idx + 1}/${paragraphs.length}...`;
-            };
-
-            utter.onend = () => {
-                if (isPlaying && !isPaused) {
-                    if (currentIdx + 1 < paragraphs.length) {
-                        speakParagraph(currentIdx + 1);
-                    } else {
-                        finishReading();
+                audio.onended = () => {
+                    if (isPlaying && !isPaused) {
+                        if (currentIdx + 1 < paragraphs.length) {
+                            speakParagraph(currentIdx + 1);
+                        } else {
+                            finishReading();
+                        }
                     }
-                }
-            };
+                };
 
-            utter.onerror = (e) => {
-                if (isPlaying && !isPaused && e.error !== 'interrupted' && e.error !== 'canceled') {
-                    console.warn('Lỗi đọc đoạn, chuyển đoạn tiếp:', e);
-                    speakParagraph(currentIdx + 1);
-                }
-            };
+                audio.onerror = (e) => {
+                    console.warn('Lỗi đọc audio Google đoạn này, chuyển tiếp:', e);
+                    if (isPlaying && !isPaused) {
+                        speakParagraph(currentIdx + 1);
+                    }
+                };
 
-            currentUtterance = utter;
-            synth.speak(utter);
+                audio.play().catch(err => {
+                    console.error('Lỗi khi phát audio:', err);
+                });
+            } else {
+                // NẾU CHỌN GIỌNG THIẾT BỊ -> CHẠY QUA WEB SPEECH
+                const utter = new SpeechSynthesisUtterance(text);
+                const voiceObj = voices.find(v => v.name === selectedVoice);
+
+                if (voiceObj) {
+                    utter.voice = voiceObj;
+                } else {
+                    utter.lang = 'vi-VN';
+                }
+
+                utter.rate = Math.min(2.0, Math.max(0.5, parseFloat(selectRate.value) || 1.0));
+                utter.pitch = parseFloat(selectPitch.value) || 1.0;
+
+                utter.onstart = () => {
+                    statusText.innerText = `Đang đọc đoạn ${idx + 1}/${paragraphs.length}...`;
+                };
+
+                utter.onend = () => {
+                    if (isPlaying && !isPaused) {
+                        if (currentIdx + 1 < paragraphs.length) {
+                            speakParagraph(currentIdx + 1);
+                        } else {
+                            finishReading();
+                        }
+                    }
+                };
+
+                utter.onerror = (e) => {
+                    if (isPlaying && !isPaused && e.error !== 'interrupted' && e.error !== 'canceled') {
+                        console.warn('Lỗi đọc đoạn, chuyển đoạn tiếp:', e);
+                        speakParagraph(currentIdx + 1);
+                    }
+                };
+
+                currentUtterance = utter;
+                synth.speak(utter);
+            }
         }
 
         function finishReading() {
             isPlaying = false;
             isPaused = false;
             synth.cancel();
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
+            }
             btnPlay.innerHTML = '▶ Nghe Tiếp';
             progressFill.style.width = '100%';
 
@@ -1285,12 +1341,20 @@
             } else if (isPaused) {
                 isPaused = false;
                 btnPlay.innerHTML = '⏸ Tạm Dừng';
-                synth.resume();
+                if (currentAudio) {
+                    currentAudio.play();
+                } else {
+                    synth.resume();
+                }
                 statusText.innerText = `Đang đọc tiếp đoạn ${currentIdx + 1}...`;
             } else {
                 isPaused = true;
                 btnPlay.innerHTML = '▶ Tiếp Tục';
-                synth.pause();
+                if (currentAudio) {
+                    currentAudio.pause();
+                } else {
+                    synth.pause();
+                }
                 statusText.innerText = 'Đã tạm dừng đọc';
             }
         });
@@ -1299,6 +1363,10 @@
             isPlaying = false;
             isPaused = false;
             synth.cancel();
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
+            }
             currentIdx = 0;
             updateProgress();
             btnPlay.innerHTML = '▶ Nghe Truyện';

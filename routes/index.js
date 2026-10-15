@@ -2616,4 +2616,73 @@ router.get('/api/proxy-image', async (req, res) => {
   }
 });
 
+// API STREAM AUDIO GIỌNG NỮ GOOGLE (MIỄN PHÍ, HOẠT ĐỘNG 100% TRÊN CHROME VÀ MỌI TRÌNH DUYỆT)
+function splitTtsChunks(text, maxLen = 175) {
+  const sentences = text.split(/(?<=[.!?,\n;:])\s+/);
+  const chunks = [];
+  let cur = '';
+
+  for (const s of sentences) {
+    if ((cur + ' ' + s).trim().length <= maxLen) {
+      cur = (cur + ' ' + s).trim();
+    } else {
+      if (cur) chunks.push(cur);
+      if (s.length <= maxLen) {
+        cur = s;
+      } else {
+        const words = s.split(/\s+/);
+        cur = '';
+        for (const w of words) {
+          if ((cur + ' ' + w).trim().length <= maxLen) {
+            cur = (cur + ' ' + w).trim();
+          } else {
+            if (cur) chunks.push(cur);
+            cur = w;
+          }
+        }
+      }
+    }
+  }
+  if (cur && cur.trim()) chunks.push(cur.trim());
+  return chunks;
+}
+
+router.get('/api/tts', async (req, res) => {
+  const text = (req.query.text || '').trim();
+  if (!text) return res.status(400).send('Missing text');
+
+  try {
+    const chunks = splitTtsChunks(text, 175);
+    const audioBuffers = await Promise.all(
+      chunks.map(async (c) => {
+        const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=vi&client=tw-ob&q=${encodeURIComponent(c)}`;
+        const r = await fetch(url, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+          }
+        });
+        if (!r.ok) return Buffer.alloc(0);
+        return Buffer.from(await r.arrayBuffer());
+      })
+    );
+
+    const validBuffers = audioBuffers.filter(b => b.length > 0);
+    if (validBuffers.length === 0) {
+      return res.status(500).send('Failed to generate audio');
+    }
+
+    const combined = Buffer.concat(validBuffers);
+    res.set({
+      'Content-Type': 'audio/mpeg',
+      'Content-Length': combined.length,
+      'Cache-Control': 'public, max-age=86400'
+    });
+    res.send(combined);
+  } catch (err) {
+    console.error('[API-TTS] Error generating TTS:', err);
+    res.status(500).send('TTS error');
+  }
+});
+
 module.exports = router;
+
