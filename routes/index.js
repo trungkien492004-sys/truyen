@@ -4,6 +4,7 @@ const supabase = require('../config/supabase');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const { generateEpub } = require('../services/epubGenerator');
 
 // Sử dụng Memory Storage để chạy không đĩa (tương thích Vercel Serverless)
 const upload = multer({ storage: multer.memoryStorage() });
@@ -1251,6 +1252,67 @@ router.get('/story/:id', async (req, res) => {
   } catch (err) {
     console.error('Lỗi chi tiết truyện:', err);
     res.status(500).send('Lỗi hệ thống.');
+  }
+});
+
+// TUYẾN ĐƯỜNG TẢI TRUYỆN DƯỚI DẠNG FILE EPUB
+router.get('/story/download-epub/:id', async (req, res) => {
+  const storyId = parseInt(req.params.id);
+  try {
+    const { data: story, error: storyErr } = await supabase
+      .from('stories')
+      .select('*')
+      .eq('id', storyId)
+      .single();
+
+    if (storyErr || !story) {
+      return res.status(404).send('Không tìm thấy truyện.');
+    }
+
+    let chapters = [];
+    let page = 0;
+    const limit = 1000;
+    let hasMore = true;
+    while (hasMore) {
+      const { data: batch, error: chapErr } = await supabase
+        .from('chapters')
+        .select('*')
+        .eq('story_id', storyId)
+        .order('chapter_number', { ascending: true })
+        .range(page * limit, (page + 1) * limit - 1);
+
+      if (chapErr) {
+        console.error('Lỗi lấy chương để tải EPUB:', chapErr);
+        break;
+      }
+
+      if (!batch || batch.length === 0) {
+        hasMore = false;
+      } else {
+        chapters = chapters.concat(batch);
+        if (batch.length < limit) {
+          hasMore = false;
+        } else {
+          page++;
+        }
+      }
+    }
+
+    if (chapters.length === 0) {
+      return res.status(400).send('Truyện chưa có chương nào để tải.');
+    }
+
+    const epubBuffer = await generateEpub(story, chapters);
+    const safeTitle = story.title
+      .replace(/[^a-zA-Z0-9ÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚÝàáâãèéêìíòóôõùúýĂăĐđĨĩŨũƠơƯưẠ-ỹ]/g, '_')
+      .substring(0, 100);
+
+    res.setHeader('Content-Type', 'application/epub+zip');
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(safeTitle)}.epub"`);
+    res.send(epubBuffer);
+  } catch (err) {
+    console.error('Lỗi tải xuống EPUB:', err);
+    res.status(500).send('Lỗi hệ thống khi tạo file EPUB.');
   }
 });
 
