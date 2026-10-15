@@ -628,14 +628,29 @@ router.use(isAdmin);
 // 1. TRANG DASHBOARD ADMIN (Thống kê & Quản lý)
 router.get('/', async (req, res) => {
   try {
-    // Thống kê tổng số lượng
-    const { count: storiesCount } = await supabase.from('stories').select('*', { count: 'exact', head: true });
-    const { count: chaptersCount } = await supabase.from('chapters').select('*', { count: 'exact', head: true });
-    const { count: viewsCount } = await supabase.from('story_views').select('*', { count: 'exact', head: true });
-    const { count: requestsCount } = await supabase.from('contact_requests').select('*', { count: 'exact', head: true });
+    // Tính đầu tháng hiện tại (theo giờ VN UTC+7)
+    const vnTime = new Date(Date.now() + 7 * 3600 * 1000);
+    const currentMonth = vnTime.getUTCMonth() + 1;
+    const startOfMonth = new Date(Date.UTC(vnTime.getUTCFullYear(), vnTime.getUTCMonth(), 1) - 7 * 3600 * 1000).toISOString();
 
-    // Lấy danh sách truyện hiện có theo chương cập nhật gần nhất
-    const { data: stories } = await supabase.from('stories_with_last_update').select('*').order('last_update_at', { ascending: false });
+    // Thống kê song song toàn bộ số liệu để tối ưu tốc độ tải trang
+    const [
+      { count: storiesCount },
+      { count: chaptersCount },
+      { count: viewsCount },
+      { count: requestsCount },
+      { count: usersCount },
+      { count: newUsersMonthCount },
+      { data: stories }
+    ] = await Promise.all([
+      supabase.from('stories').select('*', { count: 'exact', head: true }),
+      supabase.from('chapters').select('*', { count: 'exact', head: true }),
+      supabase.from('story_views').select('*', { count: 'exact', head: true }),
+      supabase.from('contact_requests').select('*', { count: 'exact', head: true }),
+      supabase.from('users').select('*', { count: 'exact', head: true }),
+      supabase.from('users').select('*', { count: 'exact', head: true }).gte('created_at', startOfMonth),
+      supabase.from('stories_with_last_update').select('*').order('last_update_at', { ascending: false })
+    ]);
 
     res.render('admin/dashboard', {
       title: 'Trang quản trị (Admin Panel)',
@@ -644,7 +659,10 @@ router.get('/', async (req, res) => {
         stories: storiesCount || 0,
         chapters: chaptersCount || 0,
         views: viewsCount || 0,
-        requests: requestsCount || 0
+        requests: requestsCount || 0,
+        users: usersCount || 0,
+        newUsersMonth: newUsersMonthCount || 0,
+        currentMonth
       },
       stories: stories || []
     });

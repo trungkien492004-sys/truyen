@@ -29,6 +29,14 @@
         <span class="stat-label">Tổng lượt đọc truyện</span>
     </div>
     <div class="stat-card">
+        <span class="stat-value" style="color: #60a5fa;"><%= stats.users %></span>
+        <span class="stat-label">Tổng số thành viên</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-value" style="color: #10b981;">+<%= stats.newUsersMonth %></span>
+        <span class="stat-label">Thành viên mới (Tháng <%= stats.currentMonth %>)</span>
+    </div>
+    <div class="stat-card">
         <span class="stat-value"><%= stats.requests %></span>
         <span class="stat-label">Yêu cầu từ độc giả</span>
     </div>
