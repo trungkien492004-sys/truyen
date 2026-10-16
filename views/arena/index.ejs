@@ -157,10 +157,44 @@
 
     /* CÁC THẺ CARD ĐẦU HÀNG TOÀN CHIỀU RỘNG TRÊN MOBILE */
     .arena-grid-cards,
-    .heroes-grid-cards,
     .chests-grid-cards {
         grid-template-columns: 1fr !important;
         gap: 0.9rem !important;
+    }
+
+    /* BỘ SƯU TẬP NỮ THẦN TRÊN MOBILE: 2 CỘT NHỎ GỌN, CHUẨN GACHA */
+    .heroes-grid-cards {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 0.6rem !important;
+    }
+    .heroes-grid-cards .hero-card-img-wrap {
+        height: 140px !important;
+    }
+    .heroes-grid-cards .hero-card-body {
+        padding: 0.55rem !important;
+    }
+    .heroes-grid-cards .hero-card-name {
+        font-size: 0.88rem !important;
+    }
+    .heroes-grid-cards .hero-card-title {
+        font-size: 0.7rem !important;
+        margin-bottom: 0.35rem !important;
+    }
+    .heroes-grid-cards .hero-card-stats {
+        font-size: 0.66rem !important;
+        padding: 0.35rem 0.2rem !important;
+        gap: 0.2rem !important;
+        margin-bottom: 0.4rem !important;
+    }
+    .heroes-grid-cards .hero-card-actions {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 0.25rem !important;
+    }
+    .heroes-grid-cards .hero-card-actions button {
+        padding: 0.35rem 0.2rem !important;
+        font-size: 0.72rem !important;
+        border-radius: 6px !important;
     }
 
     .team-slot-box {
@@ -406,15 +440,20 @@
                                 <span style="color: var(--text-secondary);">Khuyến nghị:</span>
                                 <strong style="color: #60a5fa;"><%= stg.combat_power %> LC</strong>
                             </div>
-                            <div style="display: flex; justify-content: space-between;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
                                 <span style="color: var(--text-secondary);">Phần thưởng:</span>
                                 <span style="color: #f59e0b; font-weight: 600;">
                                     <% const rw = stg.rewards; %>
-                                    <%= rw.wooden_chests ? '📦' + rw.wooden_chests + ' ' : '' %>
-                                    <%= rw.silver_chests ? '🥈' + rw.silver_chests + ' ' : '' %>
-                                    <%= rw.gold_chests ? '👑' + rw.gold_chests + ' ' : '' %>
-                                    <%= rw.exp_pills ? '💊' + rw.exp_pills + ' ' : '' %>
-                                    <%= rw.star_stones ? '⭐' + rw.star_stones : '' %>
+                                    <% const alreadyClaimed = (typeof todayClearedStages !== 'undefined' && todayClearedStages.includes(stg.stage)); %>
+                                    <% if (alreadyClaimed) { %>
+                                        <span style="color: #10b981; font-size: 0.74rem; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); padding: 0.1rem 0.4rem; border-radius: 6px;">🎁 Đã nhận hôm nay</span>
+                                    <% } else { %>
+                                        <%= rw.wooden_chests ? '📦' + rw.wooden_chests + ' ' : '' %>
+                                        <%= rw.silver_chests ? '🥈' + rw.silver_chests + ' ' : '' %>
+                                        <%= rw.gold_chests ? '👑' + rw.gold_chests + ' ' : '' %>
+                                        <%= rw.exp_pills ? '💊' + rw.exp_pills + ' ' : '' %>
+                                        <%= rw.star_stones ? '⭐' + rw.star_stones : '' %>
+                                    <% } %>
                                 </span>
                             </div>
                         </div>
@@ -505,66 +544,70 @@
         </div>
 
         <div class="heroes-grid-cards">
+            <% const starCosts = { 1: 5, 2: 10, 3: 20, 4: 35 }; %>
             <% heroes.forEach(hero => { %>
-                <div style="background: var(--bg-secondary); border: 2px solid <%= hero.is_unlocked ? 'var(--accent-color)' : 'rgba(255,255,255,0.08)' %>; border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; position: relative; <%= !hero.is_unlocked ? 'filter: grayscale(85%); opacity: 0.75;' : '' %>">
+                <div id="hero-card-<%= hero.id %>" style="background: var(--bg-secondary); border: 2px solid <%= hero.is_unlocked ? 'var(--accent-color)' : 'rgba(255,255,255,0.08)' %>; border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; position: relative; <%= !hero.is_unlocked ? 'filter: grayscale(85%); opacity: 0.75;' : '' %>">
                     <!-- Phẩm chất & Hệ phái -->
-                    <div style="position: absolute; top: 8px; left: 8px; z-index: 2; display: flex; gap: 0.35rem;">
-                        <span style="font-size: 0.72rem; font-weight: 800; padding: 0.15rem 0.45rem; border-radius: 6px; 
+                    <div style="position: absolute; top: 6px; left: 6px; z-index: 2; display: flex; gap: 0.3rem;">
+                        <span style="font-size: 0.68rem; font-weight: 800; padding: 0.12rem 0.4rem; border-radius: 5px; 
                             background: <%= hero.rarity === 'UR' ? '#dc2626' : (hero.rarity === 'SSR' ? '#f59e0b' : (hero.rarity === 'SR' ? '#a855f7' : '#3b82f6')) %>; color: white;">
                             <%= hero.rarity %>
                         </span>
-                        <span style="font-size: 0.72rem; background: rgba(0,0,0,0.6); color: #fff; padding: 0.15rem 0.45rem; border-radius: 6px; font-weight: 700;">
+                        <span style="font-size: 0.68rem; background: rgba(0,0,0,0.65); color: #fff; padding: 0.12rem 0.4rem; border-radius: 5px; font-weight: 700;">
                             <%= hero.element.toUpperCase() %>
                         </span>
                     </div>
 
                     <!-- Ảnh Nữ Tướng -->
-                    <div style="height: 220px; overflow: hidden; position: relative; background: #000;">
+                    <div class="hero-card-img-wrap" style="height: 200px; overflow: hidden; position: relative; background: #000;">
                         <img src="<%= hero.card_image_url || hero.avatar_url %>" alt="" style="width: 100%; height: 100%; object-fit: cover; object-position: top;">
                         <% if (hero.is_unlocked) { %>
-                            <div style="position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,0.75); padding: 0.2rem 0.55rem; border-radius: 12px; font-size: 0.75rem; font-weight: 700; color: #22c55e;">
+                            <div id="hero-badge-lvl-<%= hero.id %>" style="position: absolute; bottom: 6px; right: 6px; background: rgba(0,0,0,0.78); padding: 0.15rem 0.45rem; border-radius: 10px; font-size: 0.72rem; font-weight: 800; color: #22c55e;">
                                 Lv.<%= hero.level %> ⭐<%= hero.star %>
                             </div>
                         <% } %>
                     </div>
 
                     <!-- Thông tin chi tiết -->
-                    <div style="padding: 0.9rem; flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
+                    <div class="hero-card-body" style="padding: 0.8rem; flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
                         <div>
-                            <h4 style="margin: 0; font-size: 1.05rem; color: #fff;"><%= hero.name %></h4>
-                            <p style="margin: 0.15rem 0 0.6rem 0; font-size: 0.78rem; color: var(--text-secondary);"><%= hero.title || hero.role %></p>
+                            <h4 class="hero-card-name" style="margin: 0; font-size: 0.98rem; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><%= hero.name %></h4>
+                            <p class="hero-card-title" style="margin: 0.1rem 0 0.45rem 0; font-size: 0.74rem; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><%= hero.title || hero.role %></p>
 
                             <!-- Chỉ số cơ bản -->
-                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.35rem; font-size: 0.74rem; background: rgba(0,0,0,0.2); padding: 0.5rem; border-radius: 8px; margin-bottom: 0.7rem;">
-                                <div>❤️ HP: <strong style="color: #22c55e;"><%= hero.hp %></strong></div>
-                                <div>⚔️ Công: <strong style="color: #ef4444;"><%= hero.atk %></strong></div>
-                                <div>🛡️ Thủ: <strong style="color: #3b82f6;"><%= hero.def %></strong></div>
-                                <div>⚡ Tốc: <strong style="color: #f59e0b;"><%= hero.spd %></strong></div>
+                            <div class="hero-card-stats" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.3rem; font-size: 0.72rem; background: rgba(0,0,0,0.25); padding: 0.45rem; border-radius: 8px; margin-bottom: 0.6rem;">
+                                <div>❤️ <strong id="hero-stat-hp-<%= hero.id %>" style="color: #22c55e;"><%= hero.hp %></strong></div>
+                                <div>⚔️ <strong id="hero-stat-atk-<%= hero.id %>" style="color: #ef4444;"><%= hero.atk %></strong></div>
+                                <div>🛡️ <strong id="hero-stat-def-<%= hero.id %>" style="color: #3b82f6;"><%= hero.def %></strong></div>
+                                <div>⚡ <strong style="color: #f59e0b;"><%= hero.spd %></strong></div>
                             </div>
                         </div>
 
                         <!-- Nút thao tác -->
                         <div>
                             <% if (hero.is_unlocked) { %>
-                                <div style="display: flex; gap: 0.4rem;">
-                                    <button onclick="upgradeHero('<%= hero.id %>')" class="btn btn-secondary" style="flex: 1; font-size: 0.78rem; padding: 0.5rem 0.2rem;">
-                                        💊 Nâng Cấp (<%= hero.level * 5 %>)
+                                <div class="hero-card-actions" style="display: flex; gap: 0.3rem;">
+                                    <button id="btn-upgrade-lvl-<%= hero.id %>" onclick="upgradeHero('<%= hero.id %>', this)" class="btn btn-secondary" style="flex: 1; font-size: 0.72rem; padding: 0.4rem 0.2rem; white-space: nowrap;">
+                                        💊 Cấp (<%= hero.level * 5 %>)
                                     </button>
-                                    <button onclick="openSetTeamModal('<%= hero.id %>', '<%= hero.name %>')" class="btn btn-primary" style="flex: 1; font-size: 0.78rem; padding: 0.5rem 0.2rem;">
+                                    <button id="btn-upgrade-star-<%= hero.id %>" onclick="upgradeStar('<%= hero.id %>', this)" class="btn btn-secondary" style="flex: 1; font-size: 0.72rem; padding: 0.4rem 0.2rem; background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.35); white-space: nowrap;" <%= hero.star >= 5 ? 'disabled' : '' %>>
+                                        ⭐ <%= hero.star >= 5 ? 'Max' : 'Sao (' + (starCosts[hero.star] || 10) + ')' %>
+                                    </button>
+                                    <button onclick="openSetTeamModal('<%= hero.id %>', '<%= hero.name %>')" class="btn btn-primary" style="flex: 1; font-size: 0.72rem; padding: 0.4rem 0.2rem; white-space: nowrap;">
                                         ⚔️ Ra Trận
                                     </button>
                                 </div>
                             <% } else { %>
-                                <div style="margin-bottom: 0.5rem;">
-                                    <div style="display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 0.2rem;">
+                                <div style="margin-bottom: 0.4rem;">
+                                    <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 0.2rem;">
                                         <span>Mảnh tướng:</span>
-                                        <span><%= hero.shards %>/<%= hero.shards_to_summon %></span>
+                                        <span id="hero-shards-<%= hero.id %>"><%= hero.shards %>/<%= hero.shards_to_summon %></span>
                                     </div>
-                                    <div style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
+                                    <div style="height: 5px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
                                         <div style="width: <%= Math.min(100, Math.round((hero.shards / hero.shards_to_summon) * 100)) %>%; height: 100%; background: #ec4899; border-radius: 3px;"></div>
                                     </div>
                                 </div>
-                                <button onclick="summonHero('<%= hero.id %>')" class="btn btn-primary" style="width: 100%; font-size: 0.82rem; padding: 0.5rem; font-weight: 700;" <%= hero.shards < hero.shards_to_summon ? 'disabled' : '' %>>
+                                <button onclick="summonHero('<%= hero.id %>', this)" class="btn btn-primary" style="width: 100%; font-size: 0.78rem; padding: 0.45rem; font-weight: 700;" <%= hero.shards < hero.shards_to_summon ? 'disabled' : '' %>>
                                     ✨ Chiêu Mộ (<%= hero.shards %>/<%= hero.shards_to_summon %>)
                                 </button>
                             <% } %>
@@ -930,18 +973,20 @@
             });
             const data = await resp.json();
             if (data.success) {
-                alert('Đã cập nhật đội hình thành công!');
-                location.reload();
+                closeSetTeamModal();
+                showArenaToast('⚔️ Đã xếp vào đội hình ra trận thành công!');
+                setTimeout(() => location.reload(), 800);
             } else {
-                alert('Lỗi: ' + data.error);
+                showArenaToast('❌ ' + data.error, 'error');
             }
         } catch (e) {
-            alert('Lỗi kết nối: ' + e.message);
+            showArenaToast('❌ Lỗi kết nối: ' + e.message, 'error');
         }
     }
 
     // Chiêu mộ tướng
-    async function summonHero(heroId) {
+    async function summonHero(heroId, btn) {
+        if (btn) btn.disabled = true;
         try {
             const resp = await fetch('/arena/api/summon-hero', {
                 method: 'POST',
@@ -950,18 +995,21 @@
             });
             const data = await resp.json();
             if (data.success) {
-                alert(data.message);
-                location.reload();
+                showArenaToast('🎉 ' + data.message);
+                setTimeout(() => location.reload(), 1000);
             } else {
-                alert('Lỗi: ' + data.error);
+                showArenaToast('❌ Lỗi: ' + data.error, 'error');
+                if (btn) btn.disabled = false;
             }
         } catch (e) {
-            alert('Lỗi kết nối: ' + e.message);
+            showArenaToast('❌ Lỗi: ' + e.message, 'error');
+            if (btn) btn.disabled = false;
         }
     }
 
-    // Tăng cấp tướng
-    async function upgradeHero(heroId) {
+    // TĂNG CẤP TƯỚNG (AJAX MƯỢT MÀ KHÔNG LOAD LẠI TRANG)
+    async function upgradeHero(heroId, btn) {
+        if (btn) btn.disabled = true;
         try {
             const resp = await fetch('/arena/api/upgrade-hero', {
                 method: 'POST',
@@ -970,14 +1018,113 @@
             });
             const data = await resp.json();
             if (data.success) {
-                alert(`Tăng cấp thành công! Cấp độ mới: Lv.${data.new_level}`);
-                location.reload();
+                showArenaToast(`✨ Nâng cấp thành công lên Lv.${data.new_level}!`);
+                
+                // Cập nhật DOM trực tiếp không cần reload trang
+                const lvlBadge = document.getElementById(`hero-badge-lvl-${heroId}`);
+                if (lvlBadge) lvlBadge.innerText = `Lv.${data.new_level} ⭐${data.star}`;
+                
+                const btnLvl = document.getElementById(`btn-upgrade-lvl-${heroId}`);
+                if (btnLvl) btnLvl.innerHTML = `💊 Cấp (${data.next_pills_cost})`;
+
+                const hpEl = document.getElementById(`hero-stat-hp-${heroId}`);
+                if (hpEl) hpEl.innerText = data.hp;
+                const atkEl = document.getElementById(`hero-stat-atk-${heroId}`);
+                if (atkEl) atkEl.innerText = data.atk;
+                const defEl = document.getElementById(`hero-stat-def-${heroId}`);
+                if (defEl) defEl.innerText = data.def;
+
+                const pillsEl = document.getElementById('val-exp-pills');
+                if (pillsEl) pillsEl.innerText = data.remaining_pills;
             } else {
-                alert('Lỗi: ' + data.error);
+                showArenaToast('❌ ' + data.error, 'error');
             }
         } catch (e) {
-            alert('Lỗi: ' + e.message);
+            showArenaToast('❌ Lỗi kết nối: ' + e.message, 'error');
+        } finally {
+            if (btn) btn.disabled = false;
         }
+    }
+
+    // TĂNG SAO TƯỚNG (AJAX MƯỢT MÀ KHÔNG LOAD LẠI TRANG)
+    async function upgradeStar(heroId, btn) {
+        if (btn) btn.disabled = true;
+        try {
+            const resp = await fetch('/arena/api/upgrade-star', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ hero_id: heroId })
+            });
+            const data = await resp.json();
+            if (data.success) {
+                showArenaToast(`🌟 Tăng sao thành công! Đạt ⭐${data.new_star} (+20% HP/Công)!`);
+                
+                const lvlBadge = document.getElementById(`hero-badge-lvl-${heroId}`);
+                if (lvlBadge) lvlBadge.innerText = `Lv.${data.level} ⭐${data.new_star}`;
+
+                const btnStar = document.getElementById(`btn-upgrade-star-${heroId}`);
+                if (btnStar) {
+                    if (data.new_star >= 5) {
+                        btnStar.innerHTML = `⭐ 5 Sao (Max)`;
+                        btnStar.disabled = true;
+                    } else {
+                        btnStar.innerHTML = `⭐ Sao (${data.next_stones_cost})`;
+                    }
+                }
+
+                const hpEl = document.getElementById(`hero-stat-hp-${heroId}`);
+                if (hpEl) hpEl.innerText = data.hp;
+                const atkEl = document.getElementById(`hero-stat-atk-${heroId}`);
+                if (atkEl) atkEl.innerText = data.atk;
+                const defEl = document.getElementById(`hero-stat-def-${heroId}`);
+                if (defEl) defEl.innerText = data.def;
+
+                const stonesEl = document.getElementById('val-star-stones');
+                if (stonesEl) stonesEl.innerText = data.remaining_stones;
+            } else {
+                showArenaToast('❌ ' + data.error, 'error');
+            }
+        } catch (e) {
+            showArenaToast('❌ Lỗi kết nối: ' + e.message, 'error');
+        } finally {
+            if (btn) btn.disabled = false;
+        }
+    }
+
+    // Thông báo Toast xịn xò
+    function showArenaToast(msg, type = 'success') {
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+            position: fixed;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: ${type === 'success' ? 'linear-gradient(135deg, #059669, #10b981)' : 'linear-gradient(135deg, #dc2626, #ef4444)'};
+            color: white;
+            padding: 0.75rem 1.4rem;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 0.88rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.45);
+            z-index: 99999;
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            pointer-events: none;
+        `;
+        toast.innerHTML = msg;
+        document.body.appendChild(toast);
+        setTimeout(() => {
+            toast.style.opacity = '1';
+            toast.style.transform = 'translateX(-50%) translateY(0)';
+        }, 20);
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(-50%) translateY(15px)';
+            setTimeout(() => toast.remove(), 400);
+        }, 3000);
     }
 </script>
 

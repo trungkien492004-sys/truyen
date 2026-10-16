@@ -565,7 +565,19 @@ router.get('/', async (req, res) => {
       .from('arena_ranks')
       .select('user_id, elo_points, tier, wins, losses, users(id, display_name, avatar)')
       .order('elo_points', { ascending: false })
-      .limit(20);
+    // Lấy danh sách các màn tháp hôm nay user đã nhận quà
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const { data: todayQuestRow } = await supabase
+      .from('user_card_quests')
+      .select('claimed_quests')
+      .eq('user_id', userId)
+      .eq('quest_date', todayStr)
+      .maybeSingle();
+
+    const claimedList = todayQuestRow && todayQuestRow.claimed_quests ? todayQuestRow.claimed_quests : [];
+    const todayClearedStages = claimedList
+      .filter(q => q.startsWith('dungeon_stage_'))
+      .map(q => parseInt(q.replace('dungeon_stage_', '')));
 
     res.render('arena/index', {
       title: '⚔️ Đấu Trường Nữ Thần - Waifu Arena',
@@ -578,7 +590,8 @@ router.get('/', async (req, res) => {
       leaderboard: leaderboard || [],
       quests,
       dungeonStages: DUNGEON_STAGES,
-      userDungeonStage: rank.dungeon_stage || 1
+      userDungeonStage: rank.dungeon_stage || 1,
+      todayClearedStages
     });
   } catch (err) {
     console.error('Lỗi tải trang Đấu Trường:', err);
@@ -763,10 +776,103 @@ router.post('/api/upgrade-hero', async (req, res) => {
       .update({ level: currentLevel + 1 })
       .eq('id', uHero.id);
 
+    const { data: baseHero } = await supabase
+      .from('card_heroes')
+      .select('*')
+      .eq('id', heroId)
+      .single();
+
+    const newLevel = currentLevel + 1;
+    const curStar = uHero.star || 1;
+    const newHp = Math.round((baseHero ? baseHero.base_hp : 2000) * (1 + (newLevel - 1) * 0.1) * (1 + (curStar - 1) * 0.2));
+    const newAtk = Math.round((baseHero ? baseHero.base_atk : 200) * (1 + (newLevel - 1) * 0.1) * (1 + (curStar - 1) * 0.2));
+    const newDef = Math.round((baseHero ? baseHero.base_def : 100) * (1 + (newLevel - 1) * 0.08));
+
     res.json({
       success: true,
-      new_level: currentLevel + 1,
-      remaining_pills: items.exp_pills - pillsCost
+      new_level: newLevel,
+      star: curStar,
+      hp: newHp,
+      atk: newAtk,
+      def: newDef,
+      remaining_pills: items.exp_pills - pillsCost,
+      next_pills_cost: newLevel * 5
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 4b. API TĂNG SAO TƯỚNG (UPGRADE HERO STAR)
+router.post('/api/upgrade-star', async (req, res) => {
+  const userId = req.user.id;
+  const { hero_id } = req.body;
+  const heroId = parseInt(hero_id);
+
+  try {
+    const { data: uHero } = await supabase
+      .from('user_heroes')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('hero_id', heroId)
+      .single();
+
+    if (!uHero || !uHero.is_unlocked) {
+      return res.status(400).json({ success: false, error: 'Bạn chưa mở khóa nữ tướng này!' });
+    }
+
+    const currentStar = uHero.star || 1;
+    if (currentStar >= 5) {
+      return res.status(400).json({ success: false, error: 'Nữ thần đã đạt cảnh giới tối đa (5 Sao ⭐⭐⭐⭐⭐)!' });
+    }
+
+    const starCostMap = { 1: 5, 2: 10, 3: 20, 4: 35 };
+    const cost = starCostMap[currentStar] || 10;
+
+    const { data: items } = await supabase
+      .from('user_card_items')
+      .select('star_stones')
+      .eq('user_id', userId)
+      .single();
+
+    if (!items || (items.star_stones || 0) < cost) {
+      return res.status(400).json({
+        success: false,
+        error: `Không đủ Đá Nâng Sao! Cần ${cost} viên ⭐, bạn hiện có ${items ? (items.star_stones || 0) : 0}.`
+      });
+    }
+
+    await supabase
+      .from('user_card_items')
+      .update({ star_stones: items.star_stones - cost })
+      .eq('user_id', userId);
+
+    const newStar = currentStar + 1;
+    await supabase
+      .from('user_heroes')
+      .update({ star: newStar })
+      .eq('id', uHero.id);
+
+    const { data: baseHero } = await supabase
+      .from('card_heroes')
+      .select('*')
+      .eq('id', heroId)
+      .single();
+
+    const curLvl = uHero.level || 1;
+    const newHp = Math.round((baseHero ? baseHero.base_hp : 2000) * (1 + (curLvl - 1) * 0.1) * (1 + (newStar - 1) * 0.2));
+    const newAtk = Math.round((baseHero ? baseHero.base_atk : 200) * (1 + (curLvl - 1) * 0.1) * (1 + (newStar - 1) * 0.2));
+    const newDef = Math.round((baseHero ? baseHero.base_def : 100) * (1 + (curLvl - 1) * 0.08));
+
+    res.json({
+      success: true,
+      new_star: newStar,
+      level: curLvl,
+      hp: newHp,
+      atk: newAtk,
+      def: newDef,
+      remaining_stones: items.star_stones - cost,
+      next_stones_cost: starCostMap[newStar] || 0
     });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -1317,23 +1423,22 @@ router.post('/api/dungeon-result', async (req, res) => {
       return res.json({ success: true, isWin: false, message: 'Thất bại đáng tiếc!' });
     }
 
-    // Thắng: Cập nhật quest stages_cleared
+    // Thắng: Kiểm tra xem màn này hôm nay đã nhận quà chưa (Mỗi ngày rơi 1 lần quà/ải)
     const todayStr = new Date().toISOString().slice(0, 10);
+    const stageClaimKey = `dungeon_stage_${stageId}`;
+
     const { data: qRow } = await supabase
       .from('user_card_quests')
-      .select('id, stages_cleared')
+      .select('id, stages_cleared, claimed_quests')
       .eq('user_id', userId)
       .eq('quest_date', todayStr)
       .maybeSingle();
 
-    if (qRow) {
-      await supabase.from('user_card_quests')
-        .update({ stages_cleared: qRow.stages_cleared + 1, updated_at: new Date().toISOString() })
-        .eq('id', qRow.id);
-    } else {
-      await supabase.from('user_card_quests')
-        .insert([{ user_id: userId, quest_date: todayStr, stages_cleared: 1 }]);
-    }
+    const claimedList = qRow && qRow.claimed_quests ? qRow.claimed_quests : [];
+    const alreadyClaimedToday = claimedList.includes(stageClaimKey);
+
+    let rewardsGiven = null;
+    let rewardDropped = false;
 
     // Cập nhật tầng cao nhất của user
     const { data: rank } = await supabase
@@ -1353,25 +1458,54 @@ router.post('/api/dungeon-result', async (req, res) => {
       isFirstClear = true;
     }
 
-    // Trao thưởng vượt ải
-    const r = stage.rewards;
-    const { data: curItems } = await supabase
-      .from('user_card_items')
-      .select('*')
-      .eq('user_id', userId)
-      .single();
-
-    if (curItems) {
-      await supabase
+    if (!alreadyClaimedToday) {
+      // Trao thưởng vượt ải nếu hôm nay chưa nhận quà màn này
+      const r = stage.rewards;
+      const { data: curItems } = await supabase
         .from('user_card_items')
-        .update({
-          wooden_chests: curItems.wooden_chests + (r.wooden_chests || 0),
-          silver_chests: curItems.silver_chests + (r.silver_chests || 0),
-          gold_chests: curItems.gold_chests + (r.gold_chests || 0),
-          exp_pills: curItems.exp_pills + (r.exp_pills || 0),
-          star_stones: curItems.star_stones + (r.star_stones || 0)
-        })
-        .eq('user_id', userId);
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+      if (curItems) {
+        await supabase
+          .from('user_card_items')
+          .update({
+            wooden_chests: curItems.wooden_chests + (r.wooden_chests || 0),
+            silver_chests: curItems.silver_chests + (r.silver_chests || 0),
+            gold_chests: curItems.gold_chests + (r.gold_chests || 0),
+            exp_pills: curItems.exp_pills + (r.exp_pills || 0),
+            star_stones: curItems.star_stones + (r.star_stones || 0)
+          })
+          .eq('user_id', userId);
+      }
+      rewardsGiven = r;
+      rewardDropped = true;
+
+      // Đánh dấu màn này hôm nay đã nhận quà
+      const newClaimed = Array.from(new Set([...claimedList, stageClaimKey]));
+      if (qRow) {
+        await supabase.from('user_card_quests')
+          .update({
+            claimed_quests: newClaimed,
+            stages_cleared: (qRow.stages_cleared || 0) + 1,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', qRow.id);
+      } else {
+        await supabase.from('user_card_quests')
+          .insert([{ user_id: userId, quest_date: todayStr, stages_cleared: 1, claimed_quests: [stageClaimKey] }]);
+      }
+    } else {
+      // Đã nhận quà hôm nay rồi, chỉ cộng tiến độ nhiệm vụ
+      if (qRow) {
+        await supabase.from('user_card_quests')
+          .update({ stages_cleared: (qRow.stages_cleared || 0) + 1, updated_at: new Date().toISOString() })
+          .eq('id', qRow.id);
+      } else {
+        await supabase.from('user_card_quests')
+          .insert([{ user_id: userId, quest_date: todayStr, stages_cleared: 1, claimed_quests: [] }]);
+      }
     }
 
     res.json({
@@ -1379,7 +1513,9 @@ router.post('/api/dungeon-result', async (req, res) => {
       isWin: true,
       isFirstClear,
       newStage,
-      rewards: r
+      rewardDropped,
+      rewards: rewardsGiven,
+      message: rewardDropped ? 'Chiến thắng & nhận quà vượt ải thành công!' : 'Chiến thắng! (Màn này hôm nay bạn đã nhận quà rồi, mai đánh tiếp nhé!)'
     });
   } catch (err) {
     console.error('Lỗi kết quả vượt ải:', err);

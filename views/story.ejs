@@ -197,103 +197,88 @@
         </div>
     <% } %>
 
-    <% const isCollapsed = chapters && chapters.length >= 50; %>
-    <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: rgba(255,255,255,0.05); padding: 1rem 1.5rem; border-radius: 12px; margin-bottom: 1rem; border: 1px solid rgba(255,255,255,0.1); transition: background 0.3s;" onclick="document.getElementById('chapters-wrapper').classList.toggle('collapsed'); this.querySelector('.arrow').classList.toggle('up')" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">
-        <h2 class="section-title" style="margin: 0; font-size: 1.3rem;">📖 Danh sách chương (<%= chapters ? chapters.length : 0 %>)</h2>
-        <span class="arrow <%= isCollapsed ? '' : 'up' %>" style="transition: transform 0.3s; font-size: 1.2rem; <%= isCollapsed ? 'transform: rotate(180deg);' : '' %>">▼</span>
+    <div style="background: rgba(255,255,255,0.04); padding: 1rem 1.2rem; border-radius: 12px; margin-bottom: 1rem; border: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.6rem;">
+        <h2 class="section-title" style="margin: 0; font-size: 1.25rem;">
+            📖 Danh sách chương (<%= chapters ? chapters.length : 0 %>)
+        </h2>
+        <div style="font-size: 0.82rem; color: var(--text-secondary);">
+            <% if (chapters && chapters.length > 0) { %>
+                Cập nhật mới nhất: Chương <%= chapters[chapters.length - 1].chapter_number %>
+            <% } %>
+        </div>
     </div>
     
-    <div id="chapters-wrapper" class="<%= isCollapsed ? 'collapsed' : '' %>">
+    <div id="chapters-wrapper">
         <% if (!chapters || chapters.length === 0) { %>
             <p style="color: var(--text-secondary); text-align: center; padding: 2rem 0;">Truyện hiện tại chưa có chương nào. Vui lòng quay lại sau!</p>
         <% } else { %>
-            <div style="margin-bottom: 1rem;">
-                <input type="text" id="chapter-search" placeholder="Tìm kiếm chương (ví dụ: 1, 10, tiêu đề)..." style="width: 100%; padding: 0.8rem 1rem; border-radius: 8px; border: 1px solid var(--border-color); background: rgba(0,0,0,0.3); color: var(--text-primary); font-size: 0.95rem; outline: none; transition: border-color 0.3s;" oninput="searchChapters(this.value)" onfocus="this.style.borderColor='var(--accent-color)'" onblur="this.style.borderColor='var(--border-color)'">
+            <!-- Thanh tìm kiếm chương -->
+            <div style="margin-bottom: 0.8rem;">
+                <input type="text" id="chapter-search" placeholder="🔍 Tìm kiếm chương (ví dụ: 1, 50, tiêu đề)..." style="width: 100%; padding: 0.75rem 1rem; border-radius: 8px; border: 1px solid var(--border-color); background: rgba(0,0,0,0.3); color: var(--text-primary); font-size: 0.92rem; outline: none; transition: border-color 0.3s;" oninput="onChapterSearch(this.value)" onfocus="this.style.borderColor='var(--accent-color)'" onblur="this.style.borderColor='var(--border-color)'">
             </div>
-            <div class="chapters-list-container" style="max-height: 500px; overflow-y: auto; padding-right: 5px;" id="chapters-list-ul">
-                <% if (chapters.length < 50) { %>
-                    <ul class="chapters-list" style="margin-top: 0; padding-top: 0.5rem;">
-                        <% chapters.forEach(chapter => { %>
-                            <li class="chapter-item-container" data-search="<%= chapter.chapter_number %> <%= (chapter.title || '').toLowerCase() %>" style="display: flex; align-items: center; gap: 0.5rem; width: 100%;">
-                                <a href="/story/<%= story.id %>/chapter/<%= chapter.chapter_number %>" class="chapter-item" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex: 1; min-width: 0;">
-                                    <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">
-                                        <% if (chapter.title && chapter.title.toLowerCase().startsWith('chương')) { %>
-                                            <strong><%= chapter.title %></strong>
-                                        <% } else { %>
-                                            <strong>Chương <%= chapter.chapter_number %></strong><% if (chapter.title) { %>: <%= chapter.title %><% } %>
-                                        <% } %>
-                                    </span>
-                                    <span style="font-size: 0.8rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.3rem; flex-shrink: 0;" title="Lượt xem chương">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.7;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                                        <%= chapter.views || 0 %>
-                                    </span>
-                                </a>
-                                <% if (typeof user !== 'undefined' && user && (user.role === 'admin' || user.role === 'sp_admin')) { %>
-                                    <a href="/admin/chapter/edit/<%= chapter.id %>?redirect_to=/story/<%= story.id %>" class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; border-radius: 4px; border: 1px solid rgba(59, 130, 246, 0.3); background: rgba(59, 130, 246, 0.15); color: #3b82f6; font-weight: 500; text-decoration: none; white-space: nowrap; flex-shrink: 0;" title="Sửa chương nhanh">
-                                        ✏️ Sửa
-                                    </a>
-                                <% } %>
-                            </li>
-                        <% }) %>
-                    </ul>
-                <% } else { %>
-                    <% 
-                        const chunkSize = 100;
-                        for (let i = 0; i < chapters.length; i += chunkSize) { 
-                            const chunk = chapters.slice(i, i + chunkSize);
-                            const start = chunk[0].chapter_number;
-                            const end = chunk[chunk.length - 1].chapter_number;
-                    %>
-                        <details class="chapter-chunk" style="margin-bottom: 0.5rem; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px;" <%= i === 0 ? 'open' : '' %>>
-                            <summary style="padding: 0.8rem 1rem; cursor: pointer; font-weight: bold; color: var(--accent-color); outline: none;">
-                                Chương <%= start %> - <%= end %>
-                            </summary>
-                            <ul class="chapters-list" style="margin-top: 0; padding-top: 0.5rem;">
-                                <% chunk.forEach(chapter => { %>
-                                    <li class="chapter-item-container" data-search="<%= chapter.chapter_number %> <%= (chapter.title || '').toLowerCase() %>" style="display: flex; align-items: center; gap: 0.5rem; width: 100%;">
-                                        <a href="/story/<%= story.id %>/chapter/<%= chapter.chapter_number %>" class="chapter-item" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex: 1; min-width: 0;">
-                                            <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">
-                                                <% if (chapter.title && chapter.title.toLowerCase().startsWith('chương')) { %>
-                                                    <strong><%= chapter.title %></strong>
-                                                <% } else { %>
-                                                    <strong>Chương <%= chapter.chapter_number %></strong><% if (chapter.title) { %>: <%= chapter.title %><% } %>
-                                                <% } %>
-                                            </span>
-                                            <span style="font-size: 0.8rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.3rem; flex-shrink: 0;" title="Lượt xem chương">
-                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.7;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                                                <%= chapter.views || 0 %>
-                                            </span>
-                                        </a>
-                                        <% if (typeof user !== 'undefined' && user && (user.role === 'admin' || user.role === 'sp_admin')) { %>
-                                            <a href="/admin/chapter/edit/<%= chapter.id %>?redirect_to=/story/<%= story.id %>" class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; border-radius: 4px; border: 1px solid rgba(59, 130, 246, 0.3); background: rgba(59, 130, 246, 0.15); color: #3b82f6; font-weight: 500; text-decoration: none; white-space: nowrap; flex-shrink: 0;" title="Sửa chương nhanh">
-                                                ✏️ Sửa
-                                            </a>
-                                        <% } %>
-                                    </li>
-                                <% }) %>
-                            </ul>
-                        </details>
+
+            <!-- PHÂN ĐOẠN 50 CHƯƠNG CHUYÊN NGHIỆP NẾU > 50 CHƯƠNG -->
+            <% if (chapters.length > 50) { %>
+                <% const PAGE_SIZE = 50; const totalPages = Math.ceil(chapters.length / PAGE_SIZE); %>
+                <div class="chapter-range-tabs" id="chapter-range-tabs-bar" style="display: flex; gap: 0.4rem; overflow-x: auto; padding-bottom: 0.6rem; margin-bottom: 0.8rem; scrollbar-width: thin;">
+                    <% for (let p = 0; p < totalPages; p++) { %>
+                        <% const startNum = p * PAGE_SIZE + 1; const endNum = Math.min((p + 1) * PAGE_SIZE, chapters.length); %>
+                        <button type="button" class="chapter-page-btn <%= p === 0 ? 'active' : '' %>" onclick="switchChapterPage(<%= p %>)" id="chap-page-btn-<%= p %>" style="padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.82rem; font-weight: 600; cursor: pointer; white-space: nowrap; border: 1px solid rgba(255,255,255,0.1); background: <%= p === 0 ? 'var(--accent-color)' : 'rgba(255,255,255,0.05)' %>; color: <%= p === 0 ? '#fff' : 'var(--text-secondary)' %>; transition: all 0.2s;">
+                            Chương <%= startNum %> - <%= endNum %>
+                        </button>
                     <% } %>
-                <% } %>
+                    <button type="button" class="chapter-page-btn" onclick="showAllChapters()" id="chap-page-btn-all" style="padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.82rem; font-weight: 600; cursor: pointer; white-space: nowrap; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: var(--text-secondary); transition: all 0.2s;">
+                        Tất Cả (<%= chapters.length %>)
+                    </button>
+                </div>
+            <% } %>
+
+            <!-- Danh sách chương -->
+            <div class="chapters-list-container" style="max-height: 520px; overflow-y: auto; padding-right: 5px;" id="chapters-list-ul">
+                <ul class="chapters-list" style="margin-top: 0; padding-top: 0.2rem;">
+                    <% chapters.forEach((chapter, idx) => { %>
+                        <li class="chapter-item-container" data-idx="<%= idx %>" data-chap-num="<%= chapter.chapter_number %>" data-search="<%= chapter.chapter_number %> <%= (chapter.title || '').toLowerCase() %>" style="display: flex; align-items: center; gap: 0.5rem; width: 100%;">
+                            <a href="/story/<%= story.id %>/chapter/<%= chapter.chapter_number %>" class="chapter-item" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex: 1; min-width: 0;">
+                                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">
+                                    <% if (chapter.title && chapter.title.toLowerCase().startsWith('chương')) { %>
+                                        <strong><%= chapter.title %></strong>
+                                    <% } else { %>
+                                        <strong>Chương <%= chapter.chapter_number %></strong><% if (chapter.title) { %>: <%= chapter.title %><% } %>
+                                    <% } %>
+                                </span>
+                                <span style="font-size: 0.8rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.3rem; flex-shrink: 0;" title="Lượt xem chương">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.7;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                    <%= chapter.views || 0 %>
+                                </span>
+                            </a>
+                            <% if (typeof user !== 'undefined' && user && (user.role === 'admin' || user.role === 'sp_admin')) { %>
+                                <a href="/admin/chapter/edit/<%= chapter.id %>?redirect_to=/story/<%= story.id %>" class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; border-radius: 4px; border: 1px solid rgba(59, 130, 246, 0.3); background: rgba(59, 130, 246, 0.15); color: #3b82f6; font-weight: 500; text-decoration: none; white-space: nowrap; flex-shrink: 0;" title="Sửa chương nhanh">
+                                    ✏️ Sửa
+                                </a>
+                            <% } %>
+                        </li>
+                    <% }) %>
+                </ul>
             </div>
+
+            <!-- Nút chuyển 50 chương tiếp theo bên dưới danh sách -->
+            <% if (chapters.length > 50) { %>
+                <div id="chapter-next-page-wrap" style="margin-top: 0.9rem; display: flex; justify-content: center; gap: 0.8rem; flex-wrap: wrap;">
+                    <button type="button" id="btn-next-50-chapters" onclick="goToNextChapterPage()" class="btn btn-primary" style="padding: 0.6rem 1.4rem; font-size: 0.88rem; font-weight: 700; border-radius: 8px; display: inline-flex; align-items: center; gap: 0.4rem;">
+                        👉 Xem 50 chương sau (Chương 51 - <%= Math.min(100, chapters.length) %>) &rarr;
+                    </button>
+                    <button type="button" onclick="showAllChapters()" class="btn btn-secondary" style="padding: 0.6rem 1rem; font-size: 0.88rem; border-radius: 8px;">
+                        📖 Xem Toàn Bộ (<%= chapters.length %> chương)
+                    </button>
+                </div>
+            <% } %>
         <% } %>
     </div>
 </div>
 
 <style>
     #chapters-wrapper {
-        transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out, margin-top 0.3s;
-        max-height: 1000px;
-        opacity: 1;
-        overflow: hidden;
-    }
-    #chapters-wrapper.collapsed {
-        max-height: 0;
-        opacity: 0;
-        margin-top: -1rem;
-    }
-    .arrow.up {
-        transform: rotate(0deg) !important;
+        transition: opacity 0.3s ease;
     }
     #chapters-list-ul::-webkit-scrollbar {
         width: 6px;
@@ -302,44 +287,127 @@
         background: rgba(255,255,255,0.2);
         border-radius: 3px;
     }
+    .chapter-range-tabs::-webkit-scrollbar {
+        height: 4px;
+    }
+    .chapter-range-tabs::-webkit-scrollbar-thumb {
+        background: rgba(255,255,255,0.2);
+        border-radius: 2px;
+    }
 </style>
+
 <script>
-    function searchChapters(query) {
-        query = query.toLowerCase().trim();
-        const items = document.querySelectorAll('.chapter-item-container');
-        const chunks = document.querySelectorAll('.chapter-chunk');
-        
-        // Mở các phân đoạn nếu đang tìm kiếm
-        if (query.length > 0) {
-            chunks.forEach(chunk => chunk.setAttribute('open', 'true'));
-        }
-        
-        items.forEach(item => {
-            const text = item.getAttribute('data-search') || '';
-            if (text.includes(query)) {
-                item.style.setProperty('display', 'flex', 'important');
+    const TOTAL_CHAPTERS = <%= chapters ? chapters.length : 0 %>;
+    const CHAPT_PAGE_SIZE = 50;
+    let currentChapterPage = 0;
+    const totalChapterPages = Math.ceil(TOTAL_CHAPTERS / CHAPT_PAGE_SIZE);
+
+    function renderChapterPage(pageIndex) {
+        currentChapterPage = pageIndex;
+        const allItems = document.querySelectorAll('.chapter-item-container');
+        const startIdx = pageIndex * CHAPT_PAGE_SIZE;
+        const endIdx = startIdx + CHAPT_PAGE_SIZE;
+
+        allItems.forEach((el, idx) => {
+            if (idx >= startIdx && idx < endIdx) {
+                el.style.setProperty('display', 'flex', 'important');
             } else {
-                item.style.setProperty('display', 'none', 'important');
+                el.style.setProperty('display', 'none', 'important');
             }
         });
-        
-        // Ẩn phân đoạn rỗng
-        chunks.forEach(chunk => {
-            const allItems = chunk.querySelectorAll('.chapter-item-container');
-            let hasVisible = false;
-            allItems.forEach(item => {
-                if (item.style.display !== 'none') {
-                    hasVisible = true;
-                }
-            });
-            
-            if (query.length > 0 && !hasVisible) {
-                chunk.style.display = 'none';
+
+        // Cập nhật tab active
+        document.querySelectorAll('.chapter-page-btn').forEach(b => {
+            b.style.background = 'rgba(255,255,255,0.05)';
+            b.style.color = 'var(--text-secondary)';
+            b.classList.remove('active');
+        });
+        const activeBtn = document.getElementById(`chap-page-btn-${pageIndex}`);
+        if (activeBtn) {
+            activeBtn.style.background = 'var(--accent-color)';
+            activeBtn.style.color = '#fff';
+            activeBtn.classList.add('active');
+            activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        }
+
+        // Cập nhật nút Next 50 bên dưới
+        const nextWrap = document.getElementById('chapter-next-page-wrap');
+        const nextBtn = document.getElementById('btn-next-50-chapters');
+        if (nextBtn && nextWrap) {
+            if (pageIndex + 1 < totalChapterPages) {
+                nextWrap.style.display = 'flex';
+                const nextStart = (pageIndex + 1) * CHAPT_PAGE_SIZE + 1;
+                const nextEnd = Math.min((pageIndex + 2) * CHAPT_PAGE_SIZE, TOTAL_CHAPTERS);
+                nextBtn.innerHTML = `👉 Xem 50 chương sau (Chương ${nextStart} - ${nextEnd}) &rarr;`;
             } else {
-                chunk.style.display = 'block';
+                nextBtn.style.display = 'none';
+            }
+        }
+    }
+
+    function switchChapterPage(p) {
+        const searchInput = document.getElementById('chapter-search');
+        if (searchInput) searchInput.value = '';
+        renderChapterPage(p);
+        const ul = document.getElementById('chapters-list-ul');
+        if (ul) ul.scrollTop = 0;
+    }
+
+    function goToNextChapterPage() {
+        if (currentChapterPage + 1 < totalChapterPages) {
+            switchChapterPage(currentChapterPage + 1);
+        }
+    }
+
+    function showAllChapters() {
+        const searchInput = document.getElementById('chapter-search');
+        if (searchInput) searchInput.value = '';
+        const allItems = document.querySelectorAll('.chapter-item-container');
+        allItems.forEach(el => el.style.setProperty('display', 'flex', 'important'));
+
+        document.querySelectorAll('.chapter-page-btn').forEach(b => {
+            b.style.background = 'rgba(255,255,255,0.05)';
+            b.style.color = 'var(--text-secondary)';
+        });
+        const allBtn = document.getElementById('chap-page-btn-all');
+        if (allBtn) {
+            allBtn.style.background = 'var(--accent-color)';
+            allBtn.style.color = '#fff';
+        }
+
+        const nextWrap = document.getElementById('chapter-next-page-wrap');
+        if (nextWrap) nextWrap.style.display = 'none';
+    }
+
+    function onChapterSearch(keyword) {
+        keyword = keyword.toLowerCase().trim();
+        const allItems = document.querySelectorAll('.chapter-item-container');
+        const nextWrap = document.getElementById('chapter-next-page-wrap');
+
+        if (!keyword) {
+            renderChapterPage(currentChapterPage);
+            if (nextWrap) nextWrap.style.display = 'flex';
+            return;
+        }
+
+        // Khi tìm kiếm: Quét toàn bộ mọi chương
+        if (nextWrap) nextWrap.style.display = 'none';
+        allItems.forEach(el => {
+            const str = el.getAttribute('data-search') || '';
+            if (str.includes(keyword)) {
+                el.style.setProperty('display', 'flex', 'important');
+            } else {
+                el.style.setProperty('display', 'none', 'important');
             }
         });
     }
+
+    // Khởi tạo mặc định: Hiển thị 50 chương đầu tiên
+    document.addEventListener('DOMContentLoaded', () => {
+        if (TOTAL_CHAPTERS > CHAPT_PAGE_SIZE) {
+            renderChapterPage(0);
+        }
+    });
 </script>
 
 <div class="chapters-container" style="margin-top: 3rem;">
