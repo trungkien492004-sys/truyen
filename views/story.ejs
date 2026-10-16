@@ -39,11 +39,15 @@
             </div>
         </div>
 
-        <!-- ĐÁNH GIÁ TRUYỆN (SAO/ĐIỂM) -->
-        <div style="margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+        <!-- ĐÁNH GIÁ & LƯỢT XEM TRUYỆN -->
+        <div style="margin-bottom: 1rem; display: flex; align-items: center; gap: 1.2rem; flex-wrap: wrap;">
             <div>
                 ⭐ <strong><%= typeof avgScore !== 'undefined' && avgScore ? avgScore : 'Chưa có' %></strong><% if (typeof avgScore !== 'undefined' && avgScore) { %>/10<% } %>
                 <span style="color: var(--text-secondary); font-size: 0.85rem;">(<%= typeof ratingCount !== 'undefined' ? ratingCount : 0 %> lượt đánh giá)</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.35rem; color: #38bdf8; font-weight: 600;">
+                👁️ <strong><%= (typeof totalViews !== 'undefined' ? totalViews : 0).toLocaleString('vi-VN') %></strong>
+                <span style="color: var(--text-secondary); font-size: 0.85rem; font-weight: normal;">lượt xem</span>
             </div>
 
             <% if (typeof user !== 'undefined' && user) { %>

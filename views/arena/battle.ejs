@@ -122,21 +122,110 @@
             color: #ef4444;
             text-shadow: 0 0 8px #000;
             pointer-events: none;
-            animation: floatUp 0.9s ease-out forwards;
+            animation: floatUp 0.95s ease-out forwards;
             z-index: 99;
+            white-space: nowrap;
         }
         .floating-crit {
-            color: #facc15;
-            font-size: 1.7rem;
+            color: #facc15 !important;
+            font-size: 1.7rem !important;
+            text-shadow: 0 0 12px #eab308 !important;
         }
         .floating-heal {
-            color: #4ade80;
-            font-size: 1.5rem;
+            color: #4ade80 !important;
+            font-size: 1.5rem !important;
+            text-shadow: 0 0 10px #22c55e !important;
+        }
+        .floating-dodge {
+            color: #38bdf8 !important;
+            font-size: 1.6rem !important;
+            text-shadow: 0 0 12px #0284c7 !important;
+            font-weight: 900 !important;
+        }
+        .floating-stun {
+            color: #c084fc !important;
+            font-size: 1.6rem !important;
+            text-shadow: 0 0 14px #9333ea !important;
+            font-weight: 900 !important;
         }
         @keyframes floatUp {
             0% { opacity: 0; transform: translateY(0) scale(0.8); }
-            30% { opacity: 1; transform: translateY(-20px) scale(1.2); }
-            100% { opacity: 0; transform: translateY(-50px) scale(1); }
+            25% { opacity: 1; transform: translateY(-25px) scale(1.25); }
+            100% { opacity: 0; transform: translateY(-60px) scale(1); }
+        }
+
+        /* ANIMATION CHIẾN ĐẤU (LUNGE, SHAKE, DODGE, STUN) */
+        @keyframes lungeAtk {
+            0% { transform: translateY(0) scale(1); }
+            40% { transform: translateY(-42px) scale(1.12); filter: brightness(1.3); }
+            100% { transform: translateY(0) scale(1); }
+        }
+        @keyframes lungeDef {
+            0% { transform: translateY(0) scale(1); }
+            40% { transform: translateY(42px) scale(1.12); filter: brightness(1.3); }
+            100% { transform: translateY(0) scale(1); }
+        }
+        @keyframes hitShake {
+            0% { transform: translate(0, 0); }
+            20% { transform: translate(-10px, 6px); filter: brightness(2) saturate(2); }
+            40% { transform: translate(10px, -6px); }
+            60% { transform: translate(-7px, 4px); }
+            80% { transform: translate(5px, -2px); }
+            100% { transform: translate(0, 0); filter: none; }
+        }
+        @keyframes screenShake {
+            0% { transform: translate(0, 0); }
+            20% { transform: translate(-6px, 5px); }
+            40% { transform: translate(6px, -5px); }
+            60% { transform: translate(-4px, 3px); }
+            80% { transform: translate(4px, -2px); }
+            100% { transform: translate(0, 0); }
+        }
+        @keyframes dodgeEvade {
+            0% { transform: translateX(0); }
+            35% { transform: translateX(30px) rotate(10deg); opacity: 0.5; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes stunSpin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .lunge-atk {
+            animation: lungeAtk 0.45s ease-in-out !important;
+            z-index: 10 !important;
+        }
+        .lunge-def {
+            animation: lungeDef 0.45s ease-in-out !important;
+            z-index: 10 !important;
+        }
+        .hit-shake {
+            animation: hitShake 0.4s ease-out !important;
+        }
+        .dodge-evade {
+            animation: dodgeEvade 0.45s ease-out !important;
+        }
+        .screen-shake {
+            animation: screenShake 0.35s ease-out !important;
+        }
+        .stun-badge {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(168, 85, 247, 0.95);
+            color: #fef08a;
+            font-size: 0.72rem;
+            font-weight: 800;
+            padding: 0.15rem 0.5rem;
+            border-radius: 12px;
+            border: 1px solid #facc15;
+            box-shadow: 0 0 10px #a855f7;
+            white-space: nowrap;
+            z-index: 20;
+        }
+        .stun-badge span {
+            display: inline-block;
+            animation: stunSpin 1.5s linear infinite;
         }
         .action-panel {
             background: rgba(15, 23, 42, 0.9);
@@ -460,15 +549,27 @@
         });
     }
 
-    // Hiệu ứng số sát thương nảy lên
-    function showFloatingNumber(cardId, num, type = 'dmg') {
+    // Hiệu ứng số sát thương / né / choáng / hồi máu nảy lên
+    function showFloatingNumber(cardId, content, type = 'dmg') {
         const card = document.getElementById(cardId);
         if (!card) return;
         const floatEl = document.createElement('div');
-        floatEl.className = 'floating-dmg' + (type === 'crit' ? ' floating-crit' : '') + (type === 'heal' ? ' floating-heal' : '');
-        floatEl.innerText = (type === 'heal' ? '+' : '-') + num;
+        floatEl.className = 'floating-dmg' + 
+            (type === 'crit' ? ' floating-crit' : '') + 
+            (type === 'heal' ? ' floating-heal' : '') +
+            (type === 'dodge' ? ' floating-dodge' : '') +
+            (type === 'stun' ? ' floating-stun' : '');
+
+        if (type === 'heal' && typeof content === 'number') {
+            floatEl.innerText = '+' + content + ' 💖';
+        } else if (type === 'dmg' && typeof content === 'number') {
+            floatEl.innerText = '-' + content;
+        } else {
+            floatEl.innerText = content;
+        }
+
         card.appendChild(floatEl);
-        setTimeout(() => floatEl.remove(), 900);
+        setTimeout(() => floatEl.remove(), 950);
     }
 
     // Thông báo hiệp đấu
@@ -517,13 +618,17 @@
     function executeHeroAction(hero, skillType) {
         if (battleFinished) return;
 
-        // Đánh dấu thẻ bài đang xuất chiêu
+        // Đánh dấu thẻ bài đang xuất chiêu kèm Animation Lunge lao lên chém
         const cardId = (hero.team === 'attacker' ? `atk-${hero.index}` : `def-${hero.index}`);
         const card = document.getElementById(cardId);
-        if (card) card.classList.add('acting');
+        if (card) {
+            card.classList.add('acting');
+            const lungeClass = (hero.team === 'attacker') ? 'lunge-atk' : 'lunge-def';
+            card.classList.add(lungeClass);
+            setTimeout(() => card.classList.remove(lungeClass), 450);
+        }
 
         // Tìm mục tiêu
-        let targets = [];
         const enemyTeam = (hero.team === 'attacker' ? defenderTeam : attackerTeam);
         const aliveEnemies = enemyTeam.filter(e => !e.isDead);
 
@@ -537,6 +642,13 @@
             hero.rage = 0; // xả nộ
             announce(`🔥 [${hero.name}] tung Tuyệt Kỹ: "${ulti.name}"!`);
 
+            // Rung màn hình khi xuất chiêu nộ
+            const arenaStage = document.getElementById('arena-stage');
+            if (arenaStage) {
+                arenaStage.classList.add('screen-shake');
+                setTimeout(() => arenaStage.classList.remove('screen-shake'), 380);
+            }
+
             if (ulti.effect === 'heal_team') {
                 // Hồi máu toàn đội
                 const allyTeam = (hero.team === 'attacker' ? attackerTeam : defenderTeam).filter(a => !a.isDead);
@@ -548,11 +660,11 @@
             } else if (ulti.target === 'single') {
                 // Đánh đơn mục tiêu cực mạnh
                 const target = aliveEnemies.find(e => e.index === selectedTargetIndex) || aliveEnemies[0];
-                dealDamage(hero, target, ulti.dmg_rate, true);
+                dealDamage(hero, target, ulti.dmg_rate, true, 'ultimate');
             } else {
                 // Đánh toàn bộ kẻ địch
                 aliveEnemies.forEach(target => {
-                    dealDamage(hero, target, ulti.dmg_rate, false);
+                    dealDamage(hero, target, ulti.dmg_rate, false, 'ultimate');
                 });
             }
         } else {
@@ -562,7 +674,7 @@
             const target = (hero.team === 'attacker')
                 ? (aliveEnemies.find(e => e.index === selectedTargetIndex) || aliveEnemies[0])
                 : aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
-            dealDamage(hero, target, hero.skill_basic?.dmg_rate || 1.0, false);
+            dealDamage(hero, target, hero.skill_basic?.dmg_rate || 1.0, false, 'basic');
         }
 
         updateUI();
@@ -576,11 +688,31 @@
             } else {
                 nextTurn();
             }
-        }, 800);
+        }, 850);
     }
 
-    // Tính toán sát thương
-    function dealDamage(attacker, defender, rate, isBurst = false) {
+    // Tính toán sát thương kèm cơ chế Né Đòn (Dodge), Choáng (Stun), Hút Máu (Lifesteal)
+    function dealDamage(attacker, defender, rate, isBurst = false, skillType = 'basic') {
+        const defCardId = (defender.team === 'attacker' ? `atk-${defender.index}` : `def-${defender.index}`);
+        const defCard = document.getElementById(defCardId);
+
+        // 1. KIỂM TRA NÉ ĐÒN (DODGE / MISS)
+        const spdDiff = (defender.spd || 100) - (attacker.spd || 100);
+        const dodgeChance = Math.min(30, Math.max(6, 10 + (spdDiff * 0.15)));
+        const isDodge = (Math.random() * 100) < dodgeChance;
+
+        if (isDodge && skillType !== 'ultimate') {
+            // Né đòn thành công!
+            if (defCard) {
+                defCard.classList.add('dodge-evade');
+                setTimeout(() => defCard.classList.remove('dodge-evade'), 450);
+            }
+            showFloatingNumber(defCardId, 'NÉ ĐÒN! 💨', 'dodge');
+            announce(`💨 [${defender.name}] thân thủ phi phàm, nhanh nhẹn NÉ ĐÒN!`);
+            return;
+        }
+
+        // 2. TÍNH SÁT THƯƠNG & BẠO KÍCH
         const isCrit = (Math.random() * 100) < (attacker.crit || 10);
         let dmg = Math.round((attacker.atk * rate) - (defender.def * 0.4));
         if (dmg < 50) dmg = Math.floor(Math.random() * 30) + 40; // sát thương tối thiểu
@@ -594,11 +726,54 @@
             defender.isDead = true;
         }
 
-        const defCardId = (defender.team === 'attacker' ? `atk-${defender.index}` : `def-${defender.index}`);
-        showFloatingNumber(defCardId, dmg, isCrit ? 'crit' : 'dmg');
+        // Animation trúng đòn rung lắc nảy giật
+        if (defCard) {
+            defCard.classList.add('hit-shake');
+            setTimeout(() => defCard.classList.remove('hit-shake'), 400);
+        }
+
+        if (isCrit) {
+            const arenaStage = document.getElementById('arena-stage');
+            if (arenaStage) {
+                arenaStage.classList.add('screen-shake');
+                setTimeout(() => arenaStage.classList.remove('screen-shake'), 350);
+            }
+            showFloatingNumber(defCardId, `⚡ BẠO KÍCH! -${dmg}`, 'crit');
+        } else {
+            showFloatingNumber(defCardId, dmg, 'dmg');
+        }
+
+        // 3. HIỆU ỨNG HÚT MÁU / HỒI MÁU (LIFESTEAL)
+        // Hệ Mộc (wood) hoặc Thủy (water) hoặc khi nổ bạo kích có khả năng hút máu
+        const isLifesteal = (attacker.element === 'wood' || attacker.element === 'water' || isCrit);
+        if (isLifesteal && !attacker.isDead && dmg > 0) {
+            const lifestealAmount = Math.round(dmg * 0.22);
+            attacker.hp = Math.min(attacker.max_hp, attacker.hp + lifestealAmount);
+            const atkCardId = (attacker.team === 'attacker' ? `atk-${attacker.index}` : `def-${attacker.index}`);
+            showFloatingNumber(atkCardId, `+${lifestealAmount} 🩸`, 'heal');
+        }
+
+        // 4. HIỆU ỨNG CHOÁNG (STUN)
+        // Khi nổ Crit hoặc dùng Tuyệt Kỹ có 25% cơ hội gây Choáng mục tiêu
+        const stunChance = (skillType === 'ultimate') ? 30 : (isCrit ? 25 : 0);
+        if (stunChance > 0 && (Math.random() * 100) < stunChance && !defender.isDead && !defender.isStunned) {
+            defender.isStunned = true;
+            showFloatingNumber(defCardId, 'CHOÁNG! 💫', 'stun');
+            if (defCard) {
+                const oldBadge = document.getElementById(`stun-badge-${defCardId}`);
+                if (!oldBadge) {
+                    const badge = document.createElement('div');
+                    badge.id = `stun-badge-${defCardId}`;
+                    badge.className = 'stun-badge';
+                    badge.innerHTML = '<span>💫</span> CHOÁNG';
+                    defCard.appendChild(badge);
+                }
+            }
+            announce(`💫 [${defender.name}] trúng đòn chấn động và bị CHOÁNG!`);
+        }
     }
 
-    // Chuyển sang lượt tiếp theo
+    // Chuyển sang lượt tiếp theo (kiểm tra trạng thái Choáng)
     function nextTurn() {
         if (battleFinished) return;
 
@@ -612,6 +787,22 @@
         const hero = turnQueue[currentTurnIndex];
         if (!hero || hero.isDead) {
             nextTurn();
+            return;
+        }
+
+        // KIỂM TRA HIỆU ỨNG CHOÁNG (STUN)
+        if (hero.isStunned) {
+            hero.isStunned = false; // Xóa trạng thái choáng cho lượt tiếp theo
+            const cardId = (hero.team === 'attacker' ? `atk-${hero.index}` : `def-${hero.index}`);
+            const badge = document.getElementById(`stun-badge-${cardId}`);
+            if (badge) badge.remove();
+
+            announce(`💫 [${hero.name}] đang bị CHOÁNG, không thể cử động và bị bỏ qua lượt!`);
+            document.getElementById('turn-indicator').innerText = `💫 [${hero.name}] bị Choáng (Mất lượt)`;
+            
+            setTimeout(() => {
+                nextTurn();
+            }, 900);
             return;
         }
 

@@ -298,9 +298,7 @@ const DUNGEON_STAGES = [
 
 // ĐỊNH NGHĨA DANH SÁCH NHIỆM VỤ HÀNG NGÀY
 const QUEST_DEFINITIONS = [
-  { id: 'read_1', name: 'Đọc 1 chương truyện', desc: 'Đọc xong 1 chương bất kỳ hôm nay', target: 1, type: 'read_chapters', reward: { wooden_chests: 1 }, reward_desc: '📦 1 Hòm Gỗ Nữ Thần' },
-  { id: 'read_5', name: 'Mọt sách chăm chỉ', desc: 'Đọc tích lũy 5 chương truyện hôm nay', target: 5, type: 'read_chapters', reward: { wooden_chests: 2, exp_pills: 10 }, reward_desc: '📦 2 Hòm Gỗ + 💊 10 Đan EXP' },
-  { id: 'read_10', name: 'Đại Độc Giả', desc: 'Đọc tích lũy 10 chương truyện hôm nay', target: 10, type: 'read_chapters', reward: { silver_chests: 1, exp_pills: 20 }, reward_desc: '🥈 1 Hòm Bạc + 💊 20 Đan EXP' },
+  { id: 'read_daily', name: 'Đọc truyện mỗi ngày', desc: 'Đọc tích lũy từ 3 chương truyện hôm nay', target: 3, type: 'read_chapters', reward: { silver_chests: 1, wooden_chests: 1, exp_pills: 20, star_stones: 2 }, reward_desc: '🥈 1 Hòm Bạc + 📦 1 Hòm Gỗ + 💊 20 Đan EXP + ⭐ 2 Đá Sao' },
   { id: 'arena_1', name: 'Thử sức Đấu Trường', desc: 'Khiêu chiến 1 trận trong Đấu Trường Nữ Thần', target: 1, type: 'battles_fought', reward: { wooden_chests: 1, exp_pills: 5 }, reward_desc: '📦 1 Hòm Gỗ + 💊 5 Đan EXP' },
   { id: 'dungeon_1', name: 'Trảm Yêu Trừ Ma', desc: 'Vượt qua 1 màn bất kỳ trong Tháp Thử Thách', target: 1, type: 'stages_cleared', reward: { wooden_chests: 1, star_stones: 1 }, reward_desc: '📦 1 Hòm Gỗ + ⭐ 1 Đá Nâng Sao' },
   { id: 'chest_1', name: 'Khai Mở Vận May', desc: 'Mở 1 rương quà bất kỳ (Gỗ/Bạc/Vàng)', target: 1, type: 'chests_opened', reward: { exp_pills: 15 }, reward_desc: '💊 15 Đan EXP Tướng' }
@@ -826,8 +824,18 @@ router.post('/api/upgrade-star', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Nữ thần đã đạt cảnh giới tối đa (5 Sao ⭐⭐⭐⭐⭐)!' });
     }
 
-    const starCostMap = { 1: 5, 2: 10, 3: 20, 4: 35 };
-    const cost = starCostMap[currentStar] || 10;
+    const starCostMap = { 1: 5, 2: 10, 3: 20, 4: 35 }; // Đá nâng sao
+    const shardCostMap = { 1: 10, 2: 20, 3: 35, 4: 50 }; // Mảnh tướng cần để lên 2★, 3★, 4★, 5★
+    const stoneCost = starCostMap[currentStar] || 10;
+    const shardCost = shardCostMap[currentStar] || 20;
+
+    const currentShards = uHero.shards || 0;
+    if (currentShards < shardCost) {
+      return res.status(400).json({
+        success: false,
+        error: `Không đủ Mảnh Tướng! Cần ${shardCost} mảnh 🧩 (bạn hiện có ${currentShards} mảnh). Hãy mở thêm Rương để nhận mảnh!`
+      });
+    }
 
     const { data: items } = await supabase
       .from('user_card_items')
@@ -835,22 +843,29 @@ router.post('/api/upgrade-star', async (req, res) => {
       .eq('user_id', userId)
       .single();
 
-    if (!items || (items.star_stones || 0) < cost) {
+    if (!items || (items.star_stones || 0) < stoneCost) {
       return res.status(400).json({
         success: false,
-        error: `Không đủ Đá Nâng Sao! Cần ${cost} viên ⭐, bạn hiện có ${items ? (items.star_stones || 0) : 0}.`
+        error: `Không đủ Đá Nâng Sao! Cần ${stoneCost} viên ⭐ (bạn hiện có ${items ? (items.star_stones || 0) : 0} viên).`
       });
     }
 
+    // Trừ Đá Nâng Sao trong túi đồ
     await supabase
       .from('user_card_items')
-      .update({ star_stones: items.star_stones - cost })
+      .update({ star_stones: items.star_stones - stoneCost })
       .eq('user_id', userId);
 
     const newStar = currentStar + 1;
+    const remainingShards = currentShards - shardCost;
+
+    // Cập nhật Sao và trừ Mảnh Tướng
     await supabase
       .from('user_heroes')
-      .update({ star: newStar })
+      .update({
+        star: newStar,
+        shards: remainingShards
+      })
       .eq('id', uHero.id);
 
     const { data: baseHero } = await supabase
@@ -871,15 +886,17 @@ router.post('/api/upgrade-star', async (req, res) => {
       hp: newHp,
       atk: newAtk,
       def: newDef,
-      remaining_stones: items.star_stones - cost,
-      next_stones_cost: starCostMap[newStar] || 0
+      remaining_stones: items.star_stones - stoneCost,
+      remaining_shards: remainingShards,
+      next_stones_cost: starCostMap[newStar] || 0,
+      next_shards_cost: shardCostMap[newStar] || 0
     });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-// 4c. API TRÙNG SINH TƯỚNG (RESET HERO: HOÀN TRẢ EXP VÀ ĐÁ SAO)
+// 4c. API TRÙNG SINH TƯỚNG (RESET HERO: HOÀN TRẢ EXP, ĐÁ SAO VÀ MẢNH)
 router.post('/api/reset-hero', async (req, res) => {
   const userId = req.user.id;
   const { hero_id } = req.body;
@@ -911,6 +928,10 @@ router.post('/api/reset-hero', async (req, res) => {
     const starRefundMap = { 1: 0, 2: 5, 3: 15, 4: 35, 5: 70 };
     const refundedStones = starRefundMap[currentStar] || 0;
 
+    // Tính tổng Mảnh Tướng đã tiêu khi nâng sao: 1->2: 10, 2->3: 20, 3->4: 35, 4->5: 50
+    const shardRefundMap = { 1: 0, 2: 10, 3: 30, 4: 65, 5: 115 };
+    const refundedShards = shardRefundMap[currentStar] || 0;
+
     // Lấy túi đồ người chơi
     const { data: items } = await supabase
       .from('user_card_items')
@@ -930,13 +951,15 @@ router.post('/api/reset-hero', async (req, res) => {
       })
       .eq('user_id', userId);
 
-    // Reset tướng về cấp 1, sao 1
+    // Reset tướng về cấp 1, sao 1 và hoàn trả lại mảnh tướng
+    const newShards = (uHero.shards || 0) + refundedShards;
     await supabase
       .from('user_heroes')
       .update({
         level: 1,
         star: 1,
-        exp: 0
+        exp: 0,
+        shards: newShards
       })
       .eq('id', uHero.id);
 

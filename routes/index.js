@@ -203,49 +203,10 @@ async function awardReadingExp(userId, storyId, chapterNumber) {
   return { earnedExp: true, rankUp, chaptersRead };
 }
 
-// Hàm thưởng vật phẩm Đấu Trường Nữ Thần khi đọc truyện
+// Hàm ghi nhận tiến độ đọc truyện cho Đấu Trường Nữ Thần (nhiệm vụ ngày)
 async function awardReadingCardDrop(userId, chaptersRead) {
   try {
-    let itemName = '📦 Hòm Gỗ Nữ Thần';
-    const isSilver = (chaptersRead % 10 === 0);
-    const isPills = !isSilver && (Math.random() < 0.35);
-
-    // 1. Cập nhật túi đồ user_card_items
-    const { data: curItems } = await supabase
-      .from('user_card_items')
-      .select('*')
-      .eq('user_id', userId)
-      .maybeSingle();
-
-    if (curItems) {
-      if (isSilver) {
-        itemName = '🥈 Hòm Bạc Nữ Thần';
-        await supabase.from('user_card_items')
-          .update({ silver_chests: (curItems.silver_chests || 0) + 1, updated_at: new Date().toISOString() })
-          .eq('user_id', userId);
-      } else if (isPills) {
-        itemName = '💊 5x Đan EXP Tướng';
-        await supabase.from('user_card_items')
-          .update({ exp_pills: (curItems.exp_pills || 0) + 5, updated_at: new Date().toISOString() })
-          .eq('user_id', userId);
-      } else {
-        itemName = '📦 Hòm Gỗ Nữ Thần';
-        await supabase.from('user_card_items')
-          .update({ wooden_chests: (curItems.wooden_chests || 0) + 1, updated_at: new Date().toISOString() })
-          .eq('user_id', userId);
-      }
-    } else {
-      await supabase.from('user_card_items').insert([{
-        user_id: userId,
-        wooden_chests: isSilver ? 2 : 3,
-        silver_chests: isSilver ? 2 : 1,
-        gold_chests: 0,
-        exp_pills: 50,
-        star_stones: 5
-      }]);
-    }
-
-    // 2. Cập nhật tiến độ nhiệm vụ ngày
+    // Chỉ cập nhật tiến độ đọc truyện vào user_card_quests cho nhiệm vụ ngày
     const todayStr = new Date().toISOString().slice(0, 10);
     const { data: qRow } = await supabase
       .from('user_card_quests')
@@ -256,16 +217,17 @@ async function awardReadingCardDrop(userId, chaptersRead) {
 
     if (qRow) {
       await supabase.from('user_card_quests')
-        .update({ read_chapters: qRow.read_chapters + 1, updated_at: new Date().toISOString() })
+        .update({ read_chapters: (qRow.read_chapters || 0) + 1, updated_at: new Date().toISOString() })
         .eq('id', qRow.id);
     } else {
       await supabase.from('user_card_quests')
         .insert([{ user_id: userId, quest_date: todayStr, read_chapters: 1 }]);
     }
 
-    return { itemName };
+    // Không còn rơi hòm trực tiếp mỗi chương, người chơi nhận qua nhiệm vụ ngày
+    return { questUpdated: true };
   } catch (err) {
-    console.error('Lỗi rơi vật phẩm thẻ bài:', err);
+    console.error('Lỗi cập nhật tiến độ nhiệm vụ đọc thẻ bài:', err);
     return null;
   }
 }
@@ -689,9 +651,10 @@ router.get('/api/stories-partial', async (req, res) => {
     let ratingsMap = {};
     let bookmarksMap = {};
     let chapterCountMap = {};
+    let viewsMap = {};
 
     if (storyIdsOnPage.length > 0) {
-      const [chaptersSummaryResult, ratingsData, bookmarksData] = await Promise.all([
+      const [chaptersSummaryResult, ratingsData, bookmarksData, viewsData] = await Promise.all([
         supabase
           .from('story_chapters_summary')
           .select('*')
@@ -703,7 +666,11 @@ router.get('/api/stories-partial', async (req, res) => {
         supabase
           .from('stories_bookmarks_count')
           .select('id, bookmark_count')
-          .in('id', storyIdsOnPage)
+          .in('id', storyIdsOnPage),
+        supabase
+          .from('story_alltime_views')
+          .select('story_id, view_count')
+          .in('story_id', storyIdsOnPage)
       ]);
 
       for (const row of (chaptersSummaryResult.data || [])) {
@@ -716,6 +683,9 @@ router.get('/api/stories-partial', async (req, res) => {
       for (const b of (bookmarksData.data || [])) {
         bookmarksMap[b.id] = b.bookmark_count;
       }
+      for (const v of (viewsData?.data || [])) {
+        viewsMap[v.story_id] = v.view_count || 0;
+      }
     }
 
     const stories = (rawStories || []).map(s => {
@@ -726,7 +696,8 @@ router.get('/api/stories-partial', async (req, res) => {
         last_chapter_number: lastChapterMap[s.id] || null,
         avg_score: rating.avg_score,
         rating_count: rating.rating_count,
-        bookmark_count: bookmarksMap[s.id] || 0
+        bookmark_count: bookmarksMap[s.id] || 0,
+        view_count: viewsMap[s.id] || 0
       };
     });
 
@@ -840,6 +811,7 @@ router.get('/search', async (req, res) => {
     let ratingsMap = {};
     let bookmarksMap = {};
     let chapterCountMap = {};
+    let viewsMap = {};
 
     if (storyIdsOnPage.length > 0) {
       // QUAN TRỌNG: KHÔNG order('chapter_number', {ascending:false}) trên toàn bộ chapters của
@@ -849,7 +821,7 @@ router.get('/search', async (req, res) => {
       // của truyện ít chương hơn (vd chỉ tới chương 48) ra khỏi 1000 dòng đầu và bị cắt mất
       // => lastChapterMap không có story đó => hiển thị sai "Chưa có chương". Sửa bằng cách
       // tính max chapter_number cho TỪNG story_id bằng vòng lặp JS trên toàn bộ dữ liệu lấy về.
-      const [chaptersSummaryResult, ratingsData, bookmarksData] = await Promise.all([
+      const [chaptersSummaryResult, ratingsData, bookmarksData, viewsData] = await Promise.all([
         supabase
           .from('story_chapters_summary')
           .select('*')
@@ -861,7 +833,11 @@ router.get('/search', async (req, res) => {
         supabase
           .from('stories_bookmarks_count')
           .select('id, bookmark_count')
-          .in('id', storyIdsOnPage)
+          .in('id', storyIdsOnPage),
+        supabase
+          .from('story_alltime_views')
+          .select('story_id, view_count')
+          .in('story_id', storyIdsOnPage)
       ]);
 
       for (const row of (chaptersSummaryResult.data || [])) {
@@ -874,6 +850,9 @@ router.get('/search', async (req, res) => {
       for (const b of (bookmarksData.data || [])) {
         bookmarksMap[b.id] = b.bookmark_count;
       }
+      for (const v of (viewsData?.data || [])) {
+        viewsMap[v.story_id] = v.view_count || 0;
+      }
     }
 
     let stories = (rawStories || []).map(s => {
@@ -884,7 +863,8 @@ router.get('/search', async (req, res) => {
         last_chapter_number: lastChapterMap[s.id] || null,
         avg_score: rating.avg_score,
         rating_count: rating.rating_count,
-        bookmark_count: bookmarksMap[s.id] || 0
+        bookmark_count: bookmarksMap[s.id] || 0,
+        view_count: viewsMap[s.id] || 0
       };
     });
 
@@ -1021,9 +1001,10 @@ router.get('/genre/:slug', async (req, res) => {
     let ratingsMap = {};
     let bookmarksMap = {};
     let chapterCountMap = {};
+    let viewsMap = {};
 
     if (storyIdsOnPage.length > 0) {
-      const [chaptersSummaryResult, ratingsData, bookmarksData] = await Promise.all([
+      const [chaptersSummaryResult, ratingsData, bookmarksData, viewsData] = await Promise.all([
         supabase
           .from('story_chapters_summary')
           .select('*')
@@ -1035,7 +1016,11 @@ router.get('/genre/:slug', async (req, res) => {
         supabase
           .from('stories_bookmarks_count')
           .select('id, bookmark_count')
-          .in('id', storyIdsOnPage)
+          .in('id', storyIdsOnPage),
+        supabase
+          .from('story_alltime_views')
+          .select('story_id, view_count')
+          .in('story_id', storyIdsOnPage)
       ]);
 
       for (const row of (chaptersSummaryResult.data || [])) {
@@ -1048,6 +1033,9 @@ router.get('/genre/:slug', async (req, res) => {
       for (const b of (bookmarksData.data || [])) {
         bookmarksMap[b.id] = b.bookmark_count;
       }
+      for (const v of (viewsData?.data || [])) {
+        viewsMap[v.story_id] = v.view_count || 0;
+      }
     }
 
     const stories = rawStories.map(s => {
@@ -1058,7 +1046,8 @@ router.get('/genre/:slug', async (req, res) => {
         last_chapter_number: lastChapterMap[s.id] || null,
         avg_score: rating.avg_score,
         rating_count: rating.rating_count,
-        bookmark_count: bookmarksMap[s.id] || 0
+        bookmark_count: bookmarksMap[s.id] || 0,
+        view_count: viewsMap[s.id] || 0
       };
     });
 
@@ -1110,9 +1099,10 @@ router.get('/author/:name', async (req, res) => {
     let ratingsMap = {};
     let bookmarksMap = {};
     let chapterCountMap = {};
+    let viewsMap = {};
 
     if (storyIdsOnPage.length > 0) {
-      const [chaptersSummaryResult, ratingsData, bookmarksData] = await Promise.all([
+      const [chaptersSummaryResult, ratingsData, bookmarksData, viewsData] = await Promise.all([
         supabase
           .from('story_chapters_summary')
           .select('*')
@@ -1124,7 +1114,11 @@ router.get('/author/:name', async (req, res) => {
         supabase
           .from('stories_bookmarks_count')
           .select('id, bookmark_count')
-          .in('id', storyIdsOnPage)
+          .in('id', storyIdsOnPage),
+        supabase
+          .from('story_alltime_views')
+          .select('story_id, view_count')
+          .in('story_id', storyIdsOnPage)
       ]);
 
       for (const row of (chaptersSummaryResult.data || [])) {
@@ -1137,6 +1131,9 @@ router.get('/author/:name', async (req, res) => {
       for (const b of (bookmarksData.data || [])) {
         bookmarksMap[b.id] = b.bookmark_count;
       }
+      for (const v of (viewsData?.data || [])) {
+        viewsMap[v.story_id] = v.view_count || 0;
+      }
     }
 
     const stories = (rawStories || []).map(s => {
@@ -1147,7 +1144,8 @@ router.get('/author/:name', async (req, res) => {
         last_chapter_number: lastChapterMap[s.id] || null,
         avg_score: rating.avg_score,
         rating_count: rating.rating_count,
-        bookmark_count: bookmarksMap[s.id] || 0
+        bookmark_count: bookmarksMap[s.id] || 0,
+        view_count: viewsMap[s.id] || 0
       };
     });
 
@@ -1303,6 +1301,18 @@ router.get('/story/:id', async (req, res) => {
       console.error('Lỗi lấy bình luận truyện:', e);
     }
 
+    let totalViews = 0;
+    try {
+      const { data: vRow } = await supabase
+        .from('story_alltime_views')
+        .select('view_count')
+        .eq('story_id', storyId)
+        .maybeSingle();
+      if (vRow) totalViews = vRow.view_count || 0;
+    } catch (vErr) {
+      console.error('Lỗi lấy tổng view truyện:', vErr);
+    }
+
     res.render('story', {
       title: `${story.title} - Chi tiết truyện`,
       user: req.user,
@@ -1314,6 +1324,7 @@ router.get('/story/:id', async (req, res) => {
       myRating,
       avgScore: ratingSummary ? ratingSummary.avg_score : null,
       ratingCount: ratingSummary ? ratingSummary.rating_count : 0,
+      totalViews,
       comments
     });
   } catch (err) {
@@ -1656,7 +1667,7 @@ router.post('/chapter/read-confirm', async (req, res) => {
   delete req.session.reading;
 
   let message = earnedExp ? 'Đã ghi nhận đọc chương thành công! +5 EXP' : 'Đã ghi nhận đọc chương. (Chương này đã tính EXP trước đó)';
-  if (cardDrop) {
+  if (cardDrop && cardDrop.itemName) {
     message += ` 🎁 Chiến Lợi Phẩm Đấu Trường: ${cardDrop.itemName}!`;
   }
 

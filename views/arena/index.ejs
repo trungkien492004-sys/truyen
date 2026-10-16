@@ -90,11 +90,52 @@
 }
 
 /* BẢNG XẾP HẠNG */
-.desktop-leaderboard {
-    display: block;
+/* HIỆU ỨNG TƯỚNG SẴN SÀNG TĂNG SAO / CHIÊU MỘ (GLOW PULSE) */
+@keyframes heroGlowPulse {
+    0% {
+        box-shadow: 0 0 10px rgba(245, 158, 11, 0.4), inset 0 0 8px rgba(245, 158, 11, 0.2);
+        border-color: #f59e0b !important;
+    }
+    50% {
+        box-shadow: 0 0 26px rgba(245, 158, 11, 0.95), 0 0 45px rgba(234, 179, 8, 0.45), inset 0 0 16px rgba(245, 158, 11, 0.35);
+        border-color: #fde047 !important;
+        transform: translateY(-2px);
+    }
+    100% {
+        box-shadow: 0 0 10px rgba(245, 158, 11, 0.4), inset 0 0 8px rgba(245, 158, 11, 0.2);
+        border-color: #f59e0b !important;
+    }
 }
-.mobile-leaderboard {
-    display: none;
+@keyframes pulseGlow {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+.hero-card-ready {
+    animation: heroGlowPulse 1.8s infinite ease-in-out !important;
+    border-color: #f59e0b !important;
+    z-index: 5;
+}
+.ready-badge {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    z-index: 4;
+    background: linear-gradient(135deg, #f59e0b, #ef4444);
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 800;
+    padding: 0.18rem 0.5rem;
+    border-radius: 20px;
+    box-shadow: 0 0 12px rgba(245, 158, 11, 0.9);
+    animation: pulseGlow 1.4s infinite;
+}
+.btn-star-ready {
+    background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+    color: #fff !important;
+    font-weight: 800 !important;
+    border: 1px solid #fde047 !important;
+    box-shadow: 0 0 14px rgba(245, 158, 11, 0.65) !important;
+    animation: pulseGlow 1.5s infinite;
 }
 
 /* ================================================== */
@@ -545,8 +586,17 @@
 
         <div class="heroes-grid-cards">
             <% const starCosts = { 1: 5, 2: 10, 3: 20, 4: 35 }; %>
+            <% const shardCosts = { 1: 10, 2: 20, 3: 35, 4: 50 }; %>
             <% heroes.forEach(hero => { %>
-                <div id="hero-card-<%= hero.id %>" style="background: var(--bg-secondary); border: 2px solid <%= hero.is_unlocked ? 'var(--accent-color)' : 'rgba(255,255,255,0.08)' %>; border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; position: relative; <%= !hero.is_unlocked ? 'filter: grayscale(85%); opacity: 0.75;' : '' %>">
+                <% 
+                    const canSummon = !hero.is_unlocked && (hero.shards || 0) >= hero.shards_to_summon;
+                    const curStar = hero.star || 1;
+                    const reqStones = starCosts[curStar] || 10;
+                    const reqShards = shardCosts[curStar] || 20;
+                    const canUpgradeStar = hero.is_unlocked && curStar < 5 && (hero.shards || 0) >= reqShards && (items.star_stones || 0) >= reqStones;
+                    const isReady = canSummon || canUpgradeStar;
+                %>
+                <div id="hero-card-<%= hero.id %>" class="<%= isReady ? 'hero-card-ready' : '' %>" style="background: var(--bg-secondary); border: 2px solid <%= hero.is_unlocked ? 'var(--accent-color)' : 'rgba(255,255,255,0.08)' %>; border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; position: relative; <%= !hero.is_unlocked && !canSummon ? 'filter: grayscale(85%); opacity: 0.75;' : '' %>">
                     <!-- Phẩm chất & Hệ phái -->
                     <div style="position: absolute; top: 6px; left: 6px; z-index: 2; display: flex; gap: 0.3rem;">
                         <span style="font-size: 0.68rem; font-weight: 800; padding: 0.12rem 0.4rem; border-radius: 5px; 
@@ -558,9 +608,16 @@
                         </span>
                     </div>
 
+                    <!-- Huy hiệu sáng lên khi ĐỦ MẢNH / SẴN SÀNG -->
+                    <% if (isReady) { %>
+                        <div id="ready-badge-<%= hero.id %>" class="ready-badge">
+                            <%= canSummon ? '✨ CHIÊU MỘ NGAY!' : '✨ ĐỦ MẢNH LÊN ' + (curStar + 1) + '★!' %>
+                        </div>
+                    <% } %>
+
                     <!-- Ảnh Nữ Tướng -->
                     <div class="hero-card-img-wrap" style="height: 200px; overflow: hidden; position: relative; background: #000;">
-                        <img src="<%= hero.card_image_url || hero.avatar_url %>" alt="" style="width: 100%; height: 100%; object-fit: cover; object-position: top;">
+                        <img src="<%= hero.card_image_url || hero.avatar_url %>" alt="" loading="lazy" decoding="async" style="width: 100%; height: 100%; object-fit: cover; object-position: top;">
                         <% if (hero.is_unlocked) { %>
                             <div id="hero-badge-lvl-<%= hero.id %>" style="position: absolute; bottom: 6px; right: 6px; background: rgba(0,0,0,0.78); padding: 0.15rem 0.45rem; border-radius: 10px; font-size: 0.72rem; font-weight: 800; color: #22c55e;">
                                 Lv.<%= hero.level %> ⭐<%= hero.star %>
@@ -583,35 +640,53 @@
                             </div>
                         </div>
 
-                        <!-- Nút thao tác -->
+                        <!-- Nút thao tác & Thanh mảnh -->
                         <div>
                             <% if (hero.is_unlocked) { %>
+                                <!-- Mảnh tăng sao -->
+                                <div style="margin-bottom: 0.45rem;">
+                                    <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 0.2rem;">
+                                        <span>Mảnh sao:</span>
+                                        <span id="hero-shards-<%= hero.id %>" style="color: <%= hero.shards >= reqShards ? '#f59e0b' : 'inherit' %>; font-weight: 700;">
+                                            <%= hero.shards %>/<%= curStar >= 5 ? 'Max' : reqShards %> 🧩
+                                        </span>
+                                    </div>
+                                    <% if (curStar < 5) { %>
+                                        <div style="height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden;">
+                                            <div id="hero-shards-bar-<%= hero.id %>" style="width: <%= Math.min(100, Math.round(((hero.shards || 0) / reqShards) * 100)) %>%; height: 100%; background: linear-gradient(90deg, #f59e0b, #22c55e); border-radius: 2px;"></div>
+                                        </div>
+                                    <% } %>
+                                </div>
+
                                 <div class="hero-card-actions" style="display: flex; gap: 0.3rem;">
                                     <button id="btn-upgrade-lvl-<%= hero.id %>" onclick="upgradeHero('<%= hero.id %>', this)" class="btn btn-secondary" style="flex: 1; font-size: 0.72rem; padding: 0.4rem 0.2rem; white-space: nowrap;">
                                         💊 Cấp (<%= hero.level * 5 %>)
                                     </button>
-                                    <button id="btn-upgrade-star-<%= hero.id %>" onclick="upgradeStar('<%= hero.id %>', this)" class="btn btn-secondary" style="flex: 1; font-size: 0.72rem; padding: 0.4rem 0.2rem; background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.35); white-space: nowrap;" <%= hero.star >= 5 ? 'disabled' : '' %>>
-                                        ⭐ <%= hero.star >= 5 ? 'Max' : 'Sao (' + (starCosts[hero.star] || 10) + ')' %>
+                                    <button id="btn-upgrade-star-<%= hero.id %>" onclick="upgradeStar('<%= hero.id %>', this)" 
+                                        class="btn btn-secondary <%= canUpgradeStar ? 'btn-star-ready' : '' %>" 
+                                        style="flex: 1; font-size: 0.72rem; padding: 0.4rem 0.2rem; background: <%= canUpgradeStar ? '' : 'rgba(245, 158, 11, 0.15)' %>; color: <%= canUpgradeStar ? '#fff' : '#f59e0b' %>; border: 1px solid <%= canUpgradeStar ? '#fde047' : 'rgba(245, 158, 11, 0.35)' %>; white-space: nowrap;" 
+                                        <%= hero.star >= 5 ? 'disabled' : '' %>>
+                                        ⭐ <%= hero.star >= 5 ? 'Max' : (curStar + 1) + '★ (' + reqStones + '⭐ ' + reqShards + '🧩)' %>
                                     </button>
                                     <button onclick="openSetTeamModal('<%= hero.id %>', '<%= hero.name %>')" class="btn btn-primary" style="flex: 1; font-size: 0.72rem; padding: 0.4rem 0.2rem; white-space: nowrap;">
                                         ⚔️ Ra Trận
                                     </button>
                                 </div>
                                 <button id="btn-reset-hero-<%= hero.id %>" onclick="resetHero('<%= hero.id %>', '<%= hero.name %>')" class="btn btn-secondary" style="width: 100%; margin-top: 0.35rem; font-size: 0.68rem; padding: 0.25rem 0.4rem; color: #c084fc; border: 1px dashed rgba(192, 132, 252, 0.4); background: rgba(192, 132, 252, 0.08); display: <%= (hero.level > 1 || hero.star > 1) ? 'block' : 'none' %>;">
-                                    ♻️ Trùng Sinh (Hoàn EXP & Đá Sao)
+                                    ♻️ Trùng Sinh (Hoàn EXP, Đá & Mảnh)
                                 </button>
                             <% } else { %>
                                 <div style="margin-bottom: 0.4rem;">
                                     <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 0.2rem;">
-                                        <span>Mảnh tướng:</span>
-                                        <span id="hero-shards-<%= hero.id %>"><%= hero.shards %>/<%= hero.shards_to_summon %></span>
+                                        <span>Mảnh triệu hồi:</span>
+                                        <span id="hero-shards-<%= hero.id %>" style="color: <%= hero.shards >= hero.shards_to_summon ? '#22c55e' : 'inherit' %>; font-weight: 700;"><%= hero.shards %>/<%= hero.shards_to_summon %> 🧩</span>
                                     </div>
                                     <div style="height: 5px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
-                                        <div style="width: <%= Math.min(100, Math.round((hero.shards / hero.shards_to_summon) * 100)) %>%; height: 100%; background: #ec4899; border-radius: 3px;"></div>
+                                        <div id="hero-shards-bar-<%= hero.id %>" style="width: <%= Math.min(100, Math.round(((hero.shards || 0) / hero.shards_to_summon) * 100)) %>%; height: 100%; background: #ec4899; border-radius: 3px;"></div>
                                     </div>
                                 </div>
-                                <button onclick="summonHero('<%= hero.id %>', this)" class="btn btn-primary" style="width: 100%; font-size: 0.78rem; padding: 0.45rem; font-weight: 700;" <%= hero.shards < hero.shards_to_summon ? 'disabled' : '' %>>
-                                    ✨ Chiêu Mộ (<%= hero.shards %>/<%= hero.shards_to_summon %>)
+                                <button id="btn-summon-<%= hero.id %>" onclick="summonHero('<%= hero.id %>', this)" class="btn btn-primary <%= canSummon ? 'btn-star-ready' : '' %>" style="width: 100%; font-size: 0.78rem; padding: 0.45rem; font-weight: 700;" <%= hero.shards < hero.shards_to_summon ? 'disabled' : '' %>>
+                                    ✨ Chiêu Mộ (<%= hero.shards %>/<%= hero.shards_to_summon %> 🧩)
                                 </button>
                             <% } %>
                         </div>
@@ -1073,13 +1148,24 @@
                 const lvlBadge = document.getElementById(`hero-badge-lvl-${heroId}`);
                 if (lvlBadge) lvlBadge.innerText = `Lv.${data.level} ⭐${data.new_star}`;
 
+                const shardsEl = document.getElementById(`hero-shards-${heroId}`);
+                if (shardsEl) {
+                    shardsEl.innerText = `${data.remaining_shards}/${data.new_star >= 5 ? 'Max' : data.next_shards_cost} 🧩`;
+                }
+
+                const shardsBar = document.getElementById(`hero-shards-bar-${heroId}`);
+                if (shardsBar) {
+                    shardsBar.style.width = (data.new_star >= 5 ? 100 : Math.min(100, Math.round((data.remaining_shards / data.next_shards_cost) * 100))) + '%';
+                }
+
                 const btnStar = document.getElementById(`btn-upgrade-star-${heroId}`);
                 if (btnStar) {
                     if (data.new_star >= 5) {
                         btnStar.innerHTML = `⭐ 5 Sao (Max)`;
                         btnStar.disabled = true;
+                        btnStar.classList.remove('btn-star-ready');
                     } else {
-                        btnStar.innerHTML = `⭐ Sao (${data.next_stones_cost})`;
+                        btnStar.innerHTML = `⭐ ${data.new_star + 1}★ (${data.next_stones_cost}⭐ ${data.next_shards_cost}🧩)`;
                     }
                 }
 
@@ -1093,6 +1179,21 @@
                 const stonesEl = document.getElementById('val-star-stones');
                 if (stonesEl) stonesEl.innerText = data.remaining_stones;
 
+                // Kiểm tra xem còn đủ mảnh + đá để tăng tiếp không
+                const stillReady = (data.new_star < 5 && data.remaining_shards >= data.next_shards_cost && data.remaining_stones >= data.next_stones_cost);
+                const cardEl = document.getElementById(`hero-card-${heroId}`);
+                const readyBadge = document.getElementById(`ready-badge-${heroId}`);
+                if (!stillReady) {
+                    if (cardEl) cardEl.classList.remove('hero-card-ready');
+                    if (readyBadge) readyBadge.remove();
+                    if (btnStar) {
+                        btnStar.classList.remove('btn-star-ready');
+                        btnStar.style.background = 'rgba(245, 158, 11, 0.15)';
+                        btnStar.style.color = '#f59e0b';
+                        btnStar.style.borderColor = 'rgba(245, 158, 11, 0.35)';
+                    }
+                }
+
                 const resetBtn = document.getElementById(`btn-reset-hero-${heroId}`);
                 if (resetBtn) resetBtn.style.display = 'block';
             } else {
@@ -1105,9 +1206,9 @@
         }
     }
 
-    // TRÙNG SINH TƯỚNG (HOÀN TRẢ EXP VÀ ĐÁ SAO)
+    // TRÙNG SINH TƯỚNG (HOÀN TRẢ EXP, ĐÁ SAO VÀ MẢNH)
     async function resetHero(heroId, heroName) {
-        if (!confirm(`Bạn có chắc muốn Trùng Sinh nữ tướng "${heroName}"?\n\nToàn bộ Đan EXP và Đá Tăng Sao đã đầu tư sẽ được HOÀN TRẢ LẠI 100% vào túi đồ!`)) {
+        if (!confirm(`Bạn có chắc muốn Trùng Sinh nữ tướng "${heroName}"?\n\nToàn bộ Đan EXP, Đá Tăng Sao và Mảnh Tướng đã đầu tư sẽ được HOÀN TRẢ LẠI 100% vào túi đồ!`)) {
             return;
         }
         try {

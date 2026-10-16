@@ -11,7 +11,7 @@
         <% stories.forEach(story => { %>
             <div class="story-card">
                 <a href="/story/<%= story.id %>">
-                    <img src="<%= story.cover_url %>" alt="<%= story.title %>" class="story-cover" onerror="this.onerror=null; this.src='/css/default-cover.jpg';" decoding="async">
+                    <img src="<%= story.cover_url %>" alt="<%= story.title %>" class="story-cover" onerror="this.onerror=null; this.src='/css/default-cover.jpg';" loading="lazy" decoding="async">
                 </a>
                 <div class="story-info">
                     <a href="/story/<%= story.id %>" class="story-title" title="<%= story.title %>">
@@ -29,15 +29,19 @@
                         <span class="info-separator">·</span> 
                         <% if (story.status === 'completed') { %> <span style="color: #22c55e;">✅ Hoàn</span><% } else { %> <span style="color: #f59e0b;">🔄 Đang ra</span><% } %>
                     </div>
-                    <!-- Đánh giá và Theo dõi truyện -->
-                    <div class="story-meta-row" style="font-size: 0.78rem; margin-bottom: 0.25rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem;">
+                    <!-- Đánh giá, Lượt xem và Theo dõi truyện -->
+                    <div class="story-meta-row" style="font-size: 0.78rem; margin-bottom: 0.25rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0.45rem;">
                         <span style="color: #f59e0b; font-weight: 600; display: flex; align-items: center; gap: 0.15rem;">
                             🌟 <%= story.avg_score || '0' %>
                         </span>
-                        <span style="color: var(--text-secondary);">(<%= story.rating_count || 0 %> đánh giá)</span>
+                        <span style="color: var(--text-secondary);">(<%= story.rating_count || 0 %>)</span>
+                        <span class="info-separator">·</span>
+                        <span style="color: #38bdf8; font-weight: 600; display: flex; align-items: center; gap: 0.15rem;" title="Lượt xem toàn thời gian">
+                            👁️ <%= (story.view_count || 0).toLocaleString('vi-VN') %>
+                        </span>
                         <span class="info-separator">·</span>
                         <span style="color: #ec4899; font-weight: 600; display: flex; align-items: center; gap: 0.15rem;">
-                            ❤️ <%= story.bookmark_count || 0 %> <span style="color: var(--text-secondary); font-weight: normal; font-size: 0.75rem;">theo dõi</span>
+                            ❤️ <%= story.bookmark_count || 0 %>
                         </span>
                     </div>
                     <% if (story.last_update_at) { %>
