@@ -879,6 +879,98 @@ router.post('/api/upgrade-star', async (req, res) => {
   }
 });
 
+// 4c. API TRÙNG SINH TƯỚNG (RESET HERO: HOÀN TRẢ EXP VÀ ĐÁ SAO)
+router.post('/api/reset-hero', async (req, res) => {
+  const userId = req.user.id;
+  const { hero_id } = req.body;
+  const heroId = parseInt(hero_id);
+
+  try {
+    const { data: uHero } = await supabase
+      .from('user_heroes')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('hero_id', heroId)
+      .single();
+
+    if (!uHero || !uHero.is_unlocked) {
+      return res.status(400).json({ success: false, error: 'Bạn chưa sở hữu nữ tướng này!' });
+    }
+
+    const currentLevel = uHero.level || 1;
+    const currentStar = uHero.star || 1;
+
+    if (currentLevel <= 1 && currentStar <= 1) {
+      return res.status(400).json({ success: false, error: 'Nữ tướng đang ở cấp 1 và 1 sao, không có tài nguyên nào cần hoàn trả!' });
+    }
+
+    // Tính tổng Đan EXP đã tiêu: sum(i * 5) với i từ 1 đến currentLevel - 1
+    const refundedPills = Math.round(5 * (currentLevel - 1) * currentLevel / 2);
+
+    // Tính tổng Đá Sao đã tiêu: 1->2: 5, 2->3: 10, 3->4: 20, 4->5: 35
+    const starRefundMap = { 1: 0, 2: 5, 3: 15, 4: 35, 5: 70 };
+    const refundedStones = starRefundMap[currentStar] || 0;
+
+    // Lấy túi đồ người chơi
+    const { data: items } = await supabase
+      .from('user_card_items')
+      .select('exp_pills, star_stones')
+      .eq('user_id', userId)
+      .single();
+
+    const newExpPills = (items?.exp_pills || 0) + refundedPills;
+    const newStarStones = (items?.star_stones || 0) + refundedStones;
+
+    // Hoàn trả vào túi đồ
+    await supabase
+      .from('user_card_items')
+      .update({
+        exp_pills: newExpPills,
+        star_stones: newStarStones
+      })
+      .eq('user_id', userId);
+
+    // Reset tướng về cấp 1, sao 1
+    await supabase
+      .from('user_heroes')
+      .update({
+        level: 1,
+        star: 1,
+        exp: 0
+      })
+      .eq('id', uHero.id);
+
+    // Lấy thông số gốc của tướng
+    const { data: baseHero } = await supabase
+      .from('card_heroes')
+      .select('*')
+      .eq('id', heroId)
+      .single();
+
+    const baseHp = baseHero ? baseHero.base_hp : 2000;
+    const baseAtk = baseHero ? baseHero.base_atk : 200;
+    const baseDef = baseHero ? baseHero.base_def : 100;
+
+    res.json({
+      success: true,
+      message: `Trùng sinh thành công! Đã hoàn trả lại ${refundedPills} Đan EXP và ${refundedStones} Đá Tăng Sao!`,
+      refunded_pills: refundedPills,
+      refunded_stones: refundedStones,
+      new_level: 1,
+      new_star: 1,
+      hp: baseHp,
+      atk: baseAtk,
+      def: baseDef,
+      total_exp_pills: newExpPills,
+      total_star_stones: newStarStones,
+      next_pills_cost: 5,
+      next_stones_cost: 5
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // 5. API MỞ RƯƠNG QUÀ (OPEN CHEST / GACHA)
 router.post('/api/open-chest', async (req, res) => {
   const userId = req.user.id;

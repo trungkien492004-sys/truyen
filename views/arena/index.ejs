@@ -597,6 +597,9 @@
                                         ⚔️ Ra Trận
                                     </button>
                                 </div>
+                                <button id="btn-reset-hero-<%= hero.id %>" onclick="resetHero('<%= hero.id %>', '<%= hero.name %>')" class="btn btn-secondary" style="width: 100%; margin-top: 0.35rem; font-size: 0.68rem; padding: 0.25rem 0.4rem; color: #c084fc; border: 1px dashed rgba(192, 132, 252, 0.4); background: rgba(192, 132, 252, 0.08); display: <%= (hero.level > 1 || hero.star > 1) ? 'block' : 'none' %>;">
+                                    ♻️ Trùng Sinh (Hoàn EXP & Đá Sao)
+                                </button>
                             <% } else { %>
                                 <div style="margin-bottom: 0.4rem;">
                                     <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 0.2rem;">
@@ -947,6 +950,11 @@
         document.getElementById('set-team-modal').style.display = 'flex';
     }
 
+    function closeSetTeamModal() {
+        const m = document.getElementById('set-team-modal');
+        if (m) m.style.display = 'none';
+    }
+
     async function confirmSetSlot(slotNum) {
         if (!selectedHeroIdForTeam) return;
         
@@ -1036,6 +1044,9 @@
 
                 const pillsEl = document.getElementById('val-exp-pills');
                 if (pillsEl) pillsEl.innerText = data.remaining_pills;
+
+                const resetBtn = document.getElementById(`btn-reset-hero-${heroId}`);
+                if (resetBtn) resetBtn.style.display = 'block';
             } else {
                 showArenaToast('❌ ' + data.error, 'error');
             }
@@ -1081,6 +1092,9 @@
 
                 const stonesEl = document.getElementById('val-star-stones');
                 if (stonesEl) stonesEl.innerText = data.remaining_stones;
+
+                const resetBtn = document.getElementById(`btn-reset-hero-${heroId}`);
+                if (resetBtn) resetBtn.style.display = 'block';
             } else {
                 showArenaToast('❌ ' + data.error, 'error');
             }
@@ -1088,6 +1102,59 @@
             showArenaToast('❌ Lỗi kết nối: ' + e.message, 'error');
         } finally {
             if (btn) btn.disabled = false;
+        }
+    }
+
+    // TRÙNG SINH TƯỚNG (HOÀN TRẢ EXP VÀ ĐÁ SAO)
+    async function resetHero(heroId, heroName) {
+        if (!confirm(`Bạn có chắc muốn Trùng Sinh nữ tướng "${heroName}"?\n\nToàn bộ Đan EXP và Đá Tăng Sao đã đầu tư sẽ được HOÀN TRẢ LẠI 100% vào túi đồ!`)) {
+            return;
+        }
+        try {
+            const resp = await fetch('/arena/api/reset-hero', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ hero_id: heroId })
+            });
+            const data = await resp.json();
+            if (data.success) {
+                showArenaToast(`♻️ ${data.message}`);
+
+                // Cập nhật túi đồ
+                const pillsEl = document.getElementById('val-exp-pills');
+                const stonesEl = document.getElementById('val-star-stones');
+                if (pillsEl) pillsEl.innerText = data.total_exp_pills;
+                if (stonesEl) stonesEl.innerText = data.total_star_stones;
+
+                // Cập nhật huy hiệu
+                const lvlBadge = document.getElementById(`hero-badge-lvl-${heroId}`);
+                if (lvlBadge) lvlBadge.innerText = `Lv.1 ⭐1`;
+
+                // Cập nhật chỉ số
+                const hpEl = document.getElementById(`hero-stat-hp-${heroId}`);
+                const atkEl = document.getElementById(`hero-stat-atk-${heroId}`);
+                const defEl = document.getElementById(`hero-stat-def-${heroId}`);
+                if (hpEl) hpEl.innerText = data.hp;
+                if (atkEl) atkEl.innerText = data.atk;
+                if (defEl) defEl.innerText = data.def;
+
+                // Cập nhật các nút
+                const btnLvl = document.getElementById(`btn-upgrade-lvl-${heroId}`);
+                if (btnLvl) btnLvl.innerHTML = `💊 Cấp (${data.next_pills_cost})`;
+                const btnStar = document.getElementById(`btn-upgrade-star-${heroId}`);
+                if (btnStar) {
+                    btnStar.innerHTML = `⭐ Sao (${data.next_stones_cost})`;
+                    btnStar.disabled = false;
+                }
+
+                // Ẩn nút trùng sinh vì tướng đã về cấp 1 sao 1
+                const resetBtn = document.getElementById(`btn-reset-hero-${heroId}`);
+                if (resetBtn) resetBtn.style.display = 'none';
+            } else {
+                showArenaToast('❌ ' + data.error, 'error');
+            }
+        } catch (e) {
+            showArenaToast('❌ Lỗi kết nối: ' + e.message, 'error');
         }
     }
 
