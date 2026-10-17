@@ -373,15 +373,16 @@ router.get('/', async (req, res) => {
     if (rankingYearlyRes.status === 'rejected')  console.warn('BXH Yearly timeout/lỗi:', rankingYearlyRes.reason?.message);
     if (rankingRatedRes.status === 'rejected')   console.warn('BXH Rated timeout/lỗi:', rankingRatedRes.reason?.message);
 
-    // Lấy số chương thực tế + map last_chapter_number, avg_score, rating_count, bookmark_count
+    // Lấy số chương thực tế + map last_chapter_number, avg_score, rating_count, bookmark_count, view_count
     const storyIdsOnPage = (rawStories || []).map(s => s.id);
     let lastChapterMap = {};
     let ratingsMap = {};
     let bookmarksMap = {};
     let chapterCountMap = {};
+    let viewsMap = {};
 
     if (storyIdsOnPage.length > 0) {
-      const [chaptersSummaryResult, ratingsData, bookmarksData] = await Promise.all([
+      const [chaptersSummaryResult, ratingsData, bookmarksData, viewsData] = await Promise.all([
         supabase
           .from('story_chapters_summary')
           .select('*')
@@ -393,7 +394,11 @@ router.get('/', async (req, res) => {
         supabase
           .from('stories_bookmarks_count')
           .select('id, bookmark_count')
-          .in('id', storyIdsOnPage)
+          .in('id', storyIdsOnPage),
+        supabase
+          .from('story_alltime_views')
+          .select('story_id, view_count')
+          .in('story_id', storyIdsOnPage)
       ]);
 
       for (const row of (chaptersSummaryResult.data || [])) {
@@ -406,6 +411,9 @@ router.get('/', async (req, res) => {
       for (const b of (bookmarksData.data || [])) {
         bookmarksMap[b.id] = b.bookmark_count;
       }
+      for (const v of (viewsData?.data || [])) {
+        viewsMap[v.story_id] = v.view_count || 0;
+      }
     }
 
     const stories = (rawStories || []).map(s => {
@@ -416,7 +424,8 @@ router.get('/', async (req, res) => {
         last_chapter_number: lastChapterMap[s.id] || null,
         avg_score: rating.avg_score,
         rating_count: rating.rating_count,
-        bookmark_count: bookmarksMap[s.id] || 0
+        bookmark_count: bookmarksMap[s.id] || 0,
+        view_count: viewsMap[s.id] || 0
       };
     });
 
