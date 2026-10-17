@@ -11,8 +11,10 @@
     </div>
 
     <!-- TABS -->
-    <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; flex-wrap: wrap;">
+    <div style="display: flex; gap: 0.8rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; flex-wrap: wrap;">
         <button class="tab-btn active" onclick="switchTab('readers')" style="background: none; border: none; color: var(--text-primary); font-size: 1.05rem; font-weight: bold; cursor: pointer; padding: 0.5rem 0.8rem; border-bottom: 3px solid var(--accent-color); transition: all 0.2s;">👑 Độc Giả</button>
+        <button class="tab-btn" onclick="switchTab('pvp')" style="background: none; border: none; color: var(--text-secondary); font-size: 1.05rem; font-weight: bold; cursor: pointer; padding: 0.5rem 0.8rem; border-bottom: 3px solid transparent; transition: all 0.2s;">⚔️ PvP Đấu Trường</button>
+        <button class="tab-btn" onclick="switchTab('combat')" style="background: none; border: none; color: var(--text-secondary); font-size: 1.05rem; font-weight: bold; cursor: pointer; padding: 0.5rem 0.8rem; border-bottom: 3px solid transparent; transition: all 0.2s;">⚡ Lực Chiến Game</button>
         <button class="tab-btn" onclick="switchTab('comics')" style="background: none; border: none; color: var(--text-secondary); font-size: 1.05rem; font-weight: bold; cursor: pointer; padding: 0.5rem 0.8rem; border-bottom: 3px solid transparent; transition: all 0.2s;">🖼️ Truyện Tranh Top</button>
         <button class="tab-btn" onclick="switchTab('novels')" style="background: none; border: none; color: var(--text-secondary); font-size: 1.05rem; font-weight: bold; cursor: pointer; padding: 0.5rem 0.8rem; border-bottom: 3px solid transparent; transition: all 0.2s;">📄 Truyện Chữ Top</button>
         <button class="tab-btn" onclick="switchTab('authors')" style="background: none; border: none; color: var(--text-secondary); font-size: 1.05rem; font-weight: bold; cursor: pointer; padding: 0.5rem 0.8rem; border-bottom: 3px solid transparent; transition: all 0.2s;">✍️ Tác Giả</button>
@@ -90,6 +92,160 @@
         </table>
     </div>
 </div>
+
+    <!-- TAB 2: ĐẤU TRƯỜNG PVP -->
+    <div id="tab-pvp" class="tab-content" style="display: none;">
+        <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.15); overflow-x: auto;">
+            <div style="margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                <span style="font-size: 0.9rem; color: #a855f7; font-weight: bold;">⚔️ Bảng Phong Thần Đấu Trường Nữ Thần (Top Elo)</span>
+                <a href="/arena" style="font-size: 0.85rem; color: var(--accent-color); text-decoration: none; font-weight: 600;">Vào Đấu Trường &rarr;</a>
+            </div>
+            <table class="leaderboard-table" style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.95rem;">
+                <thead>
+                    <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-secondary); font-weight: bold;">
+                        <th style="padding: 1rem 0.8rem; text-align: center; width: 80px;">Hạng</th>
+                        <th style="padding: 1rem 0.8rem;">Đấu Sĩ</th>
+                        <th style="padding: 1rem 0.8rem; text-align: center;">Bậc Rank</th>
+                        <th style="padding: 1rem 0.8rem; text-align: center; width: 120px;">Điểm Elo</th>
+                        <th style="padding: 1rem 0.8rem; text-align: right; width: 140px;">Thành Tích</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (typeof pvpLeaderboard === 'undefined' || pvpLeaderboard.length === 0) { %>
+                        <tr>
+                            <td colspan="5" style="padding: 2rem; text-align: center; color: var(--text-secondary);">Chưa có dữ liệu Đấu Trường nào. Hãy vào khiêu chiến để ghi danh!</td>
+                        </tr>
+                    <% } else { %>
+                        <% pvpLeaderboard.forEach((player, index) => { %>
+                            <%
+                                const tierColorMap = {
+                                    'Đồng': '#cd7f32',
+                                    'Bạc': '#94a3b8',
+                                    'Vàng': '#f59e0b',
+                                    'Bạch Kim': '#38bdf8',
+                                    'Kim Cương': '#a855f7',
+                                    'Cao Thủ': '#ec4899',
+                                    'Đại Sư': '#ef4444',
+                                    'Thần Thoại': '#fbbf24'
+                                };
+                                const tierColor = tierColorMap[player.tier] || '#f59e0b';
+                                const totalMatches = (player.wins || 0) + (player.losses || 0);
+                                const winRate = totalMatches > 0 ? Math.round(((player.wins || 0) / totalMatches) * 100) : 0;
+                            %>
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.03); transition: background-color 0.2s;" class="leaderboard-row">
+                                <td data-label="Hạng" style="padding: 1rem 0.8rem; text-align: center;">
+                                    <% if (index === 0) { %>
+                                        <span style="font-size: 1.4rem;" title="Quán quân">🥇</span>
+                                    <% } else if (index === 1) { %>
+                                        <span style="font-size: 1.4rem;" title="Á quân">🥈</span>
+                                    <% } else if (index === 2) { %>
+                                        <span style="font-size: 1.4rem;" title="Hạng ba">🥉</span>
+                                    <% } else { %>
+                                        <span style="font-weight: bold; color: var(--text-secondary);"><%= index + 1 %></span>
+                                    <% } %>
+                                </td>
+                                <td data-label="Đấu Sĩ" style="padding: 0.8rem 0.8rem; display: flex; align-items: center; gap: 0.8rem;">
+                                    <%- include('partials/avatar', { user: player.users || { display_name: 'Đấu sĩ' }, size: 'small' }) %>
+                                    <span style="font-weight: 600;">
+                                        <a href="/user/<%= player.user_id %>" style="text-decoration: none; color: inherit; transition: color 0.2s;" onmouseover="this.style.color='var(--accent-color)'" onmouseout="this.style.color='inherit'">
+                                            <%= (player.users && player.users.display_name) ? player.users.display_name : 'Đấu Sĩ Vô Danh' %>
+                                        </a>
+                                    </span>
+                                </td>
+                                <td data-label="Bậc Rank" style="padding: 0.8rem 0.8rem; text-align: center;">
+                                    <span style="font-size: 0.82rem; background: <%= tierColor %>22; color: <%= tierColor %>; padding: 0.25rem 0.7rem; border-radius: 12px; font-weight: 700; border: 1px solid <%= tierColor %>55; white-space: nowrap;">
+                                        🏅 <%= player.tier || 'Đồng' %>
+                                    </span>
+                                </td>
+                                <td data-label="Điểm Elo" style="padding: 1rem 0.8rem; text-align: center; font-weight: bold; color: #a855f7;">
+                                    <%= player.elo_points || 1000 %>
+                                </td>
+                                <td data-label="Thành Tích" style="padding: 1rem 0.8rem; text-align: right; font-weight: 600;">
+                                    <span style="color: #22c55e;"><%= player.wins || 0 %>T</span> - <span style="color: #ef4444;"><%= player.losses || 0 %>B</span>
+                                    <span style="font-size: 0.75rem; color: var(--text-secondary); display: block;">(<%= winRate %>%)</span>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TAB 3: LỰC CHIẾN GAME -->
+    <div id="tab-combat" class="tab-content" style="display: none;">
+        <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.15); overflow-x: auto;">
+            <div style="margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                <span style="font-size: 0.9rem; color: #f59e0b; font-weight: bold;">⚡ Đỉnh Cao Lực Chiến Đội Hình Nữ Thần</span>
+                <a href="/arena" style="font-size: 0.85rem; color: var(--accent-color); text-decoration: none; font-weight: 600;">Xem Đội Hình &rarr;</a>
+            </div>
+            <table class="leaderboard-table" style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.95rem;">
+                <thead>
+                    <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-secondary); font-weight: bold;">
+                        <th style="padding: 1rem 0.8rem; text-align: center; width: 80px;">Hạng</th>
+                        <th style="padding: 1rem 0.8rem;">Chủ Tướng</th>
+                        <th style="padding: 1rem 0.8rem; text-align: center;">Đội Hình Xuất Trận</th>
+                        <th style="padding: 1rem 0.8rem; text-align: right; width: 140px;">Tổng Lực Chiến</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (typeof combatLeaderboard === 'undefined' || combatLeaderboard.length === 0) { %>
+                        <tr>
+                            <td colspan="4" style="padding: 2rem; text-align: center; color: var(--text-secondary);">Chưa có dữ liệu đội hình nào. Hãy sắp xếp đội hình trong Đấu Trường để ghi danh!</td>
+                        </tr>
+                    <% } else { %>
+                        <% combatLeaderboard.forEach((team, index) => { %>
+                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.03); transition: background-color 0.2s;" class="leaderboard-row">
+                                <td data-label="Hạng" style="padding: 1rem 0.8rem; text-align: center;">
+                                    <% if (index === 0) { %>
+                                        <span style="font-size: 1.4rem;" title="Quán quân">🥇</span>
+                                    <% } else if (index === 1) { %>
+                                        <span style="font-size: 1.4rem;" title="Á quân">🥈</span>
+                                    <% } else if (index === 2) { %>
+                                        <span style="font-size: 1.4rem;" title="Hạng ba">🥉</span>
+                                    <% } else { %>
+                                        <span style="font-weight: bold; color: var(--text-secondary);"><%= index + 1 %></span>
+                                    <% } %>
+                                </td>
+                                <td data-label="Chủ Tướng" style="padding: 0.8rem 0.8rem; display: flex; align-items: center; gap: 0.8rem;">
+                                    <%- include('partials/avatar', { user: team.users || { display_name: 'Chủ Tướng' }, size: 'small' }) %>
+                                    <span style="font-weight: 600;">
+                                        <a href="/user/<%= team.user_id %>" style="text-decoration: none; color: inherit; transition: color 0.2s;" onmouseover="this.style.color='var(--accent-color)'" onmouseout="this.style.color='inherit'">
+                                            <%= (team.users && team.users.display_name) ? team.users.display_name : 'Đại Hiệp' %>
+                                        </a>
+                                    </span>
+                                </td>
+                                <td data-label="Đội Hình" style="padding: 0.6rem 0.8rem; text-align: center;">
+                                    <div style="display: inline-flex; align-items: center; gap: 0.4rem; justify-content: center;">
+                                        <% [team.slot1, team.slot2, team.slot3].forEach(s => { %>
+                                            <% if (s) { %>
+                                                <%
+                                                    let borderRarity = '#94a3b8';
+                                                    if (s.rarity === 'SR') borderRarity = '#3b82f6';
+                                                    else if (s.rarity === 'SSR') borderRarity = '#eab308';
+                                                    else if (s.rarity === 'UR') borderRarity = '#ec4899';
+                                                %>
+                                                <div style="position: relative; width: 38px; height: 38px; border-radius: 8px; border: 2px solid <%= borderRarity %>; overflow: hidden; background: #0f172a; box-shadow: 0 2px 8px rgba(0,0,0,0.4);" title="<%= s.name %> (<%= s.rarity %>)">
+                                                    <img src="<%= s.avatar_url %>" alt="<%= s.name %>" style="width: 100%; height: 100%; object-fit: cover;">
+                                                </div>
+                                            <% } else { %>
+                                                <div style="width: 38px; height: 38px; border-radius: 8px; border: 1px dashed rgba(255,255,255,0.2); background: rgba(255,255,255,0.03); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; color: var(--text-secondary);">
+                                                    Trống
+                                                </div>
+                                            <% } %>
+                                        <% }) %>
+                                    </div>
+                                </td>
+                                <td data-label="Lực Chiến" style="padding: 1rem 0.8rem; text-align: right; font-weight: 800; color: #f59e0b; font-size: 1.05rem;">
+                                    ⚡ <%= (team.combat_power || 0).toLocaleString('vi-VN') %>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
 
     <!-- TAB TRUYỆN TRANH TOP - có sub-tab lọc theo ngày/tuần/tháng/đánh giá/theo dõi, dữ liệu
          đã được route index.js chuẩn bị sẵn (topComicDaily, topComicWeekly, topComicMonthly,

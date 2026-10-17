@@ -13,10 +13,7 @@ router.get('/daily-reward', async (req, res) => {
             return res.status(401).json({ error: 'Unauthorized' });
         }
 
-        // Lấy Top 100 người dùng theo thứ tự BXH hiển thị (chapters_read desc, exp desc)
-        // - Phải dùng cùng view và sort order với trang /leaderboard để phần thưởng
-        //   khớp chính xác với thứ hạng người dùng nhìn thấy trên màn hình.
-        // - View leaderboard_by_exp expose 'id' (= user id), không phải 'user_id'
+        // 1. Lấy Top 100 người dùng theo thứ tự BXH Độc giả (chapters_read desc, exp desc)
         const { data: topUsers, error: fetchErr } = await supabase
             .from('leaderboard_by_exp')
             .select('id, exp')
@@ -25,12 +22,18 @@ router.get('/daily-reward', async (req, res) => {
             .limit(100);
 
         if (fetchErr) throw fetchErr;
-        if (!topUsers || topUsers.length === 0) {
-            return res.status(200).json({ message: 'No users found.' });
-        }
 
-        // Cơ cấu giải thưởng
-        const getReward = (rank) => {
+        // 2. Lấy Top 100 người chơi BXH Game Đấu Trường Nữ Thần theo Elo
+        const { data: topGameUsers, error: gameFetchErr } = await supabase
+            .from('arena_ranks')
+            .select('user_id, elo_points')
+            .order('elo_points', { ascending: false })
+            .limit(100);
+
+        if (gameFetchErr) console.error('Lỗi lấy BXH Game arena_ranks:', gameFetchErr);
+
+        // Cơ cấu giải thưởng BXH Độc giả
+        const getReaderReward = (rank) => {
             if (rank === 1) return 100;
             if (rank === 2) return 80;
             if (rank === 3) return 60;
@@ -42,33 +45,59 @@ router.get('/daily-reward', async (req, res) => {
             return 0;
         };
 
+        // Cơ cấu giải thưởng BXH Game (Bằng nửa BXH Độc giả)
+        const getGameReward = (rank) => {
+            if (rank === 1) return 50;
+            if (rank === 2) return 40;
+            if (rank === 3) return 30;
+            if (rank >= 4 && rank <= 5) return 20;
+            if (rank >= 6 && rank <= 10) return 15;
+            if (rank >= 11 && rank <= 20) return 10;
+            if (rank >= 21 && rank <= 50) return 5;
+            if (rank >= 51 && rank <= 100) return 3;
+            return 0;
+        };
+
         const notifications = [];
-        const expUpdates = [];
+        const expAddMap = {};
 
-        // Duyệt qua từng người dùng để phân bổ phần thưởng
-        for (let i = 0; i < topUsers.length; i++) {
-            const rank = i + 1;
-            const user = topUsers[i];
-            const rewardExp = getReward(rank);
+        // Phân bổ phần thưởng BXH Độc giả
+        if (topUsers && topUsers.length > 0) {
+            for (let i = 0; i < topUsers.length; i++) {
+                const rank = i + 1;
+                const user = topUsers[i];
+                const rewardExp = getReaderReward(rank);
 
-            if (rewardExp > 0) {
-                // Chuẩn bị payload thông báo
-                notifications.push({
-                    user_id: user.id,
-                    message: `Chúc mừng bạn đạt Top ${rank} BXH Độc giả ngày hôm nay! Bạn nhận được ${rewardExp} EXP phần thưởng.`,
-                    link: '/leaderboard',
-                    is_read: false
-                });
-
-                // Chuẩn bị thông tin cập nhật EXP
-                expUpdates.push({
-                    user_id: user.id,
-                    exp: user.exp + rewardExp,
-                    updated_at: new Date().toISOString()
-                });
+                if (rewardExp > 0) {
+                    notifications.push({
+                        user_id: user.id,
+                        message: `Chúc mừng bạn đạt Top ${rank} BXH Độc giả ngày hôm nay! Bạn nhận được ${rewardExp} EXP phần thưởng.`,
+                        link: '/leaderboard',
+                        is_read: false
+                    });
+                    expAddMap[user.id] = (expAddMap[user.id] || 0) + rewardExp;
+                }
             }
         }
 
+        // Phân bổ phần thưởng BXH Game Đấu Trường
+        if (topGameUsers && topGameUsers.length > 0) {
+            for (let i = 0; i < topGameUsers.length; i++) {
+                const rank = i + 1;
+                const gameUser = topGameUsers[i];
+                const rewardExp = getGameReward(rank);
+
+                if (rewardExp > 0 && gameUser.user_id) {
+                    notifications.push({
+                        user_id: gameUser.user_id,
+                        message: `⚔️ Chúc mừng bạn đạt Top ${rank} BXH Đấu Trường Nữ Thần ngày hôm nay! Bạn nhận được ${rewardExp} EXP phần thưởng (bằng nửa BXH truyện).`,
+                        link: '/leaderboard',
+                        is_read: false
+                    });
+                    expAddMap[gameUser.user_id] = (expAddMap[gameUser.user_id] || 0) + rewardExp;
+                }
+            }
+        }
 
         // 1. Lưu tất cả thông báo
         if (notifications.length > 0) {
@@ -78,21 +107,31 @@ router.get('/daily-reward', async (req, res) => {
             if (notifErr) console.error('Error inserting notifications:', notifErr);
         }
 
-        // 2. Cập nhật tất cả điểm EXP
-        // Supabase/PostgreSQL không hỗ trợ bulk update dễ dàng bằng RPC nếu không viết sẵn hàm.
-        // Ta dùng vòng lặp Promise.all vì số lượng là <= 100 (khá nhanh).
-        const updatePromises = expUpdates.map(update => 
-            supabase
+        // 2. Cập nhật EXP trong user_stats (gộp thưởng nếu user nằm trong cả 2 BXH)
+        const rewardedUserIds = Object.keys(expAddMap);
+        if (rewardedUserIds.length > 0) {
+            const { data: curStats } = await supabase
                 .from('user_stats')
-                .update({ exp: update.exp, updated_at: update.updated_at })
-                .eq('user_id', update.user_id)
-        );
-        
-        await Promise.all(updatePromises);
+                .select('user_id, exp')
+                .in('user_id', rewardedUserIds);
+
+            const statMap = {};
+            (curStats || []).forEach(s => { statMap[s.user_id] = s.exp || 0; });
+
+            const updatePromises = rewardedUserIds.map(uid => {
+                const curExp = statMap[uid] || 0;
+                const added = expAddMap[uid] || 0;
+                return supabase
+                    .from('user_stats')
+                    .update({ exp: curExp + added, updated_at: new Date().toISOString() })
+                    .eq('user_id', uid);
+            });
+            await Promise.all(updatePromises);
+        }
 
         return res.status(200).json({ 
             success: true, 
-            message: `Rewarded ${expUpdates.length} users successfully.` 
+            message: `Rewarded ${rewardedUserIds.length} users successfully (Reader + Game Leaderboard).` 
         });
 
     } catch (error) {

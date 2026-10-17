@@ -296,13 +296,44 @@ const DUNGEON_STAGES = [
   }
 ];
 
-// ĐỊNH NGHĨA DANH SÁCH NHIỆM VỤ HÀNG NGÀY
+// ĐỊNH NGHĨA DANH SÁCH NHIỆM VỤ HÀNG NGÀY (BÙ ĐẮP DỒI DÀO VẬT PHẨM ĐỌC TRUYỆN)
 const QUEST_DEFINITIONS = [
-  { id: 'read_daily', name: 'Đọc truyện mỗi ngày', desc: 'Đọc tích lũy từ 3 chương truyện hôm nay', target: 3, type: 'read_chapters', reward: { silver_chests: 1, wooden_chests: 1, exp_pills: 20, star_stones: 2 }, reward_desc: '🥈 1 Hòm Bạc + 📦 1 Hòm Gỗ + 💊 20 Đan EXP + ⭐ 2 Đá Sao' },
-  { id: 'arena_1', name: 'Thử sức Đấu Trường', desc: 'Khiêu chiến 1 trận trong Đấu Trường Nữ Thần', target: 1, type: 'battles_fought', reward: { wooden_chests: 1, exp_pills: 5 }, reward_desc: '📦 1 Hòm Gỗ + 💊 5 Đan EXP' },
-  { id: 'dungeon_1', name: 'Trảm Yêu Trừ Ma', desc: 'Vượt qua 1 màn bất kỳ trong Tháp Thử Thách', target: 1, type: 'stages_cleared', reward: { wooden_chests: 1, star_stones: 1 }, reward_desc: '📦 1 Hòm Gỗ + ⭐ 1 Đá Nâng Sao' },
-  { id: 'chest_1', name: 'Khai Mở Vận May', desc: 'Mở 1 rương quà bất kỳ (Gỗ/Bạc/Vàng)', target: 1, type: 'chests_opened', reward: { exp_pills: 15 }, reward_desc: '💊 15 Đan EXP Tướng' }
+  { id: 'checkin_daily', name: 'Điểm Danh Đấu Trường', desc: 'Đăng nhập vào Đấu Trường Nữ Thần hôm nay', target: 1, type: 'checkin_done', reward: { wooden_chests: 1, exp_pills: 15, star_stones: 1 }, reward_desc: '📦 1 Hòm Gỗ + 💊 15 Đan EXP + ⭐ 1 Đá Sao' },
+  { id: 'read_daily_1', name: 'Tu Luyện Đọc Truyện I', desc: 'Đọc tích lũy từ 3 chương truyện bất kỳ hôm nay', target: 3, type: 'read_chapters', reward: { wooden_chests: 2, exp_pills: 25, star_stones: 2 }, reward_desc: '📦 2 Hòm Gỗ + 💊 25 Đan EXP + ⭐ 2 Đá Sao' },
+  { id: 'read_daily_2', name: 'Đại Hiệp Chăm Đọc II', desc: 'Đọc tích lũy từ 8 chương truyện bất kỳ hôm nay', target: 8, type: 'read_chapters', reward: { silver_chests: 1, wooden_chests: 1, exp_pills: 40, star_stones: 3 }, reward_desc: '🥈 1 Hòm Bạc + 📦 1 Hòm Gỗ + 💊 40 Đan EXP + ⭐ 3 Đá Sao' },
+  { id: 'read_daily_3', name: 'Tông Sư Mọt Sách III', desc: 'Đọc tích lũy từ 15 chương truyện bất kỳ hôm nay', target: 15, type: 'read_chapters', reward: { gold_chests: 1, exp_pills: 60, star_stones: 5 }, reward_desc: '🥇 1 Hòm Vàng + 💊 60 Đan EXP + ⭐ 5 Đá Sao' },
+  { id: 'arena_1', name: 'Thử Sức Đấu Trường', desc: 'Khiêu chiến 1 trận trong Đấu Trường Nữ Thần', target: 1, type: 'battles_fought', reward: { wooden_chests: 1, exp_pills: 10 }, reward_desc: '📦 1 Hòm Gỗ + 💊 10 Đan EXP' },
+  { id: 'arena_3', name: 'Chiến Tướng Sa Trường', desc: 'Khiêu chiến 3 trận trong Đấu Trường Nữ Thần', target: 3, type: 'battles_fought', reward: { silver_chests: 1, exp_pills: 30, star_stones: 2 }, reward_desc: '🥈 1 Hòm Bạc + 💊 30 Đan EXP + ⭐ 2 Đá Sao' },
+  { id: 'dungeon_1', name: 'Trảm Yêu Trừ Ma', desc: 'Vượt qua 1 màn bất kỳ trong Tháp Thử Thách', target: 1, type: 'stages_cleared', reward: { wooden_chests: 1, exp_pills: 15, star_stones: 1 }, reward_desc: '📦 1 Hòm Gỗ + 💊 15 Đan EXP + ⭐ 1 Đá Sao' },
+  { id: 'dungeon_3', name: 'Chinh Phục Ải Cao', desc: 'Vượt qua 3 màn bất kỳ trong Tháp Thử Thách', target: 3, type: 'stages_cleared', reward: { silver_chests: 1, exp_pills: 30, star_stones: 2 }, reward_desc: '🥈 1 Hòm Bạc + 💊 30 Đan EXP + ⭐ 2 Đá Sao' },
+  { id: 'chest_1', name: 'Khai Mở Vận May', desc: 'Mở 1 rương quà bất kỳ (Gỗ/Bạc/Vàng)', target: 1, type: 'chests_opened', reward: { exp_pills: 20, star_stones: 1 }, reward_desc: '💊 20 Đan EXP + ⭐ 1 Đá Sao' },
+  { id: 'chest_3', name: 'Kho Báu Vô Tận', desc: 'Mở 3 rương quà bất kỳ (Gỗ/Bạc/Vàng)', target: 3, type: 'chests_opened', reward: { gold_chests: 1, exp_pills: 50, star_stones: 5 }, reward_desc: '🥇 1 Hòm Vàng + 💊 50 Đan EXP + ⭐ 5 Đá Sao' },
+  { id: 'upgrade_1', name: 'Bồi Dưỡng Mỹ Nhân', desc: 'Nâng cấp cấp độ hoặc tăng sao tướng 1 lần', target: 1, type: 'hero_upgrades', reward: { wooden_chests: 1, exp_pills: 20 }, reward_desc: '📦 1 Hòm Gỗ + 💊 20 Đan EXP' }
 ];
+
+// Helper: Cập nhật tiến độ nhiệm vụ ngày
+async function incrementQuestProgress(userId, type, amount = 1) {
+  try {
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const { data: qRow } = await supabase
+      .from('user_card_quests')
+      .select('id, ' + type)
+      .eq('user_id', userId)
+      .eq('quest_date', todayStr)
+      .maybeSingle();
+
+    if (qRow) {
+      await supabase.from('user_card_quests')
+        .update({ [type]: (qRow[type] || 0) + amount, updated_at: new Date().toISOString() })
+        .eq('id', qRow.id);
+    } else {
+      await supabase.from('user_card_quests')
+        .insert([{ user_id: userId, quest_date: todayStr, [type]: amount }]);
+    }
+  } catch (err) {
+    console.error(`Lỗi cập nhật nhiệm vụ ${type}:`, err);
+  }
+}
 
 // Helper: Lấy tiến độ nhiệm vụ hàng ngày của người chơi
 async function getDailyQuestsProgress(userId) {
@@ -324,6 +355,7 @@ async function getDailyQuestsProgress(userId) {
         battles_fought: 0,
         stages_cleared: 0,
         chests_opened: 0,
+        hero_upgrades: 0,
         claimed_quests: []
       }])
       .select()
@@ -334,13 +366,14 @@ async function getDailyQuestsProgress(userId) {
   const claimed = Array.isArray(qRow?.claimed_quests) ? qRow.claimed_quests : [];
 
   const questsWithStatus = QUEST_DEFINITIONS.map(q => {
-    const progress = qRow ? (qRow[q.type] || 0) : 0;
-    const isCompleted = progress >= q.target;
+    // Với nhiệm vụ checkin_daily: luôn ghi nhận tiến độ là 1 vì user đã vào trang game
+    const rawProgress = q.type === 'checkin_done' ? 1 : (qRow ? (qRow[q.type] || 0) : 0);
+    const isCompleted = rawProgress >= q.target;
     const isClaimed = claimed.includes(q.id);
     return {
       ...q,
-      progress: Math.min(progress, q.target),
-      current: progress,
+      progress: Math.min(rawProgress, q.target),
+      current: rawProgress,
       isCompleted,
       isClaimed,
       canClaim: isCompleted && !isClaimed
@@ -786,6 +819,9 @@ router.post('/api/upgrade-hero', async (req, res) => {
     const newAtk = Math.round((baseHero ? baseHero.base_atk : 200) * (1 + (newLevel - 1) * 0.1) * (1 + (curStar - 1) * 0.2));
     const newDef = Math.round((baseHero ? baseHero.base_def : 100) * (1 + (newLevel - 1) * 0.08));
 
+    // Cập nhật tiến độ nhiệm vụ ngày: hero_upgrades
+    await incrementQuestProgress(userId, 'hero_upgrades', 1);
+
     res.json({
       success: true,
       new_level: newLevel,
@@ -878,6 +914,9 @@ router.post('/api/upgrade-star', async (req, res) => {
     const newHp = Math.round((baseHero ? baseHero.base_hp : 2000) * (1 + (curLvl - 1) * 0.1) * (1 + (newStar - 1) * 0.2));
     const newAtk = Math.round((baseHero ? baseHero.base_atk : 200) * (1 + (curLvl - 1) * 0.1) * (1 + (newStar - 1) * 0.2));
     const newDef = Math.round((baseHero ? baseHero.base_def : 100) * (1 + (curLvl - 1) * 0.08));
+
+    // Cập nhật tiến độ nhiệm vụ ngày: hero_upgrades
+    await incrementQuestProgress(userId, 'hero_upgrades', 1);
 
     res.json({
       success: true,

@@ -1648,16 +1648,16 @@ router.post('/chapter/read-confirm', async (req, res) => {
     });
   }
 
-  // Cộng EXP & Chiến lợi phẩm Nữ Thần
+  // Cộng EXP Đọc Truyện (Người đọc chỉ nhận EXP, vật phẩm chuyển vào Nhiệm vụ ngày của Game)
   let earnedExp = false;
   let rankUp = null;
-  let cardDrop = null;
   try {
     const result = await awardReadingExp(req.user.id, storyId, chapterNumber);
     earnedExp = result ? result.earnedExp : false;
     rankUp = result ? result.rankUp : null;
     if (earnedExp) {
-      cardDrop = await awardReadingCardDrop(req.user.id, result.chaptersRead || 1);
+      // Cập nhật tiến độ đọc chương cho Nhiệm Vụ Hàng Ngày trong game
+      await awardReadingCardDrop(req.user.id, result.chaptersRead || 1);
     }
   } catch (err) {
     console.error('Lỗi cộng EXP trong xác nhận:', err);
@@ -1666,16 +1666,13 @@ router.post('/chapter/read-confirm', async (req, res) => {
   // Xóa thông tin đọc trong session để tránh gửi lại nhiều lần
   delete req.session.reading;
 
-  let message = earnedExp ? 'Đã ghi nhận đọc chương thành công! +5 EXP' : 'Đã ghi nhận đọc chương. (Chương này đã tính EXP trước đó)';
-  if (cardDrop && cardDrop.itemName) {
-    message += ` 🎁 Chiến Lợi Phẩm Đấu Trường: ${cardDrop.itemName}!`;
-  }
+  const message = earnedExp ? 'Đã ghi nhận đọc chương thành công! +5 EXP' : 'Đã ghi nhận đọc chương. (Chương này đã tính EXP trước đó)';
 
   res.json({
     success: true,
     message,
     rankUp,
-    cardDrop
+    cardDrop: null
   });
 });
 
@@ -2267,7 +2264,9 @@ router.get('/leaderboard', async (req, res) => {
       topComicRated,
       topNovelRated,
       topComicBookmarks,
-      topNovelBookmarks
+      topNovelBookmarks,
+      pvpLeaderboardData,
+      combatLeaderboardData
     ] = await Promise.all([
       supabase.from('leaderboard_by_exp').select('*').order('chapters_read', { ascending: false }).order('exp', { ascending: false }).limit(20),
       fetchTopAuthors(20),
@@ -2280,15 +2279,21 @@ router.get('/leaderboard', async (req, res) => {
       getTypeRankings('comic', 'rated', 20),
       getTypeRankings('novel', 'rated', 20),
       getTypeRankings('comic', 'bookmarks', 20),
-      getTypeRankings('novel', 'bookmarks', 20)
+      getTypeRankings('novel', 'bookmarks', 20),
+      supabase.from('arena_ranks').select('user_id, elo_points, tier, wins, losses, users(id, display_name, avatar)').order('elo_points', { ascending: false }).limit(30),
+      supabase.from('user_card_teams').select('user_id, combat_power, slot_1, slot_2, slot_3, users(id, display_name, avatar), slot1:slot_1(id, name, avatar_url, rarity), slot2:slot_2(id, name, avatar_url, rarity), slot3:slot_3(id, name, avatar_url, rarity)').order('combat_power', { ascending: false }).limit(30)
     ]);
 
     const leaderboard = readers || [];
+    const pvpLeaderboard = (pvpLeaderboardData && pvpLeaderboardData.data) ? pvpLeaderboardData.data : [];
+    const combatLeaderboard = (combatLeaderboardData && combatLeaderboardData.data) ? combatLeaderboardData.data : [];
 
     res.render('leaderboard', {
       title: 'Bảng xếp hạng',
       user: req.user,
       leaderboard,
+      pvpLeaderboard,
+      combatLeaderboard,
       topAuthors,
       topComicDaily,
       topNovelDaily,
