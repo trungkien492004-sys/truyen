@@ -1107,7 +1107,7 @@ router.post('/api/open-chest', async (req, res) => {
         .select('*')
         .eq('user_id', userId)
         .eq('hero_id', droppedHero.id)
-        .single();
+        .maybeSingle();
 
       if (existingUserHero) {
         await supabase
@@ -1195,7 +1195,7 @@ router.post('/api/claim-quest', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Nhiệm vụ này bạn đã nhận thưởng rồi!' });
     }
 
-    const currentVal = qRow[questDef.type] || 0;
+    const currentVal = questDef.type === 'checkin_done' ? 1 : (qRow[questDef.type] || 0);
     if (currentVal < questDef.target) {
       return res.status(400).json({ success: false, error: 'Chưa hoàn thành điều kiện nhiệm vụ!' });
     }
