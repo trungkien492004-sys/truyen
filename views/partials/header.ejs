@@ -11,6 +11,21 @@
     <title><%= title %></title>
     <link rel="stylesheet" href="/css/style.css?v=17">
     <link rel="stylesheet" href="/css/mmorpg.css?v=17">
+    <script>
+        // Bắt lỗi ảnh toàn hệ thống ngay ở capture phase (trước khi DOMContentLoaded)
+        window.addEventListener('error', function(e) {
+            const el = e.target;
+            if (el && el.tagName === 'IMG') {
+                if (el.dataset.fallbackApplied) return;
+                el.dataset.fallbackApplied = 'true';
+                const isAvatar = el.classList.contains('avatar-img') || 
+                                 el.classList.contains('rankup-row-avatar') || 
+                                 el.alt === 'avatar' || 
+                                 (el.src && el.src.includes('avatar'));
+                el.src = isAvatar ? '/css/default-avatar.png' : '/css/default-cover.jpg';
+            }
+        }, true);
+    </script>
 </head>
 <body>
     <header id="main-header">
