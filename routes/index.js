@@ -1486,13 +1486,20 @@ router.get('/story/:story_id/chapter/:chapter_number', async (req, res) => {
         }
       })();
 
-      // 3c. Lưu thông tin bắt đầu đọc vào session để tính thời gian đọc (tránh hack/buff EXP)
-      req.session.reading = {
-        storyId: storyId,
-        chapterNumber: chapterNumber,
-        startTime: Date.now()
-      };
+      // 3c. Lưu thông tin bắt đầu đọc vào session để tính thời gian đọc (hỗ trợ nhiều tab và auto audio)
+      if (!req.session.readings) req.session.readings = {};
+      const readKey = `${storyId}_${chapterNumber}`;
+      if (!req.session.readings[readKey] || req.session.readings[readKey].claimed) {
+        req.session.readings[readKey] = {
+          storyId: storyId,
+          chapterNumber: chapterNumber,
+          startTime: Date.now(),
+          claimed: false
+        };
+      }
+      req.session.reading = req.session.readings[readKey];
     }
+
 
     // 4. Lấy danh sách toàn bộ chương để hiển thị trong mục lục nhanh và tính toán điều hướng (hỗ trợ phân trang để vượt qua giới hạn 1000 dòng của PostgREST)
     let chaptersList = [];
@@ -1607,10 +1614,10 @@ router.get('/story/:story_id/chapter/:chapter_number', async (req, res) => {
   }
 });
 
-// Route xác nhận đọc chương truyện đủ thời gian (2.5 phút) để nhận EXP
+// Route xác nhận đọc chương truyện đủ thời gian để nhận EXP
 router.post('/chapter/read-confirm', async (req, res) => {
   if (!req.user || !req.user.id) {
-    return res.status(401).json({ success: false, error: 'Vui lòng đăng nhập.' });
+    return res.status(401).json({ success: false, error: 'Vui lòng đăng nhập để ghi nhận EXP.' });
   }
   
   if (req.user.is_banned) {
@@ -1622,20 +1629,63 @@ router.post('/chapter/read-confirm', async (req, res) => {
   const chapterNumber = parseFloat(chapter_number);
 
   if (!storyId || !chapterNumber) {
-    return res.status(400).json({ success: false, error: 'Tham số không hợp lệ.' });
+    return res.status(400).json({ success: false, error: 'Tham số chương hoặc truyện không hợp lệ.' });
   }
 
-  const reading = req.session.reading;
-  if (!reading || reading.storyId !== storyId || reading.chapterNumber !== chapterNumber) {
-    console.error('[Read-Confirm Mismatch]:', {
-      sessionReading: reading,
-      requestedStoryId: storyId,
-      requestedChapterNumber: chapterNumber
+  const readKey = `${storyId}_${chapterNumber}`;
+  if (!req.session.readings) req.session.readings = {};
+
+  // 1. Nếu chương này đã được xác nhận EXP thành công trong phiên này -> Trả về thành công luôn
+  if (req.session.readings[readKey]?.claimed) {
+    return res.json({
+      success: true,
+      message: 'Đã hoàn thành chương này! (EXP đã được ghi nhận trước đó)',
+      rankUp: null,
+      cardDrop: null
     });
-    return res.status(400).json({ success: false, error: 'Yêu cầu không hợp lệ hoặc lượt đọc chưa được bắt đầu.' });
   }
 
-  const elapsedMs = Date.now() - reading.startTime;
+  // 2. Tìm thời điểm bắt đầu đọc: Ưu tiên session, nếu mất session (do tab/cookie) thì tra cứu reading_history từ DB
+  let startTime = null;
+  if (req.session.readings[readKey]?.startTime) {
+    startTime = req.session.readings[readKey].startTime;
+  } else if (req.session.reading && req.session.reading.storyId === storyId && req.session.reading.chapterNumber === chapterNumber) {
+    startTime = req.session.reading.startTime;
+  } else {
+    try {
+      const { data: existHist } = await supabase
+        .from('reading_history')
+        .select('updated_at')
+        .eq('user_id', req.user.id)
+        .eq('story_id', storyId)
+        .eq('chapter_number', chapterNumber)
+        .maybeSingle();
+
+      if (existHist && existHist.updated_at) {
+        startTime = new Date(existHist.updated_at).getTime();
+      }
+    } catch (e) {
+      console.error('Lỗi kiểm tra reading_history:', e);
+    }
+  }
+
+  // 3. Nếu vẫn không tìm thấy thời điểm bắt đầu đọc
+  if (!startTime) {
+    // Khởi tạo thời gian đọc hiện tại để độc giả không bị lỗi ngắt quãng khi nghe audio tự chuyển chương
+    req.session.readings[readKey] = {
+      storyId,
+      chapterNumber,
+      startTime: Date.now(),
+      claimed: false
+    };
+    req.session.reading = req.session.readings[readKey];
+    return res.status(400).json({ 
+      success: false, 
+      error: 'Hệ thống đang bắt đầu tính giờ đọc chương này. Vui lòng đọc thêm ít giây nhé!' 
+    });
+  }
+
+  const elapsedMs = Date.now() - startTime;
   
   // Truy vấn database để đếm số chữ của chương này
   let requiredMs = 90 * 1000; // Mặc định 1.5 phút
@@ -1667,7 +1717,7 @@ router.post('/chapter/read-confirm', async (req, res) => {
     });
   }
 
-  // Cộng EXP Đọc Truyện (Người đọc chỉ nhận EXP, vật phẩm chuyển vào Nhiệm vụ ngày của Game)
+  // Cộng EXP Đọc Truyện
   let earnedExp = false;
   let rankUp = null;
   try {
@@ -1675,14 +1725,19 @@ router.post('/chapter/read-confirm', async (req, res) => {
     earnedExp = result ? result.earnedExp : false;
     rankUp = result ? result.rankUp : null;
     if (earnedExp) {
-      // Cập nhật tiến độ đọc chương cho Nhiệm Vụ Hàng Ngày trong game
       await awardReadingCardDrop(req.user.id, result.chaptersRead || 1);
     }
   } catch (err) {
     console.error('Lỗi cộng EXP trong xác nhận:', err);
   }
 
-  // Xóa thông tin đọc trong session để tránh gửi lại nhiều lần
+  // Đánh dấu đã nhận EXP cho chương này trong session
+  req.session.readings[readKey] = {
+    storyId,
+    chapterNumber,
+    startTime: startTime,
+    claimed: true
+  };
   delete req.session.reading;
 
   const message = earnedExp ? 'Đã ghi nhận đọc chương thành công! +5 EXP' : 'Đã ghi nhận đọc chương. (Chương này đã tính EXP trước đó)';

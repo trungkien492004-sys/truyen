@@ -342,9 +342,61 @@ async function syncVietManhwaStory(storyUrl, options = {}) {
   };
 }
 
+/**
+ * Crawl latest updated stories from VietManhwa homepage
+ */
+async function syncLatestVietManhwa(pages = 1, onProgress = null) {
+  let totalNewChapters = 0;
+  let totalUpdatedStories = 0;
+
+  for (let page = 1; page <= pages; page++) {
+    const pageUrl = page === 1 ? 'https://vietmanhwa.com' : `https://vietmanhwa.com?page=${page}`;
+    try {
+      console.log(`[VIETMANHWA] Crawling recent page: ${pageUrl}`);
+      const html = await fetchUrl(pageUrl);
+      const $ = cheerio.load(html);
+      const storyLinks = new Set();
+
+      $('a').each((i, el) => {
+        const href = $(el).attr('href');
+        if (href && href.startsWith('/manhwa-18/')) {
+          const parts = href.split('/').filter(Boolean);
+          if (parts.length === 2) {
+            storyLinks.add(`https://vietmanhwa.com/manhwa-18/${parts[1]}`);
+          }
+        }
+      });
+
+      const list = [...storyLinks].slice(0, 15); // Lấy tối đa 15 truyện mới nhất mỗi trang để nhanh và ổn định
+      console.log(`[VIETMANHWA] Found ${list.length} recent stories on page ${page}`);
+
+      for (const storyUrl of list) {
+        try {
+          if (onProgress) onProgress(`Đang quét VietManhwa: ${storyUrl}`);
+          const res = await syncVietManhwaStory(storyUrl, { maxChapters: 5 });
+          if (res && res.addedCount > 0) {
+            totalNewChapters += res.addedCount;
+            totalUpdatedStories++;
+            console.log(`[VIETMANHWA] Added ${res.addedCount} new chapters for "${res.title}"`);
+          }
+        } catch (err) {
+          console.error(`[VIETMANHWA] Error syncing ${storyUrl}:`, err.message);
+        }
+        await new Promise(r => setTimeout(r, 600));
+      }
+    } catch (err) {
+      console.error(`[VIETMANHWA] Error fetching page ${page}:`, err.message);
+    }
+  }
+
+  return { totalUpdatedStories, totalNewChapters };
+}
+
 module.exports = {
   fetchVietManhwaStoryDetail,
   fetchVietManhwaChapterContent,
   syncVietManhwaStory,
+  syncLatestVietManhwa,
   normalizeTitle
 };
+

@@ -12,7 +12,7 @@
         <a href="/admin/ranks" class="btn btn-secondary" style="background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.3); color: #10b981;">🏆 Thiết lập Rank cấp bậc</a>
         <a href="/admin/shop" class="btn btn-secondary" style="background: rgba(236, 72, 153, 0.1); border-color: rgba(236, 72, 153, 0.3); color: #ec4899;">🛒 Quản lý Cửa hàng EXP</a>
         <a href="/admin/heroes" class="btn btn-secondary" style="background: rgba(236, 72, 153, 0.15); border-color: rgba(236, 72, 153, 0.35); color: #f472b6; font-weight: 600;">👑 Quản lý Nữ Tướng</a>
-        <button type="button" id="btn-open-sync-modal" class="btn" style="background: linear-gradient(135deg, #059669, #10b981); color: #fff; font-weight: 600; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35); border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem;">
+        <button type="button" id="btn-open-sync-modal" onclick="window.openSyncModal()" class="btn" style="background: linear-gradient(135deg, #059669, #10b981); color: #fff; font-weight: 600; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35); border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem;">
             🔄 Cập nhật chap mới (Link ngoài)
         </button>
         <button type="button" id="btn-check-supabase-images" class="btn btn-secondary" style="background: rgba(59, 130, 246, 0.15); border-color: rgba(59, 130, 246, 0.35); color: #60a5fa; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem;">
@@ -110,236 +110,33 @@
     <% } %>
 </div>
 
-<script>
-    const searchInput = document.getElementById('admin-story-search');
-    if (searchInput) {
-        searchInput.addEventListener('input', function() {
-            const query = this.value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
-            const rows = document.querySelectorAll('.admin-table tbody tr');
-            
-            rows.forEach(row => {
-                const titleCell = row.querySelector('td:nth-child(2)');
-                const authorCell = row.querySelector('td:nth-child(3)');
-                const commissionedCell = row.querySelector('td:nth-child(4)');
-                
-                const title = titleCell ? titleCell.textContent.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") : '';
-                const author = authorCell ? authorCell.textContent.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") : '';
-                const commissioned = commissionedCell ? commissionedCell.textContent.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") : '';
-                
-                if (title.includes(query) || author.includes(query) || commissioned.includes(query)) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-        });
-    }
-
-    // ==========================================
-    // MODAL & TIẾN TRÌNH CẬP NHẬT TRUYỆN TỪ NGUỒN NGOÀI
-    // ==========================================
-    const syncModal = document.getElementById('sync-external-modal');
-    const btnOpenSync = document.getElementById('btn-open-sync-modal');
-    const btnCloseSync = document.getElementById('btn-close-sync-modal');
-    const btnStartSync = document.getElementById('btn-start-sync');
-    const btnSyncBg = document.getElementById('btn-sync-bg');
-    const syncLogBox = document.getElementById('sync-log-box');
-    const syncProgressBar = document.getElementById('sync-progress-bar-fill');
-    const syncPercentText = document.getElementById('sync-percent-text');
-    const syncStatusText = document.getElementById('sync-status-text');
-
-    if (btnOpenSync && syncModal) {
-        btnOpenSync.addEventListener('click', () => {
-            syncModal.style.display = 'flex';
-        });
-    }
-
-    if (btnCloseSync && syncModal) {
-        btnCloseSync.addEventListener('click', () => {
-            syncModal.style.display = 'none';
-        });
-    }
-
-    // Chạy ngầm trong nền
-    if (btnSyncBg) {
-        btnSyncBg.addEventListener('click', async () => {
-            if (!confirm('Hệ thống sẽ chạy quét ngầm toàn bộ truyện có link nguồn trong nền trên máy chủ. Bạn có muốn tiếp tục?')) return;
-            try {
-                btnSyncBg.disabled = true;
-                btnSyncBg.textContent = '⏳ Đang kích hoạt...';
-                const resp = await fetch('/admin/api/sync-all-background', { method: 'POST' });
-                const data = await resp.json();
-                alert(data.message || 'Đã kích hoạt quét trong nền.');
-                if (syncModal) syncModal.style.display = 'none';
-            } catch (err) {
-                alert('Lỗi kích hoạt: ' + err.message);
-            } finally {
-                btnSyncBg.disabled = false;
-                btnSyncBg.textContent = '⚡ Chạy ngầm trong nền';
-            }
-        });
-    }
-
-    function appendSyncLog(msg, color = '#e2e8f0') {
-        if (!syncLogBox) return;
-        const line = document.createElement('div');
-        line.style.color = color;
-        line.style.fontSize = '0.84rem';
-        line.style.lineHeight = '1.45';
-        line.style.marginBottom = '4px';
-        line.innerHTML = `[${new Date().toLocaleTimeString('vi-VN')}] ${msg}`;
-        syncLogBox.appendChild(line);
-        syncLogBox.scrollTop = syncLogBox.scrollHeight;
-    }
-
-    // Bắt đầu cập nhật trực quan
-    if (btnStartSync) {
-        btnStartSync.addEventListener('click', async () => {
-            const mode = document.querySelector('input[name="sync_mode"]:checked')?.value || 'recent';
-            btnStartSync.disabled = true;
-            btnStartSync.innerHTML = '⏳ Đang quét & cập nhật...';
-            syncLogBox.innerHTML = '';
-            syncProgressBar.style.width = '0%';
-            syncPercentText.textContent = '0%';
-            syncStatusText.textContent = 'Đang khởi động tiến trình...';
-
-            let totalNewChapters = 0;
-
-            if (mode === 'recent') {
-                const pages = parseInt(document.getElementById('sync-recent-pages')?.value) || 3;
-                appendSyncLog(`🚀 Bắt đầu quét nhanh ${pages} trang mới nhất từ nguồn ngoài...`, '#60a5fa');
-                syncProgressBar.style.width = '30%';
-                syncPercentText.textContent = '30%';
-                try {
-                    const resp = await fetch('/admin/api/sync-recent-donghentai', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ pages })
-                    });
-                    const resJson = await resp.json();
-                    if (resJson.success) {
-                        syncProgressBar.style.width = '100%';
-                        syncPercentText.textContent = '100%';
-                        appendSyncLog(`✅ ${resJson.message}`, '#10b981');
-                        syncStatusText.textContent = 'Hoàn tất quét nhanh!';
-                        setTimeout(() => alert('🎉 Cập nhật thành công các chương mới nhất từ nguồn ngoài!'), 600);
-                    } else {
-                        throw new Error(resJson.error || 'Lỗi không xác định.');
-                    }
-                } catch (err) {
-                    appendSyncLog(`❌ Lỗi: ${err.message}`, '#ef4444');
-                    syncStatusText.textContent = 'Có lỗi xảy ra.';
-                } finally {
-                    btnStartSync.disabled = false;
-                    btnStartSync.innerHTML = '▶️ Bắt Đầu Cập Nhật';
-                }
-            } else {
-                // Quét từng truyện trong DB
-                appendSyncLog('📡 Đang tải danh sách các truyện có link nguồn từ máy chủ...', '#60a5fa');
-                try {
-                    const listResp = await fetch('/admin/api/sync-stories-list');
-                    const listData = await listResp.json();
-                    if (!listData.success || !listData.stories) {
-                        throw new Error(listData.error || 'Không tải được danh sách truyện.');
-                    }
-                    const stories = listData.stories;
-                    appendSyncLog(`📋 Tìm thấy ${stories.length} bộ truyện có link nguồn. Đang tiến hành quét tuần tự...`, '#a78bfa');
-
-                    for (let i = 0; i < stories.length; i++) {
-                        const s = stories[i];
-                        const progress = Math.round(((i + 1) / stories.length) * 100);
-                        syncProgressBar.style.width = `${progress}%`;
-                        syncPercentText.textContent = `${progress}%`;
-                        syncStatusText.textContent = `Đang quét (${i + 1}/${stories.length}): ${s.title}`;
-                        appendSyncLog(`🔄 [${i + 1}/${stories.length}] Đang kiểm tra: <strong>${s.title}</strong>...`, '#94a3b8');
-
-                        try {
-                            const crawlResp = await fetch(`/admin/api/sync-single-story/${s.id}`, { method: 'POST' });
-                            const crawlData = await crawlResp.json();
-                            if (crawlData.success && crawlData.addedCount > 0) {
-                                totalNewChapters += crawlData.addedCount;
-                                appendSyncLog(`✨ +${crawlData.addedCount} chương mới đã thêm cho "${s.title}"!`, '#10b981');
-                            } else if (crawlData.success) {
-                                appendSyncLog(`✓ Đã là chương mới nhất`, '#64748b');
-                            } else {
-                                appendSyncLog(`⚠️ Lỗi quét "${s.title}": ${crawlData.error || 'Nguồn bận'}`, '#f59e0b');
-                            }
-                        } catch (sErr) {
-                            appendSyncLog(`⚠️ Ngoại lệ "${s.title}": ${sErr.message}`, '#f59e0b');
-                        }
-
-                        // Nghỉ nhẹ 400ms giữa các truyện để tránh nghẽn
-                        await new Promise(r => setTimeout(r, 400));
-                    }
-
-                    appendSyncLog(`🏁 HOÀN TẤT! Tổng cộng đã thêm ${totalNewChapters} chương mới!`, '#10b981');
-                    syncStatusText.textContent = `Hoàn tất! Đã thêm ${totalNewChapters} chương mới.`;
-                    setTimeout(() => alert(`🎉 Quét hoàn tất! Đã cập nhật thành công tổng cộng ${totalNewChapters} chương mới cho các bộ truyện.`), 600);
-                } catch (err) {
-                    appendSyncLog(`❌ Lỗi hệ thống: ${err.message}`, '#ef4444');
-                    syncStatusText.textContent = 'Gặp lỗi trong quá trình quét.';
-                } finally {
-                    btnStartSync.disabled = false;
-                    btnStartSync.innerHTML = '▶️ Bắt Đầu Cập Nhật';
-                }
-            }
-        });
-    }
-
-    // ==========================================
-    // NÚT PHỤC HỒI ẢNH TỪ SUPABASE CŨ SANG MỚI
-    // ==========================================
-    const btnCheckSupabase = document.getElementById('btn-check-supabase-images');
-    if (btnCheckSupabase) {
-        btnCheckSupabase.addEventListener('click', async () => {
-            btnCheckSupabase.disabled = true;
-            btnCheckSupabase.innerHTML = '⏳ Đang kiểm tra Supabase cũ...';
-            try {
-                const resp = await fetch('/admin/api/check-migrate-images', { method: 'POST' });
-                const data = await resp.json();
-                if (data.unlocked) {
-                    alert(`🎉 SUPABASE CŨ ĐÃ MỞ LẠI VÀ DI CHUYỂN THÀNH CÔNG!\n- Bìa truyện đã phục hồi: ${data.migratedStories}\n- Avatar thành viên đã phục hồi: ${data.migratedUsers}\n- Banners: ${data.migratedBanners}\n- Nữ tướng: ${data.migratedHeroes}\nTrang sẽ tải lại ngay để cập nhật ảnh.`);
-                    location.reload();
-                } else {
-                    alert(`ℹ️ THÔNG BÁO TỪ SUPABASE CŨ:\n\n${data.message || 'Supabase cũ hiện vẫn đang hạn chế băng thông (HTTP 402).'}\n\n👉 Bạn yên tâm: Hệ thống đã bật chế độ tự động theo dõi trong nền. Ngay thời khắc Supabase cũ mở khóa, toàn bộ ảnh bìa và avatar sẽ lập tức được tự động kéo về Supabase mới 100%!`);
-                }
-            } catch (err) {
-                alert('Lỗi kiểm tra Supabase: ' + err.message);
-            } finally {
-                btnCheckSupabase.disabled = false;
-                btnCheckSupabase.innerHTML = '🦆 Phục hồi ảnh Supabase cũ';
-            }
-        });
-    }
-</script>
-
 <!-- MODAL CẬP NHẬT TRUYỆN TỰ ĐỘNG TỪ NGUỒN NGOÀI -->
 <div id="sync-external-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(6px); z-index: 99999; justify-content: center; align-items: center; padding: 1rem; box-sizing: border-box;">
-    <div style="background: var(--bg-secondary, #1e293b); border: 1px solid var(--border-color, rgba(255,255,255,0.1)); border-radius: 16px; max-width: 650px; width: 100%; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 60px rgba(0,0,0,0.6);">
+    <div style="background: var(--bg-secondary, #1e293b); border: 1px solid var(--border-color, rgba(255,255,255,0.1)); border-radius: 16px; max-width: 680px; width: 100%; max-height: 92vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 60px rgba(0,0,0,0.6);">
         <!-- Header -->
         <div style="padding: 1.2rem 1.5rem; border-bottom: 1px solid var(--border-color, rgba(255,255,255,0.1)); display: flex; justify-content: space-between; align-items: center;">
             <h3 style="margin: 0; font-size: 1.25rem; display: flex; align-items: center; gap: 0.5rem; color: #fff;">
                 <span>🔄</span> Cập Nhật Chương Mới Tự Động (Link Nguồn Ngoài)
             </h3>
-            <button type="button" id="btn-close-sync-modal" style="background: none; border: none; font-size: 1.5rem; color: #94a3b8; cursor: pointer; line-height: 1;">&times;</button>
+            <button type="button" id="btn-close-sync-modal" onclick="window.closeSyncModal()" style="background: none; border: none; font-size: 1.6rem; color: #94a3b8; cursor: pointer; line-height: 1; padding: 0.2rem 0.5rem;">&times;</button>
         </div>
 
         <!-- Body -->
         <div style="padding: 1.5rem; overflow-y: auto; flex: 1;">
             <p style="color: var(--text-secondary, #94a3b8); font-size: 0.9rem; margin: 0 0 1.2rem 0; line-height: 1.5;">
-                Hệ thống sẽ tự động đối chiếu các link nguồn (DongHentai, VietManhwa, TruyenMoiSS, NetTruyen...) để tìm các chương mới nhất chưa có trong cơ sở dữ liệu và tải về cho độc giả.
+                Hệ thống sẽ tự động quét các link nguồn ngoài (VietManhwa, DongHentai, TruyenMoiSS, NetTruyen...) để tìm các chương mới nhất chưa có trong thư viện và thêm vào hệ thống cho độc giả.
             </p>
 
             <!-- Tùy chọn chế độ quét -->
-            <div style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 1.2rem; margin-bottom: 1.5rem;">
+            <div style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 1.2rem; margin-bottom: 1.2rem;">
                 <label style="display: flex; align-items: flex-start; gap: 0.8rem; cursor: pointer; margin-bottom: 1rem;">
                     <input type="radio" name="sync_mode" value="recent" checked style="margin-top: 3px; accent-color: #10b981;">
                     <div>
-                        <strong style="color: #fff; font-size: 0.95rem;">⚡ Chế độ 1: Quét nhanh truyện mới ra chương (Khuyên dùng)</strong>
+                        <strong style="color: #fff; font-size: 0.95rem;">⚡ Chế độ 1: Quét nhanh các truyện vừa ra chương mới (Khuyên dùng)</strong>
                         <div style="color: #94a3b8; font-size: 0.85rem; margin-top: 0.2rem;">
                             Quét 
                             <input type="number" id="sync-recent-pages" value="3" min="1" max="10" style="width: 45px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 4px; padding: 2px 5px; text-align: center;" onclick="event.stopPropagation()">
-                            trang cập nhật mới nhất từ nguồn ngoài. Cực nhanh, lấy đúng các truyện vừa có chap mới.
+                            trang cập nhật mới nhất từ các nguồn ngoài (VietManhwa & DongHentai). Lấy các chap vừa xuất bản.
                         </div>
                     </div>
                 </label>
@@ -347,9 +144,9 @@
                 <label style="display: flex; align-items: flex-start; gap: 0.8rem; cursor: pointer;">
                     <input type="radio" name="sync_mode" value="all" style="margin-top: 3px; accent-color: #10b981;">
                     <div>
-                        <strong style="color: #fff; font-size: 0.95rem;">🌐 Chế độ 2: Quét toàn diện tất cả các truyện có link nguồn</strong>
+                        <strong style="color: #fff; font-size: 0.95rem;">🌐 Chế độ 2: Quét toàn diện tất cả các truyện có link nguồn trong DB</strong>
                         <div style="color: #94a3b8; font-size: 0.85rem; margin-top: 0.2rem;">
-                            Rà soát tuần tự từng bộ truyện trong 75+ bộ có link nguồn để đảm bảo không bỏ sót bất kỳ chương nào.
+                            Rà soát tuần tự từng bộ truyện trong cơ sở dữ liệu để tìm chương bị thiếu và cập nhật đầy đủ.
                         </div>
                     </div>
                 </label>
@@ -366,9 +163,9 @@
                 </div>
             </div>
 
-            <!-- Khung Log tiến trình -->
-            <div id="sync-log-box" style="background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 0.8rem; height: 160px; overflow-y: auto; font-family: monospace; box-sizing: border-box;">
-                <div style="color: #64748b; font-size: 0.82rem;">Bấm "Bắt Đầu Cập Nhật" để theo dõi tiến trình trực tiếp tại đây...</div>
+            <!-- Khung Log tiến trình & hiển thị lỗi chi tiết -->
+            <div id="sync-log-box" style="background: rgba(0,0,0,0.55); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 0.85rem; height: 180px; overflow-y: auto; font-family: 'Consolas', 'Courier New', monospace; box-sizing: border-box;">
+                <div style="color: #64748b; font-size: 0.82rem;">Bấm "▶️ Bắt Đầu Cập Nhật" để theo dõi tiến trình và lỗi (nếu có) trực tiếp tại đây...</div>
             </div>
         </div>
 
@@ -378,7 +175,7 @@
                 ⚡ Chạy ngầm trong nền
             </button>
             <div style="display: flex; gap: 0.8rem;">
-                <button type="button" class="btn btn-secondary" onclick="document.getElementById('sync-external-modal').style.display='none'" style="font-size: 0.85rem; padding: 0.5rem 1rem;">Đóng</button>
+                <button type="button" class="btn btn-secondary" onclick="window.closeSyncModal()" style="font-size: 0.85rem; padding: 0.5rem 1rem;">Đóng</button>
                 <button type="button" id="btn-start-sync" class="btn" style="background: linear-gradient(135deg, #059669, #10b981); color: #fff; font-weight: 600; font-size: 0.85rem; padding: 0.5rem 1.2rem; border: none; cursor: pointer; box-shadow: 0 4px 12px rgba(16,185,129,0.3);">
                     ▶️ Bắt Đầu Cập Nhật
                 </button>
@@ -386,6 +183,257 @@
         </div>
     </div>
 </div>
+
+<script>
+    // Hàm mở / đóng modal cập nhật nguồn ngoài
+    window.openSyncModal = function() {
+        const modal = document.getElementById('sync-external-modal');
+        if (modal) modal.style.display = 'flex';
+    };
+
+    window.closeSyncModal = function() {
+        const modal = document.getElementById('sync-external-modal');
+        if (modal) modal.style.display = 'none';
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // 1. Tìm kiếm truyện trong bảng quản trị
+        const searchInput = document.getElementById('admin-story-search');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                const query = this.value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+                const rows = document.querySelectorAll('.admin-table tbody tr');
+                
+                rows.forEach(row => {
+                    const titleCell = row.querySelector('td:nth-child(2)');
+                    const authorCell = row.querySelector('td:nth-child(3)');
+                    const commissionedCell = row.querySelector('td:nth-child(4)');
+                    
+                    const title = titleCell ? titleCell.textContent.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") : '';
+                    const author = authorCell ? authorCell.textContent.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") : '';
+                    const commissioned = commissionedCell ? commissionedCell.textContent.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") : '';
+                    
+                    if (title.includes(query) || author.includes(query) || commissioned.includes(query)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            });
+        }
+
+        // ==========================================
+        // TIẾN TRÌNH CẬP NHẬT TRUYỆN TỪ NGUỒN NGOÀI
+        // ==========================================
+        const syncModal = document.getElementById('sync-external-modal');
+        const btnOpenSync = document.getElementById('btn-open-sync-modal');
+        const btnCloseSync = document.getElementById('btn-close-sync-modal');
+        const btnStartSync = document.getElementById('btn-start-sync');
+        const btnSyncBg = document.getElementById('btn-sync-bg');
+        const syncLogBox = document.getElementById('sync-log-box');
+        const syncProgressBar = document.getElementById('sync-progress-bar-fill');
+        const syncPercentText = document.getElementById('sync-percent-text');
+        const syncStatusText = document.getElementById('sync-status-text');
+
+        if (btnOpenSync) {
+            btnOpenSync.addEventListener('click', () => {
+                window.openSyncModal();
+            });
+        }
+
+        if (btnCloseSync) {
+            btnCloseSync.addEventListener('click', () => {
+                window.closeSyncModal();
+            });
+        }
+
+        function appendSyncLog(msg, color = '#e2e8f0', isError = false) {
+            if (!syncLogBox) return;
+            const line = document.createElement('div');
+            line.style.color = color;
+            line.style.fontSize = '0.84rem';
+            line.style.lineHeight = '1.45';
+            line.style.marginBottom = '4px';
+            if (isError) {
+                line.style.background = 'rgba(239, 68, 68, 0.15)';
+                line.style.borderLeft = '3px solid #ef4444';
+                line.style.padding = '3px 6px';
+                line.style.borderRadius = '3px';
+            }
+            line.innerHTML = `[${new Date().toLocaleTimeString('vi-VN')}] ${msg}`;
+            syncLogBox.appendChild(line);
+            syncLogBox.scrollTop = syncLogBox.scrollHeight;
+        }
+
+        // Chạy ngầm trong nền
+        if (btnSyncBg) {
+            btnSyncBg.addEventListener('click', async () => {
+                if (!confirm('Hệ thống sẽ chạy quét ngầm toàn bộ truyện có link nguồn trong nền trên máy chủ. Bạn có muốn tiếp tục?')) return;
+                try {
+                    btnSyncBg.disabled = true;
+                    btnSyncBg.textContent = '⏳ Đang kích hoạt...';
+                    const resp = await fetch('/admin/api/sync-all-background', { method: 'POST' });
+                    const data = await resp.json();
+                    if (!data.success) throw new Error(data.error || 'Lỗi kích hoạt chạy ngầm.');
+                    alert(data.message || 'Đã kích hoạt quét trong nền.');
+                    window.closeSyncModal();
+                } catch (err) {
+                    appendSyncLog(`❌ Lỗi kích hoạt chạy ngầm: ${err.message}`, '#ef4444', true);
+                    alert('Lỗi kích hoạt: ' + err.message);
+                } finally {
+                    btnSyncBg.disabled = false;
+                    btnSyncBg.textContent = '⚡ Chạy ngầm trong nền';
+                }
+            });
+        }
+
+        // Bắt đầu cập nhật trực quan với hiển thị lỗi chi tiết
+        if (btnStartSync) {
+            btnStartSync.addEventListener('click', async () => {
+                const mode = document.querySelector('input[name="sync_mode"]:checked')?.value || 'recent';
+                btnStartSync.disabled = true;
+                btnStartSync.innerHTML = '⏳ Đang quét & cập nhật...';
+                syncLogBox.innerHTML = '';
+                syncProgressBar.style.width = '0%';
+                syncPercentText.textContent = '0%';
+                syncStatusText.textContent = 'Đang khởi động tiến trình...';
+
+                let totalNewChapters = 0;
+
+                if (mode === 'recent') {
+                    const pages = parseInt(document.getElementById('sync-recent-pages')?.value) || 3;
+                    appendSyncLog(`🚀 Bắt đầu quét nhanh ${pages} trang mới nhất từ nguồn ngoài...`, '#60a5fa');
+                    syncProgressBar.style.width = '25%';
+                    syncPercentText.textContent = '25%';
+                    syncStatusText.textContent = `Đang kết nối tới các nguồn ngoài (quét ${pages} trang)...`;
+
+                    try {
+                        const resp = await fetch('/admin/api/sync-recent-donghentai', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ pages })
+                        });
+                        
+                        let resJson;
+                        try {
+                            resJson = await resp.json();
+                        } catch (parseErr) {
+                            throw new Error(`Máy chủ phản hồi lỗi không đúng định dạng (HTTP ${resp.status}): ${resp.statusText}`);
+                        }
+
+                        if (resJson.success) {
+                            syncProgressBar.style.width = '100%';
+                            syncPercentText.textContent = '100%';
+                            appendSyncLog(`✅ ${resJson.message}`, '#10b981');
+                            if (resJson.notes && resJson.notes.length > 0) {
+                                resJson.notes.forEach(note => {
+                                    appendSyncLog(`ℹ️ ${note}`, '#38bdf8');
+                                });
+                            }
+                            syncStatusText.innerHTML = `<span style="color: #10b981; font-weight: 600;">✓ Hoàn tất! +${resJson.addedCount || 0} chương mới.</span>`;
+                            setTimeout(() => {
+                                alert(`🎉 Cập nhật thành công!\n${resJson.message}`);
+                            }, 500);
+                        } else {
+                            throw new Error(resJson.error || 'Lỗi không xác định từ máy chủ.');
+                        }
+                    } catch (err) {
+                        appendSyncLog(`❌ [LỖI CẬP NHẬT]: ${err.message}`, '#ef4444', true);
+                        syncStatusText.innerHTML = `<span style="color: #ef4444; font-weight: 600;">❌ Có lỗi: ${err.message}</span>`;
+                        alert(`⚠️ Có lỗi khi cập nhật link ngoài:\n\n${err.message}\n\n(Lỗi đã được ghi lại chi tiết vào khung log màu đen)`);
+                    } finally {
+                        btnStartSync.disabled = false;
+                        btnStartSync.innerHTML = '▶️ Bắt Đầu Cập Nhật';
+                    }
+                } else {
+                    // Chế độ 2: Quét tuần tự từng truyện trong DB
+                    appendSyncLog('📡 Đang tải danh sách các truyện có link nguồn từ máy chủ...', '#60a5fa');
+                    syncStatusText.textContent = 'Đang nạp danh sách truyện...';
+
+                    try {
+                        const listResp = await fetch('/admin/api/sync-stories-list');
+                        let listData;
+                        try {
+                            listData = await listResp.json();
+                        } catch (pErr) {
+                            throw new Error(`Không thể nạp danh sách truyện (HTTP ${listResp.status}): ${listResp.statusText}`);
+                        }
+
+                        if (!listData.success || !listData.stories) {
+                            throw new Error(listData.error || 'Không tải được danh sách truyện.');
+                        }
+                        const stories = listData.stories;
+                        appendSyncLog(`📋 Tìm thấy ${stories.length} bộ truyện có link nguồn. Đang tiến hành quét tuần tự...`, '#a78bfa');
+
+                        for (let i = 0; i < stories.length; i++) {
+                            const s = stories[i];
+                            const progress = Math.round(((i + 1) / stories.length) * 100);
+                            syncProgressBar.style.width = `${progress}%`;
+                            syncPercentText.textContent = `${progress}%`;
+                            syncStatusText.textContent = `Đang quét (${i + 1}/${stories.length}): ${s.title}`;
+                            appendSyncLog(`🔄 [${i + 1}/${stories.length}] Đang kiểm tra: <strong>${s.title}</strong>...`, '#94a3b8');
+
+                            try {
+                                const crawlResp = await fetch(`/admin/api/sync-single-story/${s.id}`, { method: 'POST' });
+                                const crawlData = await crawlResp.json();
+                                if (crawlData.success && crawlData.addedCount > 0) {
+                                    totalNewChapters += crawlData.addedCount;
+                                    appendSyncLog(`✨ +${crawlData.addedCount} chương mới đã thêm cho "${s.title}"!`, '#10b981');
+                                } else if (crawlData.success) {
+                                    appendSyncLog(`✓ Đã là chương mới nhất`, '#64748b');
+                                } else {
+                                    appendSyncLog(`⚠️ Lỗi quét "${s.title}": ${crawlData.error || 'Nguồn bận'}${crawlData.details ? ' (' + crawlData.details + ')' : ''}`, '#f59e0b', true);
+                                }
+                            } catch (sErr) {
+                                appendSyncLog(`⚠️ Lỗi kết nối "${s.title}": ${sErr.message}`, '#f59e0b', true);
+                            }
+
+                            // Nghỉ nhẹ 350ms giữa các truyện để tránh nghẽn mạng
+                            await new Promise(r => setTimeout(r, 350));
+                        }
+
+                        appendSyncLog(`🏁 HOÀN TẤT! Tổng cộng đã thêm ${totalNewChapters} chương mới!`, '#10b981');
+                        syncStatusText.innerHTML = `<span style="color: #10b981; font-weight: 600;">✓ Hoàn tất! Đã thêm ${totalNewChapters} chương mới.</span>`;
+                        setTimeout(() => alert(`🎉 Quét hoàn tất!\nĐã cập nhật thành công tổng cộng ${totalNewChapters} chương mới cho các bộ truyện.`), 500);
+                    } catch (err) {
+                        appendSyncLog(`❌ [LỖI HỆ THỐNG]: ${err.message}`, '#ef4444', true);
+                        syncStatusText.innerHTML = `<span style="color: #ef4444; font-weight: 600;">❌ Thất bại: ${err.message}</span>`;
+                        alert(`⚠️ Có lỗi trong quá trình quét:\n\n${err.message}`);
+                    } finally {
+                        btnStartSync.disabled = false;
+                        btnStartSync.innerHTML = '▶️ Bắt Đầu Cập Nhật';
+                    }
+                }
+            });
+        }
+
+        // ==========================================
+        // NÚT PHỤC HỒI ẢNH TỪ SUPABASE CŨ SANG MỚI
+        // ==========================================
+        const btnCheckSupabase = document.getElementById('btn-check-supabase-images');
+        if (btnCheckSupabase) {
+            btnCheckSupabase.addEventListener('click', async () => {
+                btnCheckSupabase.disabled = true;
+                btnCheckSupabase.innerHTML = '⏳ Đang kiểm tra Supabase cũ...';
+                try {
+                    const resp = await fetch('/admin/api/check-migrate-images', { method: 'POST' });
+                    const data = await resp.json();
+                    if (data.unlocked) {
+                        alert(`🎉 SUPABASE CŨ ĐÃ MỞ LẠI VÀ DI CHUYỂN THÀNH CÔNG!\n- Bìa truyện đã phục hồi: ${data.migratedStories}\n- Avatar thành viên đã phục hồi: ${data.migratedUsers}\n- Banners: ${data.migratedBanners}\n- Nữ tướng: ${data.migratedHeroes}\nTrang sẽ tải lại ngay để cập nhật ảnh.`);
+                        location.reload();
+                    } else {
+                        alert(`ℹ️ THÔNG BÁO TỪ SUPABASE CŨ:\n\n${data.message || 'Supabase cũ hiện vẫn đang hạn chế băng thông (HTTP 402).'}\n\n👉 Bạn yên tâm: Hệ thống đã bật chế độ tự động theo dõi trong nền. Ngay thời khắc Supabase cũ mở khóa, toàn bộ ảnh bìa và avatar sẽ lập tức được tự động kéo về Supabase mới 100%!`);
+                    }
+                } catch (err) {
+                    alert('Lỗi kiểm tra Supabase: ' + err.message);
+                } finally {
+                    btnCheckSupabase.disabled = false;
+                    btnCheckSupabase.innerHTML = '🦆 Phục hồi ảnh Supabase cũ';
+                }
+            });
+        }
+    });
+</script>
 
 <%- include('../partials/footer') %>
 

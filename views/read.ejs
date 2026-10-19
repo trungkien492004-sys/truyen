@@ -955,7 +955,9 @@
 
     // Hàm nhận EXP khi đọc hoặc nghe xong chương truyện
     window.claimReadingReward = async function() {
-        if (window._expRewardClaimed) return;
+        if (window._isClaimingReward || window._expRewardClaimed) return;
+        window._isClaimingReward = true;
+
         const textSpan = document.getElementById('progress-text');
         const dot = document.getElementById('progress-dot');
         const widget = document.getElementById('read-progress-widget');
@@ -968,6 +970,7 @@
             const resp = await fetch('/chapter/read-confirm', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
                 body: JSON.stringify({ story_id: storyId, chapter_number: chapterNumber })
             });
             const data = await resp.json();
@@ -999,21 +1002,34 @@
                     }
                 }
             } else {
-                if (textSpan) textSpan.textContent = '❌ Lỗi: ' + data.error;
-                if (dot) {
-                    dot.style.background = '#ef4444';
-                    dot.style.animation = 'none';
+                // Nếu chỉ là thông báo cần đọc thêm giây (chưa đủ thời gian)
+                const isWaiting = data.error && (data.error.includes('đọc thêm') || data.error.includes('bắt đầu'));
+                if (isWaiting) {
+                    if (textSpan) textSpan.textContent = '⏳ ' + data.error;
+                    if (dot) {
+                        dot.style.background = '#f59e0b';
+                        dot.style.animation = 'pulse-yellow 1.5s infinite';
+                    }
+                } else {
+                    if (textSpan) textSpan.textContent = '❌ Lỗi: ' + data.error;
+                    if (dot) {
+                        dot.style.background = '#ef4444';
+                        dot.style.animation = 'none';
+                    }
                 }
             }
         } catch (err) {
             console.error('Lỗi khi gửi xác nhận đọc chương:', err);
-            if (textSpan) textSpan.textContent = '❌ Lỗi hệ thống ghi nhận EXP.';
+            if (textSpan) textSpan.textContent = '⚠️ Đang kết nối lại máy chủ...';
             if (dot) {
-                dot.style.background = '#ef4444';
+                dot.style.background = '#f59e0b';
                 dot.style.animation = 'none';
             }
+        } finally {
+            window._isClaimingReward = false;
         }
     };
+
 
     function showRankUpBanner(fromRank, toRank) {
         const overlay = document.createElement('div');

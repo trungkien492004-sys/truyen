@@ -1515,13 +1515,14 @@ router.get('/api/sync-stories-list', isAdmin, async (req, res) => {
   try {
     const { data: stories, error } = await supabase
       .from('stories')
-      .select('id, title, source_url')
+      .select('id, title, source_url, story_type')
       .not('source_url', 'is', null)
       .order('id', { ascending: true });
     if (error) throw error;
     return res.json({ success: true, stories: stories || [] });
   } catch (err) {
-    return res.status(500).json({ success: false, error: err.message });
+    console.error('[SYNC-API] Error fetching stories list:', err);
+    return res.status(500).json({ success: false, error: err.message || 'Lỗi nạp danh sách truyện.' });
   }
 });
 
@@ -1543,19 +1544,69 @@ router.post('/api/sync-single-story/:id', isAdmin, async (req, res) => {
       message: result.message || 'Thành công'
     });
   } catch (err) {
-    return res.status(500).json({ success: false, error: err.message });
+    console.error(`[SYNC-API] Error crawling story ID ${storyId}:`, err);
+    return res.json({ 
+      success: false, 
+      error: err.message || 'Lỗi quét nguồn truyện.',
+      details: err.stack ? err.stack.split('\n').slice(0, 3).join(' | ') : null
+    });
   }
 });
 
-// API: Quét nhanh các trang mới nhất trên nguồn ngoài
+// API: Quét nhanh các trang mới nhất trên nguồn ngoài (VietManhwa & DongHentai)
 router.post('/api/sync-recent-donghentai', isAdmin, async (req, res) => {
   try {
-    const { syncLatestDongHentai } = require('../services/donghentaiCrawler');
     const pages = parseInt(req.body.pages) || 3;
-    await syncLatestDongHentai(pages);
-    return res.json({ success: true, message: `Đã quét và cập nhật ${pages} trang mới nhất từ nguồn ngoài!` });
+    let vmResult = { totalUpdatedStories: 0, totalNewChapters: 0 };
+    let dhResult = { updatedStoriesCount: 0, newChaptersCount: 0 };
+    let notes = [];
+
+    // 1. Quét VietManhwa (nguồn hoạt động mạnh mẽ)
+    try {
+      const { syncLatestVietManhwa } = require('../services/vietmanhwaCrawler');
+      vmResult = await syncLatestVietManhwa(pages);
+      if (vmResult.totalNewChapters > 0) {
+        notes.push(`VietManhwa: +${vmResult.totalNewChapters} chap mới`);
+      }
+    } catch (vmErr) {
+      console.error('[SYNC-RECENT] VietManhwa error:', vmErr.message);
+      notes.push(`VietManhwa tạm nghẽn: ${vmErr.message}`);
+    }
+
+    // 2. Quét DongHentai (nếu máy chủ damconuong.cx mở)
+    try {
+      const { syncLatestDongHentai } = require('../services/donghentaiCrawler');
+      dhResult = await syncLatestDongHentai(pages);
+      if (dhResult.newChaptersCount > 0) {
+        notes.push(`DongHentai: +${dhResult.newChaptersCount} chap mới`);
+      }
+    } catch (dhErr) {
+      console.warn('[SYNC-RECENT] DongHentai server status:', dhErr.message);
+      notes.push(`DongHentai (damconuong.cx) hiện chưa phản hồi`);
+    }
+
+    const totalNew = (vmResult.totalNewChapters || 0) + (dhResult.newChaptersCount || 0);
+    const totalStories = (vmResult.totalUpdatedStories || 0) + (dhResult.updatedStoriesCount || 0);
+
+    let summaryMsg = `Đã quét ${pages} trang mới nhất! Đã thêm mới ${totalNew} chương (${totalStories} bộ truyện).`;
+    if (notes.length > 0) {
+      summaryMsg += ` [Chi tiết: ${notes.join('; ')}]`;
+    }
+
+    return res.json({ 
+      success: true, 
+      addedCount: totalNew,
+      updatedStories: totalStories,
+      message: summaryMsg,
+      notes: notes
+    });
   } catch (err) {
-    return res.status(500).json({ success: false, error: err.message });
+    console.error('[SYNC-RECENT] Fatal error:', err);
+    return res.status(500).json({ 
+      success: false, 
+      error: err.message || 'Lỗi khi quét các trang mới.',
+      stack: err.stack ? err.stack.split('\n').slice(0, 3).join('\n') : null
+    });
   }
 });
 
