@@ -16,6 +16,10 @@
         window.addEventListener('error', function(e) {
             const el = e.target;
             if (el && el.tagName === 'IMG') {
+                // Không bao giờ thay ảnh truyện tranh trong trang đọc thành ảnh bìa sách
+                if (el.closest && el.closest('#chapter-content')) {
+                    return;
+                }
                 if (el.dataset.fallbackApplied) return;
                 el.dataset.fallbackApplied = 'true';
                 const isAvatar = el.classList.contains('avatar-img') || 

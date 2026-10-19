@@ -1413,8 +1413,8 @@ router.get('/story/:story_id/chapter/:chapter_number', async (req, res) => {
   const chapterNumber = parseFloat(req.params.chapter_number);
   
   try {
-    // 1. Lấy thông tin truyện
-    const { data: story } = await supabase.from('stories').select('id, title').eq('id', storyId).single();
+    // 1. Lấy thông tin truyện (kèm story_type để phân biệt truyện tranh hay truyện chữ)
+    const { data: story } = await supabase.from('stories').select('id, title, story_type').eq('id', storyId).single();
     if (!story) return res.status(404).send('Không tìm thấy truyện.');
 
     // 2. Lấy nội dung chương
@@ -1547,8 +1547,11 @@ router.get('/story/:story_id/chapter/:chapter_number', async (req, res) => {
     }
 
     // Tối ưu tốc độ tải ảnh truyện tranh:
-    // 1. Xóa bỏ loading="lazy" (nếu có từ crawler) để trình duyệt tải song song toàn bộ ảnh ngay khi mở trang
-    // 2. Thêm loading="eager" & decoding="async" & fetchpriority="high" cho các ảnh đầu tiên
+    // 1. Khử triệt để ký tự xuống dòng thừa \r \n ở cuối URL ảnh (vd: .jpg\r)
+    // 2. Xóa bỏ các div chứa ảnh rác tương đối (/wp-content/uploads/...)
+    // 3. Thêm referrerpolicy="no-referrer" để chống CDN chặn Referer
+    // 4. Xóa bỏ loading="lazy" (nếu có từ crawler) để trình duyệt tải song song toàn bộ ảnh ngay khi mở trang
+    // 5. Thêm loading="eager" & decoding="async" & fetchpriority="high" cho các ảnh đầu tiên
     if (chapter && chapter.content) {
       // Làm sạch khoảng trắng/xuống dòng thừa giữa các thẻ HTML để tránh lỗi cách 2 dòng khi hiển thị
       if (/<p\b|<div\b/i.test(chapter.content)) {
@@ -1557,14 +1560,20 @@ router.get('/story/:story_id/chapter/:chapter_number', async (req, res) => {
           .replace(/[\r\n]+\s*(<p\b|<div\b)/gi, '$1');
       }
 
+      // Khử ký tự xuống dòng thừa \r \n ở cuối URL ảnh (lỗi crawler Windows)
+      chapter.content = chapter.content.replace(/src="([^">]+)[\r\n]+"/gi, 'src="$1"');
+
+      // Xóa các div chứa ảnh rác tương đối từ HentaiVN (/wp-content/uploads/...)
+      chapter.content = chapter.content.replace(/<div[^>]*>\s*<img[^>]*src="\/wp-content\/[^"]*"[^>]*>\s*<\/div>/gi, '');
+
       chapter.content = chapter.content.replace(/\s*loading=["']?lazy["']?/gi, '');
       let imgIdx = 0;
       chapter.content = chapter.content.replace(/<img\b/gi, () => {
         imgIdx++;
         if (imgIdx <= 5) {
-          return '<img fetchpriority="high" loading="eager" decoding="async"';
+          return '<img fetchpriority="high" loading="eager" decoding="async" referrerpolicy="no-referrer"';
         }
-        return '<img loading="eager" decoding="async"';
+        return '<img loading="eager" decoding="async" referrerpolicy="no-referrer"';
       });
     }
 

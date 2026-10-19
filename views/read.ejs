@@ -1,6 +1,8 @@
 <%- include('partials/header') %>
 
-<div class="read-container <%= (typeof story !== 'undefined' && story && story.story_type === 'comic') ? 'read-container--comic' : '' %>">
+<% const isComic = typeof story !== 'undefined' && story && story.story_type === 'comic'; %>
+
+<div class="read-container <%= isComic ? 'read-container--comic' : '' %>">
     <div style="margin-bottom: 2rem;">
         <a href="/story/<%= story.id %>" style="color: var(--text-secondary); font-size: 0.9rem;">&larr; Quay lại trang chi tiết truyện</a>
     </div>
@@ -70,7 +72,7 @@
         <% } %>
     </div>
 
-    <% if (typeof story === 'undefined' || !story || story.story_type !== 'comic') { %>
+    <% if (!isComic) { %>
     <!-- TRÌNH PHÁT AUDIO TRUYỆN AI (TEXT-TO-SPEECH TOÀN BỘ TRUYỆN CHỮ) -->
     <div class="audio-player-card" id="ai-audio-player">
         <div class="audio-player-header">
@@ -1041,8 +1043,9 @@
     <% } %>
 
     /* ============================================================
-       TRÌNH ĐIỀU KHIỂN GIỌNG ĐỌC AUDIO AI (WEB SPEECH API)
+       TRÌNH ĐIỀU KHIỂN GIỌNG ĐỌC AUDIO AI (WEB SPEECH API - CHỈ CHO TRUYỆN CHỮ)
        ============================================================ */
+    <% if (!isComic) { %>
     (function initWebSpeechAudio() {
         const audioCard = document.getElementById('ai-audio-player');
         if (!audioCard) return;
@@ -1073,7 +1076,7 @@
         // Phân tách đoạn văn để đọc tuần tự
         function initParagraphs() {
             const contentEl = document.getElementById('chapter-content');
-            if (!contentEl) return;
+            if (!contentEl || contentEl.querySelector('img')) return;
 
             let pEls = contentEl.querySelectorAll('p');
             if (pEls.length === 0) {
@@ -1445,6 +1448,7 @@
             }, 800);
         }
     })();
+    <% } %>
 </script>
 
 <%- include('partials/footer') %>
