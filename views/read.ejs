@@ -1495,6 +1495,40 @@
         }
     })();
     <% } %>
+
+    <% if (isComic) { %>
+    // Tự động thử lại ảnh truyện tranh qua proxy máy chủ nếu CDN nguồn chặn 403
+    (function initComicImageErrorFallback() {
+        const contentEl = document.getElementById('chapter-content');
+        if (!contentEl) return;
+        
+        contentEl.addEventListener('error', function(e) {
+            const img = e.target;
+            if (img && img.tagName === 'IMG') {
+                if (img.dataset.proxyRetried) {
+                    img.style.display = 'none';
+                    if (!img.nextElementSibling || !img.nextElementSibling.classList.contains('comic-img-retry-wrap')) {
+                        const wrap = document.createElement('div');
+                        wrap.className = 'comic-img-retry-wrap';
+                        wrap.style.cssText = 'margin: 1.5rem auto; padding: 1.2rem; background: rgba(239, 68, 68, 0.1); border: 1px dashed rgba(239, 68, 68, 0.4); border-radius: 8px; text-align: center; max-width: 500px; color: #f87171; font-size: 0.9rem;';
+                        wrap.innerHTML = `⚠️ <span>Ảnh từ nguồn tạm thời không phản hồi.</span> <button type="button" style="margin-left: 8px; padding: 4px 12px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">Thử lại</button>`;
+                        wrap.querySelector('button').onclick = function() {
+                            wrap.remove();
+                            img.style.display = 'block';
+                            img.src = (img.dataset.originalSrc || img.src) + ((img.dataset.originalSrc || img.src).includes('?') ? '&' : '?') + 't=' + Date.now();
+                        };
+                        img.parentNode.insertBefore(wrap, img.nextSibling);
+                    }
+                    return;
+                }
+                img.dataset.proxyRetried = 'true';
+                img.dataset.originalSrc = img.src;
+                // Thử nạp lại qua endpoint proxy của máy chủ
+                img.src = '/api/proxy-image?url=' + encodeURIComponent(img.src);
+            }
+        }, true);
+    })();
+    <% } %>
 </script>
 
 <%- include('partials/footer') %>

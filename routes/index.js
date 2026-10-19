@@ -1560,10 +1560,11 @@ router.get('/story/:story_id/chapter/:chapter_number', async (req, res) => {
           .replace(/[\r\n]+\s*(<p\b|<div\b)/gi, '$1');
       }
 
-      // Khử ký tự xuống dòng thừa \r \n ở cuối URL ảnh (lỗi crawler Windows)
-      chapter.content = chapter.content.replace(/src="([^">]+)[\r\n]+"/gi, 'src="$1"');
+      // Khử ký tự xuống dòng thừa \r \n hoặc khoảng trắng ở cuối URL ảnh (lỗi crawler Windows)
+      chapter.content = chapter.content.replace(/src=["']([^"'>\r\n\s]+)[\r\n\s]*["']/gi, 'src="$1"');
 
-      // Xóa các div chứa ảnh rác tương đối từ HentaiVN (/wp-content/uploads/...)
+      // Xóa các ảnh rác đường dẫn tương đối (/wp-content/...) gây lỗi 404
+      chapter.content = chapter.content.replace(/<img[^>]*src=["']\/wp-content\/[^"']*["'][^>]*>/gi, '');
       chapter.content = chapter.content.replace(/<div[^>]*>\s*<img[^>]*src="\/wp-content\/[^"]*"[^>]*>\s*<\/div>/gi, '');
 
       chapter.content = chapter.content.replace(/\s*loading=["']?lazy["']?/gi, '');
@@ -1571,9 +1572,9 @@ router.get('/story/:story_id/chapter/:chapter_number', async (req, res) => {
       chapter.content = chapter.content.replace(/<img\b/gi, () => {
         imgIdx++;
         if (imgIdx <= 5) {
-          return '<img fetchpriority="high" loading="eager" decoding="async" referrerpolicy="no-referrer"';
+          return '<img fetchpriority="high" loading="eager" decoding="async"';
         }
-        return '<img loading="eager" decoding="async" referrerpolicy="no-referrer"';
+        return '<img loading="eager" decoding="async"';
       });
     }
 
