@@ -1498,7 +1498,18 @@ router.post('/story/sync-source-chunk/:id', async (req, res) => {
         resetStoryTypesCache();
       } catch(e) {}
     }
-    
+
+    return res.json({
+      success: true,
+      addedCount: result.newChaptersCount,
+      hasMore: result.newChaptersCount > 0
+    });
+  } catch (err) {
+    console.error('Lỗi cào theo phân đoạn:', err);
+    return res.status(500).json({ success: false, error: err.message || 'Lỗi hệ thống.' });
+  }
+});
+
 // API: Lấy danh sách các bộ truyện có link nguồn bên ngoài để đồng bộ
 router.get('/api/sync-stories-list', isAdmin, async (req, res) => {
   try {
