@@ -179,4 +179,18 @@ router.get('/sync-all-sources', async (req, res) => {
     }
 });
 
+// Vercel Cron / Local Endpoint: /api/cron/check-old-supabase-migration
+// Tự động kiểm tra và ngay khi Supabase cũ mở khóa băng thông, lập tức kéo toàn bộ ảnh về Supabase mới
+router.get('/check-old-supabase-migration', async (req, res) => {
+    try {
+        const { runAutoMigration } = require('../services/supabaseMigration');
+        const result = await runAutoMigration();
+        return res.status(200).json(result);
+    } catch (error) {
+        console.error('Error in check-old-supabase-migration cron:', error);
+        return res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 module.exports = router;
+

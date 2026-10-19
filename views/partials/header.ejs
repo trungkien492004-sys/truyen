@@ -9,7 +9,7 @@
     <link rel="dns-prefetch" href="//dcnvn2.mbpro.vip">
     <link rel="preconnect" href="https://dcnvn2.mbpro.vip" crossorigin>
     <title><%= title %></title>
-    <link rel="stylesheet" href="/css/style.css?v=18">
+    <link rel="stylesheet" href="/css/style.css?v=19">
     <link rel="stylesheet" href="/css/mmorpg.css?v=17">
     <script>
         // Bắt lỗi ảnh toàn hệ thống ngay ở capture phase (trước khi DOMContentLoaded)
@@ -23,10 +23,12 @@
                 if (el.dataset.fallbackApplied) return;
                 el.dataset.fallbackApplied = 'true';
                 const isAvatar = el.classList.contains('avatar-img') || 
+                                 el.classList.contains('avatar-zoomable') ||
+                                 el.classList.contains('user-avatar') ||
                                  el.classList.contains('rankup-row-avatar') || 
-                                 el.alt === 'avatar' || 
+                                 (el.alt && el.alt.toLowerCase().includes('avatar')) || 
                                  (el.src && el.src.includes('avatar'));
-                el.src = isAvatar ? '/css/default-avatar.png' : '/css/default-cover.jpg';
+                el.src = isAvatar ? '/css/silly_duck.png' : '/css/default-cover.jpg';
             }
         }, true);
     </script>
@@ -93,4 +95,4 @@
             }
         });
     </script>
-    <main <%- (typeof story !== 'undefined' && story && story.story_type === 'comic') ? 'class="comic-main"' : '' %>>
+    <main>

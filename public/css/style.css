@@ -82,7 +82,7 @@ header {
 }
 
 .nav-container {
-    max-width: 1200px;
+    max-width: 1650px;
     margin: 0 auto;
     padding: 1rem 2rem;
     display: flex;
@@ -208,15 +208,15 @@ header {
     background: rgba(255, 255, 255, 0.05);
 }
 
-/* LAYOUT CHÍNH */
+/* LAYOUT CHÍNH: Tràn rộng rãi trên PC (1650px) cho Trang chủ, Trang chi tiết truyện, v.v. */
 main {
     flex: 1;
-    max-width: 1200px;
+    max-width: 1650px;
     width: 100%;
     margin: 2rem auto;
     padding: 0 2rem;
 }
-main.comic-main,
+/* CHỈ TRANG ĐỌC CHƯƠNG TRUYỆN TRANH: Khi vô đọc mới thu gọn lại 820px trên PC */
 main:has(.read-container--comic) {
     max-width: 820px !important;
     width: 100% !important;
@@ -1210,6 +1210,12 @@ footer {
     }
 
     /* Tối ưu hóa đọc truyện tranh full màn hình trên Mobile: Cân đối 100%, không lệch phải */
+    main:has(.read-container--comic) {
+        max-width: 100% !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
     .read-container--comic {
         padding: 0 0 4rem 0 !important;
         margin: 0 !important;

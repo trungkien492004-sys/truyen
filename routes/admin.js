@@ -1499,14 +1499,76 @@ router.post('/story/sync-source-chunk/:id', async (req, res) => {
       } catch(e) {}
     }
     
+// API: Lấy danh sách các bộ truyện có link nguồn bên ngoài để đồng bộ
+router.get('/api/sync-stories-list', isAdmin, async (req, res) => {
+  try {
+    const { data: stories, error } = await supabase
+      .from('stories')
+      .select('id, title, source_url')
+      .not('source_url', 'is', null)
+      .order('id', { ascending: true });
+    if (error) throw error;
+    return res.json({ success: true, stories: stories || [] });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// API: Đồng bộ chương mới cho 1 truyện đơn lẻ từ nguồn
+router.post('/api/sync-single-story/:id', isAdmin, async (req, res) => {
+  const storyId = parseInt(req.params.id);
+  try {
+    const { crawlNewChapters } = require('../services/autoCrawler');
+    const result = await crawlNewChapters(storyId, false);
+    if (result.newChaptersCount > 0) {
+      try {
+        const { resetStoryTypesCache } = require('../services/storyClassifier');
+        resetStoryTypesCache();
+      } catch(e) {}
+    }
     return res.json({
       success: true,
-      addedCount: result.newChaptersCount,
-      hasMore: result.newChaptersCount > 0
+      addedCount: result.newChaptersCount || 0,
+      message: result.message || 'Thành công'
     });
   } catch (err) {
-    console.error('Lỗi cào theo phân đoạn:', err);
-    return res.status(500).json({ success: false, error: err.message || 'Lỗi hệ thống.' });
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// API: Quét nhanh các trang mới nhất trên nguồn ngoài
+router.post('/api/sync-recent-donghentai', isAdmin, async (req, res) => {
+  try {
+    const { syncLatestDongHentai } = require('../services/donghentaiCrawler');
+    const pages = parseInt(req.body.pages) || 3;
+    await syncLatestDongHentai(pages);
+    return res.json({ success: true, message: `Đã quét và cập nhật ${pages} trang mới nhất từ nguồn ngoài!` });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// API: Kích hoạt cào toàn bộ trong nền
+router.post('/api/sync-all-background', isAdmin, async (req, res) => {
+  try {
+    const { syncAllActiveStories } = require('../services/autoCrawler');
+    syncAllActiveStories()
+      .then(res => console.log('[ADMIN-SYNC] All active stories sync done:', res))
+      .catch(err => console.error('[ADMIN-SYNC] Error:', err));
+    return res.json({ success: true, message: 'Đã kích hoạt quét tự động toàn bộ truyện có link nguồn trong nền.' });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// API: Kiểm tra và phục hồi ảnh từ Supabase cũ về Supabase mới
+router.post('/api/check-migrate-images', isAdmin, async (req, res) => {
+  try {
+    const { runAutoMigration } = require('../services/supabaseMigration');
+    const result = await runAutoMigration();
+    return res.json(result);
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
   }
 });
 
