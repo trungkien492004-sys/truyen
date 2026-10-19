@@ -2789,8 +2789,55 @@ const NOVEL_PHONETIC_DICT = [
   [/\bLaptop\b/gi, 'Láp-tóp']
 ];
 
+function cleanTtsSpeechText(text) {
+  if (!text) return '';
+  let str = text;
+
+  // 1. Loại bỏ các emoji & ký hiệu trang trí (hoa lá, nốt nhạc, ngôi sao, icon...)
+  str = str.replace(/[\u2600-\u26FF\u2700-\u27BF\uFE00-\uFE0F★☆♥❤♦♣♠►◄♪♫✿❀©®™]/gu, ' ');
+
+  // 2. Xóa bỏ dấu thăng '#' và dấu sao '*'
+  str = str.replace(/[#*]+/g, ' ');
+
+  // 3. Chuỗi gạch ngang, gạch dưới, dấu bằng (dividers: ---, ===, ___)
+  str = str.replace(/[-=_]{2,}/g, ', ');
+
+  // 4. Dấu ngã kéo dài (đi mà~~~ -> đi mà)
+  str = str.replace(/~+/g, ' ');
+
+  // 5. Dấu chấm lửng (..., …) -> chuyển thành dấu phẩy để tạo quãng nghỉ ngắt giọng tự nhiên, không đọc 'chấm chấm chấm'
+  str = str.replace(/[.…]{2,}/g, ', ');
+  str = str.replace(/…/g, ', ');
+
+  // 6. Nhiều dấu hỏi, than liên tiếp (???, !!!, ?!) -> gộp thành 1 dấu
+  str = str.replace(/\?+/g, '?');
+  str = str.replace(/!+/g, '!');
+  str = str.replace(/\?!+|\?!+/g, '?');
+
+  // 7. Dấu ngoặc các loại: bỏ dấu ngoặc giữ nguyên chữ bên trong để không đọc 'mở ngoặc', 'đóng ngoặc'
+  str = str.replace(/[()\[\]{}<>]/g, ' ');
+
+  // 8. Các ký tự đặc biệt khác: |, \, /, ^, @, `, ~
+  str = str.replace(/[|\\\/^@`~]/g, ' ');
+
+  // 9. Dấu gạch nối đơn lẻ giữa các từ hoặc đứng một mình
+  str = str.replace(/\s+-\s+/g, ', ');
+
+  // 10. Thu gọn khoảng trắng và dấu phẩy liên tiếp
+  str = str.replace(/\s*,\s*,+/g, ', ');
+  str = str.replace(/\s+/g, ' ').trim();
+
+  // 11. Xóa dấu phẩy, gạch thừa ở đầu hoặc cuối câu
+  str = str.replace(/^[\s,;:\-]+|[\s,;:\-]+$/g, '').trim();
+
+  // 12. Nếu chỉ còn toàn dấu câu đơn độc (, . - : ;) thì xóa sạch
+  if (/^[,.\-;:!?\s]+$/.test(str)) return '';
+
+  return str;
+}
+
 function normalizeTtsText(text) {
-  let result = text;
+  let result = cleanTtsSpeechText(text);
   for (const [pattern, replacement] of NOVEL_PHONETIC_DICT) {
     result = result.replace(pattern, replacement);
   }
