@@ -37,9 +37,18 @@ app.use(cookieSession({
 }));
 
 // Cơ chế Sliding Session: Tự động gia hạn hạn dùng cookie thêm 90 ngày mỗi khi người dùng truy cập web
+// Đồng thời tự động dọn dẹp session.readings để cookie luôn gọn nhẹ (< 500 bytes), ngăn chặn lỗi tràn 4KB của trình duyệt làm mất session
 app.use((req, res, next) => {
-  if (req.session && req.session.passport) {
-    req.session._lastActive = Date.now();
+  if (req.session) {
+    if (req.session.passport) {
+      req.session._lastActive = Date.now();
+    }
+    if (req.session.readings) {
+      const keys = Object.keys(req.session.readings);
+      if (keys.length > 3) {
+        keys.slice(0, keys.length - 3).forEach(k => delete req.session.readings[k]);
+      }
+    }
   }
   next();
 });

@@ -86,22 +86,43 @@ passport.deserializeUser(async (googleId, done) => {
       return done(null, cached.user);
     }
 
-    const { data: user, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('google_id', googleId)
-      .maybeSingle();
+    // Thử truy vấn tối đa 2 lần để khắc phục tình trạng Supabase chập chờn / timeout tức thời
+    let user = null;
+    let queryError = null;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const { data, error } = await supabase
+          .from('users')
+          .select('*')
+          .eq('google_id', googleId)
+          .maybeSingle();
 
-    if (error) {
-      console.warn('Lỗi Supabase khi nạp user session:', error.message);
+        if (!error) {
+          user = data;
+          queryError = null;
+          break;
+        }
+        queryError = error;
+      } catch (e) {
+        queryError = e;
+      }
+      if (attempt < 1) {
+        await new Promise(resolve => setTimeout(resolve, 150));
+      }
+    }
+
+    if (queryError) {
+      console.warn('Lỗi Supabase khi nạp user session (sau retry):', queryError.message || queryError);
       // Nếu có cache cũ (kể cả đã quá hạn), vẫn dùng lại để tránh ngắt session người dùng
       if (cached && cached.user) {
         return done(null, cached.user);
       }
-      return done(null, false);
+      // Không gọi done(null, false) khi có lỗi DB, vì Passport sẽ xóa sạch session cookie của người dùng!
+      return done(queryError);
     }
 
     if (!user) {
+      // Chỉ khi database xác nhận người dùng không còn tồn tại thì mới xóa session
       userSessionCache.delete(googleId);
       return done(null, false);
     }
@@ -114,12 +135,12 @@ passport.deserializeUser(async (googleId, done) => {
 
     done(null, user);
   } catch (err) {
-    console.error('Lỗi deserializeUser:', err);
+    console.error('Lỗi ngoại lệ deserializeUser:', err);
     const cached = userSessionCache.get(googleId);
     if (cached && cached.user) {
       return done(null, cached.user);
     }
-    done(null, false);
+    done(err);
   }
 });
 

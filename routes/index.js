@@ -1498,6 +1498,12 @@ router.get('/story/:story_id/chapter/:chapter_number', async (req, res) => {
         };
       }
       req.session.reading = req.session.readings[readKey];
+
+      // Giới hạn session.readings tối đa 3 chương gần nhất để kích thước cookie luôn nhỏ (< 400 bytes), chống tràn 4KB của trình duyệt
+      const readingKeys = Object.keys(req.session.readings);
+      if (readingKeys.length > 3) {
+        readingKeys.slice(0, readingKeys.length - 3).forEach(k => delete req.session.readings[k]);
+      }
     }
 
 
@@ -1732,6 +1738,7 @@ router.post('/chapter/read-confirm', async (req, res) => {
   }
 
   // Đánh dấu đã nhận EXP cho chương này trong session
+  if (!req.session.readings) req.session.readings = {};
   req.session.readings[readKey] = {
     storyId,
     chapterNumber,
@@ -1739,6 +1746,12 @@ router.post('/chapter/read-confirm', async (req, res) => {
     claimed: true
   };
   delete req.session.reading;
+
+  // Giới hạn session.readings tối đa 3 chương gần nhất để tránh tràn cookie
+  const confirmKeys = Object.keys(req.session.readings);
+  if (confirmKeys.length > 3) {
+    confirmKeys.slice(0, confirmKeys.length - 3).forEach(k => delete req.session.readings[k]);
+  }
 
   const message = earnedExp ? 'Đã ghi nhận đọc chương thành công! +5 EXP' : 'Đã ghi nhận đọc chương. (Chương này đã tính EXP trước đó)';
 
