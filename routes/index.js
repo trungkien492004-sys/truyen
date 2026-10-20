@@ -1585,9 +1585,9 @@ router.get('/story/:story_id/chapter/:chapter_number', async (req, res) => {
       chapter.content = chapter.content.replace(/<img\b/gi, () => {
         imgIdx++;
         if (imgIdx <= 5) {
-          return '<img fetchpriority="high" loading="eager" decoding="async"';
+          return '<img fetchpriority="high" loading="eager" decoding="async" referrerpolicy="no-referrer"';
         }
-        return '<img loading="eager" decoding="async"';
+        return '<img loading="eager" decoding="async" referrerpolicy="no-referrer"';
       });
     }
 
@@ -2727,10 +2727,23 @@ router.post('/profile/equip-achievement', async (req, res) => {
 // PROXY ẢNH ĐỂ TRÁNH LỖI REFERER CHẶN HOTLINK (403 FORBIDDEN)
 router.get('/api/proxy-image', async (req, res) => {
   const imageUrl = req.query.url;
-  const referer = req.query.referer || 'https://truyenqq.com.vn/';
 
   if (!imageUrl) {
     return res.status(400).send('Thiếu tham số url.');
+  }
+
+  // Tự động suy luận referer phù hợp với từng CDN ảnh
+  let referer = req.query.referer || '';
+  if (!referer) {
+    if (imageUrl.includes('vietmanhwa.com')) {
+      referer = 'https://vietmanhwa.com/';
+    } else if (imageUrl.includes('truyenqq')) {
+      referer = 'https://truyenqq.com.vn/';
+    } else if (imageUrl.includes('nettruyen')) {
+      referer = 'https://nettruyenviet.shop/';
+    } else if (imageUrl.includes('mangatoon')) {
+      referer = 'https://mangatoon.mobi/';
+    }
   }
 
   try {
