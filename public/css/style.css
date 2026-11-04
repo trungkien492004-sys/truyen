@@ -657,7 +657,9 @@ main:has(.read-container--comic) {
 
 .read-content p {
     margin-bottom: 1.5rem;
-    text-align: justify;
+    text-align: left;
+    word-break: normal;
+    overflow-wrap: break-word;
 }
 
 /* Lời thoại nhân vật */
