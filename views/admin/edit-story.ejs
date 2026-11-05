@@ -930,28 +930,25 @@
 
     // Hàm upload blob thẳng lên Supabase Storage từ Browser
     async function uploadBlobToSupabase(blob, mimeType) {
-        const fileExt = mimeType === 'image/jpeg' ? '.jpg' : '.png';
-        const fileName = `word-img-${Date.now()}-${Math.round(Math.random() * 1E9)}${fileExt}`;
-        
-        const supabaseUrl = 'https://xlaqupbqiwpoprywnkgi.supabase.co';
-        const anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhsYXF1cGJxaXdwb3ByeXdua2dpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1ODkxNDcsImV4cCI6MjA5OTE2NTE0N30.v0NZKDhVb4ysx03cmx_aQn6aGBMCO6lWzBUN6--JKB0';
-
-        const response = await fetch(`${supabaseUrl}/storage/v1/object/uploads/${fileName}`, {
+        // Upload thẳng lên Cloudflare R2 qua link có chữ ký do server cấp (giữ nguyên tên hàm cũ để không phải sửa chỗ gọi)
+        const signRes = await fetch('/admin/api/upload-url', {
             method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${anonKey}`,
-                'apikey': anonKey,
-                'Content-Type': mimeType
-            },
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contentType: mimeType })
+        });
+        const info = await signRes.json().catch(() => ({}));
+        if (!signRes.ok || info.mode !== 'r2') {
+            throw new Error(info.error || 'Chưa cấu hình Cloudflare R2 (thiếu biến R2_* trên server)');
+        }
+        const putRes = await fetch(info.uploadUrl, {
+            method: 'PUT',
+            headers: { 'Content-Type': mimeType, 'Cache-Control': 'public, max-age=31536000, immutable' },
             body: blob
         });
-
-        if (!response.ok) {
-            const errText = await response.text();
-            throw new Error(`Upload ảnh thất bại: ${errText}`);
+        if (!putRes.ok) {
+            throw new Error('Upload ảnh thất bại: ' + (await putRes.text()).slice(0, 200));
         }
-
-        return `${supabaseUrl}/storage/v1/object/public/uploads/${fileName}`;
+        return info.publicUrl;
     }
 
     // --- LOGIC XỬ LÝ CHỌN VÀ XÓA HÀNG LOẠT CHƯƠNG ---

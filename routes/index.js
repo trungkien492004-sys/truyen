@@ -232,36 +232,10 @@ async function awardReadingCardDrop(userId, chaptersRead) {
   }
 }
 
-// Hàm hỗ trợ upload file lên Supabase Storage
-async function uploadToSupabase(file, bucketName = 'uploads') {
-  if (!file) return null;
-  try {
-    // Tạo bucket nếu chưa có
-    await supabase.storage.createBucket(bucketName, { public: true });
-  } catch (e) {
-    // Bỏ qua lỗi nếu đã tồn tại
-  }
-
-  const fileExt = path.extname(file.originalname);
-  const fileName = `${Date.now()}-${Math.round(Math.random() * 1E9)}${fileExt}`;
-
-  const { data, error } = await supabase.storage
-    .from(bucketName)
-    .upload(fileName, file.buffer, {
-      contentType: file.mimetype,
-      upsert: true
-    });
-
-  if (error) {
-    console.error('Lỗi upload file lên Supabase Storage:', error);
-    throw error;
-  }
-
-  const { data: { publicUrl } } = supabase.storage
-    .from(bucketName)
-    .getPublicUrl(fileName);
-
-  return publicUrl;
+// Upload ảnh: dùng Cloudflare R2 (dự phòng Supabase nếu chưa cấu hình R2) - xem services/storage.js
+const storage = require('../services/storage');
+async function uploadToSupabase(file) {
+  return storage.uploadFile(file);
 }
 
 // Hàm lấy danh sách BXH tác giả theo tổng lượt xem
@@ -1344,6 +1318,10 @@ router.get('/story/:id', async (req, res) => {
 
 // TUYẾN ĐƯỜNG TẢI TRUYỆN DƯỚI DẠNG FILE EPUB
 router.get('/story/download-epub/:id', async (req, res) => {
+  // Đã ẩn với độc giả để tiết kiệm băng thông (tải EPUB kéo toàn bộ chương của truyện). Chỉ admin còn dùng được.
+  if (!req.user || !['admin', 'sp_admin'].includes(req.user.role)) {
+    return res.status(404).send('Không tìm thấy trang yêu cầu (404 Not Found).');
+  }
   const storyId = parseInt(req.params.id);
   try {
     const { data: story, error: storyErr } = await supabase
@@ -1696,20 +1674,14 @@ router.post('/chapter/read-confirm', async (req, res) => {
   // Truy vấn database để đếm số chữ của chương này
   let requiredMs = 90 * 1000; // Mặc định 1.5 phút
   try {
-    const { data: chapterData } = await supabase
-      .from('chapters')
-      .select('content')
-      .eq('story_id', storyId)
-      .eq('chapter_number', chapterNumber)
-      .single();
-
-    if (chapterData && chapterData.content) {
-      // Loại bỏ thẻ HTML trước khi đếm từ
-      const cleanText = chapterData.content.replace(/<[^>]*>/g, ' ').trim();
-      const wordsCount = cleanText.split(/\s+/).filter(w => w.length > 0).length;
-      if (wordsCount < 1500) {
-        requiredMs = 60 * 1000; // Dưới 1500 từ yêu cầu 60 giây
-      }
+    // Đếm chữ ngay trong database (RPC chapter_word_count) để không phải tải cả nội dung chương về server
+    const { data: wordsCount, error: wcErr } = await supabase.rpc('chapter_word_count', {
+      p_story_id: storyId,
+      p_chapter_number: chapterNumber
+    });
+    if (wcErr) throw wcErr;
+    if (typeof wordsCount === 'number' && wordsCount > 0 && wordsCount < 1500) {
+      requiredMs = 60 * 1000; // Dưới 1500 từ yêu cầu 60 giây
     }
   } catch (err) {
     console.error('Lỗi khi tính số từ của chương:', err);

@@ -138,36 +138,10 @@ async function insertChaptersWithShift(storyId, newChapters) {
   return newChapters;
 }
 
-// Hàm hỗ trợ upload file lên Supabase Storage
-async function uploadToSupabase(file, bucketName = 'uploads') {
-  if (!file) return null;
-  try {
-    // Tạo bucket nếu chưa có
-    await supabase.storage.createBucket(bucketName, { public: true });
-  } catch (e) {
-    // Bỏ qua lỗi nếu đã tồn tại
-  }
-
-  const fileExt = path.extname(file.originalname);
-  const fileName = `${Date.now()}-${Math.round(Math.random() * 1E9)}${fileExt}`;
-
-  const { data, error } = await supabase.storage
-    .from(bucketName)
-    .upload(fileName, file.buffer, {
-      contentType: file.mimetype,
-      upsert: true
-    });
-
-  if (error) {
-    console.error('Lỗi upload file lên Supabase Storage:', error);
-    throw error;
-  }
-
-  const { data: { publicUrl } } = supabase.storage
-    .from(bucketName)
-    .getPublicUrl(fileName);
-
-  return publicUrl;
+// Upload ảnh: dùng Cloudflare R2 (dự phòng Supabase nếu chưa cấu hình R2) - xem services/storage.js
+const storage = require('../services/storage');
+async function uploadToSupabase(file) {
+  return storage.uploadFile(file);
 }
 
 
@@ -510,20 +484,7 @@ async function parseSingleFileToChapter(file, storyId) {
         return element.read("base64").then(async function(imageBuffer) {
           const buffer = Buffer.from(imageBuffer, 'base64');
           const fileExt = element.contentType === 'image/jpeg' ? '.jpg' : '.png';
-          const fileName = `word-img-${Date.now()}-${Math.round(Math.random() * 1E9)}${fileExt}`;
-
-          const { error: uploadErr } = await supabase.storage
-            .from('uploads')
-            .upload(fileName, buffer, {
-              contentType: element.contentType,
-              upsert: true
-            });
-
-          if (uploadErr) throw uploadErr;
-
-          const { data: { publicUrl } } = supabase.storage
-            .from('uploads')
-            .getPublicUrl(fileName);
+          const publicUrl = await storage.uploadBuffer(buffer, { contentType: element.contentType, originalName: `x${fileExt}`, prefix: 'word-img-' });
 
           return { src: publicUrl };
         });
@@ -624,6 +585,18 @@ function isFullAdmin(req, res, next) {
 
 // Áp dụng middleware kiểm tra Admin cho toàn bộ các tuyến ở đây
 router.use(isAdmin);
+
+// Cấp link upload trực tiếp lên R2 cho trình duyệt (chỉ admin)
+router.post('/api/upload-url', async (req, res) => {
+  try {
+    const contentType = String(req.body.contentType || 'image/png');
+    if (!/^image\/(png|jpeg|jpg|webp|gif)$/.test(contentType)) return res.status(400).json({ error: 'Chỉ cho phép ảnh' });
+    const ext = contentType === 'image/jpeg' || contentType === 'image/jpg' ? '.jpg' : '.' + contentType.split('/')[1];
+    const r = await storage.presignUpload(contentType, ext);
+    if (!r) return res.json({ mode: 'supabase' });
+    res.json({ mode: 'r2', uploadUrl: r.uploadUrl, publicUrl: r.publicUrl });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
 
 // 1. TRANG DASHBOARD ADMIN (Thống kê & Quản lý)
 router.get('/', async (req, res) => {
