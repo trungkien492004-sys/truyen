@@ -1098,7 +1098,7 @@
         // Phân tách đoạn văn để đọc tuần tự
         function initParagraphs() {
             const contentEl = document.getElementById('chapter-content');
-            if (!contentEl || contentEl.querySelector('img')) return;
+            if (!contentEl) return;
 
             let pEls = contentEl.querySelectorAll('p');
             if (pEls.length === 0) {
