@@ -1521,6 +1521,20 @@
     <% } %>
 
     <% if (isComic) { %>
+    // Đảm bảo mọi ảnh truyện tranh có referrerpolicy="no-referrer" để chống 403 hotlink
+    (function initComicImageSecurity() {
+        const contentEl = document.getElementById('chapter-content');
+        if (!contentEl) return;
+
+        const imgs = contentEl.querySelectorAll('img');
+        imgs.forEach(img => {
+            img.setAttribute('referrerpolicy', 'no-referrer');
+            if (!img.getAttribute('loading')) {
+                img.setAttribute('loading', 'lazy');
+            }
+        });
+    })();
+
     // Tự động thử lại ảnh truyện tranh qua proxy máy chủ nếu CDN nguồn chặn 403
     (function initComicImageErrorFallback() {
         const contentEl = document.getElementById('chapter-content');
@@ -1529,6 +1543,9 @@
         contentEl.addEventListener('error', function(e) {
             const img = e.target;
             if (img && img.tagName === 'IMG') {
+                const originalUrl = img.dataset.originalSrc || img.src;
+                
+                // Nếu đã qua proxy mà vẫn lỗi, hiển thị nút thử lại cho người dùng
                 if (img.dataset.proxyRetried) {
                     img.style.display = 'none';
                     if (!img.nextElementSibling || !img.nextElementSibling.classList.contains('comic-img-retry-wrap')) {
@@ -1539,16 +1556,17 @@
                         wrap.querySelector('button').onclick = function() {
                             wrap.remove();
                             img.style.display = 'block';
-                            img.src = (img.dataset.originalSrc || img.src) + ((img.dataset.originalSrc || img.src).includes('?') ? '&' : '?') + 't=' + Date.now();
+                            img.src = '/api/proxy-image?url=' + encodeURIComponent(originalUrl) + '&t=' + Date.now();
                         };
                         img.parentNode.insertBefore(wrap, img.nextSibling);
                     }
                     return;
                 }
+                
+                // Lần 1: Chuyển sang proxy máy chủ
                 img.dataset.proxyRetried = 'true';
-                img.dataset.originalSrc = img.src;
-                // Thử nạp lại qua endpoint proxy của máy chủ
-                img.src = '/api/proxy-image?url=' + encodeURIComponent(img.src);
+                img.dataset.originalSrc = originalUrl;
+                img.src = '/api/proxy-image?url=' + encodeURIComponent(originalUrl);
             }
         }, true);
     })();

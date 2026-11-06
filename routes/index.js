@@ -2708,7 +2708,8 @@ router.get('/api/proxy-image', async (req, res) => {
   let referer = req.query.referer || '';
   if (!referer) {
     if (imageUrl.includes('vietmanhwa.com')) {
-      referer = 'https://vietmanhwa.com/';
+      // vietmanhwa CDN chặn nếu có referer ngoài, nhưng gửi không có referer thì 200 OK
+      referer = '';
     } else if (imageUrl.includes('truyenqq')) {
       referer = 'https://truyenqq.com.vn/';
     } else if (imageUrl.includes('nettruyen')) {
@@ -2720,13 +2721,13 @@ router.get('/api/proxy-image', async (req, res) => {
 
   try {
     const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), 8000);
+    const id = setTimeout(() => controller.abort(), 12000);
 
     const imgRes = await fetch(imageUrl, {
       signal: controller.signal,
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Referer': referer
+        ...(referer ? { 'Referer': referer } : {})
       }
     });
 
@@ -2738,7 +2739,7 @@ router.get('/api/proxy-image', async (req, res) => {
 
     const contentType = imgRes.headers.get('content-type') || 'image/jpeg';
     res.setHeader('Content-Type', contentType);
-    res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache trong 24 giờ
+    res.setHeader('Cache-Control', 'public, max-age=604800, s-maxage=604800'); // Cache trong 24 giờ
 
     const buffer = await imgRes.arrayBuffer();
     res.send(Buffer.from(buffer));
