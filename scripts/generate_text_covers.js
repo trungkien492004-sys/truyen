@@ -7,7 +7,9 @@ const fs = require('fs');
 const path = require('path');
 const sharp = require('sharp');
 
-const lost = require('./lost_covers.json');
+const LIST_ARG = (process.argv.find(a => a.startsWith('--list=')) || '').split('=')[1];
+const lost = LIST_ARG ? JSON.parse(fs.readFileSync(LIST_ARG, 'utf8')) : require('./lost_covers.json');
+const FORCE = process.argv.includes('--force'); // gán đè cả khi truyện đang có cover khác (dùng cho cover chết)
 const PREVIEW = (process.argv.find(a => a.startsWith('--preview=')) || '').split('=')[1];
 const APPLY = process.argv.includes('--apply');
 const W = 600, H = 900;
@@ -92,7 +94,7 @@ const render = (id, title) => sharp(Buffer.from(coverSvg(id, title))).webp({ qua
     const buf = await render(s.id, s.title);
     const url = await storage.uploadBuffer(buf, { contentType: 'image/webp', key: `cover_v2_${s.id}.webp` });
     // chỉ gán nếu truyện vẫn đang dùng cover mặc định (không đè cover thật bạn đã up sau này)
-    const r = await c.query(`UPDATE stories SET cover_url=$1 WHERE id=$2 AND (cover_url='/css/default-cover.jpg' OR cover_url LIKE '%/cover_text_%' OR cover_url LIKE '%/cover_v2_%')`, [url, s.id]);
+    const r = await c.query(`UPDATE stories SET cover_url=$1 WHERE id=$2 ${FORCE ? '' : "AND (cover_url='/css/default-cover.jpg' OR cover_url LIKE '%/cover_text_%' OR cover_url LIKE '%/cover_v2_%')"}`, [url, s.id]);
     console.log(`${s.id}: ${r.rowCount ? 'đã gán' : 'bỏ qua (đã có cover khác)'}  ${(buf.length / 1024).toFixed(0)}KB`);
     ok += r.rowCount;
   }
