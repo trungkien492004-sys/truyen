@@ -1563,7 +1563,7 @@
             img.dataset.brokenShown = 'true';
             failedCount++;
             updateBanner();
-            img.style.display = 'none';
+            img.style.setProperty('display', 'none', 'important');
 
             const wrap = document.createElement('div');
             wrap.className = 'comic-img-retry-wrap';
@@ -1575,7 +1575,7 @@
                 delete img.dataset.brokenShown;
                 failedCount--;
                 updateBanner();
-                img.style.display = '';
+                img.style.removeProperty('display');
                 img.src = '';
                 img.src = url;
             };

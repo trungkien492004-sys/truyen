@@ -58,6 +58,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // 3. TỰ ĐỘNG THAY THẾ ẢNH BÌA LỖI BẰNG ẢNH MẶC ĐỊNH
     window.addEventListener('error', (e) => {
         if (e.target && e.target.tagName === 'IMG') {
+            // Ảnh trong chương do trang đọc tự xử lý, không thay bằng ảnh bìa
+            if (e.target.closest('#chapter-content')) return;
             if (!e.target.dataset.hasFallback) {
                 e.target.dataset.hasFallback = 'true';
                 e.target.src = '/css/default-cover.jpg';
