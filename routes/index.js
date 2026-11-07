@@ -1318,8 +1318,10 @@ router.get('/story/:id', async (req, res) => {
 
 // TUYẾN ĐƯỜNG TẢI TRUYỆN DƯỚI DẠNG FILE EPUB
 router.get('/story/download-epub/:id', async (req, res) => {
-  // Đã ẩn với độc giả để tiết kiệm băng thông (tải EPUB kéo toàn bộ chương của truyện). Chỉ admin còn dùng được.
-  if (!req.user || !['admin', 'sp_admin'].includes(req.user.role)) {
+  // Đã ẩn với độc giả để tiết kiệm băng thông (tải EPUB kéo toàn bộ chương của truyện).
+  // Chỉ truyện ID 7 (Điện thoại thần kỳ) còn mở công khai; các truyện khác chỉ admin dùng được.
+  const PUBLIC_EPUB_STORY_IDS = [7];
+  if (!PUBLIC_EPUB_STORY_IDS.includes(parseInt(req.params.id)) && (!req.user || !['admin', 'sp_admin'].includes(req.user.role))) {
     return res.status(404).send('Không tìm thấy trang yêu cầu (404 Not Found).');
   }
   const storyId = parseInt(req.params.id);
