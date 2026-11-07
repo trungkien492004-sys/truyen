@@ -241,7 +241,7 @@
             <div class="chapters-list-container" style="max-height: 520px; overflow-y: auto; padding-right: 5px;" id="chapters-list-ul">
                 <ul class="chapters-list" style="margin-top: 0; padding-top: 0.2rem;">
                     <% chapters.forEach((chapter, idx) => { %>
-                        <li class="chapter-item-container" data-idx="<%= idx %>" data-chap-num="<%= chapter.chapter_number %>" data-search="<%= chapter.chapter_number %> <%= (chapter.title || '').toLowerCase() %>" style="display: flex; align-items: center; gap: 0.5rem; width: 100%;">
+                        <li class="chapter-item-container" data-idx="<%= idx %>" data-chap-num="<%= chapter.chapter_number %>" data-search="<%= chapter.chapter_number %> <%= (chapter.title || '').toLowerCase() %>" data-title="<%= (chapter.title || '').toLowerCase() %>" style="display: flex; align-items: center; gap: 0.5rem; width: 100%;">
                             <a href="/story/<%= story.id %>/chapter/<%= chapter.chapter_number %>" class="chapter-item" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex: 1; min-width: 0;">
                                 <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">
                                     <% if (chapter.title && chapter.title.toLowerCase().startsWith('chương')) { %>
@@ -396,9 +396,19 @@
 
         // Khi tìm kiếm: Quét toàn bộ mọi chương
         if (nextWrap) nextWrap.style.display = 'none';
+        // Gõ số thuần (vd 74): khớp đúng "Chương 74" trong tiêu đề; nếu không chương nào có thì khớp đúng số thứ tự
+        let matcher = null;
+        if (/^\d+$/.test(keyword)) {
+            const byTitle = new RegExp('(chương|chuong|chapter|chap|hồi)\\s*' + keyword + '(?!\\d)');
+            const items = Array.from(allItems);
+            const hasTitle = items.some(el => byTitle.test(el.getAttribute('data-title') || ''));
+            matcher = el => hasTitle
+                ? byTitle.test(el.getAttribute('data-title') || '')
+                : el.getAttribute('data-chap-num') === keyword;
+        }
         allItems.forEach(el => {
             const str = el.getAttribute('data-search') || '';
-            if (str.includes(keyword)) {
+            if (matcher ? matcher(el) : str.includes(keyword)) {
                 el.style.setProperty('display', 'flex', 'important');
             } else {
                 el.style.setProperty('display', 'none', 'important');
