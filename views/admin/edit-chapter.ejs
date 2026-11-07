@@ -135,12 +135,44 @@
         ed.addEventListener('input', updateCount);
 
         // dán chỉ lấy chữ thuần, mỗi dòng thành 1 đoạn
+        // dán: mỗi dòng của văn bản gốc thành 1 đoạn riêng (<p>)
         ed.addEventListener('paste', e => {
             e.preventDefault();
             const t = (e.clipboardData || window.clipboardData).getData('text/plain');
-            const html = t.split(/\r?\n/).map(l => l.trim()).filter(Boolean)
-                .map(l => '<p>' + l.replace(/&/g,'&amp;').replace(/</g,'&lt;') + '</p>').join('');
-            document.execCommand('insertHTML', false, html);
+            const lines = t.split(/\r\n|\r|\n|\u2028|\u2029|\u000b|\u0085/).map(l => l.trim()).filter(Boolean);
+            if (!lines.length) return;
+            const sel = window.getSelection();
+            if (!sel.rangeCount) return;
+            const range = sel.getRangeAt(0);
+            range.deleteContents();
+            let blk = range.startContainer;
+            if (blk === ed) { const p0 = document.createElement('p'); p0.appendChild(document.createElement('br')); ed.insertBefore(p0, ed.childNodes[range.startOffset] || null); blk = p0; range.setStart(p0, 0); range.collapse(true); }
+            while (blk.parentNode !== ed) blk = blk.parentNode;
+            if (blk.nodeType === 3) { const w = document.createElement('p'); ed.insertBefore(w, blk); w.appendChild(blk); blk = w; }
+            // tách phần sau con trỏ sang đoạn mới
+            const tailRange = document.createRange();
+            tailRange.setStart(range.startContainer, range.startOffset);
+            tailRange.setEndAfter(blk.lastChild || blk);
+            const tail = document.createElement(blk.nodeName === 'P' ? 'p' : 'p');
+            tail.appendChild(tailRange.extractContents());
+            const mk = txt => { const p = document.createElement('p'); p.textContent = txt; return p; };
+            // dòng đầu nối vào đoạn hiện tại, các dòng giữa là đoạn mới, dòng cuối nối vào phần đuôi
+            const first = lines.shift();
+            if (blk.firstChild && blk.firstChild.nodeName === 'BR' && blk.childNodes.length === 1) blk.textContent = '';
+            blk.appendChild(document.createTextNode(first));
+            let ref = blk;
+            let lastP = blk;
+            lines.forEach(l => { const p = mk(l); ed.insertBefore(p, ref.nextSibling); ref = p; lastP = p; });
+            const hasTail = tail.textContent.trim() !== '' || tail.querySelector('img');
+            const tailCount = hasTail ? tail.childNodes.length : 0;
+            const before = lastP.childNodes.length;
+            if (hasTail) { while (tail.firstChild) lastP.appendChild(tail.firstChild); }
+            // đặt con trỏ ngay sau phần vừa dán
+            const r2 = document.createRange();
+            r2.setStart(lastP, before);
+            r2.collapse(true);
+            sel.removeAllRanges(); sel.addRange(r2);
+            updateCount();
         });
 
         document.querySelectorAll('.doc-toolbar [data-cmd]').forEach(b => {
