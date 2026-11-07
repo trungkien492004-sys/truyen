@@ -143,8 +143,9 @@
             if (!lines.length) return;
             const sel = window.getSelection();
             if (!sel.rangeCount) return;
+            if (!sel.isCollapsed) document.execCommand('delete');
+            if (!sel.rangeCount) return;
             const range = sel.getRangeAt(0);
-            range.deleteContents();
             let blk = range.startContainer;
             if (blk === ed) { const p0 = document.createElement('p'); p0.appendChild(document.createElement('br')); ed.insertBefore(p0, ed.childNodes[range.startOffset] || null); blk = p0; range.setStart(p0, 0); range.collapse(true); }
             while (blk.parentNode !== ed) blk = blk.parentNode;
