@@ -135,11 +135,41 @@
         ed.addEventListener('input', updateCount);
 
         // dán chỉ lấy chữ thuần, mỗi dòng thành 1 đoạn
+        // Chuẩn hoá nội dung dán từ mọi nguồn thành danh sách dòng (mỗi dòng = 1 đoạn)
+        function glueSplit(t) {
+            return t
+                .replace(/([.!?…:])(?=[A-ZÀ-Ỵ—])/g, '$1\n')
+                .replace(/([^\s\n>])(?=— )/g, '$1\n')
+                .split('\n');
+        }
+        function pasteToLines(cd) {
+            const plain = cd.getData('text/plain') || '';
+            let best = plain;
+            const html = cd.getData('text/html');
+            if (html) {
+                try {
+                    const d = new DOMParser().parseFromString(html, 'text/html');
+                    d.querySelectorAll('script,style').forEach(n => n.remove());
+                    d.querySelectorAll('br').forEach(n => n.replaceWith('\n'));
+                    d.querySelectorAll('p,div,li,tr,h1,h2,h3,h4,h5,h6,blockquote,section,article').forEach(n => n.append('\n'));
+                    const fromHtml = d.body.textContent || '';
+                    if (fromHtml.split(/\r?\n/).filter(l => l.trim()).length > best.split(/\r?\n/).filter(l => l.trim()).length) best = fromHtml;
+                } catch (err) {}
+            }
+            const out = [];
+            best.split(/\r\n|\r|\n|\u2028|\u2029|\u000b|\u0085/).forEach(l => {
+                l = l.replace(/\u00a0/g, ' ').trim();
+                if (!l) return;
+                glueSplit(l).forEach(x => { x = x.trim(); if (x) out.push(x); });
+            });
+            return out;
+        }
+
         // dán: mỗi dòng của văn bản gốc thành 1 đoạn riêng (<p>)
         ed.addEventListener('paste', e => {
             e.preventDefault();
-            const t = (e.clipboardData || window.clipboardData).getData('text/plain');
-            const lines = t.split(/\r\n|\r|\n|\u2028|\u2029|\u000b|\u0085/).map(l => l.trim()).filter(Boolean);
+            const cd = e.clipboardData || window.clipboardData;
+            const lines = pasteToLines(cd);
             if (!lines.length) return;
             const sel = window.getSelection();
             if (!sel.rangeCount) return;
