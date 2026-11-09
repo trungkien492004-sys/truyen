@@ -47,6 +47,9 @@
                 <button type="button" data-cmd="justifyLeft" title="Căn trái">⯇</button>
                 <button type="button" data-cmd="justifyCenter" title="Căn giữa">≡</button>
                 <span class="sep"></span>
+                <button type="button" id="btn-insert-image" title="Chèn ảnh tại vị trí con trỏ (cũng có thể dán hoặc kéo thả ảnh vào trang)">🖼️ Chèn ảnh</button>
+                <input type="file" id="doc-image-input" accept="image/png,image/jpeg,image/webp,image/gif" multiple style="display:none;">
+                <span class="sep"></span>
                 <select id="doc-zoom" title="Cỡ chữ">
                     <option value="15">Chữ nhỏ</option>
                     <option value="17" selected>Chữ vừa</option>
@@ -73,6 +76,7 @@
             .doc-page { background:#fff; color:#1f2328; width:100%; max-width:794px; min-height:900px; margin:0 auto; padding:64px 72px; box-shadow:0 2px 10px rgba(0,0,0,.25); font-family:'Times New Roman', Cambria, Georgia, serif; font-size:17px; line-height:1.7; outline:none; box-sizing:border-box; text-align:left; }
             .doc-page p { margin:0 0 .9em; text-indent:0; }
             .doc-page img { max-width:100%; height:auto; display:block; margin:12px auto; }
+            .doc-page .img-uploading { text-align:center; color:#6b7280; font-style:italic; background:#f3f4f6; border:1px dashed #9ca3af; border-radius:6px; padding:18px; }
             .doc-html { width:100%; box-sizing:border-box; font-family:Consolas, monospace; font-size:13px; line-height:1.5; padding:12px; background:#fff; color:#111; border:none; }
             @media (max-width:700px){ .doc-page{ padding:28px 18px; min-height:600px; } .doc-desk{ padding:10px 4px; } }
         </style>
@@ -165,10 +169,120 @@
             return out;
         }
 
+        // ===== CHÈN ẢNH TẠI VỊ TRÍ CON TRỎ (giống chèn ảnh trong Word) =====
+        const MAX_IMG_BYTES = 4.3 * 1024 * 1024; // Vercel giới hạn body ~4.5MB
+        let savedRange = null;
+        document.addEventListener('selectionchange', () => {
+            const sel = window.getSelection();
+            if (sel.rangeCount && ed.contains(sel.getRangeAt(0).startContainer)) savedRange = sel.getRangeAt(0).cloneRange();
+        });
+
+        // Tách đoạn tại con trỏ, chèn 1 đoạn giữ chỗ vào giữa, trả về đoạn giữ chỗ
+        function insertPlaceholderAt(range, label) {
+            const ph = document.createElement('p');
+            ph.className = 'img-uploading';
+            ph.contentEditable = 'false';
+            ph.textContent = label;
+            if (!range || !ed.contains(range.startContainer)) { ed.appendChild(ph); return ph; }
+            let blk = range.startContainer;
+            if (blk === ed) { ed.insertBefore(ph, ed.childNodes[range.startOffset] || null); return ph; }
+            while (blk.parentNode !== ed) blk = blk.parentNode;
+            if (blk.nodeType === 3) { const w = document.createElement('p'); ed.insertBefore(w, blk); w.appendChild(blk); blk = w; }
+            // phần sau con trỏ chuyển sang đoạn mới nằm dưới ảnh
+            const tailRange = document.createRange();
+            tailRange.setStart(range.startContainer, range.startOffset);
+            tailRange.setEndAfter(blk.lastChild || blk);
+            const tail = document.createElement('p');
+            tail.appendChild(tailRange.extractContents());
+            const headEmpty = !blk.textContent.trim() && !blk.querySelector('img');
+            const tailEmpty = !tail.textContent.trim() && !tail.querySelector('img');
+            if (headEmpty) { ed.insertBefore(ph, blk); blk.remove(); }
+            else ed.insertBefore(ph, blk.nextSibling);
+            if (!tailEmpty) ed.insertBefore(tail, ph.nextSibling);
+            return ph;
+        }
+
+        async function uploadImageFile(file) {
+            const fd = new FormData();
+            fd.append('image', file);
+            const res = await fetch('/admin/api/upload-image', { method: 'POST', body: fd });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || !data.url) throw new Error(data.error || ('Lỗi máy chủ ' + res.status));
+            return data.url;
+        }
+
+        async function insertImages(files, range) {
+            files = [...files].filter(f => /^image\//.test(f.type));
+            if (!files.length) return;
+            if (htmlMode) { alert('Hãy tắt chế độ HTML trước khi chèn ảnh.'); return; }
+            // Tạo sẵn chỗ cho từng ảnh theo đúng thứ tự, rồi mới upload
+            let r = range;
+            const slots = files.map(f => {
+                const ph = insertPlaceholderAt(r, '⏳ Đang tải ảnh "' + f.name + '"...');
+                r = document.createRange(); r.setStartAfter(ph); r.collapse(true);
+                return { f, ph };
+            });
+            updateCount();
+            for (const { f, ph } of slots) {
+                if (f.size > MAX_IMG_BYTES) {
+                    ph.remove();
+                    alert('Ảnh "' + f.name + '" nặng ' + (f.size / 1048576).toFixed(1) + 'MB, vượt giới hạn 4.3MB. Hãy dùng ảnh nhỏ hơn.');
+                    continue;
+                }
+                try {
+                    const url = await uploadImageFile(f);
+                    const p = document.createElement('p');
+                    p.style.textAlign = 'center';
+                    const img = document.createElement('img');
+                    img.src = url;
+                    img.alt = 'Ảnh minh họa';
+                    p.appendChild(img);
+                    ph.replaceWith(p);
+                } catch (err) {
+                    ph.remove();
+                    alert('Không tải được ảnh "' + f.name + '": ' + err.message);
+                }
+            }
+            updateCount();
+        }
+
+        const imgInput = document.getElementById('doc-image-input');
+        const btnImg = document.getElementById('btn-insert-image');
+        btnImg.addEventListener('mousedown', e => e.preventDefault()); // giữ nguyên vị trí con trỏ
+        btnImg.addEventListener('click', () => {
+            if (htmlMode) { alert('Hãy tắt chế độ HTML trước khi chèn ảnh.'); return; }
+            if (!savedRange) { alert('Hãy bấm vào chỗ muốn chèn ảnh trong trang trước.'); return; }
+            imgInput.click();
+        });
+        imgInput.addEventListener('change', () => {
+            const files = imgInput.files;
+            const range = savedRange ? savedRange.cloneRange() : null;
+            insertImages(files, range).finally(() => { imgInput.value = ''; });
+        });
+
+        // kéo thả ảnh vào trang: chèn tại chỗ thả
+        ed.addEventListener('dragover', e => { if (e.dataTransfer && [...e.dataTransfer.types].includes('Files')) e.preventDefault(); });
+        ed.addEventListener('drop', e => {
+            const files = e.dataTransfer && e.dataTransfer.files;
+            if (!files || !files.length) return;
+            e.preventDefault();
+            let range = null;
+            if (document.caretRangeFromPoint) range = document.caretRangeFromPoint(e.clientX, e.clientY);
+            else if (document.caretPositionFromPoint) { const p = document.caretPositionFromPoint(e.clientX, e.clientY); if (p) { range = document.createRange(); range.setStart(p.offsetNode, p.offset); range.collapse(true); } }
+            insertImages(files, range || savedRange);
+        });
+
         // dán: mỗi dòng của văn bản gốc thành 1 đoạn riêng (<p>)
         ed.addEventListener('paste', e => {
             e.preventDefault();
             const cd = e.clipboardData || window.clipboardData;
+            // dán ảnh (chụp màn hình, copy ảnh): upload rồi chèn tại con trỏ
+            const pastedImgs = cd && cd.files ? [...cd.files].filter(f => /^image\//.test(f.type)) : [];
+            if (pastedImgs.length) {
+                const sel0 = window.getSelection();
+                insertImages(pastedImgs, sel0.rangeCount ? sel0.getRangeAt(0).cloneRange() : savedRange);
+                return;
+            }
             const lines = pasteToLines(cd);
             if (!lines.length) return;
             const sel = window.getSelection();
@@ -218,7 +332,10 @@
             else { ed.innerHTML = toParagraphs(ta.value); ta.style.display = 'none'; ed.style.display = 'block'; updateCount(); }
         });
 
-        form.addEventListener('submit', () => { if (!htmlMode) ta.value = serialize(); });
+        form.addEventListener('submit', e => {
+            if (ed.querySelector('.img-uploading')) { e.preventDefault(); alert('Ảnh đang được tải lên, vui lòng đợi xong rồi hãy lưu.'); return; }
+            if (!htmlMode) ta.value = serialize();
+        });
     })();
 
     const btnDelete = document.getElementById('btn-delete-chapter');

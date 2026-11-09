@@ -586,6 +586,22 @@ function isFullAdmin(req, res, next) {
 // Áp dụng middleware kiểm tra Admin cho toàn bộ các tuyến ở đây
 router.use(isAdmin);
 
+// Upload 1 ảnh từ trình soạn thảo chương (chỉ admin). Trả về URL công khai để chèn vào nội dung.
+// Lưu ý: Vercel giới hạn body ~4.5MB nên ảnh lớn hơn sẽ bị từ chối.
+router.post('/api/upload-image', upload.single('image'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'Không nhận được file ảnh.' });
+    if (!/^image\/(png|jpeg|jpg|webp|gif)$/.test(req.file.mimetype)) {
+      return res.status(400).json({ error: 'Chỉ hỗ trợ ảnh PNG, JPG, WEBP, GIF.' });
+    }
+    const url = await storage.uploadFile(req.file, { prefix: 'chapter-img-' });
+    res.json({ url });
+  } catch (e) {
+    console.error('Lỗi upload ảnh chương:', e);
+    res.status(500).json({ error: e.message || 'Lỗi upload ảnh.' });
+  }
+});
+
 // Cấp link upload trực tiếp lên R2 cho trình duyệt (chỉ admin)
 router.post('/api/upload-url', async (req, res) => {
   try {
