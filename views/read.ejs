@@ -1558,7 +1558,18 @@
             banner.textContent = `⚠️ Có ${failedCount} ảnh của chương này tạm thời không tải được từ nguồn. Bạn vui lòng quay lại sau nhé.`;
         }
 
-        function markBroken(img) {
+        function handleImageError(img) {
+            const originalUrl = img.dataset.originalSrc || img.src;
+
+            // Nếu ảnh bị chặn bởi CDN (403 Sec-Fetch/Referer) -> tự động thử lại qua proxy server
+            if (!img.dataset.proxyRetried && originalUrl && !originalUrl.includes('/api/proxy-image')) {
+                img.dataset.proxyRetried = 'true';
+                img.dataset.originalSrc = originalUrl;
+                img.src = '/api/proxy-image?url=' + encodeURIComponent(originalUrl);
+                return;
+            }
+
+            // Nếu đã qua proxy mà vẫn lỗi (nguồn chết thật sự) -> hiện thông báo và nút thử lại
             if (img.dataset.brokenShown) return;
             img.dataset.brokenShown = 'true';
             failedCount++;
@@ -1570,25 +1581,23 @@
             wrap.style.cssText = 'margin: 1rem auto; padding: 0.9rem; max-width: 500px; background: rgba(239, 68, 68, 0.1); border: 1px dashed rgba(239, 68, 68, 0.4); border-radius: 8px; text-align: center; color: #f87171; font-size: 0.9rem;';
             wrap.innerHTML = '<span>Ảnh chưa tải được.</span> <button type="button" style="margin-left: 8px; padding: 4px 12px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">Thử lại</button>';
             wrap.querySelector('button').onclick = function() {
-                const url = img.src;
                 wrap.remove();
                 delete img.dataset.brokenShown;
                 failedCount--;
                 updateBanner();
                 img.style.removeProperty('display');
-                img.src = '';
-                img.src = url;
+                img.src = '/api/proxy-image?url=' + encodeURIComponent(originalUrl) + '&t=' + Date.now();
             };
             img.parentNode.insertBefore(wrap, img.nextSibling);
         }
 
         contentEl.addEventListener('error', function(e) {
-            if (e.target && e.target.tagName === 'IMG') markBroken(e.target);
+            if (e.target && e.target.tagName === 'IMG') handleImageError(e.target);
         }, true);
 
         // Ảnh có thể đã lỗi trước khi đoạn script này chạy, nên quét lại một lượt
         contentEl.querySelectorAll('img').forEach(function(img) {
-            if (img.getAttribute('src') && img.complete && img.naturalWidth === 0) markBroken(img);
+            if (img.getAttribute('src') && img.complete && img.naturalWidth === 0) handleImageError(img);
         });
     })();
     <% } %>
