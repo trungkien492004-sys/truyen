@@ -2846,9 +2846,24 @@ const NOVEL_PHONETIC_DICT = [
   [/\bLaptop\b/gi, 'Láp-tóp']
 ];
 
+function ttsNumberFix(str) {
+  // Số, tỉ lệ, phần trăm: để giọng đọc không nuốt dấu "/" (10/50 -> "10 trên 50")
+  str = str.replace(/(^|[^\d.\/])(\d{1,2})\/(\d{1,2})\/(\d{4})(?!\d)/g, '$1ngày $2 tháng $3 năm $4');
+  str = str.replace(/(\d)\s*\/\s*(\d)/g, '$1 trên $2');
+  str = str.replace(/(^|[^\d:])(\d{1,2}):(\d{2})(?![\d:])/g, '$1$2 giờ $3');
+  str = str.replace(/(\d):(\d)/g, '$1 trên $2');
+  str = str.replace(/(\d+(?:[.,]\d+)?)\s*%/g, '$1 phần trăm');
+  str = str.replace(/(^|[^\d.,])(\d{1,3}(?:\.\d{3})+)(?!\d)/g, (m, p, n) => p + n.replace(/\./g, ''));
+  str = str.replace(/(^|[^\d.,])(\d+)[.,](\d{1,2})(?!\d)/g, '$1$2 phẩy $3');
+  str = str.replace(/(\d)\s?[kK](?![\p{L}\d])/gu, '$1 nghìn');
+  return str;
+}
+
 function cleanTtsSpeechText(text) {
   if (!text) return '';
   let str = text;
+
+  str = ttsNumberFix(str);
 
   // 1. Loại bỏ các emoji & ký hiệu trang trí (hoa lá, nốt nhạc, ngôi sao, icon...)
   str = str.replace(/[\u2600-\u26FF\u2700-\u27BF\uFE00-\uFE0F★☆♥❤♦♣♠►◄♪♫✿❀©®™]/gu, ' ');
