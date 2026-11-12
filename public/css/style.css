@@ -2538,7 +2538,6 @@ footer {
    ========================================================= */
 html { overflow-x: hidden; max-width: 100%; }
 img, video, iframe, canvas, svg { max-width: 100%; }
-img, video { height: auto; }
 
 @media (max-width: 768px) {
     body, main { max-width: 100vw; }
@@ -2549,7 +2548,7 @@ img, video { height: auto; }
     }
     /* Từ/URL dài không đẩy layout */
     .read-content, .read-content p, .read-header h1, .story-detail-title,
-    .comment-item, .comments-section, .section-title, .story-card {
+    .comment-item, .comments-section {
         overflow-wrap: anywhere;
         word-break: break-word;
     }
@@ -2566,8 +2565,6 @@ img, video { height: auto; }
         width: min(320px, calc(100vw - 1.5rem)) !important;
         max-width: calc(100vw - 1.5rem) !important;
     }
-    /* Hàng flex có min-width cứng được phép xuống dòng/co lại */
-    [style*="min-width: 250px"], [style*="min-width: 280px"] { min-width: 0 !important; }
     .read-navigation { flex-wrap: wrap; }
     .audio-controls-row { flex-wrap: wrap; }
     .audio-select { max-width: 100% !important; }
