@@ -89,7 +89,7 @@
                 </div>
             </div>
             <div style="font-size: 0.8rem; color: #a855f7; font-weight: 600;" id="audio-progress-text">
-                0/0 (0%)
+                00:00 / 00:00
             </div>
         </div>
 
@@ -155,8 +155,35 @@
             </label>
         </div>
 
+        <!-- Nhạc nền không lời -->
+        <div class="audio-controls-row" style="margin-top: 0.6rem;">
+            <button id="bgm-btn-toggle" class="audio-btn" title="Bật/tắt nhạc nền">🎵 Nhạc nền: Tắt</button>
+            <div style="display: flex; align-items: center; gap: 0.3rem;">
+                <label for="bgm-select-style" style="font-size: 0.76rem; color: var(--text-secondary);">Phong cách:</label>
+                <select id="bgm-select-style" class="audio-select">
+                    <option value="cotrang">🏯 Cổ trang</option>
+                    <option value="huyenhuyen">🌌 Huyền huyễn</option>
+                    <option value="hiendai">🏙️ Hiện đại</option>
+                    <option value="soidong">🔥 Sôi động</option>
+                    <option value="emdiu">🌿 Êm dịu</option>
+                </select>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.3rem;">
+                <label for="bgm-select-track" style="font-size: 0.76rem; color: var(--text-secondary);">Bản:</label>
+                <select id="bgm-select-track" class="audio-select">
+                    <option value="1">Bản 1</option>
+                    <option value="2">Bản 2</option>
+                </select>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.3rem;">
+                <label for="bgm-volume" style="font-size: 0.76rem; color: var(--text-secondary);">Âm lượng:</label>
+                <input type="range" id="bgm-volume" min="0" max="100" value="30" style="width: 90px; accent-color: #a855f7;">
+            </div>
+        </div>
+
         <div style="margin-top: 0.6rem; padding-top: 0.5rem; border-top: 1px solid rgba(255, 255, 255, 0.06); font-size: 0.72rem; color: #94a3b8; display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
             <span>💡 <strong>Mẹo:</strong> Mở web bằng <strong>Microsoft Edge</strong> (PC/Điện thoại) để có sẵn 2 giọng AI đọc truyện tự nhiên số 1: <strong>Hoài My (Nữ)</strong> & <strong>Nam Minh (Nam)</strong>.</span>
+            <span style="width: 100%; font-size: 0.66rem; opacity: 0.75;">🎼 Nhạc nền: Kevin MacLeod (incompetech.com) · CC BY 4.0</span>
         </div>
     </div>
     <% } %>
@@ -1224,12 +1251,94 @@
             localStorage.setItem('tts_autonext', checkAutoNext.checked);
         });
 
+        // ===== Tiến trình theo thời gian (phút:giây), chạy theo từng giây =====
+        const CHARS_PER_SEC = 15; // tốc độ đọc ước lượng ở 1.0x
+        let paraElapsedMs = 0;    // thời gian đã đọc trong đoạn hiện tại
+        function curRate() {
+            return Math.min(2.0, Math.max(0.5, parseFloat(selectRate.value) || 1.0));
+        }
+        function paraSec(i) {
+            const p = paragraphs[i];
+            if (!p) return 0;
+            const len = Math.max(1, (p.textContent || '').trim().length);
+            return Math.max(0.8, len / CHARS_PER_SEC / curRate());
+        }
+        function fmtTime(sec) {
+            sec = Math.max(0, Math.round(sec));
+            const m = Math.floor(sec / 60), s = sec % 60;
+            return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }
         function updateProgress() {
             if (paragraphs.length === 0) return;
-            const pct = Math.min(100, Math.round(((currentIdx + 1) / paragraphs.length) * 100));
+            let total = 0, before = 0;
+            for (let i = 0; i < paragraphs.length; i++) {
+                const t = paraSec(i);
+                total += t;
+                if (i < currentIdx) before += t;
+            }
+            let within = 0;
+            const cur = paraSec(currentIdx);
+            if (currentAudio && currentAudio.duration && isFinite(currentAudio.duration)) {
+                within = (currentAudio.currentTime / currentAudio.duration) * cur;
+            } else {
+                within = Math.min(cur, paraElapsedMs / 1000);
+            }
+            const elapsed = Math.min(total, before + within);
+            const pct = total > 0 ? Math.min(100, (elapsed / total) * 100) : 0;
             progressFill.style.width = `${pct}%`;
-            progressText.innerText = `${currentIdx + 1}/${paragraphs.length} (${pct}%)`;
+            progressText.innerText = `${fmtTime(elapsed)} / ${fmtTime(total)}`;
         }
+        setInterval(() => {
+            if (isPlaying && !isPaused) paraElapsedMs += 250;
+            updateProgress();
+        }, 250);
+
+        // ===== Nhạc nền không lời =====
+        const bgmBtn = document.getElementById('bgm-btn-toggle');
+        const bgmStyle = document.getElementById('bgm-select-style');
+        const bgmTrack = document.getElementById('bgm-select-track');
+        const bgmVol = document.getElementById('bgm-volume');
+        const bgmAudio = new Audio();
+        bgmAudio.loop = true;
+        bgmAudio.preload = 'none';
+        let bgmOn = false;
+        const lsGet = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+        const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+        if (lsGet('bgm_style')) bgmStyle.value = lsGet('bgm_style');
+        if (lsGet('bgm_track')) bgmTrack.value = lsGet('bgm_track');
+        if (lsGet('bgm_vol') !== null) bgmVol.value = lsGet('bgm_vol');
+        bgmAudio.volume = (parseInt(bgmVol.value, 10) || 0) / 100;
+
+        function bgmSrc() { return `/audio/bgm/${bgmStyle.value}-${bgmTrack.value}.mp3`; }
+        function bgmRefreshBtn() {
+            bgmBtn.textContent = bgmOn ? '🎵 Nhạc nền: Bật' : '🎵 Nhạc nền: Tắt';
+            bgmBtn.classList.toggle('audio-btn-primary', bgmOn);
+        }
+        function bgmStart() {
+            const src = bgmSrc();
+            if (!bgmAudio.src || !bgmAudio.src.endsWith(src)) bgmAudio.src = src;
+            const pr = bgmAudio.play();
+            if (pr && pr.catch) pr.catch(() => { bgmOn = false; bgmRefreshBtn(); });
+        }
+        bgmBtn.addEventListener('click', () => {
+            bgmOn = !bgmOn;
+            lsSet('bgm_on', bgmOn ? '1' : '0');
+            if (bgmOn) bgmStart(); else bgmAudio.pause();
+            bgmRefreshBtn();
+        });
+        function bgmChanged() {
+            lsSet('bgm_style', bgmStyle.value);
+            lsSet('bgm_track', bgmTrack.value);
+            if (bgmOn) { bgmAudio.src = bgmSrc(); bgmStart(); }
+        }
+        bgmStyle.addEventListener('change', bgmChanged);
+        bgmTrack.addEventListener('change', bgmChanged);
+        bgmVol.addEventListener('input', () => {
+            bgmAudio.volume = (parseInt(bgmVol.value, 10) || 0) / 100;
+            lsSet('bgm_vol', bgmVol.value);
+        });
+        // Chuyển chương tự động: khôi phục nhạc nền nếu trước đó đang bật (có thể bị trình duyệt chặn)
+        if (lsGet('bgm_on') === '1') { bgmOn = true; bgmRefreshBtn(); bgmStart(); }
 
         function ttsNumberFix(str) {
           // Số, tỉ lệ, phần trăm: để giọng đọc không nuốt dấu "/" (10/50 -> "10 trên 50")
@@ -1305,6 +1414,7 @@
             }
 
             currentIdx = idx;
+            paraElapsedMs = 0;
             updateProgress();
             // Không tự cuộn màn hình theo yêu cầu người đọc
 
@@ -1458,7 +1568,7 @@
                 currentAudio.pause();
                 currentAudio = null;
             }
-            currentIdx = 0;
+            currentIdx = 0; paraElapsedMs = 0;
             updateProgress();
             btnPlay.innerHTML = '▶ Nghe Truyện';
             statusText.innerText = 'Đã dừng hẳn';
@@ -1466,7 +1576,7 @@
 
         btnPrev.addEventListener('click', () => {
             if (currentIdx > 0) {
-                currentIdx--;
+                currentIdx--; paraElapsedMs = 0;
                 if (isPlaying && !isPaused) {
                     speakParagraph(currentIdx);
                 } else {
@@ -1477,7 +1587,7 @@
 
         btnNext.addEventListener('click', () => {
             if (currentIdx + 1 < paragraphs.length) {
-                currentIdx++;
+                currentIdx++; paraElapsedMs = 0;
                 if (isPlaying && !isPaused) {
                     speakParagraph(currentIdx);
                 } else {
@@ -1492,8 +1602,15 @@
                 const rect = progressWrap.getBoundingClientRect();
                 const clickX = e.clientX - rect.left;
                 const ratio = Math.max(0, Math.min(1, clickX / rect.width));
-                const targetIdx = Math.floor(ratio * paragraphs.length);
+                let totalSec = 0;
+                for (let i = 0; i < paragraphs.length; i++) totalSec += paraSec(i);
+                let acc = 0, targetIdx = paragraphs.length - 1;
+                for (let i = 0; i < paragraphs.length; i++) {
+                    acc += paraSec(i);
+                    if (acc >= ratio * totalSec) { targetIdx = i; break; }
+                }
                 currentIdx = Math.min(paragraphs.length - 1, targetIdx);
+                paraElapsedMs = 0;
                 if (isPlaying && !isPaused) {
                     speakParagraph(currentIdx);
                 } else {
