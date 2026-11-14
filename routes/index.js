@@ -2874,8 +2874,13 @@ function cleanTtsSpeechText(text) {
   // 3. Chuỗi gạch ngang, gạch dưới, dấu bằng (dividers: ---, ===, ___)
   str = str.replace(/[-=_]{2,}/g, ', ');
 
-  // 4. Dấu ngã kéo dài (đi mà~~~ -> đi mà)
-  str = str.replace(/~+/g, ' ');
+  // 4. Dấu ngã và các biến thể dấu ngã biểu cảm / khoảng cách:
+  // - Phạm vi giữa 2 số (vd: 5~10, 5～10 -> 5 đến 10)
+  str = str.replace(/(\d+)\s*[~～〜〰–—−]\s*(\d+)/g, function(m, p1, p2) { return p1 + ' đến ' + p2; });
+  // - Xấp xỉ trước số (vd: ~50kg -> khoảng 50kg)
+  str = str.replace(/(^|[^\p{L}\d])[~～〜〰]\s*(\d+)/gu, function(m, p1, p2) { return p1 + 'khoảng ' + p2; });
+  // - Xóa sạch mọi ký tự dấu ngã biểu cảm (~, ～, 〜, 〰, ˜...) để tránh đọc thành "tương đương"
+  str = str.replace(/[~～〜〰˜˞⁓∼≈≃≅]+/g, ' ');
 
   // 5. Dấu chấm lửng (..., …) -> chuyển thành dấu phẩy để tạo quãng nghỉ ngắt giọng tự nhiên, không đọc 'chấm chấm chấm'
   str = str.replace(/[.…]{2,}/g, ', ');
@@ -2889,8 +2894,8 @@ function cleanTtsSpeechText(text) {
   // 7. Dấu ngoặc các loại: bỏ dấu ngoặc giữ nguyên chữ bên trong để không đọc 'mở ngoặc', 'đóng ngoặc'
   str = str.replace(/[()\[\]{}<>]/g, ' ');
 
-  // 8. Các ký tự đặc biệt khác: |, \, /, ^, @, `, ~
-  str = str.replace(/[|\\\/^@`~]/g, ' ');
+  // 8. Các ký tự đặc biệt khác: |, \, /, ^, @, `, ~, ～...
+  str = str.replace(/[|\\\/^@`~～〜〰˜˞⁓∼≈≃≅]/g, ' ');
 
   // 9. Dấu gạch nối đơn lẻ giữa các từ hoặc đứng một mình
   str = str.replace(/\s+-\s+/g, ', ');
