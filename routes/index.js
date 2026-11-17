@@ -2894,14 +2894,21 @@ function cleanTtsSpeechText(text) {
   // 7. Dấu ngoặc các loại: bỏ dấu ngoặc giữ nguyên chữ bên trong để không đọc 'mở ngoặc', 'đóng ngoặc'
   str = str.replace(/[()\[\]{}<>]/g, ' ');
 
+  // 7b. Dấu ngoặc kép mọi kiểu (" “ ” « » 「 」 『 』 《 》...) -> bỏ để không đọc thành 'ngoặc kép'
+  str = str.replace(/["“”„‟″‶〃«»‹›「」『』《》〈〉〝〞〟＂｢｣﹁﹂﹃﹄]/g, ' ');
+  // Nháy đơn dùng làm ngoặc (‘...’, '...') -> bỏ, nhưng giữ nháy nằm giữa chữ (don't, O'Neil)
+  str = str.replace(/['‘’‚‛′＇](?![\p{L}\d])|(?<![\p{L}\d])['‘’‚‛′＇]/gu, ' ');
+
   // 8. Các ký tự đặc biệt khác: |, \, /, ^, @, `, ~, ～...
   str = str.replace(/[|\\\/^@`~～〜〰˜˞⁓∼≈≃≅]/g, ' ');
 
   // 9. Dấu gạch nối đơn lẻ giữa các từ hoặc đứng một mình
-  str = str.replace(/\s+-\s+/g, ', ');
+  str = str.replace(/\s+[-–—―]\s+/g, ', ');
+  str = str.replace(/^\s*[-–—―]+\s*/, '');
 
   // 10. Thu gọn khoảng trắng và dấu phẩy liên tiếp
   str = str.replace(/\s*,\s*,+/g, ', ');
+  str = str.replace(/\s+([,.!?;:])/g, '$1');
   str = str.replace(/\s+/g, ' ').trim();
 
   // 11. Xóa dấu phẩy, gạch thừa ở đầu hoặc cuối câu

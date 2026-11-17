@@ -2565,7 +2565,34 @@ img, video, iframe, canvas, svg { max-width: 100%; }
         width: min(320px, calc(100vw - 1.5rem)) !important;
         max-width: calc(100vw - 1.5rem) !important;
     }
-    .read-navigation { flex-wrap: wrap; }
+    .read-navigation { flex-wrap: wrap; position: relative; }
+    /* Mục lục: căn theo cả thanh điều hướng (rộng bằng màn hình) thay vì theo nút
+       -> không còn lệch tràn mép phải trên máy nhỏ */
+    .read-navigation .toc-dropdown { position: static !important; }
+    /* Khối chữ "flex:1; min-width:2xxpx" (banner Yu-Gi, hồ sơ): chiếm trọn 1 dòng
+       để co theo màn hình mà không bị bóp hẹp (min-width:0 đơn thuần làm trang cao vọt) */
+    [style*="flex: 1; min-width: 250px"], [style*="flex: 1; min-width: 280px"] {
+        flex-basis: 100% !important;
+        min-width: 0 !important;
+    }
+    .yugi-promo-card { padding: 1.1rem 1.1rem !important; }
+    /* Lưới "5 chương mới nhất": minmax(280px) tràn trên máy 320px */
+    .latest-chapters-box > div[style*="minmax(280px"] {
+        grid-template-columns: minmax(0, 1fr) !important;
+    }
+    .latest-chapters-box { padding: 0.9rem !important; }
+    /* Ô nhập số tiền donate: cho phép co lại để nút "Tạo mã QR" không bị đẩy ra ngoài */
+    div:has(> #custom-amount-input) { flex-wrap: wrap; }
+    #custom-amount-input { min-width: 0; flex: 1 1 160px !important; }
+    div:has(> #custom-amount-input) > button { flex: 1 1 auto; }
+    /* Tên chương ở "5 chương mới nhất": cho xuống tối đa 2 dòng thay vì cắt còn "Chương 301: ..." */
+    .latest-chapters-box a > span:first-child {
+        white-space: normal !important;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        line-height: 1.35;
+    }
     .audio-controls-row { flex-wrap: wrap; }
     .audio-select { max-width: 100% !important; }
     .amount-presets { grid-template-columns: repeat(2, 1fr) !important; }
