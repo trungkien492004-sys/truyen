@@ -2583,10 +2583,6 @@ img, video, iframe, canvas, svg { max-width: 100%; }
     /* Danh sách chương (trang truyện): tên chương dài không kéo giãn hàng ra ngoài khung */
     .chapters-list { grid-template-columns: minmax(0, 1fr) !important; }
     .chapter-item-container, .chapters-list > li { min-width: 0; max-width: 100%; }
-    /* Bình luận: cột nội dung được co, dòng tên/giờ/nút được xuống hàng */
-    .comment-item, .comment-item div[style*="display: flex; gap"] { flex-wrap: wrap; }
-    .comment-item [style*="flex: 1;"] { flex: 1 1 160px !important; min-width: 0; }
-    .replies-container { padding-left: 0.6rem !important; }
     /* Danh sách chương: tên dài xuống tối đa 2 dòng thay vì chỉ còn "Chương 1: ..." */
     .chapter-item > span:first-child {
         white-space: normal !important;
@@ -2595,7 +2591,6 @@ img, video, iframe, canvas, svg { max-width: 100%; }
         -webkit-box-orient: vertical;
         line-height: 1.35;
     }
-    .comment-item div[style*="justify-content: space-between"] { flex-wrap: wrap; gap: 0.3rem; }
 
     /* ===== TRANG QUẢN TRỊ ===== */
     .admin-sections-grid { grid-template-columns: minmax(0, 1fr) !important; gap: 1rem !important; }

@@ -1,0 +1,40 @@
+<%
+  // Một bình luận (gốc hoặc phản hồi). Nhận: c, isReply, rootId, canReply, canDelete, showChapterTag, story, formatCommentContent
+  const cu = c.users || {};
+  const cName = cu.display_name || 'Độc giả ẩn danh';
+  const cFrame = cu.equipped_frame || 'default-frame';
+  const cDate = new Date(c.created_at);
+  const cTimeFull = isNaN(cDate) ? '' : cDate.toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' });
+%>
+<article class="cmt<%= isReply ? ' cmt--reply' : '' %>" id="comment-<%= c.id %>" data-id="<%= c.id %>" data-root="<%= rootId %>" data-name="<%= cName %>">
+    <a class="cmt-avatar" href="/user/<%= c.user_id %>" aria-label="Trang của <%= cName %>">
+        <div class="avatar-frame <%= cFrame %>">
+            <div class="avatar-glow"></div>
+            <img src="<%= cu.avatar || '/css/silly_duck.png' %>" alt="" class="avatar-img" loading="lazy">
+        </div>
+    </a>
+    <div class="cmt-body">
+        <div class="cmt-head">
+            <a class="cmt-name" href="/user/<%= c.user_id %>"><%= cName %></a>
+            <% if (cu.equipped_badge) { %>
+                <span class="game-title <%= getTitleRarityClass(cu.equipped_badge) %> cmt-badge" title="<%= cu.equipped_badge %>"><%= getBadgeIcon(cu.equipped_badge) %> <%= cu.equipped_badge %></span>
+            <% } %>
+            <% if (showChapterTag && !isReply && c.chapter_number) { %>
+                <a class="cmt-chap" href="/story/<%= story.id %>/chapter/<%= c.chapter_number %>#comment-<%= c.id %>">Chương <%= c.chapter_number %></a>
+            <% } %>
+        </div>
+        <time class="cmt-time" datetime="<%= isNaN(cDate) ? '' : cDate.toISOString() %>" title="<%= cTimeFull %>"><%= cTimeFull %></time>
+        <div class="cmt-content"><%- formatCommentContent(c.content) %></div>
+        <div class="cmt-actions">
+            <button type="button" class="cmt-act like-btn<%= c.user_liked ? ' is-liked' : '' %>" onclick="likeComment(<%= c.id %>)" aria-label="Thích">
+                <span class="cmt-heart">♥</span> <span class="likes-count"><%= c.likes_count || 0 %></span>
+            </button>
+            <% if (canReply) { %>
+                <button type="button" class="cmt-act" onclick="openReply(<%= rootId %>, <%= c.id %>)">💬 Trả lời</button>
+            <% } %>
+            <% if (canDelete) { %>
+                <button type="button" class="cmt-act cmt-act--danger" onclick="deleteComment(<%= c.id %>)">🗑️ Xóa</button>
+            <% } %>
+        </div>
+    </div>
+</article>

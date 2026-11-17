@@ -1270,16 +1270,7 @@ router.get('/story/:id', async (req, res) => {
         .order('created_at', { ascending: false });
       
       comments = commentsData || [];
-      for (const c of comments) {
-        const { count } = await supabase.from('comment_likes').select('*', { count: 'exact', head: true }).eq('comment_id', c.id);
-        c.likes_count = count || 0;
-        
-        c.user_liked = false;
-        if (req.user && req.user.id) {
-          const { data: liked } = await supabase.from('comment_likes').select('*').eq('comment_id', c.id).eq('user_id', req.user.id).single();
-          if (liked) c.user_liked = true;
-        }
-      }
+      await attachCommentLikes(comments, req.user && req.user.id);
     } catch (e) {
       console.error('Lỗi lấy bình luận truyện:', e);
     }
@@ -1384,6 +1375,27 @@ router.get('/story/download-epub/:id', async (req, res) => {
 });
 
 // TRANG ĐỌC CHƯƠNG TRUYỆN
+// Gắn số lượt thích + trạng thái "đã thích" cho danh sách bình luận bằng 1 truy vấn gộp
+async function attachCommentLikes(comments, userId) {
+  comments.forEach(c => { c.likes_count = 0; c.user_liked = false; });
+  if (!comments.length) return;
+  const byId = new Map(comments.map(c => [c.id, c]));
+  const ids = [...byId.keys()];
+  for (let i = 0; i < ids.length; i += 200) {
+    const { data: likes } = await supabase
+      .from('comment_likes')
+      .select('comment_id, user_id')
+      .in('comment_id', ids.slice(i, i + 200))
+      .limit(10000);
+    for (const l of likes || []) {
+      const c = byId.get(l.comment_id);
+      if (!c) continue;
+      c.likes_count++;
+      if (userId && l.user_id === userId) c.user_liked = true;
+    }
+  }
+}
+
 router.get('/story/:story_id/chapter/:chapter_number', async (req, res) => {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.setHeader('Pragma', 'no-cache');
@@ -1525,16 +1537,7 @@ router.get('/story/:story_id/chapter/:chapter_number', async (req, res) => {
         .order('created_at', { ascending: false });
       
       comments = commentsData || [];
-      for (const c of comments) {
-        const { count } = await supabase.from('comment_likes').select('*', { count: 'exact', head: true }).eq('comment_id', c.id);
-        c.likes_count = count || 0;
-        
-        c.user_liked = false;
-        if (req.user && req.user.id) {
-          const { data: liked } = await supabase.from('comment_likes').select('*').eq('comment_id', c.id).eq('user_id', req.user.id).single();
-          if (liked) c.user_liked = true;
-        }
-      }
+      await attachCommentLikes(comments, req.user && req.user.id);
     } catch (e) {
       console.error('Lỗi lấy bình luận chương:', e);
     }
@@ -2027,12 +2030,39 @@ router.post('/story/:story_id/comment', async (req, res) => {
   }
 
   try {
+    // Phản hồi luôn gắn vào bình luận GỐC của luồng và kế thừa chương của bình luận gốc,
+    // để trả lời từ trang truyện vẫn hiện đúng dưới bình luận ở trang chương (và ngược lại).
+    let parentComment = null;
+    let replyTarget = null;
+    if (parent_id) {
+      const { data: p } = await supabase
+        .from('comments')
+        .select('id, user_id, story_id, chapter_number, parent_id')
+        .eq('id', parseInt(parent_id))
+        .single();
+      if (!p || p.story_id !== storyId) {
+        return res.status(404).json({ success: false, error: 'Bình luận được trả lời không còn tồn tại.' });
+      }
+      parentComment = p;
+      replyTarget = p;
+      if (p.parent_id) {
+        const { data: root } = await supabase
+          .from('comments')
+          .select('id, user_id, story_id, chapter_number, parent_id')
+          .eq('id', p.parent_id)
+          .single();
+        if (root) parentComment = root;
+      }
+    }
+
     const commentData = {
       story_id: storyId,
-      chapter_number: chapter_number ? parseFloat(chapter_number) : null,
+      chapter_number: parentComment
+        ? parentComment.chapter_number
+        : (chapter_number ? parseFloat(chapter_number) : null),
       user_id: req.user.id,
       content: content.trim(),
-      parent_id: parent_id ? parseInt(parent_id) : null
+      parent_id: parentComment ? parentComment.id : null
     };
 
     const { data: newComment, error } = await supabase
@@ -2044,17 +2074,19 @@ router.post('/story/:story_id/comment', async (req, res) => {
     if (error) throw error;
 
     // Quét nhắc tên @mention
-    await handleCommentMentions(content, storyId, chapter_number, req.user.display_name);
+    await handleCommentMentions(content, storyId, commentData.chapter_number, req.user.display_name);
 
-    // Gửi thông báo cho bình luận gốc nếu là phản hồi
-    if (parent_id) {
-      const { data: parentComment } = await supabase.from('comments').select('user_id').eq('id', parent_id).single();
-      if (parentComment && parentComment.user_id !== req.user.id) {
-        await supabase.from('notifications').insert([{
-          user_id: parentComment.user_id,
+    // Gửi thông báo cho người được trả lời (và chủ bình luận gốc nếu khác người), dẫn thẳng tới bình luận mới
+    if (parentComment) {
+      const link = `/story/${storyId}${commentData.chapter_number ? '/chapter/' + commentData.chapter_number : ''}#comment-${newComment.id}`;
+      const notifyIds = [...new Set([replyTarget && replyTarget.user_id, parentComment.user_id])]
+        .filter(id => id && id !== req.user.id);
+      if (notifyIds.length) {
+        await supabase.from('notifications').insert(notifyIds.map(uid => ({
+          user_id: uid,
           message: `💬 ${req.user.display_name} đã phản hồi bình luận của bạn!`,
-          link: `/story/${storyId}${chapter_number ? '/chapter/' + chapter_number : ''}`
-        }]);
+          link
+        })));
       }
     }
 
@@ -2132,6 +2164,14 @@ router.post('/comment/:id/delete', async (req, res) => {
       return res.status(403).json({ success: false, error: 'Bạn không có quyền xóa bình luận này.' });
     }
     
+    // Xóa bình luận gốc thì xóa luôn các phản hồi của nó (tránh phản hồi "mồ côi" vẫn bị đếm nhưng không hiện)
+    const { data: childReplies } = await supabase.from('comments').select('id').eq('parent_id', commentId);
+    const childIds = (childReplies || []).map(r => r.id);
+    if (childIds.length) {
+      await supabase.from('comment_likes').delete().in('comment_id', childIds);
+      await supabase.from('comments').delete().in('id', childIds);
+    }
+
     const { error: deleteErr } = await supabase
       .from('comments')
       .delete()

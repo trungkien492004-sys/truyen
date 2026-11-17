@@ -1,0 +1,379 @@
+<%
+  // Khu bình luận dùng chung cho trang truyện và trang đọc chương.
+  // Nhận: comments, story, user, commentChapter (số chương hoặc null), commentTitle
+  const cmtChapter = (typeof commentChapter !== 'undefined' && commentChapter !== null && commentChapter !== '') ? commentChapter : null;
+  const cmtUser = (typeof user !== 'undefined' && user) ? user : null;
+  const cmtIsAdmin = !!(cmtUser && (cmtUser.role === 'admin' || cmtUser.role === 'sp_admin'));
+  const allComments = comments || [];
+  const cmtById = new Map(allComments.map(c => [c.id, c]));
+
+  // Tìm bình luận gốc của một phản hồi (dữ liệu cũ có thể lồng nhiều tầng)
+  function rootOf(c) {
+    let cur = c, guard = 0;
+    while (cur && cur.parent_id && guard++ < 20) cur = cmtById.get(cur.parent_id);
+    return cur && !cur.parent_id ? cur : null;
+  }
+
+  const rootComments = allComments.filter(c => !c.parent_id)
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  const repliesByRoot = {};
+  for (const c of allComments) {
+    if (!c.parent_id) continue;
+    const r = rootOf(c);
+    if (!r) continue; // phản hồi mồ côi (gốc đã bị xóa) -> không hiện, không đếm
+    (repliesByRoot[r.id] = repliesByRoot[r.id] || []).push(c);
+  }
+  Object.values(repliesByRoot).forEach(list => list.sort((a, b) => new Date(a.created_at) - new Date(b.created_at)));
+  const visibleTotal = rootComments.length + Object.values(repliesByRoot).reduce((n, l) => n + l.length, 0);
+
+  const knownDisplayNames = Array.from(new Set(allComments.map(c => c.users && c.users.display_name ? c.users.display_name.trim() : '').filter(Boolean))).sort((a, b) => b.length - a.length);
+  function formatCommentContent(text) {
+    if (!text) return '';
+    let escaped = String(text)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    const done = new Set();
+    for (const name of knownDisplayNames) {
+      const safe = name.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+      const re = new RegExp('@' + safe.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?=[\\s,.:!?]|$)', 'g');
+      if (re.test(escaped)) { escaped = escaped.replace(re, '\u0000' + done.size + '\u0000'); done.add(safe); }
+    }
+    escaped = escaped.replace(/@([a-zA-Z0-9_À-ɏẠ-ỹ]+)/g, '<span class="cmt-mention">@$1</span>');
+    [...done].forEach((safe, i) => { escaped = escaped.split('\u0000' + i + '\u0000').join('<span class="cmt-mention">@' + safe + '</span>'); });
+    return escaped;
+  }
+  const PAGE = 10, REPLIES_SHOWN = 3;
+%>
+<section class="cmt-section" id="comments" data-story="<%= story.id %>" data-chapter="<%= cmtChapter === null ? '' : cmtChapter %>">
+    <div class="cmt-header">
+        <h3 class="cmt-title">💬 <%= typeof commentTitle !== 'undefined' ? commentTitle : 'Bình luận' %> <span class="cmt-total" id="cmt-total"><%= visibleTotal %></span></h3>
+        <% if (rootComments.length > 1) { %>
+            <div class="cmt-sort" role="tablist" aria-label="Sắp xếp bình luận">
+                <button type="button" data-sort="new" class="is-active">Mới nhất</button>
+                <button type="button" data-sort="old">Cũ nhất</button>
+                <button type="button" data-sort="top">Nổi bật</button>
+            </div>
+        <% } %>
+    </div>
+
+    <% if (cmtUser) { %>
+        <form class="cmt-compose" id="comment-form">
+            <textarea id="comment-textarea" maxlength="2000" placeholder="Chia sẻ cảm nghĩ của bạn..." required></textarea>
+            <div class="cmt-compose-foot">
+                <span class="cmt-hint">Gõ @Tên để nhắc ai đó · Ctrl+Enter để gửi</span>
+                <button type="submit" class="btn btn-primary cmt-submit">Đăng bình luận</button>
+            </div>
+        </form>
+    <% } else { %>
+        <p class="cmt-login">
+            <a href="/auth/login">Đăng nhập</a> để tham gia bình luận.
+        </p>
+    <% } %>
+
+    <div class="cmt-list" id="cmt-list">
+        <% if (rootComments.length === 0) { %>
+            <p class="cmt-empty">Chưa có bình luận nào. Hãy là người đầu tiên chia sẻ cảm nghĩ!</p>
+        <% } %>
+        <% rootComments.forEach((root, idx) => {
+             const replies = repliesByRoot[root.id] || [];
+             const score = (root.likes_count || 0) * 2 + replies.length; %>
+            <div class="cmt-thread<%= idx >= PAGE ? ' is-hidden' : '' %>" id="thread-<%= root.id %>" data-time="<%= new Date(root.created_at).getTime() %>" data-score="<%= score %>">
+                <%- include('comment-item', { c: root, isReply: false, rootId: root.id, canReply: !!cmtUser, canDelete: !!(cmtUser && (cmtUser.id === root.user_id || cmtIsAdmin)), showChapterTag: cmtChapter === null, formatCommentContent }) %>
+
+                <% if (replies.length) { %>
+                    <div class="cmt-replies" id="replies-<%= root.id %>">
+                        <% replies.forEach((reply, rIdx) => { %>
+                            <div class="cmt-reply-wrap<%= rIdx >= REPLIES_SHOWN ? ' is-hidden' : '' %>">
+                                <%- include('comment-item', { c: reply, isReply: true, rootId: root.id, canReply: !!cmtUser, canDelete: !!(cmtUser && (cmtUser.id === reply.user_id || cmtIsAdmin)), showChapterTag: false, formatCommentContent }) %>
+                            </div>
+                        <% }) %>
+                        <% if (replies.length > REPLIES_SHOWN) { %>
+                            <button type="button" class="cmt-more-replies" onclick="showAllReplies(<%= root.id %>)">↳ Xem thêm <%= replies.length - REPLIES_SHOWN %> phản hồi</button>
+                        <% } %>
+                    </div>
+                <% } %>
+
+                <% if (cmtUser) { %>
+                    <div class="cmt-reply-box" id="reply-form-<%= root.id %>" hidden>
+                        <textarea id="reply-textarea-<%= root.id %>" maxlength="2000" placeholder="Viết câu trả lời..."></textarea>
+                        <div class="cmt-reply-foot">
+                            <button type="button" class="btn btn-secondary" onclick="cancelReply(<%= root.id %>)">Hủy</button>
+                            <button type="button" class="btn btn-primary" onclick="submitReply(<%= root.id %>, this)">Trả lời</button>
+                        </div>
+                    </div>
+                <% } %>
+            </div>
+        <% }) %>
+    </div>
+    <% if (rootComments.length > PAGE) { %>
+        <button type="button" class="cmt-load-more" id="cmt-load-more" onclick="showMoreThreads()">Xem thêm bình luận</button>
+    <% } %>
+</section>
+
+<style>
+    .cmt-section { --cmt-av: 40px; --cmt-av-sm: 30px; color: var(--text-primary); }
+    .cmt-header { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
+    .cmt-title { margin: 0; font-size: 1.25rem; display: flex; align-items: center; gap: 0.5rem; }
+    .cmt-total { font-size: 0.78rem; font-weight: 700; color: var(--accent-color); background: rgba(99, 102, 241, 0.14); padding: 0.1rem 0.55rem; border-radius: 999px; }
+    .cmt-sort { display: inline-flex; gap: 2px; padding: 3px; border: 1px solid var(--border-color); border-radius: 999px; background: rgba(127, 127, 127, 0.06); }
+    .cmt-sort button { background: none; border: 0; color: var(--text-secondary); font-size: 0.78rem; font-weight: 600; padding: 0.3rem 0.75rem; border-radius: 999px; cursor: pointer; }
+    .cmt-sort button.is-active { background: var(--accent-color); color: #fff; }
+
+    .cmt-compose { background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 12px; padding: 0.75rem 0.85rem; margin-bottom: 1.25rem; transition: border-color 0.2s; }
+    .cmt-compose:focus-within { border-color: var(--accent-color); }
+    .cmt-compose textarea, .cmt-reply-box textarea { display: block; width: 100%; min-height: 70px; border: 0; background: transparent; color: var(--text-primary); font: inherit; font-size: 0.92rem; line-height: 1.55; resize: vertical; outline: none; padding: 0; }
+    .cmt-compose-foot { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; }
+    .cmt-hint { font-size: 0.74rem; color: var(--text-secondary); }
+    .cmt-submit { padding: 0.45rem 1.2rem !important; font-size: 0.86rem !important; border-radius: 8px !important; margin-left: auto; }
+    .cmt-login, .cmt-empty { text-align: center; color: var(--text-secondary); font-size: 0.9rem; padding: 1rem; border-radius: 10px; margin: 0 0 1.25rem; }
+    .cmt-login { border: 1px dashed var(--border-color); }
+    .cmt-login a { color: var(--accent-color); font-weight: 700; text-decoration: none; }
+
+    .cmt-list { display: flex; flex-direction: column; }
+    .cmt-thread { padding: 1rem 0; border-top: 1px solid var(--border-color); }
+    .cmt-thread:first-child { border-top: 0; padding-top: 0.25rem; }
+    .cmt-thread.is-hidden, .cmt-reply-wrap.is-hidden { display: none; }
+
+    .cmt { display: flex; gap: 0.75rem; align-items: flex-start; scroll-margin-top: 90px; border-radius: 10px; transition: background-color 0.8s, box-shadow 0.8s; }
+    .cmt.is-highlight { background: rgba(99, 102, 241, 0.12); box-shadow: 0 0 0 6px rgba(99, 102, 241, 0.12); }
+    .cmt-avatar { flex-shrink: 0; display: block; position: relative; text-decoration: none; }
+    .cmt-avatar .avatar-frame { width: var(--cmt-av) !important; height: var(--cmt-av) !important; padding: 2px !important; }
+    .cmt--reply .cmt-avatar .avatar-frame { width: var(--cmt-av-sm) !important; height: var(--cmt-av-sm) !important; }
+    .cmt-body { flex: 1; min-width: 0; }
+    .cmt-head { display: flex; align-items: center; flex-wrap: wrap; gap: 0.3rem 0.5rem; line-height: 1.3; }
+    .cmt-name { font-weight: 700; font-size: 0.9rem; color: var(--text-primary); text-decoration: none; overflow-wrap: anywhere; }
+    .cmt-name:hover { color: var(--accent-color); }
+    .cmt-badge { font-size: 0.6rem !important; padding: 1px 7px !important; animation: none !important; transform: none !important; height: auto !important; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .cmt-chap { font-size: 0.7rem; font-weight: 600; color: #3b82f6; background: rgba(59, 130, 246, 0.12); border: 1px solid rgba(59, 130, 246, 0.25); padding: 0.05rem 0.4rem; border-radius: 4px; text-decoration: none; white-space: nowrap; }
+    .cmt-time { display: block; font-size: 0.72rem; color: var(--text-secondary); margin-top: 0.1rem; }
+    .cmt-content { font-size: 0.9rem; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; margin: 0.35rem 0 0.25rem; color: var(--text-primary); }
+    .cmt--reply .cmt-content { font-size: 0.87rem; }
+    .cmt-mention { color: var(--accent-color); font-weight: 600; }
+    .cmt-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 0.15rem; margin-left: -0.45rem; }
+    .cmt-act { background: none; border: 0; color: var(--text-secondary); font-size: 0.78rem; font-weight: 600; padding: 0.3rem 0.45rem; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 0.25rem; }
+    .cmt-act:hover { background: rgba(127, 127, 127, 0.12); color: var(--text-primary); }
+    .cmt-heart { font-size: 0.95rem; line-height: 1; }
+    .cmt-act.is-liked { color: #f43f5e; }
+    .cmt-act--danger:hover { color: #ef4444; }
+
+    .cmt-replies { margin: 0.65rem 0 0 calc(var(--cmt-av) / 2); padding-left: calc(var(--cmt-av) / 2 + 0.75rem - 2px); border-left: 2px solid var(--border-color); display: flex; flex-direction: column; gap: 0.8rem; }
+    .cmt-more-replies, .cmt-load-more { background: none; border: 0; color: var(--accent-color); font-weight: 600; font-size: 0.8rem; cursor: pointer; padding: 0.2rem 0; text-align: left; }
+    .cmt-load-more { display: block; width: 100%; margin-top: 0.5rem; padding: 0.65rem; border: 1px solid var(--border-color); border-radius: 10px; text-align: center; font-size: 0.86rem; }
+    .cmt-reply-box { margin: 0.75rem 0 0 calc(var(--cmt-av) + 0.75rem); background: var(--bg-primary); border: 1px solid var(--accent-color); border-radius: 10px; padding: 0.6rem 0.75rem; }
+    .cmt-reply-box[hidden] { display: none; }
+    .cmt-reply-box textarea { min-height: 56px; font-size: 0.88rem; }
+    .cmt-reply-foot { display: flex; justify-content: flex-end; gap: 0.4rem; margin-top: 0.4rem; }
+    .cmt-reply-foot .btn { font-size: 0.78rem !important; padding: 0.3rem 0.85rem !important; border-radius: 6px !important; }
+
+    @media (max-width: 480px) {
+        .cmt-section { --cmt-av: 36px; --cmt-av-sm: 28px; }
+        .cmt-replies { margin-left: calc(var(--cmt-av) / 2 - 6px); padding-left: 0.7rem; }
+        .cmt-reply-box { margin-left: 0; }
+        .cmt-title { font-size: 1.1rem; }
+        .cmt-hint { display: none; }
+    }
+</style>
+
+<script>
+(function () {
+    const section = document.getElementById('comments');
+    if (!section) return;
+    const STORY_ID = section.dataset.story;
+    const CHAPTER = section.dataset.chapter || null;
+    const totalEl = document.getElementById('cmt-total');
+    const list = document.getElementById('cmt-list');
+
+    // ---- Thời gian tương đối theo múi giờ của người đọc ----
+    function relTime(d) {
+        const s = Math.floor((Date.now() - d.getTime()) / 1000);
+        if (s < 60) return 'Vừa xong';
+        if (s < 3600) return Math.floor(s / 60) + ' phút trước';
+        if (s < 86400) return Math.floor(s / 3600) + ' giờ trước';
+        if (s < 7 * 86400) return Math.floor(s / 86400) + ' ngày trước';
+        return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    }
+    section.querySelectorAll('time.cmt-time').forEach(t => {
+        const d = new Date(t.getAttribute('datetime'));
+        if (isNaN(d)) return;
+        t.textContent = relTime(d);
+        t.title = d.toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' });
+    });
+
+    // ---- Sắp xếp + phân trang luồng bình luận ----
+    const PAGE = 10;
+    let shown = PAGE;
+    function applyPaging() {
+        const threads = [...list.querySelectorAll('.cmt-thread')];
+        threads.forEach((t, i) => t.classList.toggle('is-hidden', i >= shown));
+        const more = document.getElementById('cmt-load-more');
+        if (more) {
+            const left = threads.length - shown;
+            more.style.display = left > 0 ? '' : 'none';
+            more.textContent = 'Xem thêm ' + Math.min(left, PAGE) + ' bình luận';
+        }
+    }
+    function sortThreads(mode) {
+        const threads = [...list.querySelectorAll('.cmt-thread')];
+        threads.sort((a, b) => {
+            if (mode === 'old') return a.dataset.time - b.dataset.time;
+            if (mode === 'top') return (b.dataset.score - a.dataset.score) || (b.dataset.time - a.dataset.time);
+            return b.dataset.time - a.dataset.time;
+        });
+        threads.forEach(t => list.appendChild(t));
+        section.querySelectorAll('.cmt-sort button').forEach(b => b.classList.toggle('is-active', b.dataset.sort === mode));
+        try { localStorage.setItem('cmt_sort', mode); } catch (e) {}
+        applyPaging();
+    }
+    section.querySelectorAll('.cmt-sort button').forEach(b => b.addEventListener('click', () => sortThreads(b.dataset.sort)));
+    let savedSort = 'new';
+    try { savedSort = localStorage.getItem('cmt_sort') || 'new'; } catch (e) {}
+    if (savedSort !== 'new') sortThreads(savedSort); else applyPaging();
+
+    window.showMoreThreads = function () { shown += PAGE; applyPaging(); };
+    window.showAllReplies = function (rootId) {
+        const box = document.getElementById('replies-' + rootId);
+        if (!box) return;
+        box.querySelectorAll('.cmt-reply-wrap.is-hidden').forEach(w => w.classList.remove('is-hidden'));
+        const btn = box.querySelector('.cmt-more-replies');
+        if (btn) btn.remove();
+    };
+
+    // ---- Mở đúng bình luận khi đi từ thông báo (#comment-123) ----
+    function revealHash() {
+        const m = /^#comment-(\d+)$/.exec(location.hash);
+        if (!m) return;
+        const el = document.getElementById('comment-' + m[1]);
+        if (!el) return;
+        const thread = el.closest('.cmt-thread');
+        if (thread && thread.classList.contains('is-hidden')) {
+            const idx = [...list.querySelectorAll('.cmt-thread')].indexOf(thread);
+            shown = Math.max(shown, Math.ceil((idx + 1) / PAGE) * PAGE);
+            applyPaging();
+        }
+        if (el.closest('.cmt-reply-wrap.is-hidden')) showAllReplies(el.dataset.root);
+        requestAnimationFrame(() => {
+            el.scrollIntoView({ block: 'center' });
+            el.classList.add('is-highlight');
+            setTimeout(() => el.classList.remove('is-highlight'), 2200);
+        });
+    }
+    revealHash();
+    window.addEventListener('hashchange', revealHash);
+
+    function reloadTo(commentId) {
+        history.replaceState(null, '', location.pathname + location.search + '#comment-' + commentId);
+        location.reload();
+    }
+
+    async function postComment(content, parentId) {
+        const resp = await fetch('/story/' + STORY_ID + '/comment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: content, chapter_number: CHAPTER, parent_id: parentId || null })
+        });
+        let data = {};
+        try { data = await resp.json(); } catch (e) {}
+        if (!data.success) throw new Error(data.error || 'Không gửi được bình luận.');
+        return data.comment;
+    }
+
+    // ---- Bình luận mới ----
+    const form = document.getElementById('comment-form');
+    if (form) {
+        const ta = document.getElementById('comment-textarea');
+        const btn = form.querySelector('button[type="submit"]');
+        ta.addEventListener('keydown', e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) form.requestSubmit(); });
+        form.addEventListener('submit', async e => {
+            e.preventDefault();
+            const content = ta.value.trim();
+            if (!content || btn.disabled) return;
+            btn.disabled = true; btn.textContent = 'Đang gửi...';
+            try {
+                const c = await postComment(content, null);
+                reloadTo(c.id);
+            } catch (err) {
+                alert('Lỗi: ' + err.message);
+                btn.disabled = false; btn.textContent = 'Đăng bình luận';
+            }
+        });
+    }
+
+    // ---- Trả lời: luôn mở 1 khung ở cuối luồng, điền sẵn @tên người được trả lời ----
+    window.openReply = function (rootId, targetId) {
+        document.querySelectorAll('.cmt-reply-box').forEach(b => { if (b.id !== 'reply-form-' + rootId) b.hidden = true; });
+        const box = document.getElementById('reply-form-' + rootId);
+        const ta = document.getElementById('reply-textarea-' + rootId);
+        const target = document.getElementById('comment-' + targetId);
+        if (!box || !ta) return;
+        showAllReplies(rootId);
+        box.hidden = false;
+        const name = target ? target.dataset.name : '';
+        const mention = name ? '@' + name + ' ' : '';
+        // Chỉ thay @tên khi khung đang trống hoặc mới chỉ có @tên cũ (không xóa chữ người dùng đã gõ)
+        if (!ta.value.trim() || ta.value === box.dataset.mention) ta.value = mention;
+        box.dataset.mention = mention;
+        ta.focus();
+        ta.setSelectionRange(ta.value.length, ta.value.length);
+        box.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    };
+    window.cancelReply = function (rootId) {
+        const box = document.getElementById('reply-form-' + rootId);
+        const ta = document.getElementById('reply-textarea-' + rootId);
+        if (box) box.hidden = true;
+        if (ta) ta.value = '';
+    };
+    window.submitReply = async function (rootId, btn) {
+        const ta = document.getElementById('reply-textarea-' + rootId);
+        const content = ta ? ta.value.trim() : '';
+        const box = document.getElementById('reply-form-' + rootId);
+        if (!content || (box && content === (box.dataset.mention || '').trim())) { alert('Vui lòng nhập nội dung trả lời.'); return; }
+        if (btn) { if (btn.disabled) return; btn.disabled = true; btn.textContent = 'Đang gửi...'; }
+        try {
+            const c = await postComment(content, rootId);
+            reloadTo(c.id);
+        } catch (err) {
+            alert('Lỗi: ' + err.message);
+            if (btn) { btn.disabled = false; btn.textContent = 'Trả lời'; }
+        }
+    };
+
+    // ---- Thích ----
+    window.likeComment = async function (commentId) {
+        try {
+            const resp = await fetch('/comment/' + commentId + '/like', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+            if (resp.status === 401) { location.href = '/auth/login'; return; }
+            const data = await resp.json();
+            if (!data.success) return;
+            const btn = document.querySelector('#comment-' + commentId + ' .like-btn');
+            if (!btn) return;
+            btn.querySelector('.likes-count').textContent = data.likesCount;
+            btn.classList.toggle('is-liked', !!data.liked);
+        } catch (err) {
+            console.error('Lỗi khi thích bình luận:', err);
+        }
+    };
+
+    // ---- Xóa ----
+    window.deleteComment = async function (commentId) {
+        const el = document.getElementById('comment-' + commentId);
+        const isRoot = el && !el.classList.contains('cmt--reply');
+        const thread = el && el.closest('.cmt-thread');
+        const replyCount = isRoot && thread ? thread.querySelectorAll('.cmt--reply').length : 0;
+        const msg = replyCount ? 'Xóa bình luận này cùng ' + replyCount + ' phản hồi của nó?' : 'Bạn có chắc chắn muốn xóa bình luận này?';
+        if (!confirm(msg)) return;
+        try {
+            const resp = await fetch('/comment/' + commentId + '/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+            const data = await resp.json();
+            if (!data.success) { alert(data.error || 'Lỗi khi xóa bình luận.'); return; }
+            if (!el) { location.reload(); return; }
+            if (isRoot && thread) thread.remove();
+            else (el.closest('.cmt-reply-wrap') || el).remove();
+            if (totalEl) totalEl.textContent = Math.max(0, (parseInt(totalEl.textContent, 10) || 0) - 1 - replyCount);
+            applyPaging();
+        } catch (err) {
+            console.error('Lỗi khi xóa bình luận:', err);
+            alert('Lỗi hệ thống khi xóa bình luận.');
+        }
+    };
+})();
+</script>
