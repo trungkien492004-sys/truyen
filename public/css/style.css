@@ -2539,6 +2539,9 @@ footer {
 html { overflow-x: hidden; max-width: 100%; }
 img, video, iframe, canvas, svg { max-width: 100%; }
 
+/* Mục lục nhanh: ô tìm kiếm dính sát mép trên, không để tên chương lọt lên phía trên ô */
+.toc-dropdown-content { padding-top: 0 !important; }
+
 @media (max-width: 768px) {
     body, main { max-width: 100vw; }
     main, main > *, .read-container, .read-content, .read-header,
@@ -2569,6 +2572,53 @@ img, video, iframe, canvas, svg { max-width: 100%; }
     /* Mục lục: căn theo cả thanh điều hướng (rộng bằng màn hình) thay vì theo nút
        -> không còn lệch tràn mép phải trên máy nhỏ */
     .read-navigation .toc-dropdown { position: static !important; }
+    .toc-dropdown-content { max-height: min(400px, 60vh) !important; }
+    /* Mục lục ở thanh điều hướng cuối chương: mở lên trên để không rơi khỏi màn hình */
+    .read-navigation[style*="margin-top: 4rem"] .toc-dropdown-content {
+        top: auto !important;
+        bottom: 100%;
+        margin-top: 0 !important;
+        margin-bottom: 0.5rem;
+    }
+    /* Danh sách chương (trang truyện): tên chương dài không kéo giãn hàng ra ngoài khung */
+    .chapters-list { grid-template-columns: minmax(0, 1fr) !important; }
+    .chapter-item-container, .chapters-list > li { min-width: 0; max-width: 100%; }
+    /* Bình luận: cột nội dung được co, dòng tên/giờ/nút được xuống hàng */
+    .comment-item, .comment-item div[style*="display: flex; gap"] { flex-wrap: wrap; }
+    .comment-item [style*="flex: 1;"] { flex: 1 1 160px !important; min-width: 0; }
+    .replies-container { padding-left: 0.6rem !important; }
+    /* Danh sách chương: tên dài xuống tối đa 2 dòng thay vì chỉ còn "Chương 1: ..." */
+    .chapter-item > span:first-child {
+        white-space: normal !important;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        line-height: 1.35;
+    }
+    .comment-item div[style*="justify-content: space-between"] { flex-wrap: wrap; gap: 0.3rem; }
+
+    /* ===== TRANG QUẢN TRỊ ===== */
+    .admin-sections-grid { grid-template-columns: minmax(0, 1fr) !important; gap: 1rem !important; }
+    .admin-sections-grid > * { min-width: 0; }
+    .admin-box { padding: 1rem !important; min-width: 0; max-width: 100%; }
+    /* Bảng nhiều cột: cuộn ngang trong khung thay vì đẩy cả trang */
+    .admin-table, .admin-box table {
+        display: block;
+        max-width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .form-container { padding: 1rem !important; min-width: 0; max-width: 100% !important; }
+    .form-container table th[style*="width: 100px"] { width: 3.2rem !important; }
+    .form-container table th[style*="width: 130px"] { width: auto !important; }
+    .form-container table th, .form-container table td { padding: 0.5rem 0.4rem !important; }
+    .admin-table th, .admin-table td, .admin-box table th, .admin-box table td { padding: 0.5rem 0.4rem !important; }
+    /* Hàng flex có min-width cứng trong admin (shop...) */
+    .admin-box [style*="min-width: 300px"], .admin-box [style*="min-width: 250px"],
+    .admin-box [style*="min-width: 280px"] {
+        flex-basis: 100% !important;
+        min-width: 0 !important;
+    }
     /* Khối chữ "flex:1; min-width:2xxpx" (banner Yu-Gi, hồ sơ): chiếm trọn 1 dòng
        để co theo màn hình mà không bị bóp hẹp (min-width:0 đơn thuần làm trang cao vọt) */
     [style*="flex: 1; min-width: 250px"], [style*="flex: 1; min-width: 280px"] {
